@@ -1,46 +1,152 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, confidenceColor, confidenceLabel } from "@/lib/utils/format";
 
 interface Job { id: string; name: string; address: string | null; }
-interface CostCode { id: string; code: string; description: string; }
+interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
 interface PurchaseOrder { id: string; po_number: string | null; description: string | null; amount: number; }
 interface BudgetInfo { original_estimate: number; revised_estimate: number; total_spent: number; remaining: number; }
 
 interface InvoiceData {
-  id: string;
-  job_id: string | null;
-  vendor_id: string | null;
-  cost_code_id: string | null;
-  po_id: string | null;
-  invoice_number: string | null;
-  invoice_date: string | null;
-  vendor_name_raw: string | null;
-  job_reference_raw: string | null;
-  po_reference_raw: string | null;
-  description: string | null;
+  id: string; job_id: string | null; vendor_id: string | null; cost_code_id: string | null; po_id: string | null;
+  invoice_number: string | null; invoice_date: string | null; vendor_name_raw: string | null;
+  job_reference_raw: string | null; po_reference_raw: string | null; description: string | null;
   line_items: Array<{ description: string; qty: number | null; unit: string | null; rate: number | null; amount: number; }>;
-  total_amount: number;
-  invoice_type: string | null;
-  co_reference_raw: string | null;
+  total_amount: number; invoice_type: string | null; co_reference_raw: string | null;
   confidence_score: number;
   confidence_details: (Record<string, number> & { auto_fills?: Record<string, boolean> }) | null;
-  status: string;
-  status_history: Array<Record<string, unknown>>;
-  received_date: string | null;
-  payment_date: string | null;
-  original_file_type: string | null;
+  ai_raw_response: { cost_code_suggestion?: { code: string; description: string; confidence: number; is_change_order: boolean } } | null;
+  status: string; status_history: Array<Record<string, unknown>>;
+  received_date: string | null; payment_date: string | null; original_file_type: string | null;
   pm_overrides: Record<string, { old: unknown; new: unknown }> | null;
   signed_file_url: string | null;
-  jobs: Job | null;
-  vendors: { id: string; name: string } | null;
-  cost_codes: CostCode | null;
+  jobs: Job | null; vendors: { id: string; name: string } | null; cost_codes: CostCode | null;
 }
 
+// ── Searchable Combobox ────────────────────────────────
+function SearchCombobox({ label, value, onChange, options, disabled, aiFilled, grouped, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void;
+  options: { value: string; label: string; group?: string }[];
+  disabled?: boolean; aiFilled?: boolean; grouped?: boolean; placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectedLabel = options.find(o => o.value === value)?.label ?? "";
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const filtered = options.filter(o =>
+    o.value === "" || o.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const groups = grouped
+    ? Array.from(new Set(filtered.filter(o => o.group).map(o => o.group!)))
+    : [];
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">
+        {label}
+        {aiFilled && <AiBadge />}
+      </label>
+      <div
+        className={`flex items-center w-full px-3 py-2.5 bg-brand-surface border rounded-xl text-sm transition-colors cursor-text ${
+          open ? "border-teal" : aiFilled ? "border-teal/40" : "border-brand-border"
+        } ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+        onClick={() => { setOpen(true); setSearch(""); setTimeout(() => inputRef.current?.focus(), 0); }}
+      >
+        {open ? (
+          <input
+            ref={inputRef}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={selectedLabel || placeholder || "Type to search..."}
+            className="flex-1 bg-transparent text-cream placeholder-cream-dim outline-none text-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setOpen(false);
+              if (e.key === "Enter" && filtered.length > 0) {
+                const first = filtered.find(o => o.value !== "");
+                if (first) { onChange(first.value); setOpen(false); }
+              }
+            }}
+          />
+        ) : (
+          <span className={`flex-1 truncate ${value ? "text-cream" : "text-cream-dim"}`}>
+            {selectedLabel || placeholder || "Select..."}
+          </span>
+        )}
+        {value && !disabled && (
+          <button onClick={(e) => { e.stopPropagation(); onChange(""); }} className="ml-2 text-cream-dim hover:text-cream">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+        <svg className={`w-4 h-4 ml-1 text-cream-dim transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-brand-card border border-brand-border rounded-xl shadow-2xl">
+          {filtered.length === 0 ? (
+            <div className="px-3 py-4 text-sm text-cream-dim text-center">No matches</div>
+          ) : grouped && groups.length > 0 ? (
+            groups.map(group => {
+              const groupItems = filtered.filter(o => o.group === group);
+              if (groupItems.length === 0) return null;
+              return (
+                <div key={group}>
+                  <div className="px-3 py-1.5 text-[10px] font-medium text-cream-dim uppercase tracking-wider bg-brand-surface sticky top-0">{group}</div>
+                  {groupItems.map(o => (
+                    <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-brand-elevated transition-colors ${o.value === value ? "text-teal bg-teal/5" : "text-cream"}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              );
+            })
+          ) : (
+            filtered.map(o => (
+              <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-brand-elevated transition-colors ${o.value === value ? "text-teal bg-teal/5" : o.value === "" ? "text-cream-dim" : "text-cream"}`}>
+                {o.label}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AiBadge() {
+  return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal/15 text-teal border border-teal/25 normal-case tracking-normal">AI</span>;
+}
+
+// ── Status History Timeline ─────────────────────────────
+function statusDotColor(newStatus: string): string {
+  if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-status-success";
+  if (["pm_held", "request_info"].includes(newStatus)) return "bg-brass";
+  if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-status-danger";
+  return "bg-teal"; // forward progress: pm_review, qa_review, ai_processed
+}
+
+// ── Main Page ───────────────────────────────────────────
 export default function InvoiceReviewPage() {
   const params = useParams();
   const router = useRouter();
@@ -58,6 +164,8 @@ export default function InvoiceReviewPage() {
   const [totalAmount, setTotalAmount] = useState("");
   const [invoiceType, setInvoiceType] = useState("");
   const [description, setDescription] = useState("");
+  const [isChangeOrder, setIsChangeOrder] = useState(false);
+  const [coReference, setCoReference] = useState("");
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
@@ -65,35 +173,48 @@ export default function InvoiceReviewPage() {
   const [budgetInfo, setBudgetInfo] = useState<BudgetInfo | null>(null);
   const [actionNote, setActionNote] = useState("");
   const [showNoteModal, setShowNoteModal] = useState<"hold" | "deny" | null>(null);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
 
+  // Fetch invoice
   useEffect(() => {
     async function fetchInvoice() {
       const res = await fetch(`/api/invoices/${invoiceId}`);
       if (res.ok) {
         const data: InvoiceData = await res.json();
         setInvoice(data);
-        setJobId(data.job_id ?? ""); setCostCodeId(data.cost_code_id ?? ""); setPoId(data.po_id ?? "");
-        setInvoiceNumber(data.invoice_number ?? ""); setInvoiceDate(data.invoice_date ?? "");
-        setTotalAmount(String(data.total_amount / 100)); setInvoiceType(data.invoice_type ?? "");
+        setJobId(data.job_id ?? "");
+        setCostCodeId(data.cost_code_id ?? "");
+        setPoId(data.po_id ?? "");
+        setInvoiceNumber(data.invoice_number ?? "");
+        setInvoiceDate(data.invoice_date ?? "");
+        setTotalAmount(String(data.total_amount / 100));
+        setInvoiceType(data.invoice_type ?? "");
         setDescription(data.description ?? "");
+        setCoReference(data.co_reference_raw ?? "");
+        // Default CO toggle if AI detected a CO reference
+        if (data.co_reference_raw) setIsChangeOrder(true);
+        // Check if cost code is a CO variant
+        if (data.cost_codes?.code?.endsWith("C")) setIsChangeOrder(true);
       }
       setLoading(false);
     }
     fetchInvoice();
   }, [invoiceId]);
 
+  // Fetch lookups (cost codes with category + is_change_order)
   useEffect(() => {
     async function fetchLookups() {
       const [jobsRes, codesRes] = await Promise.all([
         supabase.from("jobs").select("id, name, address").is("deleted_at", null).eq("status", "active").order("name"),
-        supabase.from("cost_codes").select("id, code, description").is("deleted_at", null).order("sort_order"),
+        supabase.from("cost_codes").select("id, code, description, category, is_change_order").is("deleted_at", null).order("sort_order"),
       ]);
       if (jobsRes.data) setJobs(jobsRes.data);
-      if (codesRes.data) setCostCodes(codesRes.data);
+      if (codesRes.data) setCostCodes(codesRes.data as CostCode[]);
     }
     fetchLookups();
   }, []);
 
+  // Fetch POs
   useEffect(() => {
     async function fetchPOs() {
       if (!jobId) { setPurchaseOrders([]); return; }
@@ -103,6 +224,7 @@ export default function InvoiceReviewPage() {
     fetchPOs();
   }, [jobId]);
 
+  // Fetch budget
   useEffect(() => {
     async function fetchBudget() {
       if (!jobId || !costCodeId) { setBudgetInfo(null); return; }
@@ -140,6 +262,7 @@ export default function InvoiceReviewPage() {
     if (totalAmount !== String((invoice?.total_amount ?? 0) / 100)) updates.total_amount = Math.round(parseFloat(totalAmount) * 100);
     if (invoiceType !== (invoice?.invoice_type ?? "")) updates.invoice_type = invoiceType;
     if (description !== (invoice?.description ?? "")) updates.description = description;
+    if (coReference !== (invoice?.co_reference_raw ?? "")) updates.co_reference_raw = coReference;
     const res = await fetch(`/api/invoices/${invoiceId}/action`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, note, pm_overrides: Object.keys(overrides).length > 0 ? overrides : undefined, updates: Object.keys(updates).length > 0 ? updates : undefined }),
@@ -163,14 +286,31 @@ export default function InvoiceReviewPage() {
   const isReviewable = ["pm_review", "ai_processed"].includes(invoice.status);
   const autoFills = (invoice.confidence_details as Record<string, unknown>)?.auto_fills as Record<string, boolean> | undefined;
 
+  // Filter cost codes based on CO toggle
+  const filteredCostCodes = costCodes.filter(c => c.is_change_order === isChangeOrder);
+
+  // Build grouped cost code options
+  const costCodeOptions = filteredCostCodes.map(c => ({
+    value: c.id, label: `${c.code} — ${c.description}`, group: c.category,
+  }));
+
+  // Job options
+  const jobOptions = jobs.map(j => ({ value: j.id, label: `${j.name} — ${j.address ?? ""}` }));
+
+  // Resolve labels for approve confirmation
+  const selectedJob = jobs.find(j => j.id === jobId);
+  const selectedCostCode = costCodes.find(c => c.id === costCodeId);
+
+  // Missing field flags
+  const missingInvoiceNumber = !invoiceNumber.trim();
+  const missingInvoiceDate = !invoiceDate.trim();
+
   return (
     <div className="min-h-screen">
       {/* Header */}
       <header className="border-b border-brand-border bg-brand-bg/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center gap-4 flex-wrap">
-          <Link href="/invoices/queue" className="text-cream-dim hover:text-cream transition-colors text-sm">
-            &larr; Queue
-          </Link>
+          <Link href="/invoices/queue" className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Queue</Link>
           <h1 className="font-display text-xl text-cream">
             {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim">&mdash;</span> {invoice.invoice_number ?? "No #"}
           </h1>
@@ -185,7 +325,7 @@ export default function InvoiceReviewPage() {
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 opacity-0 animate-fade-up">
-          {/* Left: Document Preview */}
+          {/* ── Left: Document Preview ── */}
           <div className="xl:col-span-1">
             <div className="sticky top-24">
               <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline">Original Document</p>
@@ -206,23 +346,62 @@ export default function InvoiceReviewPage() {
             </div>
           </div>
 
-          {/* Middle: Editable Form */}
+          {/* ── Middle: Editable Form ── */}
           <div className="xl:col-span-1 space-y-6 opacity-0 animate-fade-up stagger-2">
             <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">Invoice Details</p>
 
-            <div className="mt-5 space-y-4">
-              <FormField label="Job" value={jobId} onChange={setJobId} type="select"
-                options={[{ value: "", label: "— Select Job —" }, ...jobs.map(j => ({ value: j.id, label: `${j.name} — ${j.address ?? ""}` }))]}
-                disabled={!isReviewable} aiFilled={!!autoFills?.job_id} />
+            {/* Missing field flags */}
+            {(missingInvoiceNumber || missingInvoiceDate) && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {missingInvoiceNumber && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                    No invoice #
+                  </span>
+                )}
+                {missingInvoiceDate && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                    No date detected
+                  </span>
+                )}
+              </div>
+            )}
 
-              <FormField label="Cost Code" value={costCodeId} onChange={setCostCodeId} type="select"
-                options={[{ value: "", label: "— Select Cost Code —" }, ...costCodes.map(c => ({ value: c.id, label: `${c.code} — ${c.description}` }))]}
-                disabled={!isReviewable} aiFilled={!!autoFills?.cost_code_id} />
+            <div className="mt-5 space-y-4">
+              {/* Job — searchable combobox */}
+              <SearchCombobox label="Job" value={jobId} onChange={setJobId}
+                options={jobOptions} disabled={!isReviewable}
+                aiFilled={!!autoFills?.job_id} placeholder="Search jobs..." />
+
+              {/* Change Order toggle */}
+              <div className="flex items-center gap-3">
+                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Change Order?</label>
+                <button
+                  onClick={() => { setIsChangeOrder(!isChangeOrder); setCostCodeId(""); }}
+                  disabled={!isReviewable}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${isChangeOrder ? "bg-brass" : "bg-brand-border"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isChangeOrder ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+                <span className="text-xs text-cream-dim">{isChangeOrder ? "Yes" : "No"}</span>
+              </div>
+
+              {/* CO Reference — only when toggle is on */}
+              {isChangeOrder && (
+                <FormField label="CO Reference" value={coReference} onChange={setCoReference}
+                  disabled={!isReviewable} placeholder="e.g. PCCO #3" />
+              )}
+
+              {/* Cost Code — searchable, grouped by category */}
+              <SearchCombobox label="Cost Code" value={costCodeId} onChange={setCostCodeId}
+                options={costCodeOptions} disabled={!isReviewable}
+                aiFilled={!!autoFills?.cost_code_id} grouped placeholder="Search cost codes..." />
 
               {purchaseOrders.length > 0 && (
-                <FormField label="Purchase Order" value={poId} onChange={setPoId} type="select"
+                <SearchCombobox label="Purchase Order" value={poId} onChange={setPoId}
                   options={[{ value: "", label: "— No PO —" }, ...purchaseOrders.map(p => ({ value: p.id, label: `${p.po_number ?? "PO"} — ${formatCents(p.amount)}` }))]}
-                  disabled={!isReviewable} />
+                  disabled={!isReviewable} placeholder="Select PO..." />
               )}
 
               <div className="grid grid-cols-2 gap-4">
@@ -232,9 +411,15 @@ export default function InvoiceReviewPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField label="Total ($)" value={totalAmount} onChange={setTotalAmount} type="number" disabled={!isReviewable} />
-                <FormField label="Type" value={invoiceType} onChange={setInvoiceType} type="select"
-                  options={[{ value: "lump_sum", label: "Lump Sum" }, { value: "progress", label: "Progress" }, { value: "time_and_materials", label: "Time & Materials" }]}
-                  disabled={!isReviewable} />
+                <div>
+                  <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">Type</label>
+                  <select value={invoiceType} onChange={(e) => setInvoiceType(e.target.value)} disabled={!isReviewable}
+                    className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border rounded-xl text-sm text-cream focus:border-teal focus:outline-none disabled:opacity-50">
+                    <option value="lump_sum">Lump Sum</option>
+                    <option value="progress">Progress</option>
+                    <option value="time_and_materials">Time &amp; Materials</option>
+                  </select>
+                </div>
               </div>
 
               <FormField label="Description" value={description} onChange={setDescription} type="textarea" disabled={!isReviewable} />
@@ -284,7 +469,7 @@ export default function InvoiceReviewPage() {
             {isReviewable && (
               <div className="border-t border-brand-border pt-6 space-y-3">
                 <div className="flex gap-3">
-                  <button onClick={() => handleAction("approve")} disabled={saving}
+                  <button onClick={() => setShowApproveConfirm(true)} disabled={saving}
                     className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium rounded-xl transition-all">
                     {saving ? "Saving..." : "Approve"}
                   </button>
@@ -305,7 +490,7 @@ export default function InvoiceReviewPage() {
             )}
           </div>
 
-          {/* Right: Sidebar */}
+          {/* ── Right: Sidebar ── */}
           <div className="xl:col-span-1 opacity-0 animate-fade-up stagger-4">
             <div className="sticky top-24 space-y-5">
               {/* Budget */}
@@ -321,16 +506,12 @@ export default function InvoiceReviewPage() {
                     </div>
                     {budgetInfo.remaining < invoice.total_amount && (
                       <div className="mt-2 px-3 py-2 bg-status-danger-muted border border-status-danger/20 rounded-lg">
-                        <p className="text-xs text-status-danger font-medium">
-                          Invoice ({formatCents(invoice.total_amount)}) exceeds remaining budget
-                        </p>
+                        <p className="text-xs text-status-danger font-medium">Invoice ({formatCents(invoice.total_amount)}) exceeds remaining budget</p>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-cream-dim">
-                    {jobId && costCodeId ? "No budget line found" : "Select job + cost code"}
-                  </p>
+                  <p className="text-sm text-cream-dim">{jobId && costCodeId ? "No budget line found" : "Select job + cost code"}</p>
                 )}
               </SidebarCard>
 
@@ -352,28 +533,40 @@ export default function InvoiceReviewPage() {
                       .map(([field, score]) => (
                       <div key={field} className="flex items-center justify-between text-sm">
                         <span className="text-cream-dim">{field.replace(/_/g, " ")}</span>
-                        <span className={`px-2 py-0.5 rounded text-xs ${confidenceColor(score as number)}`}>
-                          {Math.round((score as number) * 100)}%
-                        </span>
+                        <span className={`px-2 py-0.5 rounded text-xs ${confidenceColor(score as number)}`}>{Math.round((score as number) * 100)}%</span>
                       </div>
                     ))}
                   </div>
                 </SidebarCard>
               )}
 
-              {/* Status History */}
+              {/* Status History Timeline — newest first */}
               {invoice.status_history?.length > 0 && (
                 <SidebarCard title="Status History">
-                  <div className="space-y-3">
-                    {invoice.status_history.map((entry, i) => (
-                      <div key={i} className="text-xs border-l-2 border-teal/30 pl-3 py-1">
-                        <p className="text-cream-muted font-medium">
-                          {String(entry.old_status)} &rarr; {String(entry.new_status)}
-                        </p>
-                        <p className="text-cream-dim mt-0.5">{String(entry.who)} &mdash; {new Date(String(entry.when)).toLocaleString()}</p>
-                        {entry.note ? <p className="text-cream-dim mt-1 italic">{String(entry.note)}</p> : null}
-                      </div>
-                    ))}
+                  <div className="space-y-0">
+                    {[...invoice.status_history].reverse().map((entry, i) => {
+                      const newStatus = String(entry.new_status);
+                      return (
+                        <div key={i} className="relative pl-6 pb-4 last:pb-0">
+                          {/* Connector line */}
+                          {i < invoice.status_history.length - 1 && (
+                            <div className="absolute left-[7px] top-3 bottom-0 w-px bg-brand-border" />
+                          )}
+                          {/* Dot */}
+                          <div className={`absolute left-0 top-1 w-[15px] h-[15px] rounded-full border-2 border-brand-card ${statusDotColor(newStatus)}`} />
+                          {/* Content */}
+                          <div className="text-xs">
+                            <p className="text-cream font-medium">
+                              {String(entry.old_status)} &rarr; {newStatus}
+                            </p>
+                            <p className="text-cream-dim mt-0.5">
+                              {String(entry.who)} &mdash; {new Date(String(entry.when)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                            </p>
+                            {entry.note ? <p className="text-cream-dim/80 mt-1 italic text-[11px] leading-relaxed">{String(entry.note)}</p> : null}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </SidebarCard>
               )}
@@ -382,7 +575,57 @@ export default function InvoiceReviewPage() {
         </div>
       </main>
 
-      {/* Note Modal */}
+      {/* ── Approve Confirmation Modal ── */}
+      {showApproveConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md opacity-0 animate-fade-up shadow-2xl">
+            <h3 className="font-display text-xl text-cream mb-2">Approve Invoice</h3>
+
+            {/* Soft validation warnings */}
+            {(missingInvoiceNumber || missingInvoiceDate) && (
+              <div className="mb-4 px-3 py-2.5 bg-status-warning-muted border border-brass/20 rounded-xl space-y-1">
+                {missingInvoiceNumber && <p className="text-xs text-brass">Missing invoice number</p>}
+                {missingInvoiceDate && <p className="text-xs text-brass">Missing invoice date</p>}
+                <p className="text-[11px] text-cream-dim mt-1">You can still approve, but consider filling these in.</p>
+              </div>
+            )}
+
+            <div className="bg-brand-surface border border-brand-border rounded-xl p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-cream-dim">Amount</span>
+                <span className="text-brass font-display font-medium">{formatCents(invoice.total_amount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-cream-dim">Vendor</span>
+                <span className="text-cream">{invoice.vendor_name_raw ?? "Unknown"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-cream-dim">Job</span>
+                <span className="text-cream">{selectedJob?.name ?? "Not assigned"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-cream-dim">Cost Code</span>
+                <span className="text-cream">{selectedCostCode ? `${selectedCostCode.code} — ${selectedCostCode.description}` : "Not assigned"}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => { setShowApproveConfirm(false); handleAction("approve"); }}
+                disabled={saving}
+                className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 text-white font-medium rounded-xl disabled:opacity-50 transition-all">
+                Confirm Approval
+              </button>
+              <button onClick={() => setShowApproveConfirm(false)}
+                className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted rounded-xl hover:border-brand-border-light transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Hold / Deny Note Modal ── */}
       {showNoteModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md opacity-0 animate-fade-up shadow-2xl">
@@ -395,7 +638,7 @@ export default function InvoiceReviewPage() {
               <button
                 onClick={() => { if (actionNote.trim()) { handleAction(showNoteModal, actionNote.trim()); setShowNoteModal(null); setActionNote(""); } }}
                 disabled={!actionNote.trim() || saving}
-                className={`flex-1 px-4 py-2.5 text-white font-medium rounded-xl disabled:opacity-50 transition-all ${showNoteModal === "hold" ? "bg-brass text-brand-bg" : "bg-status-danger"}`}>
+                className={`flex-1 px-4 py-2.5 font-medium rounded-xl disabled:opacity-50 transition-all ${showNoteModal === "hold" ? "bg-brass text-brand-bg" : "bg-status-danger text-white"}`}>
                 {showNoteModal === "hold" ? "Hold" : "Deny"}
               </button>
               <button onClick={() => { setShowNoteModal(null); setActionNote(""); }}
@@ -419,28 +662,18 @@ function SidebarCard({ title, children }: { title: string; children: React.React
   );
 }
 
-function FormField({ label, value, onChange, type = "text", options, disabled, aiFilled }: {
+function FormField({ label, value, onChange, type = "text", disabled, placeholder }: {
   label: string; value: string; onChange: (v: string) => void;
-  type?: "text" | "number" | "date" | "select" | "textarea";
-  options?: { value: string; label: string }[]; disabled?: boolean; aiFilled?: boolean;
+  type?: "text" | "number" | "date" | "textarea"; disabled?: boolean; placeholder?: string;
 }) {
-  const base = `w-full px-3 py-2.5 bg-brand-surface border rounded-xl text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none disabled:opacity-50 transition-colors ${aiFilled ? "border-teal/40" : "border-brand-border"}`;
+  const base = "w-full px-3 py-2.5 bg-brand-surface border border-brand-border rounded-xl text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none disabled:opacity-50 transition-colors";
   return (
     <div>
-      <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">
-        {label}
-        {aiFilled && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal/15 text-teal border border-teal/25 normal-case tracking-normal">AI</span>
-        )}
-      </label>
-      {type === "select" && options ? (
-        <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} className={base}>
-          {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      ) : type === "textarea" ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} rows={3} className={`${base} resize-none`} />
+      <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">{label}</label>
+      {type === "textarea" ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} rows={3} placeholder={placeholder} className={`${base} resize-none`} />
       ) : (
-        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} className={base} />
+        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} placeholder={placeholder} className={base} />
       )}
     </div>
   );
