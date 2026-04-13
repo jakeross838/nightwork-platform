@@ -223,6 +223,34 @@ export default function DrawDetailPage() {
                 </tfoot>
               </table>
             </div>
+
+            {/* Included Invoices */}
+            {draw.invoices && draw.invoices.length > 0 && (
+              <div className="mt-6">
+                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline">Included Invoices</p>
+                <div className="mt-5 overflow-x-auto rounded-2xl border border-brand-border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-brand-surface text-left">
+                        <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Vendor</th>
+                        <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Invoice #</th>
+                        <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {draw.invoices.map((inv) => (
+                        <tr key={inv.id} className="border-t border-brand-border/50 hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                          onClick={() => window.location.href = `/invoices/${inv.id}`}>
+                          <td className="py-3 px-4 text-cream">{inv.vendor_name_raw ?? "Unknown"}</td>
+                          <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                          <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(inv.total_amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

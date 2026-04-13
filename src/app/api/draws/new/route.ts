@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
       .eq("job_id", job_id)
       .is("deleted_at", null);
 
-    const originalContractSum = budgetLines?.reduce((s, bl) => s + bl.original_estimate, 0) ?? 0;
+    // G702 Line 1: Original Contract Sum from job record, NOT budget lines
+    const originalContractSum = job.original_contract_amount;
 
     // Get selected invoices
     const { data: invoices } = await supabase
@@ -82,8 +83,16 @@ export async function POST(request: NextRequest) {
 
     const previousApplicationsTotal = priorInvoices?.reduce((s, inv) => s + inv.total_amount, 0) ?? 0;
 
-    // G702 computations (all in cents)
-    const netChangeOrders = 0; // No COs yet
+    // G702 Line 2: Net Change Orders from executed change_orders
+    const { data: changeOrders } = await supabase
+      .from("change_orders")
+      .select("total_with_fee")
+      .eq("job_id", job_id)
+      .eq("status", "executed")
+      .is("deleted_at", null);
+    const netChangeOrders = changeOrders?.reduce((s, co) => s + co.total_with_fee, 0) ?? 0;
+
+    // G702 Line 3: Contract Sum to Date
     const contractSumToDate = originalContractSum + netChangeOrders;
     const totalCompletedToDate = previousApplicationsTotal + thisPeriodTotal;
     const currentPaymentDue = totalCompletedToDate - lessPreviousPayments;

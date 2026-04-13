@@ -26,7 +26,6 @@ export default function NewDrawPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Step 3 — computed G702
-  const [budgetTotal, setBudgetTotal] = useState(0);
   const [job, setJob] = useState<Job | null>(null);
 
   useEffect(() => {
@@ -41,18 +40,14 @@ export default function NewDrawPage() {
   useEffect(() => {
     if (!jobId) return;
     async function fetchData() {
-      const [invRes, blRes] = await Promise.all([
-        supabase.from("invoices").select("id, vendor_name_raw, invoice_number, total_amount, cost_code_id, cost_codes:cost_code_id (code, description)")
-          .eq("job_id", jobId).eq("status", "qa_approved").is("draw_id", null).is("deleted_at", null),
-        supabase.from("budget_lines").select("original_estimate").eq("job_id", jobId).is("deleted_at", null),
-      ]);
-      if (invRes.data) {
-        const inv = invRes.data as unknown as AvailableInvoice[];
+      const { data: invData } = await supabase
+        .from("invoices")
+        .select("id, vendor_name_raw, invoice_number, total_amount, cost_code_id, cost_codes:cost_code_id (code, description)")
+        .eq("job_id", jobId).eq("status", "qa_approved").is("draw_id", null).is("deleted_at", null);
+      if (invData) {
+        const inv = invData as unknown as AvailableInvoice[];
         setInvoices(inv);
         setSelected(new Set(inv.map(i => i.id)));
-      }
-      if (blRes.data) {
-        setBudgetTotal(blRes.data.reduce((s, bl) => s + bl.original_estimate, 0));
       }
       const j = jobs.find(j => j.id === jobId);
       if (j) setJob(j);
@@ -71,8 +66,9 @@ export default function NewDrawPage() {
   const selectedTotal = invoices.filter(i => selected.has(i.id)).reduce((s, i) => s + i.total_amount, 0);
 
   // G702 preview computations
-  const originalContractSum = budgetTotal;
-  const netChangeOrders = 0;
+  // G702 Line 1: from job record, not budget lines
+  const originalContractSum = job?.original_contract_amount ?? 0;
+  const netChangeOrders = 0; // TODO: sum from executed change_orders
   const contractSumToDate = originalContractSum + netChangeOrders;
   const totalCompletedToDate = selectedTotal; // first draw — no prior
   const lessPreviousPayments = 0; // first draw
