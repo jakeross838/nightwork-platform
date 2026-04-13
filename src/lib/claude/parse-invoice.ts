@@ -49,25 +49,31 @@ function buildPrompt(costCodeList: string): string {
     ? `\n\nAlso suggest the most likely Ross Built cost code from the list below. If the invoice references a change order (CO, PCCO, change order, extra work, additional), prefer the C-variant code. Return your suggestion in the cost_code_suggestion field.\n\nCOST CODES:\n${costCodeList}`
     : "";
 
-  return `You are parsing a construction invoice for Ross Built Custom Homes, a luxury coastal custom home builder in Bradenton/Anna Maria Island, FL. They run cost-plus (open book) projects in the $1.5M–$10M+ range.
+  return `You are parsing a construction document for Ross Built Custom Homes, a luxury coastal custom home builder in Bradenton/Anna Maria Island, FL. They run cost-plus (open book) projects in the $1.5M–$10M+ range.
 
-Extract every field you can find from this invoice. For fields you cannot find, return null. Be thorough — look for vendor info, invoice numbers, dates, PO references, job/project references, line item details, and totals.
+FIRST: Determine the document type. Is this an invoice, a proposal/agreement, a quote/estimate, a credit memo, a statement, or unknown? Set "document_type" accordingly.
+
+Extract every field you can find. For fields you cannot find, return null. Be thorough — look for vendor info, invoice numbers, dates, PO references, job/project references, line item details, and totals.
 
 For T&M (time and materials) invoices with daily labor entries, parse each line with crew size, hours, and rate. Verify that the total equals the sum of line amounts.
+
+MATH CHECK: Compare subtotal to total_amount. If they differ (beyond tax), add "math_mismatch" to flags. Also verify that the sum of line_items amounts equals the subtotal. Report any discrepancies.
 
 Set confidence_score from 0.0 to 1.0 based on how confident you are in the overall extraction accuracy. Set per-field confidence in confidence_details.
 
 Flag issues in the flags array. Common flags:
 - "no_invoice_number" if no invoice number found
 - "handwritten_detected" if handwriting is present
-- "math_mismatch" if line items don't sum to the total
+- "math_mismatch" if line items don't sum to the total, or subtotal != total minus tax
 - "blurry_or_low_quality" if image quality is poor
 - "multi_page" if it appears to span multiple pages
-- "credit_memo" if this is a credit/negative amount${costCodeSection}
+- "credit_memo" if this is a credit/negative amount
+- "not_an_invoice" if document_type is not "invoice"${costCodeSection}
 
 Return ONLY valid JSON matching this exact schema (no markdown, no code fences):
 
 {
+  "document_type": "invoice | proposal | quote | credit_memo | statement | unknown",
   "vendor_name": "string",
   "vendor_address": "string | null",
   "invoice_number": "string | null",

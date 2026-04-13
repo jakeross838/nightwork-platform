@@ -41,6 +41,7 @@ export interface ParsedInvoice {
   confidence_details: ConfidenceDetails;
   flags: string[];
   cost_code_suggestion?: CostCodeSuggestion;
+  document_type?: "invoice" | "proposal" | "quote" | "credit_memo" | "statement" | "unknown";
 }
 
 export interface ParseResult {

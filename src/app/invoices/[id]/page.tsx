@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, confidenceColor, confidenceLabel } from "@/lib/utils/format";
+import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag } from "@/lib/utils/format";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -318,7 +318,7 @@ export default function InvoiceReviewPage() {
             {Math.round(invoice.confidence_score * 100)}% {confidenceLabel(invoice.confidence_score)}
           </span>
           <span className="text-xs text-cream-dim bg-brand-surface px-2.5 py-1 rounded-full border border-brand-border">
-            {invoice.status.replace(/_/g, " ")}
+            {formatStatus(invoice.status)}
           </span>
         </div>
       </header>
@@ -532,7 +532,7 @@ export default function InvoiceReviewPage() {
                       .filter(([f, s]) => f !== "auto_fills" && typeof s === "number")
                       .map(([field, score]) => (
                       <div key={field} className="flex items-center justify-between text-sm">
-                        <span className="text-cream-dim">{field.replace(/_/g, " ")}</span>
+                        <span className="text-cream-dim">{formatFlag(field)}</span>
                         <span className={`px-2 py-0.5 rounded text-xs ${confidenceColor(score as number)}`}>{Math.round((score as number) * 100)}%</span>
                       </div>
                     ))}

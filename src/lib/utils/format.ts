@@ -35,3 +35,69 @@ export function daysAgo(dateStr: string): number {
   const diff = now.getTime() - date.getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
+
+/** Format invoice type enum to display string */
+export function formatInvoiceType(type: string | null | undefined): string {
+  if (!type) return "—";
+  const map: Record<string, string> = {
+    lump_sum: "Lump Sum",
+    progress: "Progress",
+    time_and_materials: "Time and Materials",
+  };
+  return map[type] ?? titleCase(type);
+}
+
+/** Format status enum to display string */
+export function formatStatus(status: string): string {
+  const map: Record<string, string> = {
+    received: "Received",
+    ai_processed: "AI Processed",
+    pm_review: "PM Review",
+    pm_approved: "PM Approved",
+    pm_held: "PM Held",
+    pm_denied: "PM Denied",
+    qa_review: "QA Review",
+    qa_approved: "QA Approved",
+    qa_kicked_back: "QA Kicked Back",
+    pushed_to_qb: "Pushed to QB",
+    qb_failed: "QB Failed",
+    in_draw: "In Draw",
+    paid: "Paid",
+    void: "Void",
+  };
+  return map[status] ?? titleCase(status);
+}
+
+/** Format flag string to display */
+export function formatFlag(flag: string): string {
+  const map: Record<string, string> = {
+    no_invoice_number: "No Invoice Number",
+    handwritten_detected: "Handwritten Detected",
+    math_mismatch: "Math Mismatch",
+    blurry_or_low_quality: "Blurry / Low Quality",
+    multi_page: "Multi-Page",
+    credit_memo: "Credit Memo",
+    not_an_invoice: "Not an Invoice",
+  };
+  return map[flag] ?? titleCase(flag);
+}
+
+/** Format document type */
+export function formatDocumentType(type: string): string {
+  const map: Record<string, string> = {
+    invoice: "Invoice",
+    proposal: "Proposal",
+    quote: "Quote",
+    credit_memo: "Credit Memo",
+    statement: "Statement",
+    unknown: "Unknown",
+  };
+  return map[type] ?? titleCase(type);
+}
+
+/** Convert snake_case or lowercase to Title Case */
+function titleCase(str: string): string {
+  return str
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
