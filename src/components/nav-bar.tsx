@@ -46,8 +46,9 @@ export default function NavBar() {
         </Link>
         <nav className="flex items-center gap-1">
           <NavLink href="/invoices/upload" label="Upload" active={pathname === "/invoices/upload"} />
-          <NavLink href="/invoices/queue" label="PM Queue" count={pmCount} active={pathname === "/invoices/queue" || (pathname.startsWith("/invoices/") && !pathname.includes("/qa") && !pathname.includes("/upload") && pathname !== "/invoices/queue")} />
-          <NavLink href="/invoices/qa" label="Accounting QA" count={qaCount} active={pathname === "/invoices/qa" || pathname.includes("/qa")} />
+          <NavLink href="/invoices/queue" label="PM Queue" count={pmCount} active={pathname === "/invoices/queue" || (pathname.startsWith("/invoices/") && !pathname.includes("/qa") && !pathname.includes("/upload") && !pathname.includes("/draws"))} />
+          <NavLink href="/invoices/qa" label="Accounting QA" count={qaCount} active={pathname === "/invoices/qa" || pathname.endsWith("/qa")} />
+          <NavLink href="/draws" label="Draws" active={pathname.startsWith("/draws")} />
         </nav>
       </div>
     </header>
