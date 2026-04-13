@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import Link from "next/link";
 import type { ParseResult, ParsedInvoice } from "@/lib/types/invoice";
 import {
   formatDollars, confidenceColor, confidenceLabel,
   formatInvoiceType, formatFlag, formatDocumentType,
 } from "@/lib/utils/format";
+import NavBar from "@/components/nav-bar";
 
 type FileStatus = {
   file: File;
@@ -284,25 +284,19 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-brand-border bg-brand-bg/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-cream-dim hover:text-cream transition-colors text-sm font-body">&larr; Home</Link>
-            <h1 className="font-display text-2xl text-cream">Upload Invoices</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {parsedUnsaved.length > 1 && (
-              <button onClick={saveAll} disabled={savingAll}
-                className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-sm font-medium rounded-lg transition-colors">
-                {savingAll ? "Saving..." : `Save All & Route (${parsedUnsaved.length})`}
-              </button>
-            )}
-            <Link href="/invoices/queue" className="px-4 py-2 border border-brand-border hover:border-brand-border-light text-cream-muted text-sm rounded-lg transition-colors">
-              View Queue
-            </Link>
+      <NavBar />
+
+      {/* Sub-header with Save All */}
+      {parsedUnsaved.length > 1 && (
+        <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-end">
+            <button onClick={saveAll} disabled={savingAll}
+              className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-sm font-medium rounded-lg transition-colors">
+              {savingAll ? "Saving..." : `Save All & Route (${parsedUnsaved.length})`}
+            </button>
           </div>
         </div>
-      </header>
+      )}
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Drop Zone */}

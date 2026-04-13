@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 interface ActionRequest {
-  action: "approve" | "hold" | "deny" | "request_info";
+  action: "approve" | "hold" | "deny" | "request_info" | "qa_approve" | "kick_back";
   note?: string;
   pm_overrides?: Record<string, { old: unknown; new: unknown }>;
+  qa_overrides?: Record<string, { old: unknown; new: unknown }>;
   updates?: Record<string, unknown>;
 }
 
@@ -13,10 +14,14 @@ const ACTION_STATUS_MAP: Record<string, string> = {
   hold: "pm_held",
   deny: "pm_denied",
   request_info: "pm_held",
+  qa_approve: "qa_approved",
+  kick_back: "qa_kicked_back",
 };
 
+// After reaching this status, auto-advance to next
 const NEXT_STATUS_MAP: Record<string, string> = {
   pm_approved: "qa_review",
+  qa_kicked_back: "pm_review",
 };
 
 export async function POST(
@@ -26,23 +31,22 @@ export async function POST(
   try {
     const supabase = createServerClient();
     const body: ActionRequest = await request.json();
-    const { action, note, pm_overrides, updates } = body;
+    const { action, note, pm_overrides, qa_overrides, updates } = body;
 
     if (!ACTION_STATUS_MAP[action]) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    if ((action === "hold" || action === "deny") && !note) {
+    if ((action === "hold" || action === "deny" || action === "kick_back") && !note) {
       return NextResponse.json(
         { error: `${action} requires a note` },
         { status: 400 }
       );
     }
 
-    // Get current invoice
     const { data: invoice, error: fetchError } = await supabase
       .from("invoices")
-      .select("status, status_history, pm_overrides")
+      .select("status, status_history, pm_overrides, qa_overrides")
       .eq("id", params.id)
       .single();
 
@@ -53,29 +57,57 @@ export async function POST(
     const newStatus = ACTION_STATUS_MAP[action];
     const finalStatus = NEXT_STATUS_MAP[newStatus] ?? newStatus;
 
-    const statusEntry = {
-      who: "pm",
-      when: new Date().toISOString(),
-      old_status: invoice.status,
-      new_status: finalStatus,
-      note: note ?? `PM ${action}d`,
-    };
+    const who = ["qa_approve", "kick_back"].includes(action) ? "accounting" : "pm";
 
-    const existingHistory = Array.isArray(invoice.status_history)
-      ? invoice.status_history
-      : [];
+    const existingHistory = Array.isArray(invoice.status_history) ? invoice.status_history : [];
 
-    const mergedOverrides = {
+    // Log the immediate action
+    const statusEntries = [
+      {
+        who,
+        when: new Date().toISOString(),
+        old_status: invoice.status,
+        new_status: newStatus,
+        note: note ?? `${who} ${action.replace(/_/g, " ")}`,
+      },
+    ];
+
+    // If there's an auto-advance (e.g. pm_approved → qa_review, qa_kicked_back → pm_review),
+    // log that transition too
+    if (NEXT_STATUS_MAP[newStatus]) {
+      statusEntries.push({
+        who: "system",
+        when: new Date().toISOString(),
+        old_status: newStatus,
+        new_status: finalStatus,
+        note: newStatus === "qa_kicked_back"
+          ? `Auto-routed back to PM. Reason: ${note}`
+          : `Auto-routed to ${finalStatus.replace(/_/g, " ")}`,
+      });
+    }
+
+    const mergedPmOverrides = {
       ...(invoice.pm_overrides as Record<string, unknown> ?? {}),
       ...(pm_overrides ?? {}),
     };
 
+    const mergedQaOverrides = {
+      ...(invoice.qa_overrides as Record<string, unknown> ?? {}),
+      ...(qa_overrides ?? {}),
+    };
+
     const updatePayload: Record<string, unknown> = {
       status: finalStatus,
-      status_history: [...existingHistory, statusEntry],
-      pm_overrides: Object.keys(mergedOverrides).length > 0 ? mergedOverrides : null,
+      status_history: [...existingHistory, ...statusEntries],
       ...(updates ?? {}),
     };
+
+    if (Object.keys(mergedPmOverrides).length > 0) {
+      updatePayload.pm_overrides = mergedPmOverrides;
+    }
+    if (Object.keys(mergedQaOverrides).length > 0) {
+      updatePayload.qa_overrides = mergedQaOverrides;
+    }
 
     const { error: updateError } = await supabase
       .from("invoices")

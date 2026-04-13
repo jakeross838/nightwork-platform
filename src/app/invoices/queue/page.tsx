@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, confidenceColor, daysAgo } from "@/lib/utils/format";
+import NavBar from "@/components/nav-bar";
 
 interface QueueInvoice {
   id: string;
@@ -37,25 +37,15 @@ export default function QueuePage() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-brand-border bg-brand-bg/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-cream-dim hover:text-cream transition-colors text-sm">
-              &larr; Home
-            </Link>
-            <h1 className="font-display text-2xl text-cream">Invoice Queue</h1>
-            <span className="text-sm text-cream-dim font-body">
-              {invoices.length} pending
-            </span>
-          </div>
-          <Link href="/invoices/upload"
-            className="px-4 py-2 bg-teal hover:bg-teal-hover text-brand-bg text-sm font-medium rounded-lg transition-colors">
-            Upload New
-          </Link>
-        </div>
-      </header>
+      <NavBar />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-display text-2xl text-cream">PM Queue</h2>
+            <p className="text-sm text-cream-dim mt-1">{invoices.length} invoice{invoices.length !== 1 ? "s" : ""} pending PM review</p>
+          </div>
+        </div>
         {loading ? (
           <div className="text-center py-20">
             <div className="w-8 h-8 rounded-full border-2 border-teal/30 border-t-teal animate-spin mx-auto" />

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag } from "@/lib/utils/format";
+import NavBar from "@/components/nav-bar";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -305,11 +306,22 @@ export default function InvoiceReviewPage() {
   const missingInvoiceNumber = !invoiceNumber.trim();
   const missingInvoiceDate = !invoiceDate.trim();
 
+  // Detect if this invoice was kicked back by QA
+  const kickBackInfo = (() => {
+    if (!invoice.status_history || invoice.status !== "pm_review") return null;
+    const entry = [...invoice.status_history].reverse().find(
+      e => String(e.new_status) === "qa_kicked_back" || (String(e.old_status) === "qa_kicked_back" && String(e.new_status) === "pm_review")
+    );
+    return entry ? String(entry.note ?? "") : null;
+  })();
+
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b border-brand-border bg-brand-bg/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center gap-4 flex-wrap">
+      <NavBar />
+
+      {/* Sub-header */}
+      <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
+        <div className="max-w-[1600px] mx-auto flex items-center gap-4 flex-wrap">
           <Link href="/invoices/queue" className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Queue</Link>
           <h1 className="font-display text-xl text-cream">
             {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim">&mdash;</span> {invoice.invoice_number ?? "No #"}
@@ -317,11 +329,26 @@ export default function InvoiceReviewPage() {
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${confidenceColor(invoice.confidence_score)}`}>
             {Math.round(invoice.confidence_score * 100)}% {confidenceLabel(invoice.confidence_score)}
           </span>
-          <span className="text-xs text-cream-dim bg-brand-surface px-2.5 py-1 rounded-full border border-brand-border">
+          <span className="text-xs text-cream-dim bg-brand-card px-2.5 py-1 rounded-full border border-brand-border">
             {formatStatus(invoice.status)}
           </span>
         </div>
-      </header>
+      </div>
+
+      {/* Kick-back banner from QA */}
+      {kickBackInfo && (
+        <div className="bg-status-danger-muted border-b border-status-danger/20 px-6 py-3">
+          <div className="max-w-[1600px] mx-auto flex items-start gap-3">
+            <svg className="w-5 h-5 text-status-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-status-danger">Kicked Back by Accounting</p>
+              <p className="text-sm text-status-danger/80 mt-0.5">{kickBackInfo}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 opacity-0 animate-fade-up">
