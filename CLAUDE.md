@@ -372,3 +372,14 @@ The draw output must match AIA standard format. Reference: Drummond Pay App 8.
 - All amounts in cents in the database, dollars in the UI
 - Status changes always append to status_history JSONB
 - Test with the three reference invoice formats: clean PDF, T&M, lump sum Word doc
+
+## Testing Rule (MANDATORY)
+**After EVERY UI change, you MUST verify with Chrome DevTools before reporting the task as complete.**
+1. Restart the dev server if needed
+2. Navigate to the affected page(s) using Chrome DevTools
+3. Take a screenshot and visually confirm the change looks correct
+4. Check for console errors
+5. Test interactive elements (clicks, form inputs, dropdowns) if applicable
+6. Only then report success to the user
+
+Do NOT skip this step. A build passing does not mean the feature works. "It compiles" is not the same as "it works." If Chrome DevTools MCP is connected, use it. Every time.
