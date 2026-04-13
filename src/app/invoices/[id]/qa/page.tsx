@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
-import { formatCents, formatStatus, formatFlag, confidenceColor } from "@/lib/utils/format";
+import { formatCents, formatStatus, formatFlag, formatInvoiceType, confidenceColor } from "@/lib/utils/format";
 
 interface InvoiceData {
   id: string; job_id: string | null; vendor_name_raw: string | null; invoice_number: string | null;
@@ -107,7 +107,6 @@ export default function QaReviewPage() {
           <span className="text-xs text-cream-dim bg-brand-card px-2.5 py-1 rounded-full border border-brand-border">
             {formatStatus(invoice.status)}
           </span>
-          <span className="text-xs text-cream-dim">QA Review</span>
         </div>
       </div>
 
@@ -160,12 +159,21 @@ export default function QaReviewPage() {
 
               {/* Locked PM-approved fields */}
               <div className="border-t border-brand-border pt-4">
-                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 flex items-center gap-2">
+                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 flex items-center gap-2">
                   PM Approved Fields
                   <svg className="w-3.5 h-3.5 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                   </svg>
                 </p>
+                {(() => {
+                  const approvalEntry = [...(invoice.status_history ?? [])].reverse().find(e => String(e.new_status) === "pm_approved");
+                  if (!approvalEntry) return null;
+                  return (
+                    <p className="text-[11px] text-cream-dim mb-3">
+                      Approved by {String(approvalEntry.who)} &mdash; {new Date(String(approvalEntry.when)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                    </p>
+                  );
+                })()}
                 <div className="space-y-3">
                   <LockedField label="Job" value={invoice.jobs?.name ?? "Not assigned"} />
                   <LockedField label="Cost Code" value={invoice.cost_codes ? `${invoice.cost_codes.code} — ${invoice.cost_codes.description}` : "Not assigned"} />
@@ -175,7 +183,7 @@ export default function QaReviewPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <LockedField label="Date" value={invoice.invoice_date ?? "—"} />
-                    <LockedField label="Type" value={invoice.invoice_type?.replace(/_/g, " ") ?? "—"} />
+                    <LockedField label="Type" value={formatInvoiceType(invoice.invoice_type)} />
                   </div>
                   {invoice.description && <LockedField label="Description" value={invoice.description} />}
                 </div>
@@ -264,7 +272,7 @@ export default function QaReviewPage() {
                           {i < invoice.status_history.length - 1 && <div className="absolute left-[7px] top-3 bottom-0 w-px bg-brand-border" />}
                           <div className={`absolute left-0 top-1 w-[15px] h-[15px] rounded-full border-2 border-brand-card ${statusDotColor(ns)}`} />
                           <div className="text-xs">
-                            <p className="text-cream font-medium">{String(entry.old_status)} &rarr; {ns}</p>
+                            <p className="text-cream font-medium">{formatStatus(String(entry.old_status))} &rarr; {formatStatus(ns)}</p>
                             <p className="text-cream-dim mt-0.5">{String(entry.who)} &mdash; {new Date(String(entry.when)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
                             {entry.note ? <p className="text-cream-dim/80 mt-1 italic text-[11px]">{String(entry.note)}</p> : null}
                           </div>

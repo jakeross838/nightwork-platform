@@ -575,16 +575,13 @@ export default function InvoiceReviewPage() {
                       const newStatus = String(entry.new_status);
                       return (
                         <div key={i} className="relative pl-6 pb-4 last:pb-0">
-                          {/* Connector line */}
                           {i < invoice.status_history.length - 1 && (
                             <div className="absolute left-[7px] top-3 bottom-0 w-px bg-brand-border" />
                           )}
-                          {/* Dot */}
                           <div className={`absolute left-0 top-1 w-[15px] h-[15px] rounded-full border-2 border-brand-card ${statusDotColor(newStatus)}`} />
-                          {/* Content */}
                           <div className="text-xs">
                             <p className="text-cream font-medium">
-                              {String(entry.old_status)} &rarr; {newStatus}
+                              {formatStatus(String(entry.old_status))} &rarr; {formatStatus(newStatus)}
                             </p>
                             <p className="text-cream-dim mt-0.5">
                               {String(entry.who)} &mdash; {new Date(String(entry.when)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
@@ -609,11 +606,15 @@ export default function InvoiceReviewPage() {
             <h3 className="font-display text-xl text-cream mb-2">Approve Invoice</h3>
 
             {/* Soft validation warnings */}
-            {(missingInvoiceNumber || missingInvoiceDate) && (
+            {(!jobId || !costCodeId || missingInvoiceNumber || missingInvoiceDate) && (
               <div className="mb-4 px-3 py-2.5 bg-status-warning-muted border border-brass/20 rounded-xl space-y-1">
+                {!jobId && <p className="text-xs text-brass font-medium">No job assigned</p>}
+                {!costCodeId && <p className="text-xs text-brass font-medium">No cost code assigned</p>}
                 {missingInvoiceNumber && <p className="text-xs text-brass">Missing invoice number</p>}
                 {missingInvoiceDate && <p className="text-xs text-brass">Missing invoice date</p>}
-                <p className="text-[11px] text-cream-dim mt-1">You can still approve, but consider filling these in.</p>
+                <p className="text-[11px] text-cream-dim mt-1">
+                  {(!jobId || !costCodeId) ? "Job and cost code are recommended before approving. Assign now or Hold for later." : "You can still approve, but consider filling these in."}
+                </p>
               </div>
             )}
 
