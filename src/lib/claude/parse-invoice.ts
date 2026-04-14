@@ -57,14 +57,18 @@ Extract every field you can find. For fields you cannot find, return null. Be th
 
 For T&M (time and materials) invoices with daily labor entries, parse each line with crew size, hours, and rate. Verify that the total equals the sum of line amounts.
 
-MATH CHECK: Compare subtotal to total_amount. If they differ (beyond tax), add "math_mismatch" to flags. Also verify that the sum of line_items amounts equals the subtotal. Report any discrepancies.
+MATH CHECK (MANDATORY): You MUST verify that the sum of all line item amounts equals the stated subtotal and total. Specifically:
+1. Sum every line_items[].amount. Compare to the subtotal field.
+2. Check that subtotal + tax = total_amount (if tax applies).
+3. If any of these checks fail (difference > $0.01), you MUST include "math_mismatch" in the flags array. Do not skip this step.
+Report the discrepancy details in the description if found (e.g. "Line items sum to $X but stated total is $Y").
 
 Set confidence_score from 0.0 to 1.0 based on how confident you are in the overall extraction accuracy. Set per-field confidence in confidence_details.
 
 Flag issues in the flags array. Common flags:
 - "no_invoice_number" if no invoice number found
 - "handwritten_detected" if handwriting is present
-- "math_mismatch" if line items don't sum to the total, or subtotal != total minus tax
+- "math_mismatch" if line items don't sum to the stated total, or subtotal + tax != total_amount
 - "blurry_or_low_quality" if image quality is poor
 - "multi_page" if it appears to span multiple pages
 - "credit_memo" if this is a credit/negative amount

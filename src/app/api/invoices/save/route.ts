@@ -13,14 +13,70 @@ interface SaveRequest {
   force_save?: boolean;
 }
 
+const VENDOR_SUFFIXES = /\b(llc|inc|co|corp|ltd|company|enterprises|services)\b\.?/gi;
+
+function normalizeVendorName(name: string): string {
+  return name.replace(VENDOR_SUFFIXES, "").replace(/[.,]+/g, "").trim().toLowerCase();
+}
+
+function getFirstSignificantWord(name: string): string | null {
+  const normalized = normalizeVendorName(name);
+  const words = normalized.split(/\s+/).filter((w) => w.length > 2);
+  return words[0] ?? null;
+}
+
 async function matchVendor(supabase: ReturnType<typeof createServerClient>, vendorName: string) {
-  const { data } = await supabase
+  // Step 1: Try normalized name match (strip suffixes, use ilike)
+  const normalized = normalizeVendorName(vendorName);
+  if (normalized) {
+    const { data } = await supabase
+      .from("vendors")
+      .select("id, name")
+      .ilike("name", `%${normalized}%`)
+      .is("deleted_at", null)
+      .limit(1);
+    if (data && data.length > 0) return data[0];
+  }
+
+  // Step 2: Try broader match with just the first significant word
+  const firstWord = getFirstSignificantWord(vendorName);
+  if (firstWord && firstWord.length >= 3) {
+    const { data } = await supabase
+      .from("vendors")
+      .select("id, name")
+      .ilike("name", `%${firstWord}%`)
+      .is("deleted_at", null)
+      .limit(1);
+    if (data && data.length > 0) return data[0];
+  }
+
+  return null;
+}
+
+async function findOrCreateVendor(
+  supabase: ReturnType<typeof createServerClient>,
+  vendorName: string
+): Promise<{ id: string; name: string }> {
+  const matched = await matchVendor(supabase, vendorName);
+  if (matched) return matched;
+
+  // No match found — create a new vendor record
+  const { data, error } = await supabase
     .from("vendors")
+    .insert({
+      name: vendorName.trim(),
+      org_id: ORG_ID,
+    })
     .select("id, name")
-    .ilike("name", `%${vendorName}%`)
-    .is("deleted_at", null)
-    .limit(1);
-  return data?.[0] ?? null;
+    .single();
+
+  if (error || !data) {
+    console.error("Failed to create vendor:", error);
+    // Return null-ish fallback — caller should handle
+    throw new Error(`Failed to create vendor: ${error?.message ?? "unknown"}`);
+  }
+
+  return data;
 }
 
 async function matchJob(supabase: ReturnType<typeof createServerClient>, jobRef: string) {
@@ -140,10 +196,16 @@ export async function POST(request: NextRequest) {
       const paymentDate = computePaymentDate(today);
       const status = determineStatus(parsed.confidence_score);
 
-      // Match vendor and job
-      const matchedVendor = parsed.vendor_name
-        ? await matchVendor(supabase, parsed.vendor_name)
-        : null;
+      // Match or create vendor
+      let matchedVendor: { id: string; name: string } | null = null;
+      if (parsed.vendor_name) {
+        try {
+          matchedVendor = await findOrCreateVendor(supabase, parsed.vendor_name);
+        } catch {
+          // If vendor creation fails, continue with null vendor_id
+          matchedVendor = null;
+        }
+      }
 
       // Auto-fill job if confidence >= 0.85
       const jobConfidence = parsed.confidence_details?.job_reference ?? 0;

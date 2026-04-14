@@ -41,6 +41,9 @@ export default function QueuePage() {
   const [pmUsers, setPmUsers] = useState<PmUser[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Simulated auth — "Viewing as" PM
+  const [viewingAs, setViewingAs] = useState("");
+
   // Primary filters (always visible)
   const [search, setSearch] = useState("");
   const [jobFilter, setJobFilter] = useState("");
@@ -118,6 +121,11 @@ export default function QueuePage() {
   // Filter + sort
   const filtered = useMemo(() => {
     let result = invoices;
+
+    // "Viewing as" pre-filter (simulated PM login)
+    if (viewingAs) {
+      result = result.filter((inv) => inv.assigned_pm?.id === viewingAs);
+    }
 
     // Text search
     if (search.trim()) {
@@ -229,6 +237,7 @@ export default function QueuePage() {
     return result;
   }, [
     invoices,
+    viewingAs,
     search,
     jobFilter,
     pmFilter,
@@ -362,7 +371,7 @@ export default function QueuePage() {
       <NavBar />
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
             <h2 className="font-display text-2xl text-cream">PM Queue</h2>
             <p className="text-sm text-cream-dim mt-1">
@@ -370,6 +379,14 @@ export default function QueuePage() {
                 ? `Showing ${filtered.length} of ${invoices.length} invoice${invoices.length !== 1 ? "s" : ""}`
                 : `${invoices.length} invoice${invoices.length !== 1 ? "s" : ""} pending PM review`}
             </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-cream-dim uppercase tracking-wider">Viewing as</span>
+            <select value={viewingAs} onChange={(e) => { setViewingAs(e.target.value); setSelectedIds(new Set()); }}
+              className="px-3 py-2 bg-brand-surface border border-brand-border rounded-xl text-sm text-cream focus:border-teal focus:outline-none">
+              <option value="">All PMs</option>
+              {pmUsers.map(u => <option key={u.id} value={u.id}>{u.full_name}</option>)}
+            </select>
           </div>
         </div>
 

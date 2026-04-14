@@ -132,10 +132,17 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
   const allLineItemsZero = parsed.line_items.length > 0 && parsed.line_items.every(i => !i.amount || i.amount === 0);
 
   // Math mismatch detection (client-side double-check)
-  const mathMismatchAmount = (() => {
+  const lineItemsSum = parsed.line_items.reduce((sum, item) => sum + (item.amount ?? 0), 0);
+  const mathMismatchInfo = (() => {
+    // Check line items sum vs stated total
+    if (parsed.line_items.length > 0 && parsed.total_amount) {
+      const diff = Math.abs(lineItemsSum - parsed.total_amount);
+      if (diff > 0.01) return { lineItemsSum, statedTotal: parsed.total_amount, difference: diff };
+    }
+    // Check subtotal vs total (accounting for tax)
     if (parsed.subtotal && parsed.total_amount) {
       const diff = Math.abs(parsed.total_amount - parsed.subtotal - (parsed.tax ?? 0));
-      if (diff > 0.01) return diff;
+      if (diff > 0.01) return { lineItemsSum: parsed.subtotal, statedTotal: parsed.total_amount - (parsed.tax ?? 0), difference: diff };
     }
     return null;
   })();
@@ -159,9 +166,11 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
         )}
 
         {/* Math mismatch */}
-        {(mathMismatchAmount || parsed.flags.includes("math_mismatch")) && (
+        {(mathMismatchInfo || parsed.flags.includes("math_mismatch")) && (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-status-danger-muted text-status-danger border border-status-danger/20">
-            Math Mismatch{mathMismatchAmount ? `: differs by ${formatDollars(mathMismatchAmount)}` : ""}
+            {mathMismatchInfo
+              ? `Math Mismatch: Line items sum to ${formatDollars(mathMismatchInfo.lineItemsSum)} but invoice states ${formatDollars(mathMismatchInfo.statedTotal)} — difference of ${formatDollars(mathMismatchInfo.difference)}`
+              : "Math Mismatch"}
           </span>
         )}
 

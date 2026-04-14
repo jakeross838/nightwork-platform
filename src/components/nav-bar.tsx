@@ -102,6 +102,7 @@ export default function NavBar() {
   const isQaActive =
     pathname === "/invoices/qa" || pathname.endsWith("/qa");
   const isDrawsActive = pathname.startsWith("/draws");
+  const isVendorsActive = pathname === "/vendors";
 
   return (
     <header
@@ -140,6 +141,7 @@ export default function NavBar() {
             active={isQaActive}
           />
           <NavLink href="/draws" label="Draws" active={isDrawsActive} />
+          <NavLink href="/vendors" label="Vendors" active={isVendorsActive} />
         </nav>
 
         {/* Mobile hamburger + badge */}
@@ -218,6 +220,13 @@ export default function NavBar() {
             href="/draws"
             label="Draws"
             active={isDrawsActive}
+            mobile
+            onClick={closeMobile}
+          />
+          <NavLink
+            href="/vendors"
+            label="Vendors"
+            active={isVendorsActive}
             mobile
             onClick={closeMobile}
           />

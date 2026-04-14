@@ -20,10 +20,11 @@ interface InvoiceData {
   total_amount: number; invoice_type: string | null; co_reference_raw: string | null;
   confidence_score: number;
   confidence_details: (Record<string, number> & { auto_fills?: Record<string, boolean> }) | null;
-  ai_raw_response: { cost_code_suggestion?: { code: string; description: string; confidence: number; is_change_order: boolean } } | null;
+  ai_raw_response: { cost_code_suggestion?: { code: string; description: string; confidence: number; is_change_order: boolean }; flags?: string[] } | null;
   status: string; status_history: Array<Record<string, unknown>>;
   received_date: string | null; payment_date: string | null; original_file_type: string | null;
   pm_overrides: Record<string, { old: unknown; new: unknown }> | null;
+  qa_overrides: Record<string, { old: unknown; new: unknown }> | null;
   signed_file_url: string | null;
   assigned_pm: { id: string; full_name: string; role: string } | null;
   jobs: Job | null; vendors: { id: string; name: string } | null; cost_codes: CostCode | null;
@@ -454,6 +455,21 @@ export default function InvoiceReviewPage() {
         </div>
       )}
 
+      {/* Math mismatch banner */}
+      {invoice.ai_raw_response?.flags?.includes("math_mismatch") && (
+        <div className="bg-status-danger-muted border-b border-status-danger/20 px-6 py-3">
+          <div className="max-w-[1600px] mx-auto flex items-start gap-3">
+            <svg className="w-5 h-5 text-status-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-status-danger">Math Mismatch Detected</p>
+              <p className="text-sm text-status-danger/80 mt-0.5">Line items may not sum to the stated total. Verify amounts before approving.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 pb-32 md:pb-6">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
           {/* ── Left: Document Preview ── */}
@@ -717,6 +733,11 @@ export default function InvoiceReviewPage() {
                   </div>
                 </SidebarCard>
               )}
+
+              {/* Edit History (PM + QA overrides) — collapsible */}
+              {(invoice.pm_overrides && Object.keys(invoice.pm_overrides).length > 0) || (invoice.qa_overrides && Object.keys(invoice.qa_overrides).length > 0) ? (
+                <EditHistoryCard pmOverrides={invoice.pm_overrides} qaOverrides={invoice.qa_overrides} />
+              ) : null}
             </div>
           </div>
         </div>
@@ -885,6 +906,90 @@ function FormField({ label, value, onChange, type = "text", disabled, placeholde
         <textarea value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} rows={3} placeholder={placeholder} className={`${base} resize-none`} />
       ) : (
         <input type={type} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} placeholder={placeholder} className={base} />
+      )}
+    </div>
+  );
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  invoice_number: "Invoice #",
+  invoice_date: "Invoice Date",
+  total_amount: "Total Amount",
+  invoice_type: "Type",
+  description: "Description",
+  job_id: "Job",
+  cost_code_id: "Cost Code",
+  po_id: "Purchase Order",
+  vendor_id: "Vendor",
+  co_reference_raw: "CO Reference",
+};
+
+function formatOverrideValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "(empty)";
+  if (typeof value === "number") return `$${value.toFixed(2)}`;
+  return String(value);
+}
+
+function EditHistoryCard({
+  pmOverrides,
+  qaOverrides,
+}: {
+  pmOverrides: Record<string, { old: unknown; new: unknown }> | null;
+  qaOverrides: Record<string, { old: unknown; new: unknown }> | null;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const entries: { source: string; field: string; old: unknown; newVal: unknown }[] = [];
+
+  if (pmOverrides) {
+    for (const [field, change] of Object.entries(pmOverrides)) {
+      entries.push({ source: "PM", field, old: change.old, newVal: change.new });
+    }
+  }
+  if (qaOverrides) {
+    for (const [field, change] of Object.entries(qaOverrides)) {
+      entries.push({ source: "QA", field, old: change.old, newVal: change.new });
+    }
+  }
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="bg-brand-card border border-brand-border rounded-2xl p-5">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between"
+      >
+        <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">
+          Edit History ({entries.length})
+        </p>
+        <svg
+          className={`w-4 h-4 text-cream-dim transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="mt-4 space-y-3">
+          {entries.map((entry, i) => (
+            <div key={i} className="text-xs border-l-2 border-teal/30 pl-3 py-1">
+              <p className="text-cream">
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold mr-1.5 ${
+                  entry.source === "PM" ? "bg-teal/15 text-teal" : "bg-brass/15 text-brass"
+                }`}>
+                  {entry.source}
+                </span>
+                changed <span className="font-medium">{FIELD_LABELS[entry.field] ?? entry.field}</span>
+              </p>
+              <p className="text-cream-dim mt-1">
+                <span className="line-through">{formatOverrideValue(entry.old)}</span>
+                {" "}&rarr;{" "}
+                <span className="text-cream">{formatOverrideValue(entry.newVal)}</span>
+              </p>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
