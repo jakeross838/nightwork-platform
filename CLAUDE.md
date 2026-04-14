@@ -1,5 +1,21 @@
 # CLAUDE.md — Ross Command Center
 
+## Dev Environment Rules
+
+**ALWAYS run these before starting any work session:**
+```bash
+git pull origin main
+npm install
+```
+
+**ALWAYS run these after finishing any work session or completing a feature:**
+```bash
+git add -A && git commit -m "descriptive message"
+git push origin main
+```
+
+Jake works across multiple PCs. If you don't pull first, you'll be working on stale code. If you don't push after, the other PC won't have your changes. Never start coding without pulling. Never end a session without pushing.
+
 ## What This Is
 
 Ross Command Center is the internal operations platform for **Ross Built Custom Homes**, a luxury coastal custom home builder based in Bradenton and Anna Maria Island, Florida. Founded 2006. ~14 simultaneous projects in the $1.5M–$10M+ range. Cost-plus (open book) builder — clients see every invoice and exactly where their money went.

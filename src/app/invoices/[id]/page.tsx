@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime } from "@/lib/utils/format";
+import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 
 interface Job { id: string; name: string; address: string | null; }
@@ -140,7 +140,7 @@ function SearchCombobox({ label, value, onChange, options, disabled, aiFilled, g
 }
 
 function AiBadge() {
- return <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-teal/15 text-teal border border-teal/25 normal-case tracking-normal">AI</span>;
+ return <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-teal border border-teal normal-case tracking-normal">AI</span>;
 }
 
 // ── Status History Timeline ─────────────────────────────
@@ -421,10 +421,10 @@ export default function InvoiceReviewPage() {
  <h1 className="font-display text-base md:text-xl text-cream truncate">
  {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim hidden md:inline">&mdash;</span><span className="md:hidden"> </span>{invoice.invoice_number ?? "No #"}
  </h1>
- <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium border ${confidenceColor(invoice.confidence_score)}`}>
+ <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium ${confidenceColor(invoice.confidence_score)}`}>
  {Math.round(invoice.confidence_score * 100)}% {confidenceLabel(invoice.confidence_score)}
  </span>
- <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 border border-brand-border-light font-medium">
+ <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${statusBadgeOutline(invoice.status)}`}>
  {formatStatus(invoice.status)}
  </span>
  <span className="inline-flex items-center gap-1.5 text-xs text-cream-dim">
@@ -758,9 +758,9 @@ export default function InvoiceReviewPage() {
  {/* Payment */}
  <SidebarCard title="Payment">
  <div className="space-y-2.5 text-sm">
- <div className="flex justify-between"><span className="text-cream-dim">Received</span><span className="text-cream">{formatDate(invoice.received_date)}</span></div>
- <div className="flex justify-between"><span className="text-cream-dim">Scheduled</span><span className="text-cream">{formatDate(invoice.payment_date)}</span></div>
- <div className="flex justify-between border-t border-brand-border pt-2.5"><span className="text-cream-dim">Amount</span><span className="text-brass font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
+ <div className="flex justify-between"><span className="text-cream-muted">Received</span><span className="text-cream-muted">{formatDate(invoice.received_date)}</span></div>
+ <div className="flex justify-between"><span className="text-cream-muted">Scheduled</span><span className="text-cream-muted">{formatDate(invoice.payment_date)}</span></div>
+ <div className="flex justify-between border-t border-brand-border pt-2.5"><span className="text-cream-muted">Amount</span><span className="text-cream font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
  </div>
  </SidebarCard>
 
@@ -804,8 +804,8 @@ export default function InvoiceReviewPage() {
  .filter(([f, s]) => f !== "auto_fills" && typeof s === "number")
  .map(([field, score]) => (
  <div key={field} className="flex items-center justify-between text-sm">
- <span className="text-cream-dim">{formatFlag(field)}</span>
- <span className={`px-2 py-0.5 text-xs ${confidenceColor(score as number)}`}>{Math.round((score as number) * 100)}%</span>
+ <span className="text-cream-muted">{formatFlag(field)}</span>
+ <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${confidenceColor(score as number)}`}>{Math.round((score as number) * 100)}%</span>
  </div>
  ))}
  </div>
@@ -1141,8 +1141,8 @@ function EditHistoryCard({
  {entries.map((entry, i) => (
  <div key={i} className="text-xs border-l-2 border-teal/30 pl-3 py-1">
  <p className="text-cream">
- <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold mr-1.5 ${
- entry.source === "PM" ? "bg-teal/15 text-teal" : "bg-brass/15 text-brass"
+ <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold mr-1.5 bg-transparent border ${
+ entry.source === "PM" ? "text-teal border-teal" : "text-brass border-brass"
  }`}>
  {entry.source}
  </span>

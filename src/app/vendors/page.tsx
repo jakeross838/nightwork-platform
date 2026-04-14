@@ -185,7 +185,7 @@ export default function VendorsPage() {
  return (
  <div className="min-h-screen">
  <NavBar />
- <main className="max-w-7xl mx-auto px-6 py-8">
+ <main className="max-w-[1600px] mx-auto px-6 py-8">
  {/* Header */}
  <div className="flex items-center justify-between mb-6">
  <div>
@@ -245,10 +245,10 @@ export default function VendorsPage() {
  <th className="py-3 px-4 w-10">
  <span className="sr-only">Select</span>
  </th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Name</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Default Cost Code</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Invoices</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Total Billed</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Name</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Default Cost Code</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Invoices</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Total Billed</th>
  </tr>
  </thead>
  <tbody>

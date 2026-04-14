@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
-import { formatCents, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime } from "@/lib/utils/format";
+import { formatCents, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
 
 interface InvoiceData {
  id: string; job_id: string | null; vendor_name_raw: string | null; invoice_number: string | null;
@@ -44,13 +44,18 @@ export default function QaReviewPage() {
  const res = await window.fetch(`/api/invoices/${invoiceId}`);
  if (res.ok) {
  const data: InvoiceData = await res.json();
+ // QA page only applies while invoice is in QA flow; redirect otherwise.
+ if (!["qa_review", "pm_approved"].includes(data.status)) {
+ router.replace(`/invoices/${invoiceId}`);
+ return;
+ }
  setInvoice(data);
  setVendorName(data.vendor_name_raw ?? "");
  }
  setLoading(false);
  }
  fetch();
- }, [invoiceId]);
+ }, [invoiceId, router]);
 
  const handleQaApprove = async () => {
  setSaving(true);
@@ -104,7 +109,7 @@ export default function QaReviewPage() {
  <h1 className="font-display text-xl text-cream">
  {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim">&mdash;</span> {invoice.invoice_number ?? "No #"}
  </h1>
- <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 border border-brand-border-light font-medium">
+ <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${statusBadgeOutline(invoice.status)}`}>
  {formatStatus(invoice.status)}
  </span>
  </div>

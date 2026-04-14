@@ -140,7 +140,14 @@ export default function DrawDetailPage() {
  {draw.jobs?.name} <span className="text-cream-dim">&mdash;</span> Draw #{draw.draw_number}
  {draw.revision_number > 0 && <span className="text-brass ml-1">Rev {draw.revision_number}</span>}
  </h1>
- <span className="text-[10px] text-cream-dim px-2.5 py-1 border border-cream-dim font-medium uppercase tracking-[0.08em]">
+ <span className={`text-[10px] px-2.5 py-1 font-medium uppercase tracking-[0.08em] ${
+ draw.status === "submitted" ? "bg-transparent text-cream border border-cream" :
+ draw.status === "paid" ? "bg-transparent text-status-success border border-status-success" :
+ draw.status === "approved" ? "bg-transparent text-status-success border border-status-success" :
+ draw.status === "draft" || draw.status === "pm_review" ? "bg-transparent text-brass border border-brass" :
+ draw.status === "void" ? "bg-transparent text-status-danger border border-status-danger" :
+ "bg-transparent text-cream-muted border border-brand-border-light"
+ }`}>
  {formatStatus(draw.status)}
  </span>
  </div>
@@ -170,8 +177,8 @@ export default function DrawDetailPage() {
  {/* Locked banner for submitted/paid draws */}
  {draw.status === "submitted" && (
  <div className="bg-teal/10 border-b border-teal/30">
- <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
- <div className="flex items-center gap-3">
+ <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+ <div className="flex items-center gap-3 min-w-0">
  <svg className="w-5 h-5 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
  </svg>
@@ -180,7 +187,7 @@ export default function DrawDetailPage() {
  <button
  onClick={handleCreateRevision}
  disabled={acting}
- className="px-4 py-1.5 bg-teal/20 hover:bg-teal/30 border border-teal/40 text-teal text-sm font-medium transition-colors disabled:opacity-50 flex-shrink-0 ml-4">
+ className="px-4 py-1.5 bg-transparent hover:bg-teal/10 border border-teal text-teal text-sm font-medium transition-colors disabled:opacity-50 flex-shrink-0 whitespace-nowrap">
  {acting ? "Creating..." : "Create Revision"}
  </button>
  </div>
@@ -251,14 +258,14 @@ export default function DrawDetailPage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">A — Item</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">B — Description</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">C — Original Est.</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">D — Previous</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">E — This Period</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">F — Total to Date</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">G — %</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">H — Balance</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">A — Item</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">B — Description</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">C — Original Est.</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">D — Previous</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">E — This Period</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">F — Total to Date</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">G — %</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">H — Balance</th>
  </tr>
  </thead>
  <tbody>
@@ -304,9 +311,9 @@ export default function DrawDetailPage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Invoice #</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Invoice #</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
  </tr>
  </thead>
  <tbody>

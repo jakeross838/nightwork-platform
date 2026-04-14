@@ -32,7 +32,7 @@ type StatusFilter = "pending" | "held" | "denied" | "kicked_back" | "info_reques
 type AmountRange = "all" | "0-5k" | "5k-25k" | "25k-100k" | "100k+";
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
- if (!active) return <span className="ml-1 text-cream-dim/40">&#8597;</span>;
+ if (!active) return <span className="ml-1 text-cream-dim">&#8597;</span>;
  return <span className="ml-1 text-teal">{dir === "asc" ? "\u2191" : "\u2193"}</span>;
 }
 
@@ -372,14 +372,14 @@ export default function QueuePage() {
  <div className="min-h-screen">
  <NavBar />
 
- <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+ <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
  <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
  <div>
  <h2 className="font-display text-2xl text-cream">PM Queue</h2>
  <p className="text-sm text-cream-dim mt-1">
  {isFiltered
  ? `Showing ${filtered.length} of ${invoices.length} invoice${invoices.length !== 1 ? "s" : ""}`
- : `${invoices.length} invoice${invoices.length !== 1 ? "s" : ""} pending PM review`}
+ : `${filtered.length} invoice${filtered.length !== 1 ? "s" : ""} pending PM review`}
  </p>
  </div>
  <div className="flex items-center gap-2">
@@ -660,7 +660,7 @@ export default function QueuePage() {
  <div className="flex items-center justify-between mt-2">
  <div>
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-brass-muted text-brass text-xs font-medium">
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
  {inv.jobs.name}
  </span>
  ) : (
@@ -709,21 +709,21 @@ export default function QueuePage() {
  </div>
  {inv.status === "pm_held" && (
  <div className="mt-2">
- <span className="inline-flex items-center px-2 py-0.5 bg-yellow-500/15 text-yellow-400 text-xs font-medium border border-yellow-500/25">
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
  Held
  </span>
  </div>
  )}
  {inv.status === "pm_denied" && (
  <div className="mt-2">
- <span className="inline-flex items-center px-2 py-0.5 bg-red-500/15 text-red-400 text-xs font-medium border border-red-500/25">
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-status-danger border border-status-danger text-xs font-medium">
  Denied
  </span>
  </div>
  )}
  {inv.status === "info_requested" && (
  <div className="mt-2">
- <span className="inline-flex items-center px-2 py-0.5 bg-yellow-500/15 text-yellow-400 text-xs font-medium border border-yellow-500/25">
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
  Info Requested
  </span>
  </div>
@@ -747,7 +747,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("vendor")}
  >
  Vendor
@@ -756,11 +756,11 @@ export default function QueuePage() {
  dir={sortDir}
  />
  </th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">
  Invoice #
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("date")}
  >
  Date
@@ -769,11 +769,11 @@ export default function QueuePage() {
  dir={sortDir}
  />
  </th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">
  Job
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("pm")}
  >
  PM
@@ -783,7 +783,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("amount")}
  >
  Amount
@@ -793,7 +793,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("confidence")}
  >
  Confidence
@@ -803,7 +803,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("waiting")}
  >
  Waiting
@@ -835,17 +835,17 @@ export default function QueuePage() {
  <td className="py-4 px-5 text-cream font-medium">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.status === "pm_held" && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-yellow-500/15 text-yellow-400 text-[10px] font-medium border border-yellow-500/25">
+ <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-brass border border-brass text-[10px] font-medium">
  Held
  </span>
  )}
  {inv.status === "pm_denied" && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-red-500/15 text-red-400 text-[10px] font-medium border border-red-500/25">
+ <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-status-danger border border-status-danger text-[10px] font-medium">
  Denied
  </span>
  )}
  {inv.status === "info_requested" && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-yellow-500/15 text-yellow-400 text-[10px] font-medium border border-yellow-500/25">
+ <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-brass border border-brass text-[10px] font-medium">
  Info Requested
  </span>
  )}
@@ -860,7 +860,7 @@ export default function QueuePage() {
  </td>
  <td className="py-4 px-5">
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-brass-muted text-brass text-xs font-medium">
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
  {inv.jobs.name}
  </span>
  ) : (
@@ -912,7 +912,7 @@ export default function QueuePage() {
  {/* Floating batch action bar */}
  {selectedIds.size > 0 && (
  <div className="fixed bottom-0 left-0 right-0 z-50 bg-brand-surface/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 animate-fade-up">
- <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+ <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
  <span className="text-sm text-cream font-medium">
  {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""} selected
  </span>
@@ -995,10 +995,10 @@ export default function QueuePage() {
  </div>
  <div className="flex items-center gap-1.5 text-[10px]">
  {!inv.job_id && (
- <span className="px-1.5 py-0.5 bg-status-danger/15 text-status-danger border border-status-danger/25">No Job</span>
+ <span className="px-1.5 py-0.5 bg-transparent text-status-danger border border-status-danger">No Job</span>
  )}
  {!inv.cost_code_id && (
- <span className="px-1.5 py-0.5 bg-status-danger/15 text-status-danger border border-status-danger/25">No Cost Code</span>
+ <span className="px-1.5 py-0.5 bg-transparent text-status-danger border border-status-danger">No Cost Code</span>
  )}
  </div>
  </div>

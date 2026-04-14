@@ -48,7 +48,7 @@ export default function QaQueuePage() {
  return (
  <div className="min-h-screen">
  <NavBar />
- <main className="max-w-7xl mx-auto px-6 py-8">
+ <main className="max-w-[1600px] mx-auto px-6 py-8">
  <div className="flex items-center justify-between mb-6">
  <div>
  <h2 className="font-display text-2xl text-cream">Accounting QA</h2>
@@ -75,13 +75,13 @@ export default function QaQueuePage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Invoice #</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Job</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Cost Code</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">PM Approved</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Waiting</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Invoice #</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Job</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Cost Code</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">PM Approved</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Waiting</th>
  </tr>
  </thead>
  <tbody>
@@ -97,7 +97,7 @@ export default function QaQueuePage() {
  <td className="py-4 px-5 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
  <td className="py-4 px-5">
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-brass-muted text-brass text-xs font-medium">{inv.jobs.name}</span>
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">{inv.jobs.name}</span>
  ) : (
  <span className="text-cream-dim">—</span>
  )}

@@ -107,7 +107,7 @@ export default function NewDrawPage() {
  {[1, 2, 3].map(s => (
  <button key={s} onClick={() => { if (s < step || (s === 2 && jobId) || (s === 3 && jobId)) setStep(s); }}
  className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium transition-colors ${
- step === s ? "bg-teal text-brand-bg" : step > s ? "bg-brand-elevated text-cream" : "bg-brand-surface text-cream-dim"
+ step === s ? "bg-teal text-white" : step > s ? "bg-brand-elevated text-cream" : "bg-brand-surface text-cream-muted"
  }`}>
  {s}. {s === 1 ? "Setup" : s === 2 ? "Select Invoices" : "Preview & Save"}
  </button>
@@ -146,7 +146,7 @@ export default function NewDrawPage() {
  </div>
  <div className="flex justify-end">
  <button onClick={() => setStep(2)} disabled={!jobId || !periodStart || !periodEnd}
- className="px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg font-medium transition-colors">
+ className="px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium transition-colors">
  Next: Select Invoices
  </button>
  </div>
@@ -171,10 +171,10 @@ export default function NewDrawPage() {
  onChange={() => setSelected(selected.size === invoices.length ? new Set() : new Set(invoices.map(i => i.id)))}
  className="rounded" />
  </th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Invoice #</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Cost Code</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Invoice #</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Cost Code</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
  </tr>
  </thead>
  <tbody>
@@ -207,7 +207,7 @@ export default function NewDrawPage() {
  Back
  </button>
  <button onClick={() => setStep(3)} disabled={selected.size === 0}
- className="px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg font-medium transition-colors">
+ className="px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium transition-colors">
  Next: Preview
  </button>
  </div>
@@ -247,7 +247,7 @@ export default function NewDrawPage() {
  Back
  </button>
  <button onClick={handleSave} disabled={saving}
- className="px-8 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg font-medium transition-colors">
+ className="px-8 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium transition-colors">
  {saving ? "Creating..." : "Save as Draft"}
  </button>
  </div>

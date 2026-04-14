@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import NavBar from "@/components/nav-bar";
-import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
+import { formatCents, formatDate, formatStatus, statusBadgeOutline } from "@/lib/utils/format";
+
+function drawBadgeOutline(status: string): string {
+ if (status === "submitted") return "bg-transparent text-cream border border-cream";
+ if (status === "paid") return "bg-transparent text-status-success border border-status-success";
+ if (status === "approved") return "bg-transparent text-status-success border border-status-success";
+ if (status === "pm_review" || status === "draft") return "bg-transparent text-brass border border-brass";
+ if (status === "void") return "bg-transparent text-status-danger border border-status-danger";
+ return statusBadgeOutline(status);
+}
 
 interface Draw {
  id: string;
@@ -44,7 +53,7 @@ export default function DrawsPage() {
  return (
  <div className="min-h-screen">
  <NavBar />
- <main className="max-w-7xl mx-auto px-6 py-8">
+ <main className="max-w-[1600px] mx-auto px-6 py-8">
  <div className="flex items-center justify-between mb-6">
  <div>
  <h2 className="font-display text-2xl text-cream">Draws</h2>
@@ -75,7 +84,7 @@ export default function DrawsPage() {
  {Object.entries(grouped).map(([, { job, draws: jobDraws }]) => (
  <div key={job?.id ?? "unknown"}>
  <div className="flex items-center gap-3 mb-3">
- <span className="inline-flex items-center px-2.5 py-0.5 bg-brass-muted text-brass text-sm font-medium">
+ <span className="inline-flex items-center px-2.5 py-0.5 bg-transparent text-brass border border-brass text-sm font-medium">
  {job?.name ?? "Unknown Job"}
  </span>
  <span className="text-xs text-cream-dim">{job?.address}</span>
@@ -84,11 +93,11 @@ export default function DrawsPage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Draw #</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Period</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Application Date</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Status</th>
- <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Current Payment Due</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Draw #</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Period</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Application Date</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Status</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Current Payment Due</th>
  </tr>
  </thead>
  <tbody>
@@ -103,7 +112,7 @@ export default function DrawsPage() {
  <td className="py-4 px-5 text-cream-muted">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
  <td className="py-4 px-5 text-cream-muted">{formatDate(d.application_date)}</td>
  <td className="py-4 px-5">
- <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 border border-brand-border-light font-medium">
+ <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${drawBadgeOutline(d.status)}`}>
  {formatStatus(d.status)}
  </span>
  </td>

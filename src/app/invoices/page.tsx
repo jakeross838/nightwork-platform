@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatStatus, formatDate } from "@/lib/utils/format";
+import { formatCents, formatStatus, formatDate, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 
 interface Invoice {
@@ -36,17 +36,10 @@ const ALL_STATUSES = [
  "in_draw", "paid", "void",
 ];
 
-function statusBadgeColor(status: string): string {
- if (["pm_approved", "qa_approved", "pushed_to_qb"].includes(status)) return "bg-status-success/15 text-status-success border-status-success/25";
- if (["in_draw", "paid"].includes(status)) return "bg-teal/15 text-teal border-teal/25";
- if (["pm_review", "ai_processed", "qa_review", "received"].includes(status)) return "bg-brass/15 text-brass border-brass/25";
- if (["pm_held", "qa_kicked_back"].includes(status)) return "bg-status-warning/15 text-status-warning border-status-warning/25";
- if (["pm_denied", "void", "qb_failed"].includes(status)) return "bg-status-danger/15 text-status-danger border-status-danger/25";
- return "bg-brand-surface text-cream-dim border-brand-border";
-}
+const statusBadgeColor = statusBadgeOutline;
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
- if (!active) return <span className="ml-1 text-cream-dim/40">↕</span>;
+ if (!active) return <span className="ml-1 text-cream-dim">↕</span>;
  return <span className="ml-1 text-teal">{dir === "asc" ? "↑" : "↓"}</span>;
 }
 
@@ -282,7 +275,7 @@ export default function AllInvoicesPage() {
  }`}>
  Payment Tracking
  {paymentInvoices.length > 0 && (
- <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-teal/15 text-teal text-[11px] font-bold">
+ <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-transparent text-teal border border-teal text-[11px] font-bold">
  {paymentInvoices.length}
  </span>
  )}
@@ -421,25 +414,25 @@ export default function AllInvoicesPage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("vendor")}>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("vendor")}>
  Vendor<SortArrow active={sortKey === "vendor"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Inv #</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("date")}>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Inv #</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("date")}>
  Date<SortArrow active={sortKey === "date"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Job</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Cost Code</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("amount")}>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Job</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Cost Code</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("amount")}>
  Amount<SortArrow active={sortKey === "amount"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("status")}>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("status")}>
  Status<SortArrow active={sortKey === "status"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("pm")}>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("pm")}>
  PM<SortArrow active={sortKey === "pm"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Payment</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Payment</th>
  </tr>
  </thead>
  <tbody>
@@ -455,7 +448,7 @@ export default function AllInvoicesPage() {
  <td className="py-3 px-4 text-cream-muted">{formatDate(inv.invoice_date)}</td>
  <td className="py-3 px-4">
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-brass-muted text-brass text-xs font-medium">{inv.jobs.name}</span>
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">{inv.jobs.name}</span>
  ) : (
  <span className="text-cream-dim">—</span>
  )}
@@ -501,13 +494,13 @@ export default function AllInvoicesPage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Inv #</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Status</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Payment Date</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Check #</th>
- <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-center">Picked Up</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Inv #</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Status</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Payment Date</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Check #</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-center">Picked Up</th>
  </tr>
  </thead>
  <tbody>

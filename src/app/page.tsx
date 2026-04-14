@@ -31,7 +31,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
       <div className="relative z-10 text-center px-6 max-w-3xl">
         <div className="animate-fade-up">
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-brand-border mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 border border-brand-border mb-8 rounded-none">
             <span className={`h-1.5 w-1.5 ${status === "loading" ? "bg-brass animate-pulse" : status === "connected" ? "bg-status-success" : "bg-status-danger"}`} />
             <span className="text-[10px] text-cream-dim tracking-[0.08em] uppercase">
               {status === "loading" ? "Connecting..." : status === "connected" ? "Systems Online" : "Connection Failed"}
@@ -70,11 +70,11 @@ function NavCard({ href, title, subtitle, count }: {
 }) {
   return (
     <Link href={href}
-      className="group relative flex flex-col items-start p-5 border border-brand-border bg-white hover:border-teal/40 transition-all duration-300 text-left">
+      className="group relative flex flex-col items-start p-5 border border-brand-border bg-white hover:border-teal/40 transition-all duration-300 text-left rounded-none">
       <div className="flex items-center gap-2">
         <h2 className="font-display text-[15px] text-cream font-medium">{title}</h2>
         {count != null && count > 0 && (
-          <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-teal text-teal text-[10px] font-bold">{count}</span>
+          <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-teal text-teal text-[10px] font-bold rounded-none">{count}</span>
         )}
       </div>
       <p className="mt-1 text-sm text-cream-dim">{subtitle}</p>
