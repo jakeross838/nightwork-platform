@@ -21,7 +21,7 @@
   body {
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font-body), sans-serif;
+    font-family: "Century Gothic", "CenturyGothic", "AppleGothic", sans-serif;
   }
 
   /* Warm scrollbar */

@@ -18,14 +18,14 @@ const BLACK = "000000";
 const HEADER_GOLD = "C5A55A";
 
 // Fonts
-const FONT_TITLE: Partial<ExcelJS.Font> = { name: "Calibri", size: 14, bold: true, color: { argb: NAVY } };
-const FONT_SUBTITLE: Partial<ExcelJS.Font> = { name: "Calibri", size: 11, bold: true, color: { argb: NAVY } };
-const FONT_LABEL: Partial<ExcelJS.Font> = { name: "Calibri", size: 10, bold: true };
-const FONT_VALUE: Partial<ExcelJS.Font> = { name: "Calibri", size: 10 };
-const FONT_HEADER: Partial<ExcelJS.Font> = { name: "Calibri", size: 9, bold: true, color: { argb: WHITE } };
-const FONT_BODY: Partial<ExcelJS.Font> = { name: "Calibri", size: 9 };
-const FONT_TOTAL: Partial<ExcelJS.Font> = { name: "Calibri", size: 9, bold: true };
-const FONT_GRAND_TOTAL: Partial<ExcelJS.Font> = { name: "Calibri", size: 10, bold: true, color: { argb: NAVY } };
+const FONT_TITLE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 14, bold: true, color: { argb: NAVY } };
+const FONT_SUBTITLE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 11, bold: true, color: { argb: NAVY } };
+const FONT_LABEL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10, bold: true };
+const FONT_VALUE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10 };
+const FONT_HEADER: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9, bold: true, color: { argb: WHITE } };
+const FONT_BODY: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9 };
+const FONT_TOTAL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9, bold: true };
+const FONT_GRAND_TOTAL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10, bold: true, color: { argb: NAVY } };
 
 const CURRENCY_FMT = '"$"#,##0.00';
 const PERCENT_FMT = "0.0%";
