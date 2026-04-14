@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mammoth from "mammoth";
 import { createServerClient } from "@/lib/supabase/server";
 import {
  ACCEPTED_MIME_TYPES,
@@ -82,11 +83,25 @@ export async function POST(request: NextRequest) {
  }
  }
 
+ // DOCX: render HTML once here so the upload preview can display it
+ // without a second roundtrip. The file is still in storage for the
+ // eventual invoice record to reference.
+ let docxHtml: string | null = null;
+ if (fileKind === "docx") {
+ try {
+ const html = await mammoth.convertToHtml({ buffer });
+ docxHtml = html.value;
+ } catch (err) {
+ console.warn("[parse] DOCX→HTML conversion failed:", err);
+ }
+ }
+
  return NextResponse.json({
  parsed,
  file_url: storagePath,
  file_name: file.name,
  file_type: fileKind,
+ docx_html: docxHtml,
  });
  } catch (err) {
  console.error("Invoice parse error:", err);

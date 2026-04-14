@@ -56,4 +56,7 @@ export interface ParseResult {
  file_url: string;
  file_name: string;
  file_type: string;
+ /** Rendered HTML for DOCX uploads so the upload page can preview them
+  * inline (before an invoice id exists). Null for other file kinds. */
+ docx_html?: string | null;
 }

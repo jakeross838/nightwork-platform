@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "bulk-import": "npx tsx scripts/bulk-import.ts",
-    "rematch-jobs": "npx tsx scripts/rematch-jobs.ts"
+    "rematch-jobs": "npx tsx scripts/rematch-jobs.ts",
+    "rename-invoice-files": "npx tsx scripts/rename-invoice-files.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",

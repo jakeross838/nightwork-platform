@@ -107,14 +107,53 @@ function ProgressSteps({ currentStep, startedAt, error }: { currentStep: ParseSt
 }
 
 function FilePreview({ fileStatus }: { fileStatus: FileStatus }) {
- const { file, objectUrl } = fileStatus;
+ const { file, objectUrl, result } = fileStatus;
+
+ // PDF → iframe
  if (file.type === "application/pdf") {
  return <iframe src={objectUrl} className="w-full h-full min-h-[500px] border border-brand-border" title={file.name} />;
  }
+
+ // Image → img (click-to-zoom handled by InvoiceFilePreview in the detail view;
+ // keeping the upload flow simple with a flat render)
  if (file.type.startsWith("image/")) {
  // eslint-disable-next-line @next/next/no-img-element
  return <img src={objectUrl} alt={file.name} className="w-full h-auto max-h-[600px] object-contain border border-brand-border" />;
  }
+
+ // DOCX → render mammoth HTML (included in the parse response)
+ const isDocx =
+ file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+ file.name.toLowerCase().endsWith(".docx");
+ if (isDocx) {
+ return (
+ <div className="border border-brand-border bg-white">
+ <div className="flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2">
+ <span className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">
+ DOCX · {file.name}
+ </span>
+ <a
+ href={objectUrl}
+ download={file.name}
+ className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
+ >
+ Download Original
+ </a>
+ </div>
+ <div className="max-h-[600px] overflow-auto p-6 text-sm text-cream leading-relaxed docx-html">
+ {result?.docx_html ? (
+ <div dangerouslySetInnerHTML={{ __html: result.docx_html }} />
+ ) : (
+ <p className="text-cream-dim text-sm">
+ DOCX preview will render after parsing completes.
+ </p>
+ )}
+ </div>
+ </div>
+ );
+ }
+
+ // Unknown → download fallback
  return (
  <div className="flex items-center justify-center h-64 border border-brand-border bg-brand-surface">
  <div className="text-center">
@@ -122,6 +161,13 @@ function FilePreview({ fileStatus }: { fileStatus: FileStatus }) {
  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
  </svg>
  <p className="mt-2 text-sm text-cream-dim">{file.name}</p>
+ <a
+ href={objectUrl}
+ download={file.name}
+ className="inline-flex items-center gap-1 mt-3 text-[12px] px-3 py-1.5 border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
+ >
+ Download {file.name}
+ </a>
  </div>
  </div>
  );

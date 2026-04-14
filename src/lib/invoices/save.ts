@@ -7,6 +7,14 @@ import {
   matchJobForInvoice,
   type MatchResult,
 } from "@/lib/invoices/job-matcher";
+import {
+  buildCleanFilename,
+  extensionFor,
+  renameStorageObject,
+  storagePathFor,
+} from "@/lib/invoices/file-naming";
+
+const INVOICES_BUCKET = "invoice-files";
 
 export const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -219,6 +227,34 @@ export async function saveParsedInvoice(
   if (match) autoFills.job_id = true;
   if (autoFilledCostCode) autoFills.cost_code_id = true;
 
+  // ---- Rename storage object to the clean filename convention ----
+  // [job]_[vendor]_[invoice#]_[date].[ext]
+  const ext = extensionFor(null, file_type, file_name ?? file_url);
+  const cleanName = buildCleanFilename({
+    jobName: match?.job.name ?? null,
+    overhead: overhead.isOverhead,
+    vendorName: parsed.vendor_name,
+    invoiceNumber: parsed.invoice_number,
+    invoiceDate: parsed.invoice_date,
+    extension: ext,
+  });
+  const desiredPath = storagePathFor(cleanName);
+
+  let finalFileUrl = file_url;
+  try {
+    finalFileUrl = await renameStorageObject(
+      supabase,
+      INVOICES_BUCKET,
+      file_url,
+      desiredPath
+    );
+  } catch (err) {
+    // Rename is cosmetic — don't fail the whole save if storage chokes.
+    console.warn(
+      `[save] storage rename failed for ${file_url} → ${desiredPath}: ${err instanceof Error ? err.message : err}`
+    );
+  }
+
   const matchNote = match
     ? ` Job auto-matched to ${match.job.name} (score ${match.score}: ${match.reasons.join("; ")}${match.ambiguous ? "; flagged as ambiguous" : ""}).`
     : overhead.isOverhead
@@ -280,7 +316,7 @@ export async function saveParsedInvoice(
       status_history: [statusEntry],
       received_date: today,
       payment_date: paymentDate,
-      original_file_url: file_url,
+      original_file_url: finalFileUrl,
       original_filename: file_name,
       original_file_type: mapFileType(file_type),
       document_category: overhead.isOverhead ? "overhead" : "job_cost",

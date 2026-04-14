@@ -6,6 +6,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
+import InvoiceFilePreview from "@/components/invoice-file-preview";
+import { invoiceDisplayName } from "@/lib/invoices/display";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -551,18 +553,16 @@ export default function InvoiceReviewPage() {
  <div className="xl:sticky xl:top-24">
  <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline hidden xl:block">Original Document</p>
  <div className="xl:mt-5">
- {invoice.signed_file_url ? (
- invoice.original_file_type === "image" ? (
- // eslint-disable-next-line @next/next/no-img-element
- <img src={invoice.signed_file_url} alt="Invoice" className="w-full border border-brand-border" />
- ) : (
- <iframe src={invoice.signed_file_url} className="w-full h-[500px] xl:h-[700px] border border-brand-border bg-brand-surface" title="Invoice PDF" />
- )
- ) : (
- <div className="h-48 xl:h-64 border border-brand-border bg-brand-surface flex items-center justify-center">
- <p className="text-cream-dim text-sm">No preview available</p>
- </div>
- )}
+ <InvoiceFilePreview
+ invoiceId={invoice.id}
+ fileUrl={invoice.signed_file_url}
+ downloadUrl={invoice.signed_file_url}
+ fileName={invoiceDisplayName({
+ vendor_name_raw: invoice.vendor_name_raw,
+ invoice_number: invoice.invoice_number,
+ jobs: invoice.jobs,
+ })}
+ />
  </div>
  </div>
  </div>

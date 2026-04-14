@@ -83,6 +83,29 @@
     background: var(--text-secondary);
   }
 
+  /* DOCX preview — constrain whatever Mammoth generates to our palette */
+  .docx-html { font-size: 14px; color: var(--text-primary); }
+  .docx-html h1,
+  .docx-html h2,
+  .docx-html h3,
+  .docx-html h4 { font-weight: 500; color: var(--text-primary); margin: 1rem 0 0.5rem; }
+  .docx-html h2 { font-size: 18px; }
+  .docx-html h3 { font-size: 16px; }
+  .docx-html h4 { font-size: 14px; }
+  .docx-html p { margin: 0.4rem 0; line-height: 1.55; }
+  .docx-html ul, .docx-html ol { margin: 0.4rem 0 0.4rem 1.25rem; }
+  .docx-html li { margin: 0.15rem 0; }
+  .docx-html table { border-collapse: collapse; margin: 0.75rem 0; width: 100%; }
+  .docx-html th, .docx-html td {
+    border: 1px solid var(--border-default);
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .docx-html th { background: var(--bg-subtle); font-weight: 500; }
+  .docx-html strong { font-weight: 600; }
+
   /* Nav link underline animation */
   .nav-underline { position: relative; }
   .nav-underline::after {
