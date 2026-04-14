@@ -41,7 +41,12 @@ export default function QueuePage() {
  const [pmUsers, setPmUsers] = useState<PmUser[]>([]);
  const [loading, setLoading] = useState(true);
 
- // Simulated auth — "Viewing as" PM
+ // Current user (from Supabase auth) — drives PM-only self-filter
+ const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+ const [currentRole, setCurrentRole] = useState<"admin" | "pm" | "accounting" | null>(null);
+ const [myJobIds, setMyJobIds] = useState<Set<string>>(new Set());
+
+ // Admin-only "Viewing as" PM selector
  const [viewingAs, setViewingAs] = useState("");
 
  // Primary filters (always visible)
@@ -72,6 +77,33 @@ export default function QueuePage() {
 
  useEffect(() => {
  async function fetchData() {
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
+
+ let role: "admin" | "pm" | "accounting" | null = null;
+ if (user) {
+ setCurrentUserId(user.id);
+ const { data: profile } = await supabase
+ .from("profiles")
+ .select("role")
+ .eq("id", user.id)
+ .single();
+ role = (profile?.role as typeof role) ?? null;
+ setCurrentRole(role);
+
+ // For PMs, pre-load the set of jobs they own so we can include
+ // any invoice on those jobs (not just ones explicitly assigned).
+ if (role === "pm") {
+ const { data: myJobs } = await supabase
+ .from("jobs")
+ .select("id")
+ .eq("pm_id", user.id)
+ .is("deleted_at", null);
+ if (myJobs) setMyJobIds(new Set(myJobs.map((j) => j.id as string)));
+ }
+ }
+
  const [invoiceResult, pmResult] = await Promise.all([
  supabase
  .from("invoices")
@@ -122,8 +154,18 @@ export default function QueuePage() {
  const filtered = useMemo(() => {
  let result = invoices;
 
- // "Viewing as" pre-filter (simulated PM login)
- if (viewingAs) {
+ // PM self-filter: a PM only ever sees invoices on their own jobs
+ // (either explicitly assigned to them OR on a job where they are pm_id).
+ if (currentRole === "pm" && currentUserId) {
+ result = result.filter(
+ (inv) =>
+ inv.assigned_pm?.id === currentUserId ||
+ (inv.job_id != null && myJobIds.has(inv.job_id))
+ );
+ }
+
+ // Admin "Viewing as" pre-filter
+ if (currentRole === "admin" && viewingAs) {
  result = result.filter((inv) => inv.assigned_pm?.id === viewingAs);
  }
 
@@ -240,6 +282,9 @@ export default function QueuePage() {
  }, [
  invoices,
  viewingAs,
+ currentRole,
+ currentUserId,
+ myJobIds,
  search,
  jobFilter,
  pmFilter,
@@ -382,14 +427,16 @@ export default function QueuePage() {
  : `${filtered.length} invoice${filtered.length !== 1 ? "s" : ""} pending PM review`}
  </p>
  </div>
- <div className="flex items-center gap-2">
- <span className="text-xs text-cream-dim uppercase tracking-wider">Viewing as</span>
- <select value={viewingAs} onChange={(e) => { setViewingAs(e.target.value); setSelectedIds(new Set()); }}
- className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none">
- <option value="">All PMs</option>
- {pmUsers.map(u => <option key={u.id} value={u.id}>{u.full_name}</option>)}
- </select>
- </div>
+ {currentRole === "admin" && (
+  <div className="flex items-center gap-2">
+   <span className="text-xs text-cream-dim uppercase tracking-wider">Viewing as</span>
+   <select value={viewingAs} onChange={(e) => { setViewingAs(e.target.value); setSelectedIds(new Set()); }}
+    className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none">
+    <option value="">All PMs</option>
+    {pmUsers.map(u => <option key={u.id} value={u.id}>{u.full_name}</option>)}
+   </select>
+  </div>
+ )}
  </div>
 
  {loading ? (

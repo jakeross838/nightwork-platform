@@ -73,14 +73,28 @@ function NavLink({
   );
 }
 
+const ROLE_LABEL: Record<UserRole, string> = {
+  admin: "Admin",
+  pm: "PM",
+  accounting: "Accounting",
+};
+
 function RoleBadge({ role }: { role: UserRole }) {
-  const label =
-    role === "admin" ? "Admin" : role === "pm" ? "PM" : "Accounting";
   return (
-    <span className="px-1.5 py-0.5 text-[10px] font-bold tracking-[0.06em] uppercase border border-white/50 text-white/90">
-      {label}
+    <span
+      className="px-1.5 py-0.5 text-[10px] font-bold tracking-[0.08em] uppercase border rounded-none"
+      style={{
+        color: "var(--text-inverse)",
+        borderColor: "var(--text-inverse)",
+      }}
+    >
+      {ROLE_LABEL[role]}
     </span>
   );
+}
+
+function firstNameOf(fullName: string) {
+  return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
 export default function NavBar() {
@@ -108,7 +122,8 @@ export default function NavBar() {
     loadProfile();
   }, []);
 
-  // Fetch queue counts (only if the user can see the relevant queue)
+  // Fetch queue counts (only if the user can see the relevant queue).
+  // For PMs, scope the PM count to their own jobs/assignments.
   useEffect(() => {
     if (!profile) return;
     const showPm = can(profile.role, "pmQueue");
@@ -116,24 +131,50 @@ export default function NavBar() {
     if (!showPm && !showQa) return;
 
     async function fetchCounts() {
-      const [pmRes, qaRes] = await Promise.all([
-        showPm
-          ? supabase
-              .from("invoices")
-              .select("id", { count: "exact", head: true })
-              .in("status", ["pm_review", "ai_processed"])
-              .is("deleted_at", null)
-          : Promise.resolve({ count: 0 }),
-        showQa
-          ? supabase
-              .from("invoices")
-              .select("id", { count: "exact", head: true })
-              .in("status", ["qa_review", "pm_approved"])
-              .is("deleted_at", null)
-          : Promise.resolve({ count: 0 }),
-      ]);
-      setPmCount(pmRes.count ?? 0);
-      setQaCount(qaRes.count ?? 0);
+      let pmCountVal = 0;
+      if (showPm && profile) {
+        if (profile.role === "pm") {
+          // Fetch this PM's own jobs, then count invoices assigned to them
+          // OR on one of their jobs.
+          const { data: myJobs } = await supabase
+            .from("jobs")
+            .select("id")
+            .eq("pm_id", profile.id)
+            .is("deleted_at", null);
+          const jobIds = (myJobs ?? []).map((j) => j.id as string);
+          const orClause =
+            jobIds.length > 0
+              ? `assigned_pm_id.eq.${profile.id},job_id.in.(${jobIds.join(",")})`
+              : `assigned_pm_id.eq.${profile.id}`;
+          const { count } = await supabase
+            .from("invoices")
+            .select("id", { count: "exact", head: true })
+            .in("status", ["pm_review", "ai_processed"])
+            .is("deleted_at", null)
+            .or(orClause);
+          pmCountVal = count ?? 0;
+        } else {
+          const { count } = await supabase
+            .from("invoices")
+            .select("id", { count: "exact", head: true })
+            .in("status", ["pm_review", "ai_processed"])
+            .is("deleted_at", null);
+          pmCountVal = count ?? 0;
+        }
+      }
+
+      let qaCountVal = 0;
+      if (showQa) {
+        const { count } = await supabase
+          .from("invoices")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["qa_review", "pm_approved"])
+          .is("deleted_at", null);
+        qaCountVal = count ?? 0;
+      }
+
+      setPmCount(pmCountVal);
+      setQaCount(qaCountVal);
     }
     fetchCounts();
   }, [pathname, profile]);
@@ -239,8 +280,17 @@ export default function NavBar() {
         <div className="hidden md:flex items-center gap-3 shrink-0">
           {profile && (
             <div className="flex items-center gap-2">
-              <span className="text-white text-[13px] font-medium">
-                {profile.full_name}
+              <span
+                className="text-[13px] font-medium"
+                style={{ color: "var(--text-inverse)" }}
+              >
+                {firstNameOf(profile.full_name)}
+              </span>
+              <span
+                className="text-[13px]"
+                style={{ color: "var(--text-inverse)", opacity: 0.6 }}
+              >
+                &middot;
               </span>
               <RoleBadge role={profile.role} />
             </div>
@@ -248,9 +298,10 @@ export default function NavBar() {
           <form action={logoutAction}>
             <button
               type="submit"
-              className="text-white/70 hover:text-white text-[13px] px-2 py-1 nav-underline transition-colors"
+              className="text-[13px] px-2 py-1 transition-colors hover:underline underline-offset-4"
+              style={{ color: "var(--text-inverse)", opacity: 0.8 }}
             >
-              Sign out
+              Sign Out
             </button>
           </form>
         </div>
@@ -300,8 +351,17 @@ export default function NavBar() {
           {profile && (
             <div className="flex items-center justify-between py-2 px-4 border-b border-white/10 mb-1">
               <div className="flex items-center gap-2">
-                <span className="text-white text-[13px] font-medium">
-                  {profile.full_name}
+                <span
+                  className="text-[13px] font-medium"
+                  style={{ color: "var(--text-inverse)" }}
+                >
+                  {firstNameOf(profile.full_name)}
+                </span>
+                <span
+                  className="text-[13px]"
+                  style={{ color: "var(--text-inverse)", opacity: 0.6 }}
+                >
+                  &middot;
                 </span>
                 <RoleBadge role={profile.role} />
               </div>
@@ -366,9 +426,10 @@ export default function NavBar() {
           <form action={logoutAction} className="mt-1">
             <button
               type="submit"
-              className="w-full text-left py-3 px-4 text-white/70 hover:text-white text-[14px] transition-colors"
+              className="w-full text-left py-3 px-4 text-[14px] transition-colors hover:underline underline-offset-4"
+              style={{ color: "var(--text-inverse)", opacity: 0.8 }}
             >
-              Sign out
+              Sign Out
             </button>
           </form>
         </nav>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import NavBar from "@/components/nav-bar";
 
 type UserRole = "admin" | "pm" | "accounting";
 
@@ -15,9 +16,14 @@ type NavItem = {
   roles: UserRole[];
 };
 
+function firstNameOf(fullName: string) {
+  return fullName.trim().split(/\s+/)[0] ?? fullName;
+}
+
 export default function Home() {
   const [status, setStatus] = useState<"loading" | "connected" | "error">("loading");
   const [role, setRole] = useState<UserRole | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
   const [pmCount, setPmCount] = useState(0);
   const [qaCount, setQaCount] = useState(0);
 
@@ -27,23 +33,61 @@ export default function Home() {
         const {
           data: { user },
         } = await supabase.auth.getUser();
+
+        let resolvedRole: UserRole | null = null;
         if (user) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("role")
+            .select("role, full_name")
             .eq("id", user.id)
             .single();
-          if (profile?.role) setRole(profile.role as UserRole);
+          if (profile?.role) {
+            resolvedRole = profile.role as UserRole;
+            setRole(resolvedRole);
+          }
+          if (profile?.full_name) setFirstName(firstNameOf(profile.full_name));
         }
 
         const { error } = await supabase.from("cost_codes").select("id").limit(1);
         setStatus(error ? "error" : "connected");
-        const [pmRes, qaRes] = await Promise.all([
-          supabase.from("invoices").select("id", { count: "exact", head: true }).in("status", ["pm_review", "ai_processed"]).is("deleted_at", null),
-          supabase.from("invoices").select("id", { count: "exact", head: true }).in("status", ["qa_review", "pm_approved"]).is("deleted_at", null),
-        ]);
-        setPmCount(pmRes.count ?? 0);
-        setQaCount(qaRes.count ?? 0);
+
+        // PM count scoped to the signed-in PM's jobs; global for admin.
+        let pmCountVal = 0;
+        if (user && resolvedRole === "pm") {
+          const { data: myJobs } = await supabase
+            .from("jobs")
+            .select("id")
+            .eq("pm_id", user.id)
+            .is("deleted_at", null);
+          const jobIds = (myJobs ?? []).map((j) => j.id as string);
+          const orClause =
+            jobIds.length > 0
+              ? `assigned_pm_id.eq.${user.id},job_id.in.(${jobIds.join(",")})`
+              : `assigned_pm_id.eq.${user.id}`;
+          const { count } = await supabase
+            .from("invoices")
+            .select("id", { count: "exact", head: true })
+            .in("status", ["pm_review", "ai_processed"])
+            .is("deleted_at", null)
+            .or(orClause);
+          pmCountVal = count ?? 0;
+        } else if (resolvedRole === "admin") {
+          const { count } = await supabase
+            .from("invoices")
+            .select("id", { count: "exact", head: true })
+            .in("status", ["pm_review", "ai_processed"])
+            .is("deleted_at", null);
+          pmCountVal = count ?? 0;
+        }
+
+        const { count: qaCountVal } = await supabase
+          .from("invoices")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["qa_review", "pm_approved"])
+          .is("deleted_at", null);
+
+        setPmCount(pmCountVal);
+        setQaCount(qaCountVal ?? 0);
       } catch {
         setStatus("error");
       }
@@ -63,35 +107,45 @@ export default function Home() {
   const visibleCards = role ? cards.filter((c) => c.roles.includes(role)) : [];
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-      <div className="relative z-10 text-center px-6 max-w-3xl">
-        <div className="animate-fade-up">
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-brand-border mb-8 rounded-none">
-            <span className={`h-1.5 w-1.5 ${status === "loading" ? "bg-brass animate-pulse" : status === "connected" ? "bg-status-success" : "bg-status-danger"}`} />
-            <span className="text-[10px] text-cream-dim tracking-[0.08em] uppercase">
-              {status === "loading" ? "Connecting..." : status === "connected" ? "Systems Online" : "Connection Failed"}
-            </span>
+    <div className="min-h-screen flex flex-col">
+      <NavBar />
+      <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden px-6 py-12">
+        <div className="relative z-10 text-center max-w-3xl">
+          <div className="animate-fade-up">
+            <div className="inline-flex items-center gap-2 px-3 py-1 border border-brand-border mb-6 rounded-none">
+              <span className={`h-1.5 w-1.5 ${status === "loading" ? "bg-brass animate-pulse" : status === "connected" ? "bg-status-success" : "bg-status-danger"}`} />
+              <span className="text-[10px] text-cream-dim tracking-[0.08em] uppercase">
+                {status === "loading" ? "Connecting..." : status === "connected" ? "Systems Online" : "Connection Failed"}
+              </span>
+            </div>
+          </div>
+
+          <h1 className="animate-fade-up stagger-1 font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.1]">
+            Ross Command Center
+          </h1>
+          <p className="animate-fade-up stagger-2 mt-4 font-body text-cream-muted text-lg">Ross Built Custom Homes</p>
+          <div className="animate-fade-up stagger-3 mt-2 flex items-center justify-center gap-3 text-cream-dim text-sm">
+            <span>Bradenton</span><span className="text-teal">&#x2022;</span><span>Anna Maria Island</span>
+          </div>
+
+          {/* Personalized greeting */}
+          {firstName && (
+            <p className="animate-fade-up stagger-4 mt-10 font-display text-xl text-cream">
+              Welcome, {firstName}
+            </p>
+          )}
+
+          {/* Navigation cards — filtered by role */}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up stagger-4">
+            {visibleCards.map((c) => (
+              <NavCard key={c.key} href={c.href} title={c.title} subtitle={c.subtitle} count={c.count} />
+            ))}
           </div>
         </div>
 
-        <h1 className="animate-fade-up stagger-1 font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.1]">
-          Ross Command Center
-        </h1>
-        <p className="animate-fade-up stagger-2 mt-4 font-body text-cream-muted text-lg">Ross Built Custom Homes</p>
-        <div className="animate-fade-up stagger-3 mt-2 flex items-center justify-center gap-3 text-cream-dim text-sm">
-          <span>Bradenton</span><span className="text-teal">&#x2022;</span><span>Anna Maria Island</span>
+        <div className="mt-12 text-center animate-fade-up stagger-6">
+          <p className="text-[11px] text-cream-dim tracking-[0.08em] uppercase">Est. 2006 &middot; Luxury Coastal Custom Homes</p>
         </div>
-
-        {/* Navigation cards — filtered by role */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up stagger-4">
-          {visibleCards.map((c) => (
-            <NavCard key={c.key} href={c.href} title={c.title} subtitle={c.subtitle} count={c.count} />
-          ))}
-        </div>
-      </div>
-
-      <div className="absolute bottom-6 text-center animate-fade-up stagger-6">
-        <p className="text-[11px] text-cream-dim tracking-[0.08em] uppercase">Est. 2006 &middot; Luxury Coastal Custom Homes</p>
       </div>
     </div>
   );
