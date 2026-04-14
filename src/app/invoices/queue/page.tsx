@@ -28,7 +28,7 @@ interface PmUser {
 type SortKey = "vendor" | "date" | "amount" | "confidence" | "waiting" | "pm";
 type SortDir = "asc" | "desc";
 type ConfidenceFilter = "all" | "high" | "medium" | "low";
-type StatusFilter = "pending" | "held" | "denied" | "kicked_back" | "all";
+type StatusFilter = "pending" | "held" | "denied" | "kicked_back" | "info_requested" | "all";
 type AmountRange = "all" | "0-5k" | "5k-25k" | "25k-100k" | "100k+";
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -78,7 +78,7 @@ export default function QueuePage() {
           .select(
             "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
           )
-          .in("status", ["pm_review", "ai_processed", "pm_held", "pm_denied"])
+          .in("status", ["pm_review", "ai_processed", "pm_held", "pm_denied", "info_requested"])
           .is("deleted_at", null)
           .order("received_date", { ascending: true }),
         supabase
@@ -174,6 +174,8 @@ export default function QueuePage() {
       } else if (statusFilter === "kicked_back") {
         // Kicked-back items return to pm_review status
         result = result.filter((inv) => inv.status === "pm_review");
+      } else if (statusFilter === "info_requested") {
+        result = result.filter((inv) => inv.status === "info_requested");
       }
     }
 
@@ -562,6 +564,7 @@ export default function QueuePage() {
                     <option value="held">Held</option>
                     <option value="denied">Denied</option>
                     <option value="kicked_back">Kicked Back</option>
+                    <option value="info_requested">Info Requested</option>
                     <option value="all">All Statuses</option>
                   </select>
 
@@ -718,6 +721,13 @@ export default function QueuePage() {
                           </span>
                         </div>
                       )}
+                      {inv.status === "info_requested" && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 text-xs font-medium border border-yellow-500/25">
+                            Info Requested
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -832,6 +842,11 @@ export default function QueuePage() {
                             {inv.status === "pm_denied" && (
                               <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 text-[10px] font-medium border border-red-500/25">
                                 Denied
+                              </span>
+                            )}
+                            {inv.status === "info_requested" && (
+                              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-yellow-500/15 text-yellow-400 text-[10px] font-medium border border-yellow-500/25">
+                                Info Requested
                               </span>
                             )}
                           </td>

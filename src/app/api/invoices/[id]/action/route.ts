@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 interface ActionRequest {
-  action: "approve" | "hold" | "deny" | "request_info" | "qa_approve" | "kick_back" | "reopen";
+  action: "approve" | "hold" | "deny" | "request_info" | "info_received" | "qa_approve" | "kick_back" | "reopen";
   note?: string;
   pm_overrides?: Record<string, { old: unknown; new: unknown }>;
   qa_overrides?: Record<string, { old: unknown; new: unknown }>;
@@ -13,7 +13,8 @@ const ACTION_STATUS_MAP: Record<string, string> = {
   approve: "pm_approved",
   hold: "pm_held",
   deny: "pm_denied",
-  request_info: "pm_held",
+  request_info: "info_requested",
+  info_received: "pm_review",
   qa_approve: "qa_approved",
   kick_back: "qa_kicked_back",
   reopen: "pm_review",
@@ -38,7 +39,7 @@ export async function POST(
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    if ((action === "hold" || action === "deny" || action === "kick_back") && !note) {
+    if ((action === "hold" || action === "deny" || action === "kick_back" || action === "request_info") && !note) {
       return NextResponse.json(
         { error: `${action} requires a note` },
         { status: 400 }

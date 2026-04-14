@@ -23,6 +23,7 @@ interface InvoiceData {
   ai_raw_response: { cost_code_suggestion?: { code: string; description: string; confidence: number; is_change_order: boolean }; flags?: string[] } | null;
   status: string; status_history: Array<Record<string, unknown>>;
   received_date: string | null; payment_date: string | null; original_file_type: string | null;
+  check_number: string | null; picked_up: boolean; mailed_date: string | null;
   pm_overrides: Record<string, { old: unknown; new: unknown }> | null;
   qa_overrides: Record<string, { old: unknown; new: unknown }> | null;
   signed_file_url: string | null;
@@ -145,7 +146,7 @@ function AiBadge() {
 // ── Status History Timeline ─────────────────────────────
 function statusDotColor(newStatus: string): string {
   if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-status-success";
-  if (["pm_held", "request_info"].includes(newStatus)) return "bg-brass";
+  if (["pm_held", "info_requested"].includes(newStatus)) return "bg-brass";
   if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-status-danger";
   return "bg-teal"; // forward progress: pm_review, qa_review, ai_processed
 }
@@ -182,6 +183,15 @@ export default function InvoiceReviewPage() {
   const [showDocPreview, setShowDocPreview] = useState(false);
   const [pmUsers, setPmUsers] = useState<{ id: string; full_name: string }[]>([]);
   const [reassigning, setReassigning] = useState(false);
+  const [showRequestInfoModal, setShowRequestInfoModal] = useState(false);
+  const [infoRecipient, setInfoRecipient] = useState("");
+  const [infoQuestion, setInfoQuestion] = useState("");
+
+  // Payment tracking
+  const [checkNumber, setCheckNumber] = useState("");
+  const [pickedUp, setPickedUp] = useState(false);
+  const [mailedDate, setMailedDate] = useState("");
+  const [savingPayment, setSavingPayment] = useState(false);
 
   // Fetch invoice
   useEffect(() => {
@@ -200,6 +210,9 @@ export default function InvoiceReviewPage() {
         setDescription(data.description ?? "");
         setCoReference(data.co_reference_raw ?? "");
         if (data.pm_users) setPmUsers(data.pm_users);
+        setCheckNumber(data.check_number ?? "");
+        setPickedUp(data.picked_up ?? false);
+        setMailedDate(data.mailed_date ?? "");
         // Default CO toggle if AI detected a CO reference
         if (data.co_reference_raw) setIsChangeOrder(true);
         // Check if cost code is a CO variant
@@ -276,7 +289,7 @@ export default function InvoiceReviewPage() {
     return o;
   }, [invoice, invoiceNumber, invoiceDate, totalAmount, invoiceType, description, jobId, costCodeId]);
 
-  const handleAction = async (action: "approve" | "hold" | "deny" | "request_info", note?: string) => {
+  const handleAction = async (action: "approve" | "hold" | "deny" | "request_info" | "info_received", note?: string) => {
     setSaving(true);
     const overrides = buildOverrides();
     const updates: Record<string, unknown> = {};
@@ -309,7 +322,8 @@ export default function InvoiceReviewPage() {
     </div>
   );
 
-  const isReviewable = ["pm_review", "ai_processed", "pm_held"].includes(invoice.status);
+  const isReviewable = ["pm_review", "ai_processed", "pm_held", "info_requested"].includes(invoice.status);
+  const showPaymentTracking = ["qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(invoice.status);
   const autoFills = (invoice.confidence_details as Record<string, unknown>)?.auto_fills as Record<string, boolean> | undefined;
 
   // Filter cost codes based on CO toggle
@@ -358,6 +372,15 @@ export default function InvoiceReviewPage() {
     return entry ? String(entry.note ?? "") : null;
   })();
 
+  // Detect info requested reason
+  const infoRequestedInfo = (() => {
+    if (!invoice.status_history || invoice.status !== "info_requested") return null;
+    const entry = [...invoice.status_history].reverse().find(
+      e => String(e.new_status) === "info_requested"
+    );
+    return entry ? String(entry.note ?? "") : null;
+  })();
+
   const handleReopen = async () => {
     setSaving(true);
     const res = await fetch(`/api/invoices/${invoiceId}/action`, {
@@ -367,6 +390,24 @@ export default function InvoiceReviewPage() {
     });
     setSaving(false);
     if (res.ok) window.location.reload();
+  };
+
+  const handleSavePaymentTracking = async () => {
+    setSavingPayment(true);
+    const updates: Record<string, unknown> = {
+      check_number: checkNumber.trim() || null,
+      picked_up: pickedUp,
+      mailed_date: !pickedUp && mailedDate ? mailedDate : null,
+    };
+    const res = await fetch(`/api/invoices/${invoiceId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+    if (res.ok && invoice) {
+      setInvoice({ ...invoice, check_number: updates.check_number as string | null, picked_up: updates.picked_up as boolean, mailed_date: updates.mailed_date as string | null });
+    }
+    setSavingPayment(false);
   };
 
   return (
@@ -449,6 +490,28 @@ export default function InvoiceReviewPage() {
                 className="mt-2 px-3 py-1.5 bg-brand-surface border border-brand-border hover:border-brand-border-light text-cream text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {saving ? "Reopening..." : "Reopen for Review"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Info Requested banner */}
+      {infoRequestedInfo !== null && (
+        <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-6 py-3">
+          <div className="max-w-[1600px] mx-auto flex items-start gap-3">
+            <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-400">Info Requested</p>
+              <p className="text-sm text-yellow-400/80 mt-0.5">{infoRequestedInfo}</p>
+              <button
+                onClick={() => handleAction("info_received", "Info received — returning to PM review")}
+                disabled={saving}
+                className="mt-2 px-3 py-1.5 bg-brand-surface border border-brand-border hover:border-brand-border-light text-cream text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {saving ? "Processing..." : "Info Received — Resume Review"}
               </button>
             </div>
           </div>
@@ -641,7 +704,7 @@ export default function InvoiceReviewPage() {
                     Deny
                   </button>
                 </div>
-                <button onClick={() => handleAction("request_info", "PM requesting additional information")} disabled={saving}
+                <button onClick={() => setShowRequestInfoModal(true)} disabled={saving}
                   className="w-full px-4 py-2 border border-brand-border hover:border-brand-border-light text-cream-muted text-sm rounded-xl transition-colors">
                   Request Info
                 </button>
@@ -689,6 +752,38 @@ export default function InvoiceReviewPage() {
                   <div className="flex justify-between border-t border-brand-border pt-2.5"><span className="text-cream-dim">Amount</span><span className="text-brass font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
                 </div>
               </SidebarCard>
+
+              {/* Payment Tracking */}
+              {showPaymentTracking && (
+                <SidebarCard title="Payment Tracking">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">Check #</label>
+                      <input type="text" value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} placeholder="e.g. 10452"
+                        className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border rounded-xl text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none transition-colors" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Picked Up</label>
+                      <button onClick={() => setPickedUp(!pickedUp)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${pickedUp ? "bg-status-success" : "bg-brand-border"}`}>
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${pickedUp ? "translate-x-6" : "translate-x-1"}`} />
+                      </button>
+                      <span className="text-xs text-cream-dim">{pickedUp ? "Yes" : "No"}</span>
+                    </div>
+                    {!pickedUp && (
+                      <div>
+                        <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">Mailed Date</label>
+                        <input type="date" value={mailedDate} onChange={(e) => setMailedDate(e.target.value)}
+                          className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border rounded-xl text-sm text-cream focus:border-teal focus:outline-none transition-colors" />
+                      </div>
+                    )}
+                    <button onClick={handleSavePaymentTracking} disabled={savingPayment}
+                      className="w-full px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium rounded-xl transition-colors disabled:opacity-50">
+                      {savingPayment ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </SidebarCard>
+              )}
 
               {/* AI Confidence */}
               {invoice.confidence_details && (
@@ -760,6 +855,10 @@ export default function InvoiceReviewPage() {
               Deny
             </button>
           </div>
+          <button onClick={() => setShowRequestInfoModal(true)} disabled={saving}
+            className="w-full mt-2 px-3 py-2 border border-brand-border hover:border-brand-border-light text-cream-muted text-xs rounded-xl transition-colors">
+            Request Info
+          </button>
         </div>
       )}
 
@@ -851,6 +950,62 @@ export default function InvoiceReviewPage() {
                 disabled={saving}
                 className="flex-1 px-4 py-2.5 bg-brass hover:brightness-110 text-brand-bg font-medium rounded-xl disabled:opacity-50 transition-all">
                 Hold Instead
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Request Info Modal ── */}
+      {showRequestInfoModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md animate-fade-up shadow-2xl">
+            <h3 className="font-display text-xl text-cream mb-4">Request Information</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+                  Who do you need info from?
+                </label>
+                <select
+                  value={infoRecipient}
+                  onChange={(e) => setInfoRecipient(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border rounded-xl text-sm text-cream focus:border-teal focus:outline-none"
+                >
+                  <option value="">Select...</option>
+                  <option value="Vendor">Vendor</option>
+                  <option value="Subcontractor">Subcontractor</option>
+                  <option value="Architect">Architect</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+                  What do you need?
+                </label>
+                <textarea
+                  value={infoQuestion}
+                  onChange={(e) => setInfoQuestion(e.target.value)}
+                  placeholder="Describe the information you need..."
+                  className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border rounded-xl text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => {
+                  handleAction("request_info", `Info requested from ${infoRecipient}: ${infoQuestion.trim()}`);
+                  setShowRequestInfoModal(false);
+                  setInfoRecipient("");
+                  setInfoQuestion("");
+                }}
+                disabled={!infoRecipient || !infoQuestion.trim() || saving}
+                className="flex-1 px-4 py-2.5 bg-brass hover:brightness-110 text-brand-bg font-medium rounded-xl disabled:opacity-50 transition-all">
+                {saving ? "Sending..." : "Send Request"}
+              </button>
+              <button
+                onClick={() => { setShowRequestInfoModal(false); setInfoRecipient(""); setInfoQuestion(""); }}
+                className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted rounded-xl hover:border-brand-border-light transition-colors">
+                Cancel
               </button>
             </div>
           </div>

@@ -78,6 +78,7 @@ export function formatStatus(status: string): string {
     qa_review: "QA Review",
     qa_approved: "QA Approved",
     qa_kicked_back: "QA Kicked Back",
+    info_requested: "Info Requested",
     pushed_to_qb: "Pushed to QB",
     qb_failed: "QB Failed",
     in_draw: "In Draw",

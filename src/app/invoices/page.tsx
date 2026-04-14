@@ -15,6 +15,9 @@ interface Invoice {
   received_date: string;
   payment_date: string | null;
   status: string;
+  check_number: string | null;
+  picked_up: boolean;
+  mailed_date: string | null;
   jobs: { name: string } | null;
   cost_codes: { code: string; description: string } | null;
   assigned_pm: { id: string; full_name: string } | null;
@@ -62,6 +65,14 @@ export default function AllInvoicesPage() {
   const [pmUsers, setPmUsers] = useState<PmUser[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState<"all" | "payment">("all");
+
+  // Inline editing for payment tracking
+  const [editingCheckId, setEditingCheckId] = useState<string | null>(null);
+  const [editingCheckValue, setEditingCheckValue] = useState("");
+  const [savingInline, setSavingInline] = useState<string | null>(null);
+
   // Filters
   const [search, setSearch] = useState("");
   const [jobFilter, setJobFilter] = useState("");
@@ -84,7 +95,7 @@ export default function AllInvoicesPage() {
       const [invResult, pmResult] = await Promise.all([
         supabase
           .from("invoices")
-          .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
+          .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
           .is("deleted_at", null)
           .order("created_at", { ascending: false }),
         supabase
@@ -198,17 +209,84 @@ export default function AllInvoicesPage() {
 
   const clearAllFilters = () => { setSearch(""); setJobFilter(""); setPmFilter(""); setConfidenceFilter("all"); setStatusFilters(new Set()); setAmountRange("all"); setDateStart(""); setDateEnd(""); };
 
+  // Payment tracking: filtered and grouped by payment_date
+  const PAYMENT_STATUSES = ["qa_approved", "pushed_to_qb", "in_draw", "paid"];
+  const paymentInvoices = useMemo(() => {
+    return invoices.filter(inv => PAYMENT_STATUSES.includes(inv.status))
+      .sort((a, b) => (a.payment_date ?? "").localeCompare(b.payment_date ?? ""));
+  }, [invoices]);
+
+  const paymentGroups = useMemo(() => {
+    const groups: Record<string, Invoice[]> = {};
+    paymentInvoices.forEach(inv => {
+      const key = inv.payment_date ?? "No Date";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(inv);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [paymentInvoices]);
+
+  const handleInlineCheckSave = async (invoiceId: string, value: string) => {
+    setSavingInline(invoiceId);
+    const res = await fetch(`/api/invoices/${invoiceId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ check_number: value.trim() || null }),
+    });
+    if (res.ok) {
+      setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, check_number: value.trim() || null } : inv));
+    }
+    setSavingInline(null);
+    setEditingCheckId(null);
+  };
+
+  const handleInlinePickedUpToggle = async (invoiceId: string, current: boolean) => {
+    setSavingInline(invoiceId);
+    const res = await fetch(`/api/invoices/${invoiceId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ picked_up: !current }),
+    });
+    if (res.ok) {
+      setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, picked_up: !current } : inv));
+    }
+    setSavingInline(null);
+  };
+
   return (
     <div className="min-h-screen">
       <NavBar />
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-display text-2xl text-cream">All Invoices</h2>
+            <h2 className="font-display text-2xl text-cream">Invoices</h2>
             <p className="text-sm text-cream-dim mt-1">
-              {isFiltered ? `Showing ${filtered.length} of ${invoices.length} invoices` : `${invoices.length} total invoices`}
+              {activeTab === "all"
+                ? (isFiltered ? `Showing ${filtered.length} of ${invoices.length} invoices` : `${invoices.length} total invoices`)
+                : `${paymentInvoices.length} invoices ready for payment`}
             </p>
           </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 bg-brand-surface border border-brand-border rounded-xl p-1 w-fit">
+          <button
+            onClick={() => setActiveTab("all")}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              activeTab === "all" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+            }`}>
+            All Invoices
+          </button>
+          <button
+            onClick={() => setActiveTab("payment")}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              activeTab === "payment" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+            }`}>
+            Payment Tracking
+            {paymentInvoices.length > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-teal/15 text-teal text-[11px] font-bold">
+                {paymentInvoices.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {loading ? (
@@ -218,6 +296,8 @@ export default function AllInvoicesPage() {
           </div>
         ) : (
           <>
+            {activeTab === "all" ? (
+            <>
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
               <StatCard label="Total Invoices" value={stats.total.toString()} />
@@ -396,6 +476,93 @@ export default function AllInvoicesPage() {
                   </tbody>
                 </table>
               </div>
+            )}
+          </>
+            ) : (
+            /* Payment Tracking Tab */
+            <>
+              {paymentGroups.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="text-cream-muted text-sm">No invoices ready for payment tracking</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {paymentGroups.map(([dateKey, group]) => (
+                    <div key={dateKey} className="animate-fade-up">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-sm font-medium text-cream">
+                          {dateKey === "No Date" ? "No Payment Date" : formatDate(dateKey)}
+                        </h3>
+                        <span className="text-[11px] text-cream-dim bg-brand-surface px-2 py-0.5 rounded-full border border-brand-border">
+                          {group.length} invoice{group.length !== 1 ? "s" : ""} &mdash; {formatCents(group.reduce((s, inv) => s + inv.total_amount, 0))}
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto rounded-2xl border border-brand-border">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-brand-surface text-left">
+                              <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
+                              <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Inv #</th>
+                              <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
+                              <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Status</th>
+                              <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Payment Date</th>
+                              <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Check #</th>
+                              <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-center">Picked Up</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.map((inv) => (
+                              <tr key={inv.id} className="border-t border-brand-row-border hover:bg-brand-elevated/50 transition-colors">
+                                <td className="py-3 px-4 text-cream font-medium cursor-pointer hover:text-teal transition-colors"
+                                  onClick={() => window.location.href = `/invoices/${inv.id}`}>
+                                  {inv.vendor_name_raw ?? "Unknown"}
+                                </td>
+                                <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? <span className="text-cream-dim">&mdash;</span>}</td>
+                                <td className="py-3 px-4 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
+                                <td className="py-3 px-4">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${statusBadgeColor(inv.status)}`}>
+                                    {formatStatus(inv.status)}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
+                                <td className="py-3 px-4">
+                                  {editingCheckId === inv.id ? (
+                                    <input
+                                      type="text"
+                                      value={editingCheckValue}
+                                      onChange={(e) => setEditingCheckValue(e.target.value)}
+                                      onBlur={() => handleInlineCheckSave(inv.id, editingCheckValue)}
+                                      onKeyDown={(e) => { if (e.key === "Enter") handleInlineCheckSave(inv.id, editingCheckValue); if (e.key === "Escape") setEditingCheckId(null); }}
+                                      autoFocus
+                                      className="w-24 px-2 py-1 bg-brand-surface border border-teal rounded-lg text-xs text-cream focus:outline-none"
+                                    />
+                                  ) : (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setEditingCheckId(inv.id); setEditingCheckValue(inv.check_number ?? ""); }}
+                                      className="px-2 py-1 text-xs text-cream-muted hover:text-cream hover:bg-brand-surface rounded-lg transition-colors min-w-[60px] text-left"
+                                      disabled={savingInline === inv.id}>
+                                      {savingInline === inv.id ? "..." : (inv.check_number || <span className="text-cream-dim italic">Add #</span>)}
+                                    </button>
+                                  )}
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleInlinePickedUpToggle(inv.id, inv.picked_up); }}
+                                    disabled={savingInline === inv.id}
+                                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors disabled:opacity-50 ${inv.picked_up ? "bg-status-success" : "bg-brand-border"}`}>
+                                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${inv.picked_up ? "translate-x-5" : "translate-x-1"}`} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
             )}
           </>
         )}

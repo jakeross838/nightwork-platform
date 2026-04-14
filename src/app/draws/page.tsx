@@ -8,6 +8,7 @@ import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 interface Draw {
   id: string;
   draw_number: number;
+  revision_number: number;
   application_date: string | null;
   period_start: string | null;
   period_end: string | null;
@@ -95,7 +96,10 @@ export default function DrawsPage() {
                         <tr key={d.id}
                           className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
                           onClick={() => window.location.href = `/draws/${d.id}`}>
-                          <td className="py-4 px-5 text-cream font-display font-medium">#{d.draw_number}</td>
+                          <td className="py-4 px-5 text-cream font-display font-medium">
+                            #{d.draw_number}
+                            {d.revision_number > 0 && <span className="text-brass ml-1 text-xs">Rev {d.revision_number}</span>}
+                          </td>
                           <td className="py-4 px-5 text-cream-muted">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
                           <td className="py-4 px-5 text-cream-muted">{formatDate(d.application_date)}</td>
                           <td className="py-4 px-5">

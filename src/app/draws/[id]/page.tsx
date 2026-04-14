@@ -75,6 +75,22 @@ export default function DrawDetailPage() {
 
   const action = ACTION_MAP[draw.status];
 
+  const handleCreateRevision = async () => {
+    setActing(true);
+    try {
+      const res = await fetch(`/api/draws/${drawId}/revise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        router.push(`/draws/${data.id}`);
+      }
+    } finally {
+      setActing(false);
+    }
+  };
+
   // G703 rows come directly from computed line_items (API already merged budget_lines + invoices)
   const g703Rows = draw.line_items
     .map((li) => ({
@@ -122,23 +138,26 @@ export default function DrawDetailPage() {
             <button onClick={() => router.push("/draws")} className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Draws</button>
             <h1 className="font-display text-xl text-cream">
               {draw.jobs?.name} <span className="text-cream-dim">&mdash;</span> Draw #{draw.draw_number}
+              {draw.revision_number > 0 && <span className="text-brass ml-1">Rev {draw.revision_number}</span>}
             </h1>
             <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 rounded-full border border-brand-border-light font-medium">
               {formatStatus(draw.status)}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const a = document.createElement("a");
-                a.href = `/api/draws/${drawId}/export`;
-                a.download = "";
-                a.click();
-              }}
-              className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm rounded-lg transition-colors">
-              Export to Excel
-            </button>
-            {action && (
+            {draw.status !== "paid" && (
+              <button
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = `/api/draws/${drawId}/export`;
+                  a.download = "";
+                  a.click();
+                }}
+                className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm rounded-lg transition-colors">
+                Export to Excel
+              </button>
+            )}
+            {action && draw.status !== "paid" && (
               <button onClick={() => handleAction(action.next)} disabled={acting}
                 className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-sm font-medium rounded-lg transition-colors">
                 {acting ? "Processing..." : action.label}
@@ -147,6 +166,36 @@ export default function DrawDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Locked banner for submitted/paid draws */}
+      {draw.status === "submitted" && (
+        <div className="bg-teal/10 border-b border-teal/30">
+          <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              <p className="text-teal text-sm">This draw has been submitted to the owner. It is locked — changes require a formal revision.</p>
+            </div>
+            <button
+              onClick={handleCreateRevision}
+              disabled={acting}
+              className="px-4 py-1.5 bg-teal/20 hover:bg-teal/30 border border-teal/40 text-teal text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex-shrink-0 ml-4">
+              {acting ? "Creating..." : "Create Revision"}
+            </button>
+          </div>
+        </div>
+      )}
+      {draw.status === "paid" && (
+        <div className="bg-teal/10 border-b border-teal/30">
+          <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-3">
+            <svg className="w-5 h-5 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-teal text-sm">This draw has been paid.</p>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-up">
