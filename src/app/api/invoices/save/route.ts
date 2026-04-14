@@ -25,7 +25,7 @@ async function matchVendor(supabase: ReturnType<typeof createServerClient>, vend
 async function matchJob(supabase: ReturnType<typeof createServerClient>, jobRef: string) {
   const { data } = await supabase
     .from("jobs")
-    .select("id, name, address")
+    .select("id, name, address, pm_id")
     .is("deleted_at", null)
     .or(`name.ilike.%${jobRef}%,address.ilike.%${jobRef}%`)
     .limit(1);
@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
         .insert({
           vendor_id: matchedVendor?.id ?? null,
           job_id: matchedJob?.id ?? null,
+          assigned_pm_id: matchedJob?.pm_id ?? null,
           cost_code_id: matchedCostCode?.id ?? null,
           invoice_number: parsed.invoice_number,
           invoice_date: parsed.invoice_date,

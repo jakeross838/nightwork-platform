@@ -25,7 +25,9 @@ interface InvoiceData {
   received_date: string | null; payment_date: string | null; original_file_type: string | null;
   pm_overrides: Record<string, { old: unknown; new: unknown }> | null;
   signed_file_url: string | null;
+  assigned_pm: { id: string; full_name: string; role: string } | null;
   jobs: Job | null; vendors: { id: string; name: string } | null; cost_codes: CostCode | null;
+  pm_users?: { id: string; full_name: string }[];
 }
 
 // ── Searchable Combobox ────────────────────────────────
@@ -177,6 +179,8 @@ export default function InvoiceReviewPage() {
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [showMissingFieldsBlock, setShowMissingFieldsBlock] = useState(false);
   const [showDocPreview, setShowDocPreview] = useState(false);
+  const [pmUsers, setPmUsers] = useState<{ id: string; full_name: string }[]>([]);
+  const [reassigning, setReassigning] = useState(false);
 
   // Fetch invoice
   useEffect(() => {
@@ -194,6 +198,7 @@ export default function InvoiceReviewPage() {
         setInvoiceType(data.invoice_type ?? "");
         setDescription(data.description ?? "");
         setCoReference(data.co_reference_raw ?? "");
+        if (data.pm_users) setPmUsers(data.pm_users);
         // Default CO toggle if AI detected a CO reference
         if (data.co_reference_raw) setIsChangeOrder(true);
         // Check if cost code is a CO variant
@@ -239,6 +244,23 @@ export default function InvoiceReviewPage() {
     }
     fetchBudget();
   }, [jobId, costCodeId]);
+
+  const handleReassignPm = async (newPmId: string) => {
+    setReassigning(true);
+    const res = await fetch(`/api/invoices/${invoiceId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assigned_pm_id: newPmId || null }),
+    });
+    if (res.ok && invoice) {
+      const newPm = newPmId ? pmUsers.find(u => u.id === newPmId) : null;
+      setInvoice({
+        ...invoice,
+        assigned_pm: newPm ? { id: newPm.id, full_name: newPm.full_name, role: "" } : null,
+      });
+    }
+    setReassigning(false);
+  };
 
   const buildOverrides = useCallback(() => {
     if (!invoice) return {};
@@ -333,6 +355,20 @@ export default function InvoiceReviewPage() {
           </span>
           <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 rounded-full border border-brand-border-light font-medium">
             {formatStatus(invoice.status)}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-xs text-cream-dim">
+            <span>PM:</span>
+            <select
+              value={invoice.assigned_pm?.id ?? ""}
+              onChange={(e) => handleReassignPm(e.target.value)}
+              disabled={reassigning}
+              className="bg-brand-surface border border-brand-border rounded-lg text-sm text-cream px-2 py-1 focus:border-teal focus:outline-none disabled:opacity-50 cursor-pointer"
+            >
+              <option value="">Unassigned</option>
+              {pmUsers.map(u => (
+                <option key={u.id} value={u.id}>{u.full_name}</option>
+              ))}
+            </select>
           </span>
         </div>
       </div>

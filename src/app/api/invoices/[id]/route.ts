@@ -14,7 +14,8 @@ export async function GET(
         *,
         jobs:job_id (id, name, address, client_name, original_contract_amount, current_contract_amount),
         vendors:vendor_id (id, name),
-        cost_codes:cost_code_id (id, code, description)
+        cost_codes:cost_code_id (id, code, description),
+        assigned_pm:assigned_pm_id (id, full_name, role)
       `)
       .eq("id", params.id)
       .is("deleted_at", null)
@@ -33,7 +34,15 @@ export async function GET(
       signedUrl = urlData?.signedUrl ?? null;
     }
 
-    return NextResponse.json({ ...invoice, signed_file_url: signedUrl });
+    // Fetch PM/admin users for reassignment dropdown
+    const { data: pmUsers } = await supabase
+      .from("users")
+      .select("id, full_name")
+      .in("role", ["pm", "admin"])
+      .is("deleted_at", null)
+      .order("full_name");
+
+    return NextResponse.json({ ...invoice, signed_file_url: signedUrl, pm_users: pmUsers ?? [] });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
