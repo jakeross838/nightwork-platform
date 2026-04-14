@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import mammoth from "mammoth";
 import { createServerClient } from "@/lib/supabase/server";
 import {
- parseInvoiceWithVision,
- parseInvoiceFromText,
-} from "@/lib/claude/parse-invoice";
+ ACCEPTED_MIME_TYPES,
+ parseInvoiceFile,
+} from "@/lib/invoices/parse-file";
 
 export const dynamic = "force-dynamic";
-
-const ACCEPTED_TYPES: Record<string, string> = {
- "application/pdf": "pdf",
- "image/jpeg": "image",
- "image/png": "image",
- "image/jpg": "image",
- "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
- "docx",
- "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-};
-
 export const maxDuration = 120; // Allow up to 2 minutes for retries
 
 export async function POST(request: NextRequest) {
@@ -29,10 +17,16 @@ export async function POST(request: NextRequest) {
  return NextResponse.json({ error: "No file provided" }, { status: 400 });
  }
 
- const fileType = ACCEPTED_TYPES[file.type];
- if (!fileType) {
+ const fileKind = ACCEPTED_MIME_TYPES[file.type];
+ if (!fileKind) {
  return NextResponse.json(
  { error: `Unsupported file type: ${file.type}` },
+ { status: 400 }
+ );
+ }
+ if (fileKind === "xlsx") {
+ return NextResponse.json(
+ { error: "XLSX parsing is not yet supported. Please convert to PDF." },
  { status: 400 }
  );
  }
@@ -60,28 +54,16 @@ export async function POST(request: NextRequest) {
  );
  }
 
- // Parse with Claude based on file type
- let parsed;
+ const parsed = await parseInvoiceFile({
+ buffer,
+ mediaType: file.type,
+ fileKind,
+ fileName: file.name,
+ // Shared helper works with both SSR and supabase-js clients.
+ supabase: supabase as unknown as Parameters<typeof parseInvoiceFile>[0]["supabase"],
+ });
 
- if (fileType === "pdf" || fileType === "image") {
- parsed = await parseInvoiceWithVision(buffer, file.type, file.name);
- } else if (fileType === "docx") {
- const result = await mammoth.extractRawText({ buffer });
- if (!result.value.trim()) {
- return NextResponse.json(
- { error: "Could not extract text from DOCX file" },
- { status: 400 }
- );
- }
- parsed = await parseInvoiceFromText(result.value, file.name);
- } else {
- return NextResponse.json(
- { error: "XLSX parsing is not yet supported. Please convert to PDF." },
- { status: 400 }
- );
- }
-
- // Attempt to match job from parsed job_reference
+ // Attempt to match job from parsed job_reference (for the UI suggestion chip)
  if (parsed.job_reference) {
  const jobRef = parsed.job_reference;
  const jobConfidence = parsed.confidence_details?.job_reference ?? 0;
@@ -104,7 +86,7 @@ export async function POST(request: NextRequest) {
  parsed,
  file_url: storagePath,
  file_name: file.name,
- file_type: fileType,
+ file_type: fileKind,
  });
  } catch (err) {
  console.error("Invoice parse error:", err);

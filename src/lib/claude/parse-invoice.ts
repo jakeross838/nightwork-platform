@@ -1,8 +1,21 @@
 import Anthropic from "@anthropic-ai/sdk";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ParsedInvoice } from "@/lib/types/invoice";
-import { createServerClient } from "@/lib/supabase/server";
 
-const anthropic = new Anthropic();
+// Lazy so the SDK isn't instantiated at module-load time (before dotenv
+// runs in scripts, before env is injected on Vercel edge workers, etc.).
+let _anthropic: Anthropic | null = null;
+function getAnthropic(): Anthropic {
+ if (!_anthropic) _anthropic = new Anthropic();
+ return _anthropic;
+}
+
+/**
+ * A minimal interface covering the subset of SupabaseClient we rely on.
+ * Both the SSR client (used by API routes) and the plain supabase-js
+ * client (used by /scripts) satisfy it.
+ */
+type Client = SupabaseClient | { from: (table: string) => unknown };
 
 async function callWithRetry(
  fn: () => Promise<Anthropic.Messages.Message>,
@@ -29,9 +42,11 @@ async function callWithRetry(
  throw new Error("Retry logic failed unexpectedly");
 }
 
-async function getCostCodeList(): Promise<string> {
- const supabase = createServerClient();
- const { data } = await supabase
+async function getCostCodeList(supabase: Client): Promise<string> {
+ // `any` here because this function supports both SSR and plain supabase-js
+ // clients; the call shape is identical but the generic parameters differ.
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ const { data } = await (supabase as any)
  .from("cost_codes")
  .select("code, description, category, is_change_order")
  .is("deleted_at", null)
@@ -40,7 +55,10 @@ async function getCostCodeList(): Promise<string> {
  if (!data || data.length === 0) return "";
 
  return data
- .map((c) => `${c.code} - ${c.description} [${c.category}]${c.is_change_order ? " (CO)" : ""}`)
+ .map(
+ (c: { code: string; description: string; category: string; is_change_order: boolean }) =>
+ `${c.code} - ${c.description} [${c.category}]${c.is_change_order ? " (CO)" : ""}`
+ )
  .join("\n");
 }
 
@@ -125,10 +143,11 @@ type ImageMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 export async function parseInvoiceWithVision(
  fileBuffer: Buffer,
  mediaType: string,
- fileName: string
+ fileName: string,
+ supabase: Client
 ): Promise<ParsedInvoice> {
  const base64 = fileBuffer.toString("base64");
- const costCodeList = await getCostCodeList();
+ const costCodeList = await getCostCodeList(supabase);
  const prompt = buildPrompt(costCodeList);
 
  const contentBlocks: Anthropic.Messages.ContentBlockParam[] = [];
@@ -159,7 +178,7 @@ export async function parseInvoiceWithVision(
  });
 
  const response = await callWithRetry(() =>
- anthropic.messages.create({
+ getAnthropic().messages.create({
  model: "claude-sonnet-4-20250514",
  max_tokens: 4096,
  messages: [
@@ -186,13 +205,14 @@ export async function parseInvoiceWithVision(
 
 export async function parseInvoiceFromText(
  text: string,
- fileName: string
+ fileName: string,
+ supabase: Client
 ): Promise<ParsedInvoice> {
- const costCodeList = await getCostCodeList();
+ const costCodeList = await getCostCodeList(supabase);
  const prompt = buildPrompt(costCodeList);
 
  const response = await callWithRetry(() =>
- anthropic.messages.create({
+ getAnthropic().messages.create({
  model: "claude-sonnet-4-20250514",
  max_tokens: 4096,
  messages: [
