@@ -83,23 +83,23 @@ export default function DrawsPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-brand-surface text-left">
-                        <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Draw #</th>
-                        <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Period</th>
-                        <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Application Date</th>
-                        <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Status</th>
-                        <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">Current Payment Due</th>
+                        <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Draw #</th>
+                        <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Period</th>
+                        <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Application Date</th>
+                        <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Status</th>
+                        <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Current Payment Due</th>
                       </tr>
                     </thead>
                     <tbody>
                       {jobDraws.map((d) => (
                         <tr key={d.id}
-                          className="border-t border-brand-border/50 hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                          className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
                           onClick={() => window.location.href = `/draws/${d.id}`}>
                           <td className="py-4 px-5 text-cream font-display font-medium">#{d.draw_number}</td>
                           <td className="py-4 px-5 text-cream-muted">{d.period_start} — {d.period_end}</td>
                           <td className="py-4 px-5 text-cream-muted">{d.application_date}</td>
                           <td className="py-4 px-5">
-                            <span className="text-xs text-cream-dim bg-brand-card px-2.5 py-1 rounded-full border border-brand-border">
+                            <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 rounded-full border border-brand-border-light font-medium">
                               {formatStatus(d.status)}
                             </span>
                           </td>

@@ -104,7 +104,7 @@ export default function QaReviewPage() {
           <h1 className="font-display text-xl text-cream">
             {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim">&mdash;</span> {invoice.invoice_number ?? "No #"}
           </h1>
-          <span className="text-xs text-cream-dim bg-brand-card px-2.5 py-1 rounded-full border border-brand-border">
+          <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 rounded-full border border-brand-border-light font-medium">
             {formatStatus(invoice.status)}
           </span>
         </div>
@@ -196,13 +196,13 @@ export default function QaReviewPage() {
                   <div className="overflow-x-auto rounded-lg border border-brand-border">
                     <table className="w-full text-xs">
                       <thead><tr className="bg-brand-surface">
-                        <th className="py-2 px-3 text-left text-cream-dim font-medium">Description</th>
-                        <th className="py-2 px-3 text-right text-cream-dim font-medium">Amount</th>
+                        <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
+                        <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
                       </tr></thead>
                       <tbody>
                         {invoice.line_items.map((item, i) => (
-                          <tr key={i} className="border-t border-brand-border/50">
-                            <td className="py-2 px-3 text-cream-muted">{item.description}</td>
+                          <tr key={i} className="border-t border-brand-row-border">
+                            <td className="py-2 px-3 text-cream">{item.description}</td>
                             <td className="py-2 px-3 text-right text-cream font-medium">{item.amount ? `$${item.amount.toFixed(2)}` : "—"}</td>
                           </tr>
                         ))}

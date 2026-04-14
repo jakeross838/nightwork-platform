@@ -59,7 +59,7 @@ export default function Home() {
       </div>
 
       <div className="absolute bottom-6 text-center animate-fade-up stagger-6">
-        <p className="text-xs text-cream-dim/50 tracking-wider uppercase font-body">Est. 2006 &middot; Luxury Coastal Custom Homes</p>
+        <p className="text-xs text-cream-dim tracking-wider uppercase font-body">Est. 2006 &middot; Luxury Coastal Custom Homes</p>
       </div>
     </div>
   );

@@ -66,19 +66,19 @@ export default function QueuePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-brand-surface text-left">
-                  <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Vendor</th>
-                  <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Invoice #</th>
-                  <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Date</th>
-                  <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Job</th>
-                  <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">Amount</th>
-                  <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Confidence</th>
-                  <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">Waiting</th>
+                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
+                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Invoice #</th>
+                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Date</th>
+                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Job</th>
+                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
+                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Confidence</th>
+                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Waiting</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.map((inv, i) => (
                   <tr key={inv.id}
-                    className="border-t border-brand-border/50 hover:bg-brand-elevated/50 cursor-pointer transition-colors animate-fade-up"
+                    className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors animate-fade-up"
                     style={{ animationDelay: `${0.05 + i * 0.03}s` }}
                     onClick={() => window.location.href = `/invoices/${inv.id}`}
                   >

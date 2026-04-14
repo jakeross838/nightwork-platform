@@ -123,7 +123,7 @@ export default function DrawDetailPage() {
             <h1 className="font-display text-xl text-cream">
               {draw.jobs?.name} <span className="text-cream-dim">&mdash;</span> Draw #{draw.draw_number}
             </h1>
-            <span className="text-xs text-cream-dim bg-brand-card px-2.5 py-1 rounded-full border border-brand-border">
+            <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 rounded-full border border-brand-border-light font-medium">
               {formatStatus(draw.status)}
             </span>
           </div>
@@ -202,29 +202,31 @@ export default function DrawDetailPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-brand-surface text-left">
-                    <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider">A — Item</th>
-                    <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider">B — Description</th>
-                    <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">C — Original Est.</th>
-                    <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">D — Previous</th>
-                    <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">E — This Period</th>
-                    <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">F — Total to Date</th>
-                    <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">G — %</th>
-                    <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">H — Balance</th>
+                    <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">A — Item</th>
+                    <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">B — Description</th>
+                    <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">C — Original Est.</th>
+                    <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">D — Previous</th>
+                    <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">E — This Period</th>
+                    <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">F — Total to Date</th>
+                    <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">G — %</th>
+                    <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">H — Balance</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleRows.map((row) => {
+                  {visibleRows.map((row, idx) => {
                     const overBudget = row.balance_to_finish < 0;
+                    const stripe = idx % 2 === 1 ? "bg-brand-surface/40" : "";
+                    const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
                     return (
-                      <tr key={row.code} className={`border-t border-brand-border/50 ${row.this_period > 0 ? "bg-teal/5" : ""}`}>
+                      <tr key={row.code} className={`border-t border-brand-row-border ${highlight}`}>
                         <td className="py-2.5 px-4 text-cream font-mono text-xs">{row.code}</td>
-                        <td className="py-2.5 px-4 text-cream-muted">{row.description}</td>
-                        <td className="py-2.5 px-4 text-cream-muted text-right">{formatCents(row.original_estimate)}</td>
-                        <td className="py-2.5 px-4 text-cream-dim text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : "—"}</td>
+                        <td className="py-2.5 px-4 text-cream">{row.description}</td>
+                        <td className="py-2.5 px-4 text-cream text-right">{formatCents(row.original_estimate)}</td>
+                        <td className="py-2.5 px-4 text-cream text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}</td>
                         <td className="py-2.5 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
-                        <td className="py-2.5 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : "—"}</td>
-                        <td className="py-2.5 px-4 text-cream-dim text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : "—"}</td>
-                        <td className={`py-2.5 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream-muted"}`}>{formatCents(row.balance_to_finish)}</td>
+                        <td className="py-2.5 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}</td>
+                        <td className="py-2.5 px-4 text-cream-muted text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}</td>
+                        <td className={`py-2.5 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>{formatCents(row.balance_to_finish)}</td>
                       </tr>
                     );
                   })}
@@ -233,7 +235,7 @@ export default function DrawDetailPage() {
                   <tr className="border-t-2 border-brand-border bg-brand-surface">
                     <td colSpan={2} className="py-3 px-4 text-cream font-medium">Grand Total</td>
                     <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.original)}</td>
-                    <td className="py-3 px-4 text-cream-dim text-right">{totals.previous > 0 ? formatCents(totals.previous) : "—"}</td>
+                    <td className="py-3 px-4 text-cream text-right font-display font-medium">{totals.previous > 0 ? formatCents(totals.previous) : <span className="text-cream-dim">—</span>}</td>
                     <td className="py-3 px-4 text-teal text-right font-display font-medium">{formatCents(totals.thisPeriod)}</td>
                     <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.totalToDate)}</td>
                     <td className="py-3 px-4 text-cream-dim text-right">
@@ -253,14 +255,14 @@ export default function DrawDetailPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-brand-surface text-left">
-                        <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Vendor</th>
-                        <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Invoice #</th>
-                        <th className="py-3 px-4 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">Amount</th>
+                        <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
+                        <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider">Invoice #</th>
+                        <th className="py-3 px-4 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
                       {draw.invoices.map((inv) => (
-                        <tr key={inv.id} className="border-t border-brand-border/50 hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                        <tr key={inv.id} className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
                           onClick={() => window.location.href = `/invoices/${inv.id}`}>
                           <td className="py-3 px-4 text-cream">{inv.vendor_name_raw ?? "Unknown"}</td>
                           <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
@@ -289,7 +291,7 @@ function G702Row({ num, label, value, bold, highlight, sub }: {
         {!num && <span className="w-4" />}
         <span className={`text-xs ${bold ? "text-cream font-medium" : "text-cream-muted"}`}>{label}</span>
       </div>
-      <span className={`font-display text-sm ${highlight ? "text-brass font-medium" : bold ? "text-cream font-medium" : "text-cream-muted"}`}>
+      <span className={`font-display text-sm ${highlight ? "text-brass font-medium" : bold ? "text-cream font-medium" : "text-cream"}`}>
         {formatCents(value)}
       </span>
     </div>

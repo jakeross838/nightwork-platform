@@ -141,7 +141,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
             // Scope-only display: just descriptions, no $0 columns
             <div className="rounded-lg border border-brand-border overflow-hidden">
               {parsed.line_items.map((item, i) => (
-                <div key={i} className={`px-3 py-2 text-sm text-cream-muted ${i > 0 ? "border-t border-brand-border/50" : ""}`}>
+                <div key={i} className={`px-3 py-2 text-sm text-cream-muted ${i > 0 ? "border-t border-brand-row-border" : ""}`}>
                   {item.description}
                 </div>
               ))}
@@ -161,7 +161,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
                 </thead>
                 <tbody>
                   {parsed.line_items.map((item, i) => (
-                    <tr key={i} className="border-t border-brand-border/50">
+                    <tr key={i} className="border-t border-brand-row-border">
                       <td className="py-2 px-3 text-cream-muted">{item.description}</td>
                       <td className="py-2 px-3 text-cream-muted text-right">{item.qty ?? "—"}</td>
                       <td className="py-2 px-3 text-cream-dim">{item.unit ?? "—"}</td>

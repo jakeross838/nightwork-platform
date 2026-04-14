@@ -16,11 +16,12 @@ const config: Config = {
           elevated: "#33322b",
           border: "#3d3c34",
           "border-light": "#4a493f",
+          "row-border": "#383730",
         },
         cream: {
           DEFAULT: "#f5f0e8",
-          muted: "#b8b2a4",
-          dim: "#8a8478",
+          muted: "#d2ccc0",
+          dim: "#a09688",
         },
         teal: {
           DEFAULT: "#4a9b8e",

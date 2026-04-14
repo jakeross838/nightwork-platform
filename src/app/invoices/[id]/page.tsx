@@ -330,7 +330,7 @@ export default function InvoiceReviewPage() {
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${confidenceColor(invoice.confidence_score)}`}>
             {Math.round(invoice.confidence_score * 100)}% {confidenceLabel(invoice.confidence_score)}
           </span>
-          <span className="text-xs text-cream-dim bg-brand-card px-2.5 py-1 rounded-full border border-brand-border">
+          <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 rounded-full border border-brand-border-light font-medium">
             {formatStatus(invoice.status)}
           </span>
         </div>
@@ -471,18 +471,18 @@ export default function InvoiceReviewPage() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="bg-brand-surface">
-                          <th className="py-2 px-3 text-left text-cream-dim font-medium">Description</th>
-                          <th className="py-2 px-3 text-right text-cream-dim font-medium">Qty</th>
-                          <th className="py-2 px-3 text-right text-cream-dim font-medium">Rate</th>
-                          <th className="py-2 px-3 text-right text-cream-dim font-medium">Amount</th>
+                          <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
+                          <th className="py-2 px-3 text-right text-cream font-semibold">Qty</th>
+                          <th className="py-2 px-3 text-right text-cream font-semibold">Rate</th>
+                          <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
                         {invoice.line_items.map((item, i) => (
-                          <tr key={i} className="border-t border-brand-border/50">
-                            <td className="py-2 px-3 text-cream-muted">{item.description}</td>
-                            <td className="py-2 px-3 text-right text-cream-dim">{item.qty ?? "—"}</td>
-                            <td className="py-2 px-3 text-right text-cream-dim">{item.rate != null ? `$${item.rate}` : "—"}</td>
+                          <tr key={i} className="border-t border-brand-row-border">
+                            <td className="py-2 px-3 text-cream">{item.description}</td>
+                            <td className="py-2 px-3 text-right text-cream-muted">{item.qty ?? <span className="text-cream-dim">—</span>}</td>
+                            <td className="py-2 px-3 text-right text-cream-muted">{item.rate != null ? `$${item.rate}` : <span className="text-cream-dim">—</span>}</td>
                             <td className="py-2 px-3 text-right text-cream font-medium">${item.amount?.toFixed(2)}</td>
                           </tr>
                         ))}

@@ -171,15 +171,15 @@ export default function NewDrawPage() {
                           onChange={() => setSelected(selected.size === invoices.length ? new Set() : new Set(invoices.map(i => i.id)))}
                           className="rounded" />
                       </th>
-                      <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Vendor</th>
-                      <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Invoice #</th>
-                      <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider">Cost Code</th>
-                      <th className="py-3 px-5 text-[11px] text-cream-dim font-medium uppercase tracking-wider text-right">Amount</th>
+                      <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
+                      <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Invoice #</th>
+                      <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Cost Code</th>
+                      <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {invoices.map((inv) => (
-                      <tr key={inv.id} className="border-t border-brand-border/50 hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                      <tr key={inv.id} className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
                         onClick={() => toggleInvoice(inv.id)}>
                         <td className="py-3 px-5">
                           <input type="checkbox" checked={selected.has(inv.id)} onChange={() => toggleInvoice(inv.id)} className="rounded" />
