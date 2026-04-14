@@ -175,16 +175,31 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
         {parsed.vendor_address && <Field label="Vendor Address" value={parsed.vendor_address} />}
       </div>
 
-      {/* AI Cost Code Suggestion */}
-      {parsed.cost_code_suggestion && (
-        <div className="flex items-center gap-2 px-3 py-2.5 bg-brand-surface border border-brand-border rounded-xl">
-          <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Suggested Cost Code</span>
-          <span className="text-sm text-cream font-medium">
-            {parsed.cost_code_suggestion.code} — {parsed.cost_code_suggestion.description}
-          </span>
-          <span className={`ml-auto px-2 py-0.5 rounded text-xs ${confidenceColor(parsed.cost_code_suggestion.confidence)}`}>
-            {Math.round(parsed.cost_code_suggestion.confidence * 100)}%
-          </span>
+      {/* AI Suggestions */}
+      {(parsed.job_suggestion || parsed.cost_code_suggestion) && (
+        <div className="space-y-2">
+          {parsed.job_suggestion && (
+            <div className="flex items-center gap-2 px-3 py-2.5 bg-brand-surface border border-brand-border rounded-xl">
+              <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider flex-shrink-0">Suggested Job</span>
+              <span className="text-sm text-cream font-medium truncate">
+                {parsed.job_suggestion.name}
+              </span>
+              <span className={`ml-auto flex-shrink-0 px-2 py-0.5 rounded text-xs ${confidenceColor(parsed.job_suggestion.confidence)}`}>
+                {Math.round(parsed.job_suggestion.confidence * 100)}%
+              </span>
+            </div>
+          )}
+          {parsed.cost_code_suggestion && (
+            <div className="flex items-center gap-2 px-3 py-2.5 bg-brand-surface border border-brand-border rounded-xl">
+              <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider flex-shrink-0">Suggested Cost Code</span>
+              <span className="text-sm text-cream font-medium truncate">
+                {parsed.cost_code_suggestion.code} — {parsed.cost_code_suggestion.description}
+              </span>
+              <span className={`ml-auto flex-shrink-0 px-2 py-0.5 rounded text-xs ${confidenceColor(parsed.cost_code_suggestion.confidence)}`}>
+                {Math.round(parsed.cost_code_suggestion.confidence * 100)}%
+              </span>
+            </div>
+          )}
         </div>
       )}
 

@@ -23,6 +23,12 @@ export interface CostCodeSuggestion {
   is_change_order: boolean;
 }
 
+export interface JobSuggestion {
+  name: string;
+  address: string | null;
+  confidence: number;
+}
+
 export interface ParsedInvoice {
   vendor_name: string;
   vendor_address: string | null;
@@ -41,6 +47,7 @@ export interface ParsedInvoice {
   confidence_details: ConfidenceDetails;
   flags: string[];
   cost_code_suggestion?: CostCodeSuggestion;
+  job_suggestion?: JobSuggestion;
   document_type?: "invoice" | "proposal" | "quote" | "credit_memo" | "statement" | "unknown";
 }
 

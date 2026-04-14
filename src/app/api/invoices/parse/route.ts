@@ -79,6 +79,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Attempt to match job from parsed job_reference
+    if (parsed.job_reference) {
+      const jobRef = parsed.job_reference;
+      const jobConfidence = parsed.confidence_details?.job_reference ?? 0;
+      const { data: matchedJobs } = await supabase
+        .from("jobs")
+        .select("name, address")
+        .is("deleted_at", null)
+        .or(`name.ilike.%${jobRef}%,address.ilike.%${jobRef}%`)
+        .limit(1);
+      if (matchedJobs && matchedJobs.length > 0) {
+        parsed.job_suggestion = {
+          name: matchedJobs[0].name,
+          address: matchedJobs[0].address,
+          confidence: jobConfidence,
+        };
+      }
+    }
+
     return NextResponse.json({
       parsed,
       file_url: storagePath,
