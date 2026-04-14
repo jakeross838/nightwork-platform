@@ -91,9 +91,11 @@ export default function NavBar() {
   const closeMobile = () => setMobileOpen(false);
 
   const isUploadActive = pathname === "/invoices/upload";
+  const isAllInvoicesActive = pathname === "/invoices";
   const isPmActive =
     pathname === "/invoices/queue" ||
     (pathname.startsWith("/invoices/") &&
+      pathname !== "/invoices" &&
       !pathname.includes("/qa") &&
       !pathname.includes("/upload") &&
       !pathname.includes("/draws"));
@@ -119,6 +121,11 @@ export default function NavBar() {
             href="/invoices/upload"
             label="Upload"
             active={isUploadActive}
+          />
+          <NavLink
+            href="/invoices"
+            label="All Invoices"
+            active={isAllInvoicesActive}
           />
           <NavLink
             href="/invoices/queue"
@@ -181,6 +188,13 @@ export default function NavBar() {
             href="/invoices/upload"
             label="Upload"
             active={isUploadActive}
+            mobile
+            onClick={closeMobile}
+          />
+          <NavLink
+            href="/invoices"
+            label="All Invoices"
+            active={isAllInvoicesActive}
             mobile
             onClick={closeMobile}
           />
