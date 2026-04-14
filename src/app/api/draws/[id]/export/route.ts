@@ -151,6 +151,10 @@ export async function GET(
     // ═══════════════════════════════════════════════
     const ws1 = wb.addWorksheet("Project Summary (G702)", {
       pageSetup: { paperSize: 1 as unknown as ExcelJS.PaperSize, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 1, margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 } },
+      headerFooter: {
+        oddHeader: "&CRoss Built Construction, LLC",
+        oddFooter: "&RPage &P of &N",
+      },
     });
 
     ws1.columns = [
@@ -217,6 +221,17 @@ export async function GET(
     r++;
     ws1.getCell(`C${r}`).value = job?.address ?? "";
     ws1.getCell(`C${r}`).font = FONT_VALUE;
+
+    r = 7;
+    ws1.getCell(`F${r}`).value = "CONTRACT FOR:";
+    ws1.getCell(`F${r}`).font = FONT_LABEL;
+    ws1.getCell(`G${r}`).value = "General Construction";
+    ws1.getCell(`G${r}`).font = FONT_VALUE;
+    r++;
+    ws1.getCell(`F${r}`).value = "CONTRACT DATE:";
+    ws1.getCell(`F${r}`).font = FONT_LABEL;
+    ws1.getCell(`G${r}`).value = formatDateStr(draw.application_date);
+    ws1.getCell(`G${r}`).font = FONT_VALUE;
 
     r = 10;
     ws1.getCell(`B${r}`).value = "FROM CONTRACTOR:";
@@ -346,7 +361,11 @@ export async function GET(
     // SHEET 2: G703 — Continuation Sheet
     // ═══════════════════════════════════════════════
     const ws2 = wb.addWorksheet("Line Item Estimate (G703)", {
-      pageSetup: { paperSize: 1 as unknown as ExcelJS.PaperSize, orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.4, right: 0.4, top: 0.7, bottom: 0.5, header: 0.3, footer: 0.3 } },
+      pageSetup: { paperSize: 1 as unknown as ExcelJS.PaperSize, orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 }, printTitlesRow: "7:7" },
+      headerFooter: {
+        oddHeader: "&CRoss Built Construction, LLC",
+        oddFooter: "&RPage &P of &N",
+      },
     });
 
     ws2.columns = [
@@ -358,6 +377,8 @@ export async function GET(
       { width: 16, key: "toDate" },    // F — Total to Date
       { width: 10, key: "pct" },       // G — % Complete
       { width: 16, key: "balance" },   // H — Balance to Finish
+      { width: 16, key: "proposal" },  // I — Proposal Amount
+      { width: 16, key: "balContract" }, // J — Balance in Contract
     ];
 
     // ── G703 Header block ──
@@ -365,13 +386,13 @@ export async function GET(
     ws2.mergeCells(`A${r}:B${r}`);
     ws2.getCell(`A${r}`).value = "CONTINUATION SHEET";
     ws2.getCell(`A${r}`).font = FONT_TITLE;
-    ws2.mergeCells(`F${r}:H${r}`);
-    ws2.getCell(`F${r}`).value = "AIA DOCUMENT G703";
-    ws2.getCell(`F${r}`).font = { ...FONT_SUBTITLE, size: 12 };
-    ws2.getCell(`F${r}`).alignment = { horizontal: "right" };
+    ws2.mergeCells(`H${r}:J${r}`);
+    ws2.getCell(`H${r}`).value = "AIA DOCUMENT G703";
+    ws2.getCell(`H${r}`).font = { ...FONT_SUBTITLE, size: 12 };
+    ws2.getCell(`H${r}`).alignment = { horizontal: "right" };
 
     r = 2;
-    for (const col of ["A", "B", "C", "D", "E", "F", "G", "H"]) {
+    for (const col of ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]) {
       ws2.getCell(`${col}${r}`).border = { bottom: { style: "medium", color: { argb: HEADER_GOLD } } };
     }
     ws2.getRow(r).height = 6;
@@ -413,6 +434,8 @@ export async function GET(
       { col: "F", text: "F\nTOTAL\nCOMPLETED TO DATE", width: 16 },
       { col: "G", text: "G\n%", width: 10 },
       { col: "H", text: "H\nBALANCE\nTO FINISH", width: 16 },
+      { col: "I", text: "I\nPROPOSAL\nAMOUNT", width: 16 },
+      { col: "J", text: "J\nBALANCE\nIN CONTRACT", width: 16 },
     ];
 
     ws2.getRow(r).height = 40;
@@ -429,8 +452,8 @@ export async function GET(
     const PAGE_SIZE = 30;
     let rowsOnPage = 0;
     let pageNum = 1;
-    let pageSub = { original: 0, previous: 0, thisPeriod: 0, toDate: 0, balance: 0 };
-    const grandTotal = { original: 0, previous: 0, thisPeriod: 0, toDate: 0, balance: 0 };
+    let pageSub = { original: 0, previous: 0, thisPeriod: 0, toDate: 0, balance: 0, proposal: 0, balContract: 0 };
+    const grandTotal = { original: 0, previous: 0, thisPeriod: 0, toDate: 0, balance: 0, proposal: 0, balContract: 0 };
 
     r = 8;
 
@@ -440,7 +463,7 @@ export async function GET(
 
       const rowObj = ws2.getRow(r);
       if (isEvenRow) {
-        for (let c = 1; c <= 8; c++) {
+        for (let c = 1; c <= 10; c++) {
           rowObj.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_GRAY_BG } };
         }
       }
@@ -482,8 +505,21 @@ export async function GET(
       ws2.getCell(`H${r}`).font = line.balance_to_finish < 0 ? { ...FONT_BODY, color: { argb: "CC0000" } } : FONT_BODY;
       ws2.getCell(`H${r}`).alignment = { horizontal: "right" };
 
+      // Column I: Proposal Amount (placeholder — CO per-cost-code breakdown not yet available)
+      ws2.getCell(`I${r}`).value = null;
+      ws2.getCell(`I${r}`).numFmt = CURRENCY_FMT;
+      ws2.getCell(`I${r}`).font = FONT_BODY;
+      ws2.getCell(`I${r}`).alignment = { horizontal: "right" };
+
+      // Column J: Balance in Contract = revised_estimate - total_to_date
+      const balanceInContract = line.revised_estimate - line.total_to_date;
+      ws2.getCell(`J${r}`).value = centsToExcel(balanceInContract);
+      ws2.getCell(`J${r}`).numFmt = CURRENCY_FMT;
+      ws2.getCell(`J${r}`).font = balanceInContract < 0 ? { ...FONT_BODY, color: { argb: "CC0000" } } : FONT_BODY;
+      ws2.getCell(`J${r}`).alignment = { horizontal: "right" };
+
       // Borders on all data cells
-      for (let c = 1; c <= 8; c++) {
+      for (let c = 1; c <= 10; c++) {
         rowObj.getCell(c).border = { left: THIN_BORDER, right: THIN_BORDER, bottom: { style: "hair", color: { argb: "D9D9D9" } } };
       }
 
@@ -493,12 +529,16 @@ export async function GET(
       pageSub.thisPeriod += line.this_period;
       pageSub.toDate += line.total_to_date;
       pageSub.balance += line.balance_to_finish;
+      pageSub.proposal += 0; // placeholder
+      pageSub.balContract += (line.revised_estimate - line.total_to_date);
 
       grandTotal.original += line.original_estimate;
       grandTotal.previous += line.previous_applications;
       grandTotal.thisPeriod += line.this_period;
       grandTotal.toDate += line.total_to_date;
       grandTotal.balance += line.balance_to_finish;
+      grandTotal.proposal += 0; // placeholder
+      grandTotal.balContract += (line.revised_estimate - line.total_to_date);
 
       rowsOnPage++;
       r++;
@@ -507,7 +547,7 @@ export async function GET(
       if (rowsOnPage >= PAGE_SIZE && i < g703Lines.length - 1) {
         writeSubtotalRow(ws2, r, `Total Page ${pageNum}`, pageSub);
         r += 2; // blank row after subtotal
-        pageSub = { original: 0, previous: 0, thisPeriod: 0, toDate: 0, balance: 0 };
+        pageSub = { original: 0, previous: 0, thisPeriod: 0, toDate: 0, balance: 0, proposal: 0, balContract: 0 };
         rowsOnPage = 0;
         pageNum++;
 
@@ -545,7 +585,15 @@ export async function GET(
     ws2.getCell(`H${r}`).numFmt = CURRENCY_FMT;
     ws2.getCell(`H${r}`).font = FONT_GRAND_TOTAL;
 
-    for (let c = 1; c <= 8; c++) {
+    ws2.getCell(`I${r}`).value = grandTotal.proposal > 0 ? centsToExcel(grandTotal.proposal) : null;
+    ws2.getCell(`I${r}`).numFmt = CURRENCY_FMT;
+    ws2.getCell(`I${r}`).font = FONT_GRAND_TOTAL;
+
+    ws2.getCell(`J${r}`).value = centsToExcel(grandTotal.balContract);
+    ws2.getCell(`J${r}`).numFmt = CURRENCY_FMT;
+    ws2.getCell(`J${r}`).font = FONT_GRAND_TOTAL;
+
+    for (let c = 1; c <= 10; c++) {
       gtRow.getCell(c).border = { top: { style: "medium", color: { argb: NAVY } }, bottom: { style: "double", color: { argb: NAVY } } };
       gtRow.getCell(c).alignment = { ...gtRow.getCell(c).alignment, horizontal: c <= 2 ? "right" : "right" };
     }
@@ -667,7 +715,7 @@ function writeSubtotalRow(
   ws: ExcelJS.Worksheet,
   r: number,
   label: string,
-  sums: { original: number; previous: number; thisPeriod: number; toDate: number; balance: number }
+  sums: { original: number; previous: number; thisPeriod: number; toDate: number; balance: number; proposal: number; balContract: number }
 ) {
   ws.mergeCells(`A${r}:B${r}`);
   ws.getCell(`A${r}`).value = label;
@@ -688,8 +736,14 @@ function writeSubtotalRow(
   ws.getCell(`H${r}`).value = centsToExcel(sums.balance);
   ws.getCell(`H${r}`).numFmt = CURRENCY_FMT;
   ws.getCell(`H${r}`).font = FONT_TOTAL;
+  ws.getCell(`I${r}`).value = sums.proposal > 0 ? centsToExcel(sums.proposal) : null;
+  ws.getCell(`I${r}`).numFmt = CURRENCY_FMT;
+  ws.getCell(`I${r}`).font = FONT_TOTAL;
+  ws.getCell(`J${r}`).value = centsToExcel(sums.balContract);
+  ws.getCell(`J${r}`).numFmt = CURRENCY_FMT;
+  ws.getCell(`J${r}`).font = FONT_TOTAL;
 
-  for (let c = 1; c <= 8; c++) {
+  for (let c = 1; c <= 10; c++) {
     ws.getRow(r).getCell(c).border = {
       top: { style: "thin", color: { argb: NAVY } },
       bottom: { style: "thin", color: { argb: NAVY } },

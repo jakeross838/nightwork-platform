@@ -657,34 +657,45 @@ export default function InvoiceReviewPage() {
                 </div>
               </div>
 
-              {/* Line Items */}
-              {invoice.line_items?.length > 0 && (
-                <div className="border-t border-brand-border pt-4">
-                  <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">Line Items</p>
-                  <div className="overflow-x-auto rounded-lg border border-brand-border">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="bg-brand-surface">
-                          <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
-                          <th className="py-2 px-3 text-right text-cream font-semibold">Qty</th>
-                          <th className="py-2 px-3 text-right text-cream font-semibold">Rate</th>
-                          <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+              {/* Line Items — smart display for $0 scope items vs priced items */}
+              {invoice.line_items?.length > 0 && (() => {
+                const allZero = invoice.line_items.every(i => !i.amount || i.amount === 0);
+                return (
+                  <div className="border-t border-brand-border pt-4">
+                    <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">{allZero ? "Scope Items" : "Line Items"}</p>
+                    {allZero ? (
+                      <div className="rounded-lg border border-brand-border overflow-hidden">
                         {invoice.line_items.map((item, i) => (
-                          <tr key={i} className="border-t border-brand-row-border">
-                            <td className="py-2 px-3 text-cream">{item.description}</td>
-                            <td className="py-2 px-3 text-right text-cream-muted">{item.qty ?? <span className="text-cream-dim">—</span>}</td>
-                            <td className="py-2 px-3 text-right text-cream-muted">{item.rate != null ? `$${item.rate}` : <span className="text-cream-dim">—</span>}</td>
-                            <td className="py-2 px-3 text-right text-cream font-medium">${item.amount?.toFixed(2)}</td>
-                          </tr>
+                          <div key={i} className={`px-3 py-2 text-xs text-cream ${i > 0 ? "border-t border-brand-row-border" : ""}`}>{item.description}</div>
                         ))}
-                      </tbody>
-                    </table>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-lg border border-brand-border">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="bg-brand-surface">
+                              <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
+                              <th className="py-2 px-3 text-right text-cream font-semibold">Qty</th>
+                              <th className="py-2 px-3 text-right text-cream font-semibold">Rate</th>
+                              <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {invoice.line_items.map((item, i) => (
+                              <tr key={i} className="border-t border-brand-row-border">
+                                <td className="py-2 px-3 text-cream">{item.description}</td>
+                                <td className="py-2 px-3 text-right text-cream-muted">{item.qty ?? <span className="text-cream-dim">—</span>}</td>
+                                <td className="py-2 px-3 text-right text-cream-muted">{item.rate != null ? `$${item.rate}` : <span className="text-cream-dim">—</span>}</td>
+                                <td className="py-2 px-3 text-right text-cream font-medium">${item.amount?.toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Actions — desktop only (mobile uses sticky bar below) */}
