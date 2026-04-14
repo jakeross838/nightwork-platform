@@ -27,18 +27,28 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
+// Expanded list. Goal: bias toward true-positive so anything that reads
+// like "beyond original contract scope" gets flagged for the PM to confirm.
+// A false positive is cheap (PM un-toggles); a false negative is expensive
+// (invoice bills against the base budget when it should have become a CO).
 const CO_KEYWORDS = [
   "change order",
+  "co #",
   "pcco",
-  "extra work",
-  "additional work",
+  "additional",
+  "extra",
+  "added",
+  "beyond scope",
   "beyond original scope",
+  "not in original",
   "revision",
+  "revised",
   "modification",
-  "added extensions",
-  "added fixtures",
+  "modified",
+  "extension required",
+  "extensions required",
   "relocated",
-  "revised scope",
+  "relocation",
 ];
 
 interface InvoiceRow {
@@ -55,7 +65,7 @@ interface InvoiceRow {
 
 interface LineItemRow {
   id: string;
-  invoice_id: string;
+  invoice_id?: string;
   description: string | null;
   is_change_order: boolean;
   co_reference: string | null;
@@ -68,42 +78,101 @@ function containsCoKeyword(text: string | null | undefined): boolean {
   return CO_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
-/** Heuristic copy of the prompt's CO detection rule, applied to the stored AI response. */
-function detectChangeOrderFromStored(inv: InvoiceRow): { isCo: boolean; coRef: string | null; reason: string } {
+/** Heuristic copy of the prompt's CO detection rule, applied to the stored AI response
+ *  plus any persisted invoice_line_items rows (authoritative since the 00013 migration). */
+function detectChangeOrderFromStored(
+  inv: InvoiceRow,
+  lineItemRows: { description: string | null; co_reference: string | null }[]
+): { isCo: boolean; coRef: string | null; reason: string; matchedPhrase: string | null } {
   const ai = inv.ai_raw_response ?? {};
 
   // 1. Explicit flag from a re-parsed response
   if (ai.is_change_order === true) {
-    return { isCo: true, coRef: (ai.co_reference as string | null) ?? inv.co_reference_raw, reason: "ai.is_change_order" };
+    return {
+      isCo: true,
+      coRef: (ai.co_reference as string | null) ?? inv.co_reference_raw,
+      reason: "ai.is_change_order",
+      matchedPhrase: null,
+    };
   }
 
   // 2. Flags array
   const flags = Array.isArray(ai.flags) ? (ai.flags as string[]) : [];
   if (flags.includes("change_order")) {
-    return { isCo: true, coRef: (ai.co_reference as string | null) ?? inv.co_reference_raw, reason: "flags.change_order" };
+    return {
+      isCo: true,
+      coRef: (ai.co_reference as string | null) ?? inv.co_reference_raw,
+      reason: "flags.change_order",
+      matchedPhrase: null,
+    };
   }
 
   // 3. Cost code suggestion is a C-variant
   const ccSug = (ai.cost_code_suggestion ?? null) as { code?: string; is_change_order?: boolean } | null;
   if (ccSug?.is_change_order === true || ccSug?.code?.endsWith("C")) {
-    return { isCo: true, coRef: (ai.co_reference as string | null) ?? inv.co_reference_raw, reason: "cost_code_suggestion C-variant" };
+    return {
+      isCo: true,
+      coRef: (ai.co_reference as string | null) ?? inv.co_reference_raw,
+      reason: "cost_code_suggestion C-variant",
+      matchedPhrase: null,
+    };
   }
 
   // 4. Invoice-level co_reference exists
   if (inv.co_reference_raw && inv.co_reference_raw.trim()) {
-    return { isCo: true, coRef: inv.co_reference_raw, reason: "co_reference_raw present" };
+    return {
+      isCo: true,
+      coRef: inv.co_reference_raw,
+      reason: "co_reference_raw present",
+      matchedPhrase: null,
+    };
   }
 
-  // 5. Keywords in description or raw line items
-  if (containsCoKeyword(inv.description)) {
-    return { isCo: true, coRef: inv.co_reference_raw, reason: "keyword in description" };
-  }
-  const lineItemJson = JSON.stringify(inv.line_items ?? []);
-  if (containsCoKeyword(lineItemJson)) {
-    return { isCo: true, coRef: inv.co_reference_raw, reason: "keyword in line_items" };
+  // 5. Keyword scan across description, line items (JSONB + invoice_line_items rows),
+  //    and CO references on individual line items. Report WHICH phrase matched so
+  //    the human reviewer can audit the heuristic.
+  const scan = (text: string | null | undefined): string | null => {
+    if (!text) return null;
+    const lower = text.toLowerCase();
+    for (const kw of CO_KEYWORDS) {
+      if (lower.includes(kw)) return kw;
+    }
+    return null;
+  };
+
+  const descMatch = scan(inv.description);
+  if (descMatch) {
+    return {
+      isCo: true,
+      coRef: inv.co_reference_raw,
+      reason: `keyword in description`,
+      matchedPhrase: descMatch,
+    };
   }
 
-  return { isCo: false, coRef: null, reason: "no CO indicators" };
+  const jsonMatch = scan(JSON.stringify(inv.line_items ?? []));
+  if (jsonMatch) {
+    return {
+      isCo: true,
+      coRef: inv.co_reference_raw,
+      reason: `keyword in line_items JSONB`,
+      matchedPhrase: jsonMatch,
+    };
+  }
+
+  for (const li of lineItemRows) {
+    const lineMatch = scan(li.description);
+    if (lineMatch) {
+      return {
+        isCo: true,
+        coRef: inv.co_reference_raw ?? li.co_reference,
+        reason: `keyword in invoice_line_items`,
+        matchedPhrase: lineMatch,
+      };
+    }
+  }
+
+  return { isCo: false, coRef: null, reason: "no CO indicators", matchedPhrase: null };
 }
 
 async function signInAsAdmin(): Promise<SupabaseClient> {
@@ -197,12 +266,21 @@ async function ensureLineItemCoverage(supabase: SupabaseClient, inv: InvoiceRow)
 async function applyCoDetection(supabase: SupabaseClient, inv: InvoiceRow): Promise<{
   changed: boolean;
   reason: string;
+  matchedPhrase: string | null;
   coRef: string | null;
   isCo: boolean;
 }> {
-  const { isCo, coRef, reason } = detectChangeOrderFromStored(inv);
+  // Pull the line item rows once so the keyword scan can look at them.
+  const { data: lineItemRows } = await supabase
+    .from("invoice_line_items")
+    .select("id, description, is_change_order, co_reference, cost_code_id")
+    .eq("invoice_id", inv.id)
+    .is("deleted_at", null);
+  const allLines = (lineItemRows as LineItemRow[] | null) ?? [];
+
+  const { isCo, coRef, reason, matchedPhrase } = detectChangeOrderFromStored(inv, allLines);
   if (inv.is_change_order === isCo && (inv.co_reference_raw ?? null) === (coRef ?? null)) {
-    return { changed: false, reason, coRef, isCo };
+    return { changed: false, reason, matchedPhrase, coRef, isCo };
   }
 
   const update: Record<string, unknown> = { is_change_order: isCo };
@@ -211,17 +289,12 @@ async function applyCoDetection(supabase: SupabaseClient, inv: InvoiceRow): Prom
   const { error } = await supabase.from("invoices").update(update).eq("id", inv.id);
   if (error) {
     console.warn(`  ! CO update failed for invoice ${inv.id}: ${error.message}`);
-    return { changed: false, reason, coRef, isCo };
+    return { changed: false, reason, matchedPhrase, coRef, isCo };
   }
 
   // Mirror onto line items (ones that have no explicit CO opinion).
   if (isCo) {
-    const { data: lines } = await supabase
-      .from("invoice_line_items")
-      .select("id, is_change_order, co_reference")
-      .eq("invoice_id", inv.id)
-      .is("deleted_at", null);
-    const toUpdate = (lines as LineItemRow[] | null)?.filter((l) => !l.is_change_order) ?? [];
+    const toUpdate = allLines.filter((l) => !l.is_change_order);
     if (toUpdate.length > 0) {
       await supabase
         .from("invoice_line_items")
@@ -233,7 +306,7 @@ async function applyCoDetection(supabase: SupabaseClient, inv: InvoiceRow): Prom
     }
   }
 
-  return { changed: true, reason, coRef, isCo };
+  return { changed: true, reason, matchedPhrase, coRef, isCo };
 }
 
 async function main() {
@@ -264,10 +337,11 @@ async function main() {
     }
 
     // Phase 2: CO detection
-    const { changed, reason, isCo, coRef } = await applyCoDetection(supabase, inv);
+    const { changed, reason, isCo, coRef, matchedPhrase } = await applyCoDetection(supabase, inv);
     if (changed) {
       coFlipped++;
-      console.log(`${label}: is_change_order → ${isCo} (reason: ${reason})${coRef ? `, co_ref="${coRef}"` : ""}`);
+      const phrase = matchedPhrase ? ` [matched "${matchedPhrase}"]` : "";
+      console.log(`${label}: is_change_order → ${isCo} (${reason})${phrase}${coRef ? `, co_ref="${coRef}"` : ""}`);
     } else if (isCo) {
       coAlreadyCorrect++;
     } else {

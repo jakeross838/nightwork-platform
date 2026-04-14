@@ -282,7 +282,10 @@ export default function DrawDetailPage() {
  <td className="py-3 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
  <td className="py-3 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}</td>
  <td className="py-3 px-4 text-cream-muted text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}</td>
- <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>{formatCents(row.balance_to_finish)}</td>
+ <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>
+ {overBudget && <span className="mr-1 font-bold" title="Over original budget — see change order log">*</span>}
+ {formatCents(row.balance_to_finish)}
+ </td>
  </tr>
  );
  })}
@@ -302,6 +305,12 @@ export default function DrawDetailPage() {
  </tfoot>
  </table>
  </div>
+ {visibleRows.some(r => r.balance_to_finish < 0) && (
+ <p className="mt-3 text-[11px] text-cream-dim italic">
+ <span className="text-red-400 font-bold mr-1">*</span>
+ Indicates line items over original budget — see change order log for details.
+ </p>
+ )}
 
  {/* Included Invoices */}
  {draw.invoices && draw.invoices.length > 0 && (

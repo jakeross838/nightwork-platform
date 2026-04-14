@@ -245,16 +245,34 @@ export async function saveParsedInvoice(
   }
 
   // ---- AI change-order detection — auto-toggle invoice-level CO flag
-  // when the AI flagged it OR the suggested cost code is a C-variant. ----
+  // when the AI flagged it OR the suggested cost code is a C-variant OR
+  // the description/line items contain CO keywords. We bias toward true
+  // (false positives are cheap; false negatives route real CO work onto
+  // the base-contract budget). ----
   const aiFlaggedChangeOrder = !!(
     parsed.is_change_order ||
     parsed.cost_code_suggestion?.is_change_order ||
     parsed.flags?.includes("change_order")
   );
+  const CO_KEYWORDS = [
+    "change order", "co #", "pcco",
+    "additional", "extra", "added",
+    "beyond scope", "beyond original scope", "not in original",
+    "revision", "revised", "modification", "modified",
+    "extension required", "extensions required",
+    "relocated", "relocation",
+  ];
+  const haystack = [
+    parsed.description,
+    ...parsed.line_items.map((l) => l.description ?? ""),
+  ].join(" ").toLowerCase();
+  const keywordHit = CO_KEYWORDS.some((kw) => haystack.includes(kw));
+
   const invoiceIsChangeOrder =
     aiFlaggedChangeOrder ||
     (matchedCostCode?.is_change_order ?? false) ||
-    !!parsed.co_reference;
+    !!parsed.co_reference ||
+    keywordHit;
 
   const autoFills: Record<string, boolean> = {};
   if (match) autoFills.job_id = true;

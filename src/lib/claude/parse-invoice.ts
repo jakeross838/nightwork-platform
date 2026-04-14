@@ -75,10 +75,16 @@ Extract every field you can find. For fields you cannot find, return null. Be th
 
 For T&M (time and materials) invoices with daily labor entries, parse each line with crew size, hours, and rate. Verify that the total equals the sum of line amounts.
 
-CHANGE ORDER DETECTION (MANDATORY): Determine if this invoice is likely a change order. Set is_change_order: true at the invoice level if ANY of these are present:
- - The words "change order", "CO", "PCCO", "extra work", "additional work", "added", "revision", "modification", "beyond original scope" appear anywhere on the document
- - Reference to work not typically in an original contract (e.g. "additional extensions required", "added fixtures", "relocated", "revised")
+CHANGE ORDER DETECTION (MANDATORY — BIAS TOWARD TRUE): Determine if this invoice is likely a change order. Set is_change_order: true at the invoice level if ANY of the following phrases appear anywhere on the document (case-insensitive, partial match):
+ - "change order", "CO #", "PCCO"
+ - "additional", "extra", "added" (any form of the word)
+ - "beyond scope", "beyond original scope", "not in original"
+ - "revision", "revised", "modification", "modified"
+ - "extension required", "extensions required", "added extensions"
+ - "relocated", "relocation"
+ - General references to work not typically in an original contract (e.g. "additional extensions required", "added fixtures", "client requested upgrade")
  - The subject/description contains "Change Order" or "CO #"
+When in doubt, prefer is_change_order: true. A false positive is cheap (PM un-toggles); a false negative is expensive (invoice bills against base budget when it should go to CO).
 If is_change_order is true at the invoice level, suggest which PCCO number it might relate to in co_reference (e.g. "PCCO #3" or just the raw reference you see). Also prefer the C-variant cost code in cost_code_suggestion.
 ALSO determine is_change_order at the line-item level — a single invoice can mix base-contract lines and CO lines. Set line_items[].is_change_order accordingly, and line_items[].co_reference when the line references a specific PCCO.
 

@@ -12,7 +12,13 @@ import { invoiceDisplayName } from "@/lib/invoices/display";
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
 interface PurchaseOrder { id: string; po_number: string | null; description: string | null; amount: number; }
-interface BudgetInfo { original_estimate: number; revised_estimate: number; total_spent: number; remaining: number; }
+interface BudgetInfo {
+ original_estimate: number;
+ revised_estimate: number;
+ total_spent: number;
+ remaining: number;
+ is_allowance?: boolean;
+}
 
 interface InvoiceLineItem {
  id: string;
@@ -264,6 +270,8 @@ export default function InvoiceReviewPage() {
  const [amountGuardNote, setAmountGuardNote] = useState("");
  const [showMissingCoBlock, setShowMissingCoBlock] = useState(false);
  const [showMissingFieldsBlock, setShowMissingFieldsBlock] = useState(false);
+ const [showOverBudgetModal, setShowOverBudgetModal] = useState(false);
+ const [overBudgetNote, setOverBudgetNote] = useState("");
  const [showDocPreview, setShowDocPreview] = useState(false);
  const [pmUsers, setPmUsers] = useState<{ id: string; full_name: string }[]>([]);
  const [reassigning, setReassigning] = useState(false);
@@ -356,11 +364,11 @@ export default function InvoiceReviewPage() {
  useEffect(() => {
  async function fetchBudget() {
  if (!jobId || !costCodeId) { setBudgetInfo(null); return; }
- const { data: bl } = await supabase.from("budget_lines").select("original_estimate, revised_estimate").eq("job_id", jobId).eq("cost_code_id", costCodeId).is("deleted_at", null).single();
+ const { data: bl } = await supabase.from("budget_lines").select("original_estimate, revised_estimate, is_allowance").eq("job_id", jobId).eq("cost_code_id", costCodeId).is("deleted_at", null).single();
  if (!bl) { setBudgetInfo(null); return; }
  const { data: spent } = await supabase.from("invoices").select("total_amount").eq("job_id", jobId).eq("cost_code_id", costCodeId).in("status", ["pm_approved","qa_review","qa_approved","pushed_to_qb","in_draw","paid"]).is("deleted_at", null);
  const totalSpent = spent?.reduce((s, i) => s + i.total_amount, 0) ?? 0;
- setBudgetInfo({ original_estimate: bl.original_estimate, revised_estimate: bl.revised_estimate, total_spent: totalSpent, remaining: bl.revised_estimate - totalSpent });
+ setBudgetInfo({ original_estimate: bl.original_estimate, revised_estimate: bl.revised_estimate, total_spent: totalSpent, remaining: bl.revised_estimate - totalSpent, is_allowance: !!bl.is_allowance });
  }
  fetchBudget();
  }, [jobId, costCodeId]);
@@ -386,7 +394,7 @@ export default function InvoiceReviewPage() {
  }
  const { data: blData } = await supabase
  .from("budget_lines")
- .select("cost_code_id, original_estimate, revised_estimate")
+ .select("cost_code_id, original_estimate, revised_estimate, is_allowance")
  .eq("job_id", jobId)
  .in("cost_code_id", uniqueLineCostCodeIds)
  .is("deleted_at", null);
@@ -409,6 +417,7 @@ export default function InvoiceReviewPage() {
  revised_estimate: bl.revised_estimate,
  total_spent: spent,
  remaining: bl.revised_estimate - spent,
+ is_allowance: !!bl.is_allowance,
  });
  }
  setBudgetByCostCode(next);
@@ -445,6 +454,34 @@ export default function InvoiceReviewPage() {
  if (costCodeId !== (invoice.cost_code_id ?? "")) o.cost_code_id = { old: invoice.cost_code_id, new: costCodeId };
  return o;
  }, [invoice, invoiceNumber, invoiceDate, totalAmount, invoiceType, description, jobId, costCodeId]);
+
+ // "Convert to Change Order" — flip every line to CO, swap to C-variant
+ // cost codes where one exists, and stamp a CO reference. PMs use this
+ // when an allowance or base-contract line overruns and needs a formal CO.
+ const handleConvertToChangeOrder = useCallback(() => {
+ setIsChangeOrder(true);
+ if (!coReference.trim()) setCoReference("Pending CO — overage");
+ setLineItems(prev => prev.map(li => {
+ const currentCc = costCodes.find(c => c.id === li.cost_code_id);
+ if (!currentCc || currentCc.is_change_order) {
+ return { ...li, is_change_order: true, co_reference: li.co_reference || "Pending CO — overage" };
+ }
+ const cVariant = costCodes.find(c => c.code === `${currentCc.code}C`);
+ return {
+ ...li,
+ cost_code_id: cVariant?.id ?? li.cost_code_id,
+ is_change_order: true,
+ co_reference: li.co_reference || "Pending CO — overage",
+ };
+ }));
+ const defaultCc = costCodes.find(c => c.id === costCodeId);
+ if (defaultCc && !defaultCc.is_change_order) {
+ const cVariant = costCodes.find(c => c.code === `${defaultCc.code}C`);
+ if (cVariant) setCostCodeId(cVariant.id);
+ }
+ setShowOverBudgetModal(false);
+ setOverBudgetNote("");
+ }, [costCodes, costCodeId, coReference]);
 
  const handleAction = async (action: "approve" | "hold" | "deny" | "request_info" | "info_received", note?: string) => {
  setSaving(true);
@@ -558,11 +595,61 @@ export default function InvoiceReviewPage() {
  return { id: ccId, code: cc?.code ?? "???", description: cc?.description ?? "", total };
  });
 
+ // Over-budget severity classifier. Returns the worst-case severity across
+ // every cost code this invoice touches. Drives the graduated warnings in
+ // the sidebar and gates the approve flow.
+ type OverBudgetSeverity = "none" | "yellow" | "orange" | "red";
+ const classifyOverBudget = (
+ revised: number,
+ alreadySpent: number,
+ thisInvoicePortion: number,
+ isAllowance: boolean
+ ): { severity: OverBudgetSeverity; overageCents: number; pct: number } => {
+ if (revised === 0) {
+ return {
+ severity: thisInvoicePortion > 0 ? "red" : "none",
+ overageCents: thisInvoicePortion,
+ pct: 100,
+ };
+ }
+ const projectedTotal = alreadySpent + thisInvoicePortion;
+ if (projectedTotal <= revised) return { severity: "none", overageCents: 0, pct: 0 };
+ const overageCents = projectedTotal - revised;
+ const pct = (overageCents / revised) * 100;
+ // Allowances are expected to run over — bump them straight to red so the
+ // "Convert to Change Order" path is suggested.
+ if (isAllowance) return { severity: "red", overageCents, pct };
+ if (pct > 25) return { severity: "red", overageCents, pct };
+ if (pct > 10) return { severity: "orange", overageCents, pct };
+ return { severity: "yellow", overageCents, pct };
+ };
+
+ // Compute per-line-code budget status for the sidebar + gating.
+ const overBudgetByCode = uniqueLineCodeIds.map(ccId => {
+ const bi = budgetByCostCode.get(ccId);
+ const thisInvoicePortion = lineItems.filter(l => l.cost_code_id === ccId).reduce((s, l) => s + l.amount_cents, 0);
+ const classification = bi
+ ? classifyOverBudget(bi.revised_estimate, bi.total_spent, thisInvoicePortion, !!bi.is_allowance)
+ : classifyOverBudget(0, 0, thisInvoicePortion, false);
+ return { ccId, bi, thisInvoicePortion, ...classification };
+ });
+ const worstSeverity: OverBudgetSeverity = overBudgetByCode.reduce<OverBudgetSeverity>((worst, s) => {
+ const rank = { none: 0, yellow: 1, orange: 2, red: 3 } as const;
+ return rank[s.severity] > rank[worst] ? s.severity : worst;
+ }, "none");
+ const hasAllowanceOverage = overBudgetByCode.some(s => s.severity !== "none" && s.bi?.is_allowance);
+
  // Approve-flow gatekeeper. Order matters: job/cost-code → CO refs →
- // amount guard → confirmation modal.
+ // over-budget severity → amount guard → confirmation modal.
  const openApproveFlow = () => {
  if (!jobId || !costCodeId) { setShowMissingFieldsBlock(true); return; }
  if (missingCoReference) { setShowMissingCoBlock(true); return; }
+ // Orange (10-25%) requires a note via the over-budget modal.
+ // Red (>25% or no budget) requires the PM to choose: approve as overage OR convert to CO.
+ if ((worstSeverity === "orange" || worstSeverity === "red") && !overBudgetNote.trim()) {
+ setShowOverBudgetModal(true);
+ return;
+ }
  if (amountOver10Pct) { setShowAmountGuard(true); return; }
  setShowApproveConfirm(true);
  };
@@ -1068,54 +1155,64 @@ export default function InvoiceReviewPage() {
  <SidebarCard title="Budget Status">
  {uniqueLineCodeIds.length > 1 ? (
  <div className="space-y-4">
- {uniqueLineCodeIds.map(ccId => {
- const cc = costCodes.find(c => c.id === ccId);
- const bi = budgetByCostCode.get(ccId);
- const lineTotal = lineItems
- .filter(l => l.cost_code_id === ccId)
- .reduce((s, l) => s + l.amount_cents, 0);
+ {overBudgetByCode.map(s => {
+ const cc = costCodes.find(c => c.id === s.ccId);
  return (
- <div key={ccId} className="border-b border-brand-border pb-3 last:border-b-0 last:pb-0">
+ <div key={s.ccId} className="border-b border-brand-border pb-3 last:border-b-0 last:pb-0">
  <div className="flex items-baseline justify-between mb-2">
  <span className="text-xs font-mono text-teal">{cc?.code ?? "???"}</span>
- <span className="text-[10px] text-cream-dim truncate max-w-[60%] text-right">{cc?.description ?? ""}</span>
+ <span className="flex items-center gap-1">
+ {s.bi?.is_allowance && (
+ <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-bold bg-transparent text-teal border border-teal uppercase">Allowance</span>
+ )}
+ <span className="text-[10px] text-cream-dim truncate max-w-[120px] text-right">{cc?.description ?? ""}</span>
+ </span>
  </div>
- {bi ? (
+ {s.bi ? (
  <div className="space-y-1.5">
- <BudgetRow label="Budget" value={bi.revised_estimate} />
- <BudgetRow label="Spent" value={bi.total_spent} />
- <BudgetRow label="This Invoice" value={lineTotal} />
+ <BudgetRow label="Budget" value={s.bi.revised_estimate} />
+ <BudgetRow label="Spent" value={s.bi.total_spent} />
+ <BudgetRow label="This Invoice" value={s.thisInvoicePortion} />
  <BudgetRow
  label="Remaining"
- value={bi.remaining - lineTotal}
- highlight={bi.remaining - lineTotal < 0 ? "danger" : bi.remaining - lineTotal < lineTotal ? "warning" : "success"}
+ value={s.bi.remaining - s.thisInvoicePortion}
+ highlight={s.severity === "red" ? "danger" : s.severity === "orange" ? "danger" : s.severity === "yellow" ? "warning" : "success"}
  />
+ {s.severity !== "none" && <OverBudgetAlert severity={s.severity} overage={s.overageCents} pct={s.pct} isAllowance={!!s.bi.is_allowance} />}
  </div>
  ) : (
- <div className="px-2 py-1.5 bg-brass/10 border border-brass/20">
- <p className="text-[11px] text-brass">No budget — $0 budget line will be created on approve</p>
+ <div className="px-2 py-1.5 bg-status-danger-muted border border-status-danger/20">
+ <p className="text-[11px] text-status-danger font-medium">No budget set — $0 budget line</p>
+ <p className="text-[10px] text-cream-dim mt-0.5">Use Convert to Change Order or Approve as Overage.</p>
  </div>
  )}
  </div>
  );
  })}
  </div>
- ) : budgetInfo ? (
+ ) : budgetInfo ? (() => {
+ const singleClass = classifyOverBudget(
+ budgetInfo.revised_estimate,
+ budgetInfo.total_spent,
+ totalCents,
+ !!budgetInfo.is_allowance
+ );
+ return (
  <div className="space-y-3">
+ {budgetInfo.is_allowance && (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-teal border border-teal uppercase">Allowance</span>
+ )}
  <BudgetRow label="Original Estimate" value={budgetInfo.original_estimate} />
  <BudgetRow label="Revised Estimate" value={budgetInfo.revised_estimate} />
  <BudgetRow label="Total Spent" value={budgetInfo.total_spent} />
  <div className="border-t border-brand-border pt-3">
  <BudgetRow label="Remaining" value={budgetInfo.remaining}
- highlight={budgetInfo.remaining < 0 ? "danger" : budgetInfo.remaining < invoice.total_amount ? "warning" : "success"} />
+ highlight={singleClass.severity === "red" || singleClass.severity === "orange" ? "danger" : singleClass.severity === "yellow" ? "warning" : "success"} />
  </div>
- {budgetInfo.remaining < invoice.total_amount && (
- <div className="mt-2 px-3 py-2 bg-status-danger-muted border border-status-danger/20 ">
- <p className="text-xs text-status-danger font-medium">Invoice ({formatCents(invoice.total_amount)}) exceeds remaining budget</p>
+ {singleClass.severity !== "none" && <OverBudgetAlert severity={singleClass.severity} overage={singleClass.overageCents} pct={singleClass.pct} isAllowance={!!budgetInfo.is_allowance} />}
  </div>
- )}
- </div>
- ) : (
+ );
+ })() : (
  jobId && costCodeId ? (
  <div className="px-3 py-2.5 bg-brass/10 border border-brass/20 ">
  <p className="text-xs text-brass font-medium">No budget set for this cost code</p>
@@ -1315,6 +1412,98 @@ export default function InvoiceReviewPage() {
  </div>
  )}
 
+ {/* ── Over-Budget Modal (graduated severity gate) ── */}
+ {showOverBudgetModal && (() => {
+ const redRows = overBudgetByCode.filter(r => r.severity === "red");
+ const orangeRows = overBudgetByCode.filter(r => r.severity === "orange");
+ const hasRed = redRows.length > 0;
+ const formatCc = (ccId: string) => costCodes.find(c => c.id === ccId)?.code ?? "???";
+ return (
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="bg-brand-card border border-status-danger/40 p-6 w-full max-w-lg animate-fade-up shadow-2xl">
+ <div className="flex items-center gap-3 mb-4">
+ <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${hasRed ? "bg-status-danger-muted" : "bg-status-warning-muted"}`}>
+ <svg className={`w-5 h-5 ${hasRed ? "text-status-danger" : "text-status-warning"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+ </svg>
+ </div>
+ <h3 className="font-display text-xl text-cream">
+ {hasRed ? "Over Budget — Review Required" : "Over Budget — Note Required"}
+ </h3>
+ </div>
+ <p className="text-sm text-cream-muted mb-3">
+ This invoice exceeds the budget on {overBudgetByCode.filter(r => r.severity !== "none").length} cost code(s):
+ </p>
+ <ul className="bg-brand-surface border border-brand-border p-3 space-y-1 mb-4 max-h-40 overflow-y-auto">
+ {overBudgetByCode.filter(r => r.severity !== "none").map(r => (
+ <li key={r.ccId} className="text-xs text-cream-muted flex justify-between">
+ <span>
+ <span className="font-mono text-teal">{formatCc(r.ccId)}</span>
+ {r.bi?.is_allowance && <span className="ml-1 text-teal">[Allowance]</span>}
+ </span>
+ <span className={r.severity === "red" ? "text-status-danger" : r.severity === "orange" ? "text-status-warning" : "text-brass"}>
+ +{formatCents(r.overageCents)} ({r.pct.toFixed(1)}%)
+ </span>
+ </li>
+ ))}
+ </ul>
+
+ {hasAllowanceOverage && (
+ <div className="mb-4 px-3 py-2 bg-teal/10 border border-teal/30">
+ <p className="text-xs text-teal font-medium">Allowance overage detected</p>
+ <p className="text-[11px] text-cream-dim mt-0.5">
+ Allowances are expected to generate change orders — &quot;Convert to Change Order&quot; is the recommended path.
+ </p>
+ </div>
+ )}
+
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+ {hasRed ? "Overage Note (required if approving as overage)" : "Overage Note (required)"}
+ </label>
+ <textarea
+ value={overBudgetNote}
+ onChange={(e) => setOverBudgetNote(e.target.value)}
+ placeholder={`Why is this going over? (e.g. "Client requested ${orangeRows.length > 0 && orangeRows[0].bi?.is_allowance ? "tile upgrade" : "additional scope"}"`}
+ className="w-full h-20 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
+ />
+
+ <div className="flex flex-col gap-2 mt-5">
+ {hasRed && (
+ <button
+ onClick={handleConvertToChangeOrder}
+ className="w-full px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-all">
+ Convert to Change Order
+ </button>
+ )}
+ <div className="flex gap-3">
+ <button
+ onClick={() => {
+ if (!overBudgetNote.trim()) return;
+ setShowOverBudgetModal(false);
+ const prefix = hasRed ? "Approved as overage. " : "Over budget approval. ";
+ const summary = overBudgetByCode
+ .filter(r => r.severity !== "none")
+ .map(r => `${formatCc(r.ccId)} +${formatCents(r.overageCents)} (${r.pct.toFixed(1)}%)`)
+ .join("; ");
+ handleAction("approve", `${prefix}${summary}. Reason: ${overBudgetNote.trim()}`);
+ setOverBudgetNote("");
+ }}
+ disabled={!overBudgetNote.trim() || saving}
+ className={`flex-1 px-4 py-2.5 font-medium disabled:opacity-50 transition-all ${hasRed ? "bg-status-danger text-white" : "bg-status-success text-white"} hover:brightness-110`}>
+ {hasRed ? "Approve as Overage" : "Approve With Note"}
+ </button>
+ <button
+ onClick={() => { setShowOverBudgetModal(false); setOverBudgetNote(""); }}
+ className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ Cancel
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ );
+ })()}
+
  {/* ── Amount Guard Modal (>10% over AI-parsed) ── */}
  {showAmountGuard && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
@@ -1513,6 +1702,40 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  </div>
+ )}
+ </div>
+ );
+}
+
+// Graduated over-budget badge used in the budget sidebar.
+// Yellow  (≤10% over)  — soft warning; PM can still approve normally.
+// Orange  (10-25% over) — note required at approve time.
+// Red     (>25% over OR $0 budget OR allowance) — forces the over-budget modal.
+function OverBudgetAlert({ severity, overage, pct, isAllowance }: {
+ severity: "yellow" | "orange" | "red";
+ overage: number;
+ pct: number;
+ isAllowance: boolean;
+}) {
+ const colorMap: Record<string, { bg: string; border: string; text: string; label: string }> = {
+ yellow: { bg: "bg-status-warning-muted", border: "border-brass/30", text: "text-brass", label: "Over budget" },
+ orange: { bg: "bg-status-warning-muted", border: "border-status-warning/40", text: "text-status-warning", label: "Significantly over budget" },
+ red: { bg: "bg-status-danger-muted", border: "border-status-danger/40", text: "text-status-danger", label: isAllowance ? "Allowance overage" : "Severely over budget" },
+ };
+ const c = colorMap[severity];
+ const fmt = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+ return (
+ <div className={`mt-2 px-3 py-2 ${c.bg} border ${c.border}`}>
+ <p className={`text-[11px] ${c.text} font-medium`}>
+ {c.label} by {fmt(overage)} ({pct.toFixed(1)}%)
+ </p>
+ {severity === "orange" && (
+ <p className="text-[10px] text-cream-dim mt-0.5">Note required at approval.</p>
+ )}
+ {severity === "red" && (
+ <p className="text-[10px] text-cream-dim mt-0.5">
+ {isAllowance ? "Allowances usually become change orders — convert below." : "Approve as overage or convert to a change order."}
+ </p>
  )}
  </div>
  );
