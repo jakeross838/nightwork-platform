@@ -189,6 +189,28 @@ function AiBadge() {
  return <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-teal border border-teal normal-case tracking-normal">AI</span>;
 }
 
+/** Resolve the matching base↔CO cost code variant. Mapping is the literal
+ *  code string: "07101" ↔ "07101C". Returns the original id if no partner
+ *  exists in the table (so the dropdown stays populated with a valid code
+ *  even when the PM has picked something that doesn't have both variants). */
+function resolveVariant(
+ costCodes: { id: string; code: string; is_change_order: boolean }[],
+ costCodeId: string | null | undefined,
+ wantChangeOrder: boolean
+): string | null {
+ if (!costCodeId) return costCodeId ?? null;
+ const current = costCodes.find(c => c.id === costCodeId);
+ if (!current) return costCodeId;
+ if (current.is_change_order === wantChangeOrder) return costCodeId;
+ const targetCode = wantChangeOrder
+ ? `${current.code}C`
+ : current.code.replace(/C$/, "");
+ const partner = costCodes.find(
+ c => c.code === targetCode && c.is_change_order === wantChangeOrder
+ );
+ return partner ? partner.id : costCodeId;
+}
+
 // Compact cost-code picker sized for the per-line-item table.
 // Shares option data with the main SearchCombobox but renders as a native
 // <select> so the table rows stay dense.
@@ -461,27 +483,16 @@ export default function InvoiceReviewPage() {
  const handleConvertToChangeOrder = useCallback(() => {
  setIsChangeOrder(true);
  if (!coReference.trim()) setCoReference("Pending CO — overage");
- setLineItems(prev => prev.map(li => {
- const currentCc = costCodes.find(c => c.id === li.cost_code_id);
- if (!currentCc || currentCc.is_change_order) {
- return { ...li, is_change_order: true, co_reference: li.co_reference || "Pending CO — overage" };
- }
- const cVariant = costCodes.find(c => c.code === `${currentCc.code}C`);
- return {
+ setLineItems(prev => prev.map(li => ({
  ...li,
- cost_code_id: cVariant?.id ?? li.cost_code_id,
  is_change_order: true,
+ cost_code_id: resolveVariant(costCodes, li.cost_code_id, true),
  co_reference: li.co_reference || "Pending CO — overage",
- };
- }));
- const defaultCc = costCodes.find(c => c.id === costCodeId);
- if (defaultCc && !defaultCc.is_change_order) {
- const cVariant = costCodes.find(c => c.code === `${defaultCc.code}C`);
- if (cVariant) setCostCodeId(cVariant.id);
- }
+ })));
+ setCostCodeId(prev => resolveVariant(costCodes, prev, true) ?? prev);
  setShowOverBudgetModal(false);
  setOverBudgetNote("");
- }, [costCodes, costCodeId, coReference]);
+ }, [costCodes, coReference]);
 
  const handleAction = async (action: "approve" | "hold" | "deny" | "request_info" | "info_received", note?: string) => {
  setSaving(true);
@@ -924,11 +935,28 @@ export default function InvoiceReviewPage() {
  options={jobOptions} disabled={!isReviewable}
  aiFilled={!!autoFills?.job_id} placeholder="Search jobs..." />
 
- {/* Change Order toggle */}
+ {/* Change Order toggle — auto-swaps default cost code + every line
+ between base ("07101 Pilings") and C-variant ("07101C Pilings CO"). */}
  <div className="flex items-center gap-3">
  <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Change Order?</label>
  <button
- onClick={() => { setIsChangeOrder(!isChangeOrder); setCostCodeId(""); }}
+ onClick={() => {
+ const next = !isChangeOrder;
+ setIsChangeOrder(next);
+ // Swap the default cost code to the matching variant.
+ setCostCodeId(prev => resolveVariant(costCodes, prev, next) ?? "");
+ // Every line follows the invoice-level flag by default. Swap each
+ // line's assigned cost code to its variant AND flip its own CO flag
+ // so the table matches the top-level toggle.
+ setLineItems(prev => prev.map(li => ({
+ ...li,
+ is_change_order: next,
+ cost_code_id: resolveVariant(costCodes, li.cost_code_id, next),
+ // When flipping off, also clear the CO reference so the PM has
+ // to re-enter one if they flip back on later.
+ co_reference: next ? li.co_reference : "",
+ })));
+ }}
  disabled={!isReviewable}
  className={`relative inline-flex h-6 w-11 items-center transition-colors disabled:opacity-50 ${isChangeOrder ? "bg-brass" : "bg-brand-border"}`}
  >
@@ -1068,7 +1096,16 @@ export default function InvoiceReviewPage() {
  </td>
  <td className="py-2 px-3 text-center">
  <button
- onClick={() => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, is_change_order: !item.is_change_order } : item))}
+ onClick={() => setLineItems(prev => prev.map((item, i) => {
+ if (i !== idx) return item;
+ const next = !item.is_change_order;
+ return {
+ ...item,
+ is_change_order: next,
+ cost_code_id: resolveVariant(costCodes, item.cost_code_id, next),
+ co_reference: next ? item.co_reference : "",
+ };
+ }))}
  disabled={!isReviewable}
  className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-brass" : "bg-brand-border"}`}
  aria-label="Toggle Change Order"
