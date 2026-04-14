@@ -351,7 +351,7 @@ export default function InvoiceReviewPage() {
       )}
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 opacity-0 animate-fade-up">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
           {/* ── Left: Document Preview ── */}
           <div className="xl:col-span-1">
             <div className="sticky top-24">
@@ -374,7 +374,7 @@ export default function InvoiceReviewPage() {
           </div>
 
           {/* ── Middle: Editable Form ── */}
-          <div className="xl:col-span-1 space-y-6 opacity-0 animate-fade-up stagger-2">
+          <div className="xl:col-span-1 space-y-6 animate-fade-up stagger-2">
             <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">Invoice Details</p>
 
             {/* Missing field flags */}
@@ -518,7 +518,7 @@ export default function InvoiceReviewPage() {
           </div>
 
           {/* ── Right: Sidebar ── */}
-          <div className="xl:col-span-1 opacity-0 animate-fade-up stagger-4">
+          <div className="xl:col-span-1 animate-fade-up stagger-4">
             <div className="sticky top-24 space-y-5">
               {/* Budget */}
               <SidebarCard title="Budget Status">
@@ -602,7 +602,7 @@ export default function InvoiceReviewPage() {
       {/* ── Approve Confirmation Modal ── */}
       {showApproveConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md opacity-0 animate-fade-up shadow-2xl">
+          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md animate-fade-up shadow-2xl">
             <h3 className="font-display text-xl text-cream mb-2">Approve Invoice</h3>
 
             {/* Soft validation warnings */}
@@ -656,7 +656,7 @@ export default function InvoiceReviewPage() {
       {/* ── Hold / Deny Note Modal ── */}
       {showNoteModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md opacity-0 animate-fade-up shadow-2xl">
+          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md animate-fade-up shadow-2xl">
             <h3 className="font-display text-xl text-cream mb-4">
               {showNoteModal === "hold" ? "Hold Invoice" : "Deny Invoice"}
             </h3>

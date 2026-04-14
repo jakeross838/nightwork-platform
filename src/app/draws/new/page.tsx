@@ -116,7 +116,7 @@ export default function NewDrawPage() {
 
         {/* Step 1: Setup */}
         {step === 1 && (
-          <div className="space-y-6 opacity-0 animate-fade-up">
+          <div className="space-y-6 animate-fade-up">
             <div className="bg-brand-card border border-brand-border rounded-2xl p-6 space-y-4">
               <div>
                 <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">Job</label>
@@ -155,7 +155,7 @@ export default function NewDrawPage() {
 
         {/* Step 2: Select Invoices */}
         {step === 2 && (
-          <div className="space-y-6 opacity-0 animate-fade-up">
+          <div className="space-y-6 animate-fade-up">
             {invoices.length === 0 ? (
               <div className="bg-brand-card border border-brand-border rounded-2xl p-8 text-center">
                 <p className="text-cream text-lg font-display">No invoices available</p>
@@ -216,7 +216,7 @@ export default function NewDrawPage() {
 
         {/* Step 3: G702 Preview */}
         {step === 3 && (
-          <div className="space-y-6 opacity-0 animate-fade-up">
+          <div className="space-y-6 animate-fade-up">
             <div className="bg-brand-card border border-brand-border rounded-2xl p-6">
               <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">G702 Summary — Application for Payment</p>
               <div className="mt-5 space-y-3">

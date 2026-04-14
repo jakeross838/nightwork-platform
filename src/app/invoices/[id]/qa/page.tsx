@@ -111,7 +111,7 @@ export default function QaReviewPage() {
       </div>
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 opacity-0 animate-fade-up">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
           {/* ── Left: Document Preview ── */}
           <div className="xl:col-span-1">
             <div className="sticky top-28">
@@ -134,7 +134,7 @@ export default function QaReviewPage() {
           </div>
 
           {/* ── Middle: QA Form ── */}
-          <div className="xl:col-span-1 space-y-6 opacity-0 animate-fade-up stagger-2">
+          <div className="xl:col-span-1 space-y-6 animate-fade-up stagger-2">
             <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">QA Review</p>
 
             <div className="mt-5 space-y-4">
@@ -231,7 +231,7 @@ export default function QaReviewPage() {
           </div>
 
           {/* ── Right: Sidebar ── */}
-          <div className="xl:col-span-1 opacity-0 animate-fade-up stagger-4">
+          <div className="xl:col-span-1 animate-fade-up stagger-4">
             <div className="sticky top-28 space-y-5">
               {/* Payment */}
               <div className="bg-brand-card border border-brand-border rounded-2xl p-5">
@@ -290,7 +290,7 @@ export default function QaReviewPage() {
       {/* Kick Back Modal */}
       {showKickBack && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md opacity-0 animate-fade-up shadow-2xl">
+          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md animate-fade-up shadow-2xl">
             <h3 className="font-display text-xl text-cream mb-2">Kick Back to PM</h3>
             <p className="text-sm text-cream-dim mb-4">This invoice will be sent back to the PM queue with your note.</p>
             <textarea value={kickBackNote} onChange={(e) => setKickBackNote(e.target.value)} placeholder="Reason for kick back (required)..."

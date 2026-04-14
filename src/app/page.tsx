@@ -33,7 +33,7 @@ export default function Home() {
       <div className="absolute bottom-1/4 -right-1/4 w-[500px] h-[500px] bg-brass/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 text-center px-6 max-w-2xl">
-        <div className="opacity-0 animate-fade-up">
+        <div className="animate-fade-up">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand-border bg-brand-surface/50 mb-8">
             <span className={`h-2 w-2 rounded-full ${status === "loading" ? "bg-brass animate-pulse" : status === "connected" ? "bg-status-success" : "bg-status-danger"}`} />
             <span className="text-xs font-body text-cream-dim tracking-wide uppercase">
@@ -42,23 +42,23 @@ export default function Home() {
           </div>
         </div>
 
-        <h1 className="opacity-0 animate-fade-up stagger-1 font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.1]">
+        <h1 className="animate-fade-up stagger-1 font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.1]">
           Ross Command Center
         </h1>
-        <p className="opacity-0 animate-fade-up stagger-2 mt-4 font-body text-cream-muted text-lg">Ross Built Custom Homes</p>
-        <div className="opacity-0 animate-fade-up stagger-3 mt-2 flex items-center justify-center gap-3 text-cream-dim text-sm">
+        <p className="animate-fade-up stagger-2 mt-4 font-body text-cream-muted text-lg">Ross Built Custom Homes</p>
+        <div className="animate-fade-up stagger-3 mt-2 flex items-center justify-center gap-3 text-cream-dim text-sm">
           <span>Bradenton</span><span className="text-brass">&#x2022;</span><span>Anna Maria Island</span>
         </div>
 
         {/* 3 Navigation cards */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 opacity-0 animate-fade-up stagger-4">
+        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up stagger-4">
           <NavCard href="/invoices/upload" icon="upload" color="teal" title="Upload Invoices" subtitle="Drag and drop — AI parses instantly" />
           <NavCard href="/invoices/queue" icon="clipboard" color="brass" title="PM Queue" subtitle={pmCount > 0 ? `${pmCount} pending review` : "No invoices waiting"} count={pmCount} />
           <NavCard href="/invoices/qa" icon="check" color="teal" title="Accounting QA" subtitle={qaCount > 0 ? `${qaCount} ready for QA` : "QA queue clear"} count={qaCount} />
         </div>
       </div>
 
-      <div className="absolute bottom-6 text-center opacity-0 animate-fade-up stagger-6">
+      <div className="absolute bottom-6 text-center animate-fade-up stagger-6">
         <p className="text-xs text-cream-dim/50 tracking-wider uppercase font-body">Est. 2006 &middot; Luxury Coastal Custom Homes</p>
       </div>
     </div>

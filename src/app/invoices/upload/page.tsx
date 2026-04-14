@@ -326,7 +326,7 @@ export default function UploadPage() {
           <div className="mt-8 space-y-6">
             {files.map((fileStatus, index) => (
               <div key={`${fileStatus.file.name}-${index}`}
-                className="bg-brand-card border border-brand-border rounded-2xl overflow-hidden opacity-0 animate-fade-up"
+                className="bg-brand-card border border-brand-border rounded-2xl overflow-hidden animate-fade-up"
                 style={{ animationDelay: `${index * 0.05}s` }}>
                 {/* Card Header */}
                 <div className="px-6 py-4 border-b border-brand-border flex items-center gap-3">

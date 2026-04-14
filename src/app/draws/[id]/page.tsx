@@ -149,7 +149,7 @@ export default function DrawDetailPage() {
       </div>
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 opacity-0 animate-fade-up">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-up">
 
           {/* G702 Summary */}
           <div className="xl:col-span-1">

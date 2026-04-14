@@ -61,7 +61,7 @@ export default function QaQueuePage() {
             <div className="w-8 h-8 rounded-full border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
           </div>
         ) : invoices.length === 0 ? (
-          <div className="text-center py-20 opacity-0 animate-fade-up">
+          <div className="text-center py-20 animate-fade-up">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-surface border border-brand-border mb-6">
               <svg className="w-7 h-7 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -71,7 +71,7 @@ export default function QaQueuePage() {
             <p className="text-cream-dim text-sm mt-1">No invoices waiting for accounting review</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-brand-border opacity-0 animate-fade-up">
+          <div className="overflow-x-auto rounded-2xl border border-brand-border animate-fade-up">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-brand-surface text-left">
@@ -89,7 +89,7 @@ export default function QaQueuePage() {
                   const approval = getApprovalInfo(inv.status_history ?? []);
                   return (
                     <tr key={inv.id}
-                      className="border-t border-brand-border/50 hover:bg-brand-elevated/50 cursor-pointer transition-colors opacity-0 animate-fade-up"
+                      className="border-t border-brand-border/50 hover:bg-brand-elevated/50 cursor-pointer transition-colors animate-fade-up"
                       style={{ animationDelay: `${0.05 + i * 0.03}s` }}
                       onClick={() => window.location.href = `/invoices/${inv.id}/qa`}
                     >
