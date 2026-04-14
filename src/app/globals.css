@@ -79,9 +79,38 @@
     bottom: -4px;
     left: 0;
     width: 32px;
-    height: 2px;
-    background: var(--border-brand);
-    border-radius: 0;
+    height: 1px;
+    background: var(--text-secondary);
+  }
+
+  /* Nav link underline animation */
+  .nav-underline { position: relative; }
+  .nav-underline::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    background: white;
+    transition: width 0.25s ease, left 0.25s ease;
+  }
+  .nav-underline:hover::after,
+  .nav-underline.active::after {
+    width: 100%;
+    left: 0;
+  }
+
+  /* Section header with rule */
+  .section-label {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: 16px;
   }
 }
 

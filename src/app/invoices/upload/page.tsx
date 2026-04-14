@@ -530,7 +530,7 @@ export default function UploadPage() {
  onDragLeave={() => setIsDragging(false)}
  onDrop={(e) => { e.preventDefault(); setIsDragging(false); processFiles(Array.from(e.dataTransfer.files)); }}
  onClick={() => inputRef.current?.click()}
- className={`relative border-2 border-dashed p-8 md:p-16 text-center cursor-pointer transition-all duration-300 ${
+ className={`relative border border-dashed p-8 md:p-16 text-center cursor-pointer transition-all duration-300 ${
  isDragging ? "border-teal bg-teal/5 shadow-[0_0_40px_-10px_rgba(74,155,142,0.2)]" : "border-brand-border hover:border-brand-border-light bg-brand-surface/30"
  }`}
  >

@@ -132,15 +132,15 @@ export default function DrawDetailPage() {
  <NavBar />
 
  {/* Sub-header */}
- <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
+ <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-5">
  <div className="max-w-[1600px] mx-auto flex items-center justify-between flex-wrap gap-4">
  <div className="flex items-center gap-4">
- <button onClick={() => router.push("/draws")} className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Draws</button>
+ <button onClick={() => router.push("/draws")} className="text-cream-dim hover:text-teal transition-colors text-sm">&larr; Draws</button>
  <h1 className="font-display text-xl text-cream">
  {draw.jobs?.name} <span className="text-cream-dim">&mdash;</span> Draw #{draw.draw_number}
  {draw.revision_number > 0 && <span className="text-brass ml-1">Rev {draw.revision_number}</span>}
  </h1>
- <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 border border-brand-border-light font-medium">
+ <span className="text-[10px] text-cream-dim px-2.5 py-1 border border-cream-dim font-medium uppercase tracking-[0.08em]">
  {formatStatus(draw.status)}
  </span>
  </div>
@@ -153,13 +153,13 @@ export default function DrawDetailPage() {
  a.download = "";
  a.click();
  }}
- className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm transition-colors">
+ className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors">
  Export to Excel
  </button>
  )}
  {action && draw.status !== "paid" && (
  <button onClick={() => handleAction(action.next)} disabled={acting}
- className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-sm font-medium transition-colors">
+ className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors">
  {acting ? "Processing..." : action.label}
  </button>
  )}
@@ -203,8 +203,8 @@ export default function DrawDetailPage() {
  {/* G702 Summary */}
  <div className="xl:col-span-1">
  <div className="sticky top-24 space-y-5">
- <div className="bg-brand-card border border-brand-border p-5">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">G702 — Application for Payment</p>
+ <div className="bg-brand-card border border-teal/30 p-6">
+ <p className="section-label">G702 — Application for Payment</p>
  <div className="mt-5 space-y-2.5">
  <G702Row num="1" label="Original Contract Sum" value={draw.original_contract_sum} />
  <G702Row num="" label="Deposit" value={draw.deposit_amount} sub />
@@ -219,8 +219,8 @@ export default function DrawDetailPage() {
  </div>
  </div>
 
- <div className="bg-brand-card border border-brand-border p-5">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">Details</p>
+ <div className="bg-brand-card border border-teal/30 p-6">
+ <p className="section-label">Details</p>
  <div className="mt-5 space-y-2 text-sm">
  <div className="flex justify-between"><span className="text-cream-dim">Application #</span><span className="text-cream">{draw.draw_number}</span></div>
  <div className="flex justify-between"><span className="text-cream-dim">Period</span><span className="text-cream">{formatDate(draw.period_start)} — {formatDate(draw.period_end)}</span></div>
@@ -246,7 +246,7 @@ export default function DrawDetailPage() {
  </div>
  </div>
  )}
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline">G703 — Continuation Sheet</p>
+ <p className="section-label">G703 — Continuation Sheet</p>
  <div className="mt-5 overflow-x-auto border border-brand-border">
  <table className="w-full text-sm">
  <thead>
@@ -264,24 +264,24 @@ export default function DrawDetailPage() {
  <tbody>
  {visibleRows.map((row, idx) => {
  const overBudget = row.balance_to_finish < 0;
- const stripe = idx % 2 === 1 ? "bg-brand-surface/40" : "";
+ const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
  const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
  return (
  <tr key={row.code} className={`border-t border-brand-row-border ${highlight}`}>
- <td className="py-2.5 px-4 text-cream font-mono text-xs">{row.code}</td>
- <td className="py-2.5 px-4 text-cream">{row.description}</td>
- <td className="py-2.5 px-4 text-cream text-right">{formatCents(row.original_estimate)}</td>
- <td className="py-2.5 px-4 text-cream text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}</td>
- <td className="py-2.5 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
- <td className="py-2.5 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}</td>
- <td className="py-2.5 px-4 text-cream-muted text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}</td>
- <td className={`py-2.5 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>{formatCents(row.balance_to_finish)}</td>
+ <td className="py-3 px-4 text-teal font-mono text-xs font-bold">{row.code}</td>
+ <td className="py-3 px-4 text-cream">{row.description}</td>
+ <td className="py-3 px-4 text-cream text-right">{formatCents(row.original_estimate)}</td>
+ <td className="py-3 px-4 text-cream text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}</td>
+ <td className="py-3 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
+ <td className="py-3 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}</td>
+ <td className="py-3 px-4 text-cream-muted text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}</td>
+ <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>{formatCents(row.balance_to_finish)}</td>
  </tr>
  );
  })}
  </tbody>
  <tfoot>
- <tr className="border-t-2 border-brand-border bg-brand-surface">
+ <tr className="border-t border-brand-border-light bg-brand-surface">
  <td colSpan={2} className="py-3 px-4 text-cream font-medium">Grand Total</td>
  <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.original)}</td>
  <td className="py-3 px-4 text-cream text-right font-display font-medium">{totals.previous > 0 ? formatCents(totals.previous) : <span className="text-cream-dim">—</span>}</td>
@@ -299,7 +299,7 @@ export default function DrawDetailPage() {
  {/* Included Invoices */}
  {draw.invoices && draw.invoices.length > 0 && (
  <div className="mt-6">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline">Included Invoices</p>
+ <p className="section-label">Included Invoices</p>
  <div className="mt-5 overflow-x-auto border border-brand-border">
  <table className="w-full text-sm">
  <thead>

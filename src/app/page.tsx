@@ -34,8 +34,8 @@ export default function Home() {
 
  <div className="relative z-10 text-center px-6 max-w-2xl">
  <div className="animate-fade-up">
- <div className="inline-flex items-center gap-2 px-4 py-2 border border-brand-border bg-brand-surface/50 mb-8">
- <span className={`h-2 w-2 ${status === "loading" ? "bg-brass animate-pulse" : status === "connected" ? "bg-status-success" : "bg-status-danger"}`} />
+ <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-brand-border bg-brand-surface/50 mb-8 text-[11px]">
+ <span className={`h-1.5 w-1.5 ${status === "loading" ? "bg-brass animate-pulse" : status === "connected" ? "bg-status-success" : "bg-status-danger"}`} />
  <span className="text-xs font-body text-cream-dim tracking-wide uppercase">
  {status === "loading" ? "Connecting..." : status === "connected" ? "Systems Online" : "Connection Failed"}
  </span>

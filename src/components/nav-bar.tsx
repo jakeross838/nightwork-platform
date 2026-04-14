@@ -24,17 +24,17 @@ function NavLink({
  <Link
  href={href}
  onClick={onClick}
- className={`relative flex items-center gap-1.5 text-sm font-medium transition-colors ${
+ className={`relative flex items-center gap-1.5 text-[14px] font-medium transition-colors ${
  mobile ? "py-3 px-4 w-full" : "px-3 py-1.5"
  } ${
  active
- ? "bg-white/20 text-white"
- : "text-white/70 hover:text-white hover:bg-white/10"
+ ? "text-white nav-underline active"
+ : "text-white/70 hover:text-white nav-underline"
  }`}
  >
  {label}
  {count != null && count > 0 && (
- <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-white text-teal text-[10px] font-bold">
+ <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-white/50 text-white text-[10px] font-bold bg-transparent">
  {count}
  </span>
  )}
@@ -107,11 +107,11 @@ export default function NavBar() {
  return (
  <header
  ref={menuRef}
- className="border-b border-brand-border bg-teal backdrop-blur-sm sticky top-0 z-40"
+ className="border-t-[3px] border-t-teal border-b border-brand-border bg-teal backdrop-blur-sm sticky top-0 z-40"
  >
- <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
+ <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between">
  <Link href="/" className="flex items-center gap-2 group">
- <span className="font-display text-lg text-white group-hover:text-white/80 transition-colors">
+ <span className="font-display text-lg text-white uppercase tracking-[0.08em] font-normal group-hover:text-white/80 transition-colors">
  Ross Command Center
  </span>
  </Link>
@@ -147,14 +147,14 @@ export default function NavBar() {
  {/* Mobile hamburger + badge */}
  <div className="flex md:hidden items-center gap-2">
  {pmCount > 0 && (
- <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-white text-teal text-[10px] font-bold">
+ <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-white/50 text-white text-[10px] font-bold bg-transparent">
  {pmCount}
  </span>
  )}
  <button
  type="button"
  onClick={() => setMobileOpen((prev) => !prev)}
- className="p-2 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+ className="p-2 text-white/70 hover:text-white nav-underline transition-colors"
  aria-label="Toggle menu"
  aria-expanded={mobileOpen}
  >
