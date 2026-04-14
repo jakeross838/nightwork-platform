@@ -19,9 +19,12 @@ interface Invoice {
  picked_up: boolean;
  mailed_date: string | null;
  document_category: string | null;
+ is_change_order: boolean;
  jobs: { name: string } | null;
  cost_codes: { code: string; description: string } | null;
  assigned_pm: { id: string; full_name: string } | null;
+ /** Set by client after fetching per-invoice line-item splits. */
+ line_item_cost_codes?: string[];
 }
 
 interface PmUser { id: string; full_name: string; }
@@ -86,10 +89,10 @@ export default function AllInvoicesPage() {
 
  useEffect(() => {
  async function fetchData() {
- const [invResult, pmResult] = await Promise.all([
+ const [invResult, pmResult, lineItemResult] = await Promise.all([
  supabase
  .from("invoices")
- .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
+ .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
  .is("deleted_at", null)
  .order("created_at", { ascending: false }),
  supabase
@@ -98,8 +101,33 @@ export default function AllInvoicesPage() {
  .in("role", ["pm", "admin"])
  .is("deleted_at", null)
  .order("full_name"),
+ // Count unique cost codes per invoice (for the "Multiple (N)" indicator)
+ supabase
+ .from("invoice_line_items")
+ .select("invoice_id, cost_code_id, cost_codes:cost_code_id(code)")
+ .is("deleted_at", null),
  ]);
- if (!invResult.error && invResult.data) setInvoices(invResult.data as unknown as Invoice[]);
+
+ // Build invoice_id → list of unique cost code strings
+ const lineItemCodesByInvoice = new Map<string, Set<string>>();
+ for (const li of lineItemResult.data ?? []) {
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ const cc = (li as any).cost_codes;
+ const code = Array.isArray(cc) ? cc[0]?.code : cc?.code;
+ if (!code) continue;
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ const invId = (li as any).invoice_id as string;
+ if (!lineItemCodesByInvoice.has(invId)) lineItemCodesByInvoice.set(invId, new Set());
+ lineItemCodesByInvoice.get(invId)!.add(code);
+ }
+
+ if (!invResult.error && invResult.data) {
+ const enriched = (invResult.data as unknown as Invoice[]).map(inv => ({
+ ...inv,
+ line_item_cost_codes: Array.from(lineItemCodesByInvoice.get(inv.id) ?? []),
+ }));
+ setInvoices(enriched);
+ }
  if (!pmResult.error && pmResult.data) setPmUsers(pmResult.data as PmUser[]);
  setLoading(false);
  }
@@ -460,7 +488,20 @@ export default function AllInvoicesPage() {
  )}
  </td>
  <td className="py-3 px-4 text-cream-muted text-xs">
- {inv.cost_codes ? `${inv.cost_codes.code}` : <span className="text-cream-dim">—</span>}
+ {inv.line_item_cost_codes && inv.line_item_cost_codes.length > 1 ? (
+ <span
+ className="inline-flex items-center px-2 py-0.5 bg-transparent text-teal border border-teal text-xs font-medium"
+ title={inv.line_item_cost_codes.join(", ")}
+ >
+ Multiple ({inv.line_item_cost_codes.length})
+ </span>
+ ) : inv.line_item_cost_codes && inv.line_item_cost_codes.length === 1 ? (
+ <span>{inv.line_item_cost_codes[0]}</span>
+ ) : inv.cost_codes ? (
+ <span>{inv.cost_codes.code}</span>
+ ) : (
+ <span className="text-cream-dim">—</span>
+ )}
  </td>
  <td className="py-3 px-4 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
  <td className="py-3 px-4">

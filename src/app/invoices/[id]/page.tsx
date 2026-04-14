@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -14,12 +14,33 @@ interface CostCode { id: string; code: string; description: string; category: st
 interface PurchaseOrder { id: string; po_number: string | null; description: string | null; amount: number; }
 interface BudgetInfo { original_estimate: number; revised_estimate: number; total_spent: number; remaining: number; }
 
+interface InvoiceLineItem {
+ id: string;
+ line_index: number;
+ description: string | null;
+ qty: number | null;
+ unit: string | null;
+ rate: number | null;
+ amount_cents: number;
+ cost_code_id: string | null;
+ budget_line_id: string | null;
+ is_change_order: boolean;
+ co_reference: string | null;
+ ai_suggested_cost_code_id: string | null;
+ ai_suggestion_confidence: number | null;
+ cost_codes: { id: string; code: string; description: string; category: string; is_change_order: boolean } | null;
+}
+
 interface InvoiceData {
  id: string; job_id: string | null; vendor_id: string | null; cost_code_id: string | null; po_id: string | null;
  invoice_number: string | null; invoice_date: string | null; vendor_name_raw: string | null;
  job_reference_raw: string | null; po_reference_raw: string | null; description: string | null;
  line_items: Array<{ description: string; qty: number | null; unit: string | null; rate: number | null; amount: number; }>;
- total_amount: number; invoice_type: string | null; co_reference_raw: string | null;
+ invoice_line_items: InvoiceLineItem[];
+ total_amount: number;
+ ai_parsed_total_amount: number | null;
+ is_change_order: boolean;
+ invoice_type: string | null; co_reference_raw: string | null;
  confidence_score: number;
  confidence_details: (Record<string, number> & { auto_fills?: Record<string, boolean> }) | null;
  ai_raw_response: { cost_code_suggestion?: { code: string; description: string; confidence: number; is_change_order: boolean }; flags?: string[] } | null;
@@ -32,6 +53,23 @@ interface InvoiceData {
  assigned_pm: { id: string; full_name: string; role: string } | null;
  jobs: Job | null; vendors: { id: string; name: string } | null; cost_codes: CostCode | null;
  pm_users?: { id: string; full_name: string }[];
+}
+
+// PM-edited shape for a line item — mirrors InvoiceLineItem but keeps
+// unsaved edits in client state until the PM approves.
+interface EditableLineItem {
+ id: string | null; // null = client-only new row (shouldn't happen today but future-proof)
+ line_index: number;
+ description: string;
+ qty: number | null;
+ unit: string | null;
+ rate: number | null;
+ amount_cents: number;
+ cost_code_id: string | null;
+ is_change_order: boolean;
+ co_reference: string;
+ ai_suggested_cost_code_id: string | null;
+ ai_suggestion_confidence: number | null;
 }
 
 // ── Searchable Combobox ────────────────────────────────
@@ -145,6 +183,45 @@ function AiBadge() {
  return <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-teal border border-teal normal-case tracking-normal">AI</span>;
 }
 
+// Compact cost-code picker sized for the per-line-item table.
+// Shares option data with the main SearchCombobox but renders as a native
+// <select> so the table rows stay dense.
+function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }: {
+ value: string;
+ onChange: (v: string) => void;
+ options: { value: string; label: string; group?: string }[];
+ disabled?: boolean;
+ aiSuggestion?: { code: string; confidence: number } | null;
+}) {
+ const groups = Array.from(new Set(options.filter(o => o.group).map(o => o.group!)));
+ return (
+ <div className="relative">
+ <select
+ value={value}
+ onChange={(e) => onChange(e.target.value)}
+ disabled={disabled}
+ className={`w-full px-2 py-1 bg-brand-surface border text-xs text-cream focus:outline-none disabled:opacity-50 ${aiSuggestion ? "border-teal/40 focus:border-teal" : "border-brand-border focus:border-teal"}`}
+ >
+ {options.filter(o => !o.group).map(o => (
+ <option key={o.value} value={o.value}>{o.label}</option>
+ ))}
+ {groups.map(group => (
+ <optgroup key={group} label={group}>
+ {options.filter(o => o.group === group).map(o => (
+ <option key={o.value} value={o.value}>{o.label}</option>
+ ))}
+ </optgroup>
+ ))}
+ </select>
+ {aiSuggestion && (
+ <span className="absolute -top-2 right-1 text-[9px] px-1 bg-brand-card text-teal border border-teal tracking-tight">
+ AI {Math.round(aiSuggestion.confidence * 100)}%
+ </span>
+ )}
+ </div>
+ );
+}
+
 // ── Status History Timeline ─────────────────────────────
 function statusDotColor(newStatus: string): string {
  if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-status-success";
@@ -178,9 +255,14 @@ export default function InvoiceReviewPage() {
  const [costCodes, setCostCodes] = useState<CostCode[]>([]);
  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
  const [budgetInfo, setBudgetInfo] = useState<BudgetInfo | null>(null);
+ const [lineItems, setLineItems] = useState<EditableLineItem[]>([]);
+ const [budgetByCostCode, setBudgetByCostCode] = useState<Map<string, BudgetInfo>>(new Map());
  const [actionNote, setActionNote] = useState("");
  const [showNoteModal, setShowNoteModal] = useState<"hold" | "deny" | null>(null);
  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+ const [showAmountGuard, setShowAmountGuard] = useState(false);
+ const [amountGuardNote, setAmountGuardNote] = useState("");
+ const [showMissingCoBlock, setShowMissingCoBlock] = useState(false);
  const [showMissingFieldsBlock, setShowMissingFieldsBlock] = useState(false);
  const [showDocPreview, setShowDocPreview] = useState(false);
  const [pmUsers, setPmUsers] = useState<{ id: string; full_name: string }[]>([]);
@@ -215,10 +297,32 @@ export default function InvoiceReviewPage() {
  setCheckNumber(data.check_number ?? "");
  setPickedUp(data.picked_up ?? false);
  setMailedDate(data.mailed_date ?? "");
- // Default CO toggle if AI detected a CO reference
- if (data.co_reference_raw) setIsChangeOrder(true);
- // Check if cost code is a CO variant
- if (data.cost_codes?.code?.endsWith("C")) setIsChangeOrder(true);
+ // CO toggle reflects the AI-detected is_change_order flag (set at upload).
+ // Fall back to legacy heuristics for pre-migration invoices.
+ setIsChangeOrder(
+ data.is_change_order ||
+ !!data.co_reference_raw ||
+ (data.cost_codes?.code?.endsWith("C") ?? false)
+ );
+ // Hydrate editable line items from server
+ if (Array.isArray(data.invoice_line_items)) {
+ setLineItems(
+ data.invoice_line_items.map((li) => ({
+ id: li.id,
+ line_index: li.line_index,
+ description: li.description ?? "",
+ qty: li.qty,
+ unit: li.unit,
+ rate: li.rate,
+ amount_cents: li.amount_cents,
+ cost_code_id: li.cost_code_id,
+ is_change_order: li.is_change_order,
+ co_reference: li.co_reference ?? "",
+ ai_suggested_cost_code_id: li.ai_suggested_cost_code_id,
+ ai_suggestion_confidence: li.ai_suggestion_confidence,
+ }))
+ );
+ }
  }
  setLoading(false);
  }
@@ -248,7 +352,7 @@ export default function InvoiceReviewPage() {
  fetchPOs();
  }, [jobId]);
 
- // Fetch budget
+ // Fetch budget (legacy single-cost-code sidebar — retained for fallback)
  useEffect(() => {
  async function fetchBudget() {
  if (!jobId || !costCodeId) { setBudgetInfo(null); return; }
@@ -260,6 +364,57 @@ export default function InvoiceReviewPage() {
  }
  fetchBudget();
  }, [jobId, costCodeId]);
+
+ // When the PM picks a default Cost Code, pre-fill any line item that has
+ // no cost_code_id yet (don't override PM's per-line picks).
+ useEffect(() => {
+ if (!costCodeId) return;
+ setLineItems(prev => prev.map(l => (l.cost_code_id ? l : { ...l, cost_code_id: costCodeId })));
+ }, [costCodeId]);
+
+ // Per-cost-code budget lookup for the multi-cost-code sidebar.
+ // Refetches when the set of cost codes used by the line items changes.
+ const uniqueLineCostCodeIds = useMemo(
+ () => Array.from(new Set(lineItems.map((l) => l.cost_code_id).filter(Boolean) as string[])),
+ [lineItems]
+ );
+ useEffect(() => {
+ async function fetchMultiBudget() {
+ if (!jobId || uniqueLineCostCodeIds.length === 0) {
+ setBudgetByCostCode(new Map());
+ return;
+ }
+ const { data: blData } = await supabase
+ .from("budget_lines")
+ .select("cost_code_id, original_estimate, revised_estimate")
+ .eq("job_id", jobId)
+ .in("cost_code_id", uniqueLineCostCodeIds)
+ .is("deleted_at", null);
+ const { data: spentData } = await supabase
+ .from("invoices")
+ .select("cost_code_id, total_amount")
+ .eq("job_id", jobId)
+ .in("cost_code_id", uniqueLineCostCodeIds)
+ .in("status", ["pm_approved", "qa_review", "qa_approved", "pushed_to_qb", "in_draw", "paid"])
+ .is("deleted_at", null);
+ const spentByCode = new Map<string, number>();
+ for (const row of spentData ?? []) {
+ spentByCode.set(row.cost_code_id, (spentByCode.get(row.cost_code_id) ?? 0) + row.total_amount);
+ }
+ const next = new Map<string, BudgetInfo>();
+ for (const bl of blData ?? []) {
+ const spent = spentByCode.get(bl.cost_code_id) ?? 0;
+ next.set(bl.cost_code_id, {
+ original_estimate: bl.original_estimate,
+ revised_estimate: bl.revised_estimate,
+ total_spent: spent,
+ remaining: bl.revised_estimate - spent,
+ });
+ }
+ setBudgetByCostCode(next);
+ }
+ fetchMultiBudget();
+ }, [jobId, uniqueLineCostCodeIds]);
 
  const handleReassignPm = async (newPmId: string) => {
  setReassigning(true);
@@ -304,6 +459,31 @@ export default function InvoiceReviewPage() {
  if (invoiceType !== (invoice?.invoice_type ?? "")) updates.invoice_type = invoiceType;
  if (description !== (invoice?.description ?? "")) updates.description = description;
  if (coReference !== (invoice?.co_reference_raw ?? "")) updates.co_reference_raw = coReference;
+ if (isChangeOrder !== (invoice?.is_change_order ?? false)) updates.is_change_order = isChangeOrder;
+
+ // Save line items first so the invoice action sees the latest cost-code
+ // assignments. Only persist for approve/hold/deny/info flows — reading-only
+ // paths (e.g. reassign PM) skip this entirely.
+ if (lineItems.length > 0) {
+ await fetch(`/api/invoices/${invoiceId}/line-items`, {
+ method: "PUT", headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({
+ line_items: lineItems.map((li) => ({
+ id: li.id,
+ line_index: li.line_index,
+ description: li.description,
+ qty: li.qty,
+ unit: li.unit,
+ rate: li.rate,
+ amount_cents: li.amount_cents,
+ cost_code_id: li.cost_code_id,
+ is_change_order: li.is_change_order,
+ co_reference: li.co_reference.trim() || null,
+ })),
+ }),
+ });
+ }
+
  const res = await fetch(`/api/invoices/${invoiceId}/action`, {
  method: "POST", headers: { "Content-Type": "application/json" },
  body: JSON.stringify({ action, note, pm_overrides: Object.keys(overrides).length > 0 ? overrides : undefined, updates: Object.keys(updates).length > 0 ? updates : undefined }),
@@ -335,6 +515,57 @@ export default function InvoiceReviewPage() {
  const costCodeOptions = filteredCostCodes.map(c => ({
  value: c.id, label: `${c.code} — ${c.description}`, group: c.category,
  }));
+
+ // Per-line cost code options — unfiltered, because each line can be
+ // independently a base or CO line. Include both variants so PM has full control.
+ const lineCostCodeOptions = [
+ { value: "", label: "— Unassigned —" },
+ ...costCodes.map(c => ({
+ value: c.id,
+ label: `${c.code} — ${c.description}${c.is_change_order ? " (CO)" : ""}`,
+ group: c.category,
+ })),
+ ];
+
+ // Summary: how many unique cost codes the line items span
+ const uniqueLineCodeIds = Array.from(new Set(lineItems.map(l => l.cost_code_id).filter(Boolean) as string[]));
+ const lineItemSumCents = lineItems.reduce((s, l) => s + l.amount_cents, 0);
+ const totalCents = Math.round((parseFloat(totalAmount) || 0) * 100);
+ const amountMismatchCents = Math.abs(lineItemSumCents - totalCents);
+ const hasAmountMismatch = lineItems.length > 0 && amountMismatchCents > 1; // 1¢ rounding tolerance
+
+ // Amount guard: PM edited total above original AI-parsed amount
+ const aiParsedTotal = invoice.ai_parsed_total_amount ?? invoice.total_amount;
+ const amountIncreasePct = aiParsedTotal > 0
+ ? ((totalCents - aiParsedTotal) / aiParsedTotal) * 100
+ : 0;
+ const amountOverAi = totalCents > aiParsedTotal;
+ const amountOver10Pct = amountIncreasePct > 10;
+
+ // Credit memo (negative total)
+ const isCreditMemo = invoice.total_amount < 0 || totalCents < 0;
+
+ // CO reference required: any line flagged as CO must have a co_reference
+ const lineItemsMissingCoReference = lineItems.filter(l => l.is_change_order && !l.co_reference.trim());
+ const missingCoReference = lineItemsMissingCoReference.length > 0;
+
+ // Per-line-item breakdown (for summary display)
+ const costCodeSummary = uniqueLineCodeIds.map(ccId => {
+ const cc = costCodes.find(c => c.id === ccId);
+ const total = lineItems
+ .filter(l => l.cost_code_id === ccId)
+ .reduce((s, l) => s + l.amount_cents, 0);
+ return { id: ccId, code: cc?.code ?? "???", description: cc?.description ?? "", total };
+ });
+
+ // Approve-flow gatekeeper. Order matters: job/cost-code → CO refs →
+ // amount guard → confirmation modal.
+ const openApproveFlow = () => {
+ if (!jobId || !costCodeId) { setShowMissingFieldsBlock(true); return; }
+ if (missingCoReference) { setShowMissingCoBlock(true); return; }
+ if (amountOver10Pct) { setShowAmountGuard(true); return; }
+ setShowApproveConfirm(true);
+ };
 
  // Job options
  const jobOptions = jobs.map(j => ({ value: j.id, label: `${j.name} — ${j.address ?? ""}` }));
@@ -429,6 +660,16 @@ export default function InvoiceReviewPage() {
  <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${statusBadgeOutline(invoice.status)}`}>
  {formatStatus(invoice.status)}
  </span>
+ {isCreditMemo && (
+ <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-teal border border-teal">
+ Credit Memo
+ </span>
+ )}
+ {isChangeOrder && (
+ <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-brass border border-brass">
+ Change Order
+ </span>
+ )}
  <span className="inline-flex items-center gap-1.5 text-xs text-cream-dim">
  <span>PM:</span>
  <select
@@ -632,7 +873,24 @@ export default function InvoiceReviewPage() {
  </div>
 
  <div className="grid grid-cols-2 gap-4">
+ <div>
  <FormField label="Total ($)" value={totalAmount} onChange={setTotalAmount} type="number" disabled={!isReviewable} />
+ {amountOverAi && !amountOver10Pct && (
+ <p className="mt-1.5 text-[11px] text-brass">
+ +{amountIncreasePct.toFixed(1)}% vs AI-parsed {formatCents(aiParsedTotal)}
+ </p>
+ )}
+ {amountOver10Pct && (
+ <p className="mt-1.5 text-[11px] text-status-danger font-medium">
+ Warning: +{amountIncreasePct.toFixed(1)}% over AI-parsed {formatCents(aiParsedTotal)} — note required
+ </p>
+ )}
+ {isCreditMemo && (
+ <span className="mt-1.5 inline-flex items-center px-2 py-0.5 text-[11px] font-medium bg-transparent text-teal border border-teal">
+ Credit Memo
+ </span>
+ )}
+ </div>
  <div>
  <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">Type</label>
  <select value={invoiceType} onChange={(e) => setInvoiceType(e.target.value)} disabled={!isReviewable}
@@ -657,52 +915,132 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
 
- {/* Line Items — smart display for $0 scope items vs priced items */}
- {invoice.line_items?.length > 0 && (() => {
- const allZero = invoice.line_items.every(i => !i.amount || i.amount === 0);
- return (
+ {/* Line Items — editable per-row cost code + CO toggle (multi-cost-code support) */}
+ {lineItems.length > 0 && (
  <div className="border-t border-brand-border pt-4">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">{allZero ? "Scope Items" : "Line Items"}</p>
- {allZero ? (
- <div className=" border border-brand-border overflow-hidden">
- {invoice.line_items.map((item, i) => (
- <div key={i} className={`px-3 py-2 text-xs text-cream ${i > 0 ? "border-t border-brand-row-border" : ""}`}>{item.description}</div>
+ <div className="flex items-center justify-between mb-2">
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Line Items</p>
+ {uniqueLineCodeIds.length > 0 && (
+ <p className="text-[11px] text-cream-dim">
+ {lineItems.length} line{lineItems.length === 1 ? "" : "s"} across {uniqueLineCodeIds.length} cost code{uniqueLineCodeIds.length === 1 ? "" : "s"}
+ </p>
+ )}
+ </div>
+
+ {/* Cost code summary */}
+ {costCodeSummary.length > 0 && (
+ <div className="mb-2 px-3 py-2 bg-brand-surface/60 border border-brand-border">
+ <p className="text-[10px] text-cream-dim uppercase tracking-wider mb-1">Cost Code Split</p>
+ <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+ {costCodeSummary.map(cs => (
+ <span key={cs.id} className="text-cream">
+ <span className="text-teal font-mono">{cs.code}</span>{" "}
+ {cs.description} <span className="text-cream-dim">({formatCents(cs.total)})</span>
+ </span>
  ))}
  </div>
- ) : (
+ </div>
+ )}
+
  <div className="overflow-x-auto border border-brand-border">
  <table className="w-full text-xs">
  <thead>
  <tr className="bg-brand-surface">
  <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
- <th className="py-2 px-3 text-right text-cream font-semibold">Qty</th>
- <th className="py-2 px-3 text-right text-cream font-semibold">Rate</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold min-w-[180px]">Cost Code</th>
+ <th className="py-2 px-3 text-center text-cream font-semibold">CO</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold">CO Ref</th>
  <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
  </tr>
  </thead>
  <tbody>
- {invoice.line_items.map((item, i) => (
- <tr key={i} className="border-t border-brand-row-border">
- <td className="py-2 px-3 text-cream">{item.description}</td>
- <td className="py-2 px-3 text-right text-cream-muted">{item.qty ?? <span className="text-cream-dim">—</span>}</td>
- <td className="py-2 px-3 text-right text-cream-muted">{item.rate != null ? `$${item.rate}` : <span className="text-cream-dim">—</span>}</td>
- <td className="py-2 px-3 text-right text-cream font-medium">${item.amount?.toFixed(2)}</td>
+ {lineItems.map((li, idx) => {
+ const aiSug = li.ai_suggested_cost_code_id && costCodes.find(c => c.id === li.ai_suggested_cost_code_id);
+ const aiSugActive = li.cost_code_id === li.ai_suggested_cost_code_id && aiSug;
+ const missingCoRef = li.is_change_order && !li.co_reference.trim();
+ return (
+ <tr key={li.id ?? idx} className="border-t border-brand-row-border align-top">
+ <td className="py-2 px-3 text-cream">
+ <div>{li.description || <span className="text-cream-dim italic">(no description)</span>}</div>
+ {(li.qty != null || li.rate != null) && (
+ <div className="text-[10px] text-cream-dim mt-0.5">
+ {li.qty != null && <span>{li.qty}{li.unit ? ` ${li.unit}` : ""}</span>}
+ {li.qty != null && li.rate != null && <span> × </span>}
+ {li.rate != null && <span>${li.rate}</span>}
+ </div>
+ )}
+ </td>
+ <td className="py-2 px-3">
+ <LineCostCodeSelect
+ value={li.cost_code_id ?? ""}
+ onChange={(v) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, cost_code_id: v || null } : item))}
+ options={lineCostCodeOptions}
+ disabled={!isReviewable}
+ aiSuggestion={aiSugActive ? { code: aiSug!.code, confidence: li.ai_suggestion_confidence ?? 0 } : null}
+ />
+ </td>
+ <td className="py-2 px-3 text-center">
+ <button
+ onClick={() => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, is_change_order: !item.is_change_order } : item))}
+ disabled={!isReviewable}
+ className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-brass" : "bg-brand-border"}`}
+ aria-label="Toggle Change Order"
+ >
+ <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${li.is_change_order ? "translate-x-5" : "translate-x-1"}`} />
+ </button>
+ </td>
+ <td className="py-2 px-3">
+ {li.is_change_order ? (
+ <input
+ type="text"
+ value={li.co_reference}
+ onChange={(e) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, co_reference: e.target.value } : item))}
+ disabled={!isReviewable}
+ placeholder="PCCO #"
+ className={`w-20 px-2 py-1 bg-brand-surface border text-xs text-cream focus:outline-none disabled:opacity-50 ${missingCoRef ? "border-status-danger" : "border-brand-border focus:border-teal"}`}
+ />
+ ) : (
+ <span className="text-cream-dim">—</span>
+ )}
+ </td>
+ <td className="py-2 px-3 text-right text-cream font-medium">${(li.amount_cents / 100).toFixed(2)}</td>
  </tr>
- ))}
+ );
+ })}
  </tbody>
+ <tfoot>
+ <tr className="border-t-2 border-brand-border bg-brand-surface/40">
+ <td colSpan={4} className="py-2 px-3 text-right text-cream-dim text-[11px] uppercase tracking-wider">Line Items Sum</td>
+ <td className={`py-2 px-3 text-right font-medium ${hasAmountMismatch ? "text-status-danger" : "text-cream"}`}>
+ {formatCents(lineItemSumCents)}
+ </td>
+ </tr>
+ </tfoot>
  </table>
+ </div>
+ {hasAmountMismatch && (
+ <div className="mt-2 px-3 py-2 bg-status-danger-muted border border-status-danger/20">
+ <p className="text-xs text-status-danger font-medium">
+ Line items sum ({formatCents(lineItemSumCents)}) does not match invoice total ({formatCents(totalCents)})
+ </p>
+ </div>
+ )}
+ {missingCoReference && (
+ <div className="mt-2 px-3 py-2 bg-status-danger-muted border border-status-danger/20">
+ <p className="text-xs text-status-danger font-medium">
+ {lineItemsMissingCoReference.length} change-order line{lineItemsMissingCoReference.length === 1 ? "" : "s"} missing CO Reference
+ </p>
  </div>
  )}
  </div>
- );
- })()}
+ )}
  </div>
 
  {/* Actions — desktop only (mobile uses sticky bar below) */}
  {isReviewable && (
  <div className="hidden md:block border-t border-brand-border pt-6 space-y-3">
  <div className="flex gap-3">
- <button onClick={() => { if (!jobId || !costCodeId) { setShowMissingFieldsBlock(true); } else { setShowApproveConfirm(true); } }} disabled={saving}
+ <button onClick={openApproveFlow} disabled={saving}
  className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
  {saving ? "Saving..." : "Approve"}
  </button>
@@ -726,9 +1064,43 @@ export default function InvoiceReviewPage() {
  {/* ── Right: Sidebar ── */}
  <div className="xl:col-span-1 animate-fade-up stagger-4">
  <div className="sticky top-24 space-y-5">
- {/* Budget */}
+ {/* Budget — stacked per unique cost code in line items */}
  <SidebarCard title="Budget Status">
- {budgetInfo ? (
+ {uniqueLineCodeIds.length > 1 ? (
+ <div className="space-y-4">
+ {uniqueLineCodeIds.map(ccId => {
+ const cc = costCodes.find(c => c.id === ccId);
+ const bi = budgetByCostCode.get(ccId);
+ const lineTotal = lineItems
+ .filter(l => l.cost_code_id === ccId)
+ .reduce((s, l) => s + l.amount_cents, 0);
+ return (
+ <div key={ccId} className="border-b border-brand-border pb-3 last:border-b-0 last:pb-0">
+ <div className="flex items-baseline justify-between mb-2">
+ <span className="text-xs font-mono text-teal">{cc?.code ?? "???"}</span>
+ <span className="text-[10px] text-cream-dim truncate max-w-[60%] text-right">{cc?.description ?? ""}</span>
+ </div>
+ {bi ? (
+ <div className="space-y-1.5">
+ <BudgetRow label="Budget" value={bi.revised_estimate} />
+ <BudgetRow label="Spent" value={bi.total_spent} />
+ <BudgetRow label="This Invoice" value={lineTotal} />
+ <BudgetRow
+ label="Remaining"
+ value={bi.remaining - lineTotal}
+ highlight={bi.remaining - lineTotal < 0 ? "danger" : bi.remaining - lineTotal < lineTotal ? "warning" : "success"}
+ />
+ </div>
+ ) : (
+ <div className="px-2 py-1.5 bg-brass/10 border border-brass/20">
+ <p className="text-[11px] text-brass">No budget — $0 budget line will be created on approve</p>
+ </div>
+ )}
+ </div>
+ );
+ })}
+ </div>
+ ) : budgetInfo ? (
  <div className="space-y-3">
  <BudgetRow label="Original Estimate" value={budgetInfo.original_estimate} />
  <BudgetRow label="Revised Estimate" value={budgetInfo.revised_estimate} />
@@ -853,7 +1225,7 @@ export default function InvoiceReviewPage() {
  {isReviewable && (
  <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-bg/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 z-30">
  <div className="flex gap-2">
- <button onClick={() => { if (!jobId || !costCodeId) { setShowMissingFieldsBlock(true); } else { setShowApproveConfirm(true); } }} disabled={saving}
+ <button onClick={openApproveFlow} disabled={saving}
  className="flex-1 px-3 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
  {saving ? "..." : "Approve"}
  </button>
@@ -877,7 +1249,15 @@ export default function InvoiceReviewPage() {
  {showApproveConfirm && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up shadow-2xl">
- <h3 className="font-display text-xl text-cream mb-2">Approve Invoice</h3>
+ <h3 className="font-display text-xl text-cream mb-2">
+ {isCreditMemo ? "Approve Credit Memo" : "Approve Invoice"}
+ </h3>
+
+ {isCreditMemo && (
+ <p className="text-sm text-cream-muted mb-3">
+ Approve credit of {formatCents(Math.abs(totalCents))} from {invoice.vendor_name_raw ?? "Unknown"}?
+ </p>
+ )}
 
  {/* Soft warnings for optional fields (job+cost code enforced before reaching this modal) */}
  {(missingInvoiceNumber || missingInvoiceDate) && (
@@ -891,7 +1271,7 @@ export default function InvoiceReviewPage() {
  <div className="bg-brand-surface border border-brand-border p-4 space-y-2 text-sm">
  <div className="flex justify-between">
  <span className="text-cream-dim">Amount</span>
- <span className="text-brass font-display font-medium">{formatCents(invoice.total_amount)}</span>
+ <span className={`font-display font-medium ${isCreditMemo ? "text-teal" : "text-brass"}`}>{formatCents(totalCents)}</span>
  </div>
  <div className="flex justify-between">
  <span className="text-cream-dim">Vendor</span>
@@ -902,9 +1282,21 @@ export default function InvoiceReviewPage() {
  <span className="text-cream">{selectedJob?.name ?? "Not assigned"}</span>
  </div>
  <div className="flex justify-between">
- <span className="text-cream-dim">Cost Code</span>
+ <span className="text-cream-dim">Default Cost Code</span>
  <span className="text-cream">{selectedCostCode ? `${selectedCostCode.code} — ${selectedCostCode.description}` : "Not assigned"}</span>
  </div>
+ {uniqueLineCodeIds.length > 1 && (
+ <div className="flex justify-between">
+ <span className="text-cream-dim">Cost Code Split</span>
+ <span className="text-cream">{uniqueLineCodeIds.length} codes across {lineItems.length} lines</span>
+ </div>
+ )}
+ {isChangeOrder && (
+ <div className="flex justify-between">
+ <span className="text-cream-dim">Change Order</span>
+ <span className="text-brass">{coReference || "Yes"}</span>
+ </div>
+ )}
  </div>
 
  <div className="flex gap-3 mt-5">
@@ -912,13 +1304,88 @@ export default function InvoiceReviewPage() {
  onClick={() => { setShowApproveConfirm(false); handleAction("approve"); }}
  disabled={saving}
  className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 text-white font-medium disabled:opacity-50 transition-all">
- Confirm Approval
+ {isCreditMemo ? "Confirm Credit Approval" : "Confirm Approval"}
  </button>
  <button onClick={() => setShowApproveConfirm(false)}
  className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
  Cancel
  </button>
  </div>
+ </div>
+ </div>
+ )}
+
+ {/* ── Amount Guard Modal (>10% over AI-parsed) ── */}
+ {showAmountGuard && (
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="bg-brand-card border border-status-danger/40 p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <div className="flex items-center gap-3 mb-4">
+ <div className="w-10 h-10 bg-status-danger-muted flex items-center justify-center flex-shrink-0">
+ <svg className="w-5 h-5 text-status-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+ </svg>
+ </div>
+ <h3 className="font-display text-xl text-cream">Amount Change Requires Note</h3>
+ </div>
+ <p className="text-sm text-cream-muted mb-4">
+ You&apos;re approving <span className="font-medium text-cream">{formatCents(totalCents)}</span>, which is{" "}
+ <span className="text-status-danger font-medium">+{amountIncreasePct.toFixed(1)}%</span> over the AI-parsed total of{" "}
+ <span className="text-cream">{formatCents(aiParsedTotal)}</span>. A note is required for any increase over 10%.
+ </p>
+ <textarea
+ value={amountGuardNote}
+ onChange={(e) => setAmountGuardNote(e.target.value)}
+ placeholder="Reason for the amount change (required)..."
+ className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
+ />
+ <div className="flex gap-3 mt-5">
+ <button
+ onClick={() => {
+ if (!amountGuardNote.trim()) return;
+ setShowAmountGuard(false);
+ handleAction("approve", `Amount adjusted from ${formatCents(aiParsedTotal)} to ${formatCents(totalCents)} (+${amountIncreasePct.toFixed(1)}%). Reason: ${amountGuardNote.trim()}`);
+ setAmountGuardNote("");
+ }}
+ disabled={!amountGuardNote.trim() || saving}
+ className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 text-white font-medium disabled:opacity-50 transition-all">
+ Approve With Note
+ </button>
+ <button onClick={() => { setShowAmountGuard(false); setAmountGuardNote(""); }}
+ className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ Cancel
+ </button>
+ </div>
+ </div>
+ </div>
+ )}
+
+ {/* ── Missing CO Reference Modal ── */}
+ {showMissingCoBlock && (
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <div className="flex items-center gap-3 mb-4">
+ <div className="w-10 h-10 bg-status-danger-muted flex items-center justify-center flex-shrink-0">
+ <svg className="w-5 h-5 text-status-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+ </svg>
+ </div>
+ <h3 className="font-display text-xl text-cream">CO Reference Required</h3>
+ </div>
+ <p className="text-sm text-cream-muted mb-3">
+ {lineItemsMissingCoReference.length} change-order line item{lineItemsMissingCoReference.length === 1 ? "" : "s"} need a CO Reference (e.g. &quot;PCCO #3&quot;) before approval.
+ </p>
+ <ul className="bg-brand-surface border border-brand-border p-3 space-y-1 mb-5 max-h-40 overflow-y-auto">
+ {lineItemsMissingCoReference.map((l, i) => (
+ <li key={l.id ?? i} className="text-xs text-cream-muted">
+ Line {l.line_index + 1}: {l.description || "(no description)"} — {formatCents(l.amount_cents)}
+ </li>
+ ))}
+ </ul>
+ <button
+ onClick={() => setShowMissingCoBlock(false)}
+ className="w-full px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors">
+ Go Back and Fill In
+ </button>
  </div>
  </div>
  )}

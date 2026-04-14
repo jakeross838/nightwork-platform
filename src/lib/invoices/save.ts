@@ -103,6 +103,27 @@ async function matchCostCode(supabase: SupabaseClient, code: string) {
   return data?.[0] ?? null;
 }
 
+/**
+ * Resolve the budget_line for a given job + cost code pair. Returns null
+ * if no row exists yet — the G703 endpoint auto-creates budget lines on
+ * the fly when it sees an invoice referencing a code without one.
+ */
+async function findBudgetLine(
+  supabase: SupabaseClient,
+  jobId: string | null,
+  costCodeId: string | null
+): Promise<string | null> {
+  if (!jobId || !costCodeId) return null;
+  const { data } = await supabase
+    .from("budget_lines")
+    .select("id")
+    .eq("job_id", jobId)
+    .eq("cost_code_id", costCodeId)
+    .is("deleted_at", null)
+    .limit(1);
+  return (data?.[0]?.id as string) ?? null;
+}
+
 async function checkDuplicate(
   supabase: SupabaseClient,
   vendorNameRaw: string,
@@ -213,7 +234,7 @@ export async function saveParsedInvoice(
         })
       : { isOverhead: false };
 
-  let matchedCostCode: { id: string; code: string } | null = null;
+  let matchedCostCode: { id: string; code: string; is_change_order?: boolean } | null = null;
   let autoFilledCostCode = false;
   if (parsed.cost_code_suggestion && parsed.cost_code_suggestion.confidence >= 0.8) {
     matchedCostCode = await matchCostCode(
@@ -222,6 +243,18 @@ export async function saveParsedInvoice(
     );
     if (matchedCostCode) autoFilledCostCode = true;
   }
+
+  // ---- AI change-order detection — auto-toggle invoice-level CO flag
+  // when the AI flagged it OR the suggested cost code is a C-variant. ----
+  const aiFlaggedChangeOrder = !!(
+    parsed.is_change_order ||
+    parsed.cost_code_suggestion?.is_change_order ||
+    parsed.flags?.includes("change_order")
+  );
+  const invoiceIsChangeOrder =
+    aiFlaggedChangeOrder ||
+    (matchedCostCode?.is_change_order ?? false) ||
+    !!parsed.co_reference;
 
   const autoFills: Record<string, boolean> = {};
   if (match) autoFills.job_id = true;
@@ -289,6 +322,8 @@ export async function saveParsedInvoice(
       description: parsed.description,
       line_items: parsed.line_items,
       total_amount: totalAmountCents,
+      ai_parsed_total_amount: totalAmountCents,
+      is_change_order: invoiceIsChangeOrder,
       invoice_type: parsed.invoice_type,
       co_reference_raw: parsed.co_reference,
       confidence_score: parsed.confidence_score,
@@ -329,5 +364,83 @@ export async function saveParsedInvoice(
     throw new Error(`Failed to save invoice: ${error?.message ?? "unknown"}`);
   }
 
-  return { id: data.id as string };
+  const invoiceId = data.id as string;
+
+  // ---- Persist per-line-item rows in invoice_line_items ----
+  // Each line gets its own cost code (AI-suggested when available; otherwise
+  // falls back to the invoice-level default). PM can re-assign in review.
+  if (Array.isArray(parsed.line_items) && parsed.line_items.length > 0) {
+    // Resolve default budget_line_id once for lines that fall back to
+    // the invoice-level cost code.
+    const defaultBudgetLineId = await findBudgetLine(
+      supabase,
+      match?.job.id ?? null,
+      matchedCostCode?.id ?? null
+    );
+
+    // Pre-resolve per-line AI-suggested codes (dedupe by code string).
+    const perLineCodes = new Map<string, { id: string; is_change_order: boolean } | null>();
+    for (const li of parsed.line_items) {
+      const sug = li.cost_code_suggestion;
+      if (sug?.code && !perLineCodes.has(sug.code)) {
+        const cc = await matchCostCode(supabase, sug.code);
+        perLineCodes.set(
+          sug.code,
+          cc ? { id: cc.id as string, is_change_order: !!cc.is_change_order } : null
+        );
+      }
+    }
+
+    const lineRows = await Promise.all(
+      parsed.line_items.map(async (li, idx) => {
+        const sugCode = li.cost_code_suggestion?.code ?? null;
+        const sugMatch = sugCode ? perLineCodes.get(sugCode) : null;
+        const sugConfidence = li.cost_code_suggestion?.confidence ?? null;
+
+        // Assign the line's cost code: AI suggestion if strong, else invoice default.
+        const autoAssignLineCode =
+          sugMatch && (sugConfidence ?? 0) >= 0.8 ? sugMatch.id : matchedCostCode?.id ?? null;
+
+        const lineBudgetLineId =
+          autoAssignLineCode === matchedCostCode?.id
+            ? defaultBudgetLineId
+            : autoAssignLineCode
+              ? await findBudgetLine(supabase, match?.job.id ?? null, autoAssignLineCode)
+              : null;
+
+        return {
+          invoice_id: invoiceId,
+          line_index: idx,
+          description: li.description ?? null,
+          qty: li.qty,
+          unit: li.unit,
+          rate: li.rate,
+          amount_cents: Math.round((li.amount ?? 0) * 100),
+          cost_code_id: autoAssignLineCode,
+          budget_line_id: lineBudgetLineId,
+          is_change_order:
+            !!li.is_change_order ||
+            sugMatch?.is_change_order === true ||
+            // Mirror invoice-level CO if this line has no opinion of its own.
+            (li.is_change_order === undefined && invoiceIsChangeOrder),
+          co_reference: li.co_reference ?? (invoiceIsChangeOrder ? parsed.co_reference : null),
+          ai_suggested_cost_code_id: sugMatch?.id ?? null,
+          ai_suggestion_confidence: sugConfidence,
+          org_id: ORG_ID,
+        };
+      })
+    );
+
+    const { error: lineErr } = await supabase.from("invoice_line_items").insert(lineRows);
+    if (lineErr) {
+      // Log but don't fail the invoice save — JSONB copy on the invoice row
+      // remains as a fallback. PMs can still review the invoice; the line
+      // table can be backfilled by a later reprocess job.
+      console.warn(
+        `[save] invoice_line_items insert failed for invoice ${invoiceId}: ${lineErr.message}`
+      );
+    }
+  }
+
+  return { id: invoiceId };
 }

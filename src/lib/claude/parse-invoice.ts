@@ -64,7 +64,7 @@ async function getCostCodeList(supabase: Client): Promise<string> {
 
 function buildPrompt(costCodeList: string): string {
  const costCodeSection = costCodeList
- ? `\n\nAlso suggest the most likely Ross Built cost code from the list below. If the invoice references a change order (CO, PCCO, change order, extra work, additional), prefer the C-variant code. Return your suggestion in the cost_code_suggestion field.\n\nCOST CODES:\n${costCodeList}`
+ ? `\n\nAlso suggest the most likely Ross Built cost code from the list below. If the invoice references a change order (CO, PCCO, change order, extra work, additional), prefer the C-variant code. Return your suggestion in the cost_code_suggestion field.\n\nFor each line item, ALSO suggest the most appropriate Ross Built cost code based on the line item description. A single invoice often spans multiple cost codes — e.g. a lumber invoice may have framing material AND strapping material on separate lines. A T&M invoice may have labor lines AND materials lines. Return a per-line suggestion in line_items[].cost_code_suggestion when you can identify a likely code.\n\nCOST CODES:\n${costCodeList}`
  : "";
 
  return `You are parsing a construction document for Ross Built Custom Homes, a luxury coastal custom home builder in Bradenton/Anna Maria Island, FL. They run cost-plus (open book) projects in the $1.5M–$10M+ range.
@@ -74,6 +74,13 @@ FIRST: Determine the document type. Is this an invoice, a proposal/agreement, a 
 Extract every field you can find. For fields you cannot find, return null. Be thorough — look for vendor info, invoice numbers, dates, PO references, job/project references, line item details, and totals.
 
 For T&M (time and materials) invoices with daily labor entries, parse each line with crew size, hours, and rate. Verify that the total equals the sum of line amounts.
+
+CHANGE ORDER DETECTION (MANDATORY): Determine if this invoice is likely a change order. Set is_change_order: true at the invoice level if ANY of these are present:
+ - The words "change order", "CO", "PCCO", "extra work", "additional work", "added", "revision", "modification", "beyond original scope" appear anywhere on the document
+ - Reference to work not typically in an original contract (e.g. "additional extensions required", "added fixtures", "relocated", "revised")
+ - The subject/description contains "Change Order" or "CO #"
+If is_change_order is true at the invoice level, suggest which PCCO number it might relate to in co_reference (e.g. "PCCO #3" or just the raw reference you see). Also prefer the C-variant cost code in cost_code_suggestion.
+ALSO determine is_change_order at the line-item level — a single invoice can mix base-contract lines and CO lines. Set line_items[].is_change_order accordingly, and line_items[].co_reference when the line references a specific PCCO.
 
 MATH CHECK (MANDATORY): You MUST verify that the sum of all line item amounts equals the stated subtotal and total. Specifically:
 1. Sum every line_items[].amount. Compare to the subtotal field.
@@ -90,7 +97,9 @@ Flag issues in the flags array. Common flags:
 - "blurry_or_low_quality" if image quality is poor
 - "multi_page" if it appears to span multiple pages
 - "credit_memo" if this is a credit/negative amount
-- "not_an_invoice" if document_type is not "invoice"${costCodeSection}
+- "not_an_invoice" if document_type is not "invoice"
+- "change_order" if this invoice is a change order (is_change_order: true)
+- "mixed_cost_codes" if line items span multiple cost codes${costCodeSection}
 
 Return ONLY valid JSON matching this exact schema (no markdown, no code fences):
 
@@ -104,6 +113,7 @@ Return ONLY valid JSON matching this exact schema (no markdown, no code fences):
  "job_reference": "string | null",
  "description": "string",
  "invoice_type": "progress | time_and_materials | lump_sum",
+ "is_change_order": "boolean",
  "co_reference": "string | null",
  "line_items": [
  {
@@ -112,7 +122,14 @@ Return ONLY valid JSON matching this exact schema (no markdown, no code fences):
  "qty": "number | null",
  "unit": "string | null",
  "rate": "number | null",
- "amount": "number"
+ "amount": "number",
+ "is_change_order": "boolean",
+ "co_reference": "string | null",
+ "cost_code_suggestion": {
+ "code": "string | null — 5-digit code (with C suffix if change order line)",
+ "description": "string | null",
+ "confidence": "number 0.0-1.0"
+ }
  }
  ],
  "subtotal": "number",
@@ -127,7 +144,7 @@ Return ONLY valid JSON matching this exact schema (no markdown, no code fences):
  "cost_code_suggestion": "number 0.0-1.0"
  },
  "cost_code_suggestion": {
- "code": "string — the 5-digit code (with C suffix if change order)",
+ "code": "string — the default 5-digit code (with C suffix if change order)",
  "description": "string",
  "confidence": "number 0.0-1.0",
  "is_change_order": "boolean"

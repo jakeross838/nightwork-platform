@@ -50,7 +50,7 @@ export async function POST(
 
  const { data: invoice, error: fetchError } = await supabase
  .from("invoices")
- .select("status, status_history, pm_overrides, qa_overrides, job_id, cost_code_id")
+ .select("status, status_history, pm_overrides, qa_overrides, job_id, cost_code_id, total_amount, ai_parsed_total_amount")
  .eq("id", params.id)
  .single();
 
@@ -67,6 +67,43 @@ export async function POST(
  { error: "Job and Cost Code are required before approving" },
  { status: 422 }
  );
+ }
+
+ // Hard block: every change-order line item must have a CO reference.
+ // Runs server-side so it can't be bypassed by editing the UI.
+ const { data: coLinesMissingRef } = await supabase
+ .from("invoice_line_items")
+ .select("id, line_index, description")
+ .eq("invoice_id", params.id)
+ .eq("is_change_order", true)
+ .or("co_reference.is.null,co_reference.eq.")
+ .is("deleted_at", null);
+
+ if (coLinesMissingRef && coLinesMissingRef.length > 0) {
+ return NextResponse.json(
+ {
+ error: `CO Reference required on ${coLinesMissingRef.length} change-order line item(s)`,
+ lines: coLinesMissingRef,
+ },
+ { status: 422 }
+ );
+ }
+
+ // Amount guard: > 10% over AI-parsed requires a note so the reason is
+ // captured in status_history.
+ const aiParsed = invoice.ai_parsed_total_amount ?? invoice.total_amount;
+ const effectiveTotal =
+ typeof updates?.total_amount === "number" ? updates.total_amount : invoice.total_amount;
+ if (aiParsed > 0 && effectiveTotal > aiParsed) {
+ const pct = ((effectiveTotal - aiParsed) / aiParsed) * 100;
+ if (pct > 10 && !note) {
+ return NextResponse.json(
+ {
+ error: `Amount increased by ${pct.toFixed(1)}% over AI-parsed total — a note is required for any increase > 10%`,
+ },
+ { status: 422 }
+ );
+ }
  }
  }
 

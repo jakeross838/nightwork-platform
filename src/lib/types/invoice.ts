@@ -1,3 +1,9 @@
+export interface LineItemCostCodeSuggestion {
+ code: string | null;
+ description: string | null;
+ confidence: number;
+}
+
 export interface ParsedLineItem {
  description: string;
  date: string | null;
@@ -5,6 +11,9 @@ export interface ParsedLineItem {
  unit: string | null;
  rate: number | null;
  amount: number;
+ is_change_order?: boolean;
+ co_reference?: string | null;
+ cost_code_suggestion?: LineItemCostCodeSuggestion | null;
 }
 
 export interface ConfidenceDetails {
@@ -38,6 +47,7 @@ export interface ParsedInvoice {
  job_reference: string | null;
  description: string;
  invoice_type: "progress" | "time_and_materials" | "lump_sum";
+ is_change_order?: boolean;
  co_reference: string | null;
  line_items: ParsedLineItem[];
  subtotal: number;

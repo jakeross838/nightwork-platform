@@ -40,6 +40,17 @@ export async function GET(
  .eq("draw_id", params.id)
  .is("deleted_at", null);
 
+ // Get per-line-item splits for these invoices. One invoice can contribute
+ // to multiple G703 rows when its lines span multiple cost codes.
+ const drawInvoiceIds = (invoices ?? []).map((i) => i.id);
+ const { data: drawLineItems } = drawInvoiceIds.length > 0
+ ? await supabase
+ .from("invoice_line_items")
+ .select("invoice_id, cost_code_id, amount_cents")
+ .in("invoice_id", drawInvoiceIds)
+ .is("deleted_at", null)
+ : { data: [] as Array<{ invoice_id: string; cost_code_id: string | null; amount_cents: number }> };
+
  // Get all budget lines for this job (including baseline)
  const { data: fetchedBudgetLines } = await supabase
  .from("budget_lines")
@@ -56,10 +67,27 @@ export async function GET(
  cost_codes: Array.isArray(bl.cost_codes) ? bl.cost_codes[0] : bl.cost_codes,
  }));
 
- // Handle invoice cost codes missing from the bulk query (PostgREST caching quirk)
- const budgetLineCostCodeIds = new Set(allBudgetLines.map(bl => bl.cost_code_id));
+ // Collect every cost_code_id the draw touches: both via the line-item
+ // splits and the legacy invoice-level fallback (for pre-migration invoices).
+ const referencedCostCodeIds = new Set<string>();
+ for (const li of drawLineItems ?? []) {
+ if (li.cost_code_id) referencedCostCodeIds.add(li.cost_code_id);
+ }
+ // Fallback: if an invoice has no line-item rows (e.g. upload mid-migration),
+ // use its invoice-level cost_code_id so it still lands on a G703 row.
+ const invoicesWithLineCoverage = new Set(
+ (drawLineItems ?? []).map((li) => li.invoice_id)
+ );
  for (const inv of invoices ?? []) {
- if (inv.cost_code_id && !budgetLineCostCodeIds.has(inv.cost_code_id)) {
+ if (inv.cost_code_id && !invoicesWithLineCoverage.has(inv.id)) {
+ referencedCostCodeIds.add(inv.cost_code_id);
+ }
+ }
+
+ // Handle cost codes missing from the bulk query (PostgREST caching quirk)
+ const budgetLineCostCodeIds = new Set(allBudgetLines.map(bl => bl.cost_code_id));
+ for (const ccId of Array.from(referencedCostCodeIds)) {
+ if (!budgetLineCostCodeIds.has(ccId)) {
  const { data: existingBl } = await supabase
  .from("budget_lines")
  .select(`
@@ -67,7 +95,7 @@ export async function GET(
  cost_codes:cost_code_id (code, description, category, sort_order)
  `)
  .eq("job_id", draw.job_id)
- .eq("cost_code_id", inv.cost_code_id)
+ .eq("cost_code_id", ccId)
  .is("deleted_at", null)
  .maybeSingle();
 
@@ -75,12 +103,12 @@ export async function GET(
  // eslint-disable-next-line @typescript-eslint/no-explicit-any
  const bl = existingBl as any;
  allBudgetLines.push({ ...bl, cost_codes: Array.isArray(bl.cost_codes) ? bl.cost_codes[0] : bl.cost_codes });
- budgetLineCostCodeIds.add(inv.cost_code_id);
+ budgetLineCostCodeIds.add(ccId);
  } else {
  // Auto-create budget line with $0 estimate
  const { data: created } = await supabase
  .from("budget_lines")
- .insert({ job_id: draw.job_id, cost_code_id: inv.cost_code_id, original_estimate: 0, revised_estimate: 0, previous_applications_baseline: 0, org_id: ORG_ID })
+ .insert({ job_id: draw.job_id, cost_code_id: ccId, original_estimate: 0, revised_estimate: 0, previous_applications_baseline: 0, org_id: ORG_ID })
  .select(`
  id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline,
  cost_codes:cost_code_id (code, description, category, sort_order)
@@ -90,17 +118,26 @@ export async function GET(
  // eslint-disable-next-line @typescript-eslint/no-explicit-any
  const bl = created as any;
  allBudgetLines.push({ ...bl, cost_codes: Array.isArray(bl.cost_codes) ? bl.cost_codes[0] : bl.cost_codes });
- budgetLineCostCodeIds.add(inv.cost_code_id);
+ budgetLineCostCodeIds.add(ccId);
  }
  }
  }
  }
 
- // Compute G703 line items dynamically from invoices (never stored, always calculated)
- // Sum invoice amounts by cost_code_id for this draw
+ // Compute G703 line items dynamically. Primary source is invoice_line_items
+ // grouped by cost_code_id (supports invoices that split across multiple codes).
+ // Invoices without any line items fall back to their invoice-level cost_code_id.
  const thisPeriodByCostCode = new Map<string, number>();
+ for (const li of drawLineItems ?? []) {
+ if (li.cost_code_id) {
+ thisPeriodByCostCode.set(
+ li.cost_code_id,
+ (thisPeriodByCostCode.get(li.cost_code_id) ?? 0) + li.amount_cents
+ );
+ }
+ }
  for (const inv of invoices ?? []) {
- if (inv.cost_code_id) {
+ if (inv.cost_code_id && !invoicesWithLineCoverage.has(inv.id)) {
  thisPeriodByCostCode.set(
  inv.cost_code_id,
  (thisPeriodByCostCode.get(inv.cost_code_id) ?? 0) + inv.total_amount

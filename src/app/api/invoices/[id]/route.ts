@@ -27,6 +27,21 @@ export async function GET(
  return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
  }
 
+ // Per-line items (multi-cost-code support). The invoice-level
+ // `line_items` JSONB is kept as a mirror but the authoritative source
+ // for cost-code splits is invoice_line_items.
+ const { data: lineItems } = await supabase
+ .from("invoice_line_items")
+ .select(`
+ id, line_index, description, qty, unit, rate, amount_cents,
+ cost_code_id, budget_line_id, is_change_order, co_reference,
+ ai_suggested_cost_code_id, ai_suggestion_confidence,
+ cost_codes:cost_code_id (id, code, description, category, is_change_order)
+ `)
+ .eq("invoice_id", params.id)
+ .is("deleted_at", null)
+ .order("line_index");
+
  // Get signed URL for the original file
  let signedUrl: string | null = null;
  if (invoice.original_file_url) {
@@ -44,7 +59,12 @@ export async function GET(
  .is("deleted_at", null)
  .order("full_name");
 
- return NextResponse.json({ ...invoice, signed_file_url: signedUrl, pm_users: pmUsers ?? [] });
+ return NextResponse.json({
+ ...invoice,
+ signed_file_url: signedUrl,
+ pm_users: pmUsers ?? [],
+ invoice_line_items: lineItems ?? [],
+ });
  } catch (err) {
  const message = err instanceof Error ? err.message : "Unknown error";
  return NextResponse.json({ error: message }, { status: 500 });

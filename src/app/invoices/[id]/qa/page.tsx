@@ -5,9 +5,21 @@ import { useParams, useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
 import { formatCents, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
 
+interface QaLineItem {
+ id: string;
+ line_index: number;
+ description: string | null;
+ amount_cents: number;
+ cost_code_id: string | null;
+ is_change_order: boolean;
+ co_reference: string | null;
+ cost_codes: { id: string; code: string; description: string } | null;
+}
+
 interface InvoiceData {
  id: string; job_id: string | null; vendor_name_raw: string | null; invoice_number: string | null;
  invoice_date: string | null; description: string | null; total_amount: number; invoice_type: string | null;
+ is_change_order?: boolean;
  confidence_score: number;
  confidence_details: (Record<string, number> & { auto_fills?: Record<string, boolean> }) | null;
  status: string; status_history: Array<Record<string, unknown>>;
@@ -17,6 +29,7 @@ interface InvoiceData {
  cost_codes: { id: string; code: string; description: string } | null;
  vendors: { id: string; name: string } | null;
  line_items: Array<{ description: string; qty: number | null; rate: number | null; amount: number }>;
+ invoice_line_items: QaLineItem[];
 }
 
 function statusDotColor(newStatus: string): string {
@@ -194,8 +207,53 @@ export default function QaReviewPage() {
  </div>
  </div>
 
- {/* Line Items */}
- {invoice.line_items?.length > 0 && (
+ {/* Line Items — read-only with assigned cost codes (PM owns these) */}
+ {invoice.invoice_line_items?.length > 0 ? (
+ <div className="border-t border-brand-border pt-4">
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2 flex items-center gap-2">
+ Line Items
+ <svg className="w-3.5 h-3.5 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+ </svg>
+ <span className="text-[10px] text-cream-dim normal-case tracking-normal">PM-assigned — kick back to change</span>
+ </p>
+ <div className="overflow-x-auto border border-brand-border">
+ <table className="w-full text-xs">
+ <thead><tr className="bg-brand-surface">
+ <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold">Cost Code</th>
+ <th className="py-2 px-3 text-center text-cream font-semibold">CO</th>
+ <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
+ </tr></thead>
+ <tbody>
+ {invoice.invoice_line_items.map((li) => (
+ <tr key={li.id} className="border-t border-brand-row-border">
+ <td className="py-2 px-3 text-cream">{li.description ?? <span className="text-cream-dim italic">(no description)</span>}</td>
+ <td className="py-2 px-3 text-cream-muted">
+ {li.cost_codes ? (
+ <span className="font-mono text-teal">{li.cost_codes.code}</span>
+ ) : (
+ <span className="text-cream-dim">—</span>
+ )}
+ {li.cost_codes && <span className="ml-1">{li.cost_codes.description}</span>}
+ </td>
+ <td className="py-2 px-3 text-center">
+ {li.is_change_order ? (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-brass border border-brass">
+ {li.co_reference || "CO"}
+ </span>
+ ) : (
+ <span className="text-cream-dim">—</span>
+ )}
+ </td>
+ <td className="py-2 px-3 text-right text-cream font-medium">{formatCents(li.amount_cents)}</td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ </div>
+ </div>
+ ) : invoice.line_items?.length > 0 && (
  <div className="border-t border-brand-border pt-4">
  <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">Line Items</p>
  <div className="overflow-x-auto border border-brand-border">
