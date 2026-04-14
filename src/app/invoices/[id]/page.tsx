@@ -175,6 +175,7 @@ export default function InvoiceReviewPage() {
   const [actionNote, setActionNote] = useState("");
   const [showNoteModal, setShowNoteModal] = useState<"hold" | "deny" | null>(null);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [showMissingFieldsBlock, setShowMissingFieldsBlock] = useState(false);
 
   // Fetch invoice
   useEffect(() => {
@@ -496,7 +497,7 @@ export default function InvoiceReviewPage() {
             {isReviewable && (
               <div className="border-t border-brand-border pt-6 space-y-3">
                 <div className="flex gap-3">
-                  <button onClick={() => setShowApproveConfirm(true)} disabled={saving}
+                  <button onClick={() => { if (!jobId || !costCodeId) { setShowMissingFieldsBlock(true); } else { setShowApproveConfirm(true); } }} disabled={saving}
                     className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium rounded-xl transition-all">
                     {saving ? "Saving..." : "Approve"}
                   </button>
@@ -605,16 +606,12 @@ export default function InvoiceReviewPage() {
           <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md animate-fade-up shadow-2xl">
             <h3 className="font-display text-xl text-cream mb-2">Approve Invoice</h3>
 
-            {/* Soft validation warnings */}
-            {(!jobId || !costCodeId || missingInvoiceNumber || missingInvoiceDate) && (
+            {/* Soft warnings for optional fields (job+cost code enforced before reaching this modal) */}
+            {(missingInvoiceNumber || missingInvoiceDate) && (
               <div className="mb-4 px-3 py-2.5 bg-status-warning-muted border border-brass/20 rounded-xl space-y-1">
-                {!jobId && <p className="text-xs text-brass font-medium">No job assigned</p>}
-                {!costCodeId && <p className="text-xs text-brass font-medium">No cost code assigned</p>}
                 {missingInvoiceNumber && <p className="text-xs text-brass">Missing invoice number</p>}
                 {missingInvoiceDate && <p className="text-xs text-brass">Missing invoice date</p>}
-                <p className="text-[11px] text-cream-dim mt-1">
-                  {(!jobId || !costCodeId) ? "Job and cost code are recommended before approving. Assign now or Hold for later." : "You can still approve, but consider filling these in."}
-                </p>
+                <p className="text-[11px] text-cream-dim mt-1">You can still approve, but consider filling these in.</p>
               </div>
             )}
 
@@ -647,6 +644,50 @@ export default function InvoiceReviewPage() {
               <button onClick={() => setShowApproveConfirm(false)}
                 className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted rounded-xl hover:border-brand-border-light transition-colors">
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Missing Fields Block Modal ── */}
+      {showMissingFieldsBlock && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md animate-fade-up shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-status-danger-muted flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-status-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl text-cream">Cannot Approve</h3>
+            </div>
+            <p className="text-sm text-cream-muted mb-2">Job and Cost Code are required before approving.</p>
+            <div className="bg-brand-surface border border-brand-border rounded-xl p-3 space-y-1.5 mb-5">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${jobId ? "bg-status-success" : "bg-status-danger"}`} />
+                <span className={`text-sm ${jobId ? "text-cream-muted" : "text-cream font-medium"}`}>
+                  {jobId ? `Job: ${selectedJob?.name ?? "Assigned"}` : "Job — not assigned"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${costCodeId ? "bg-status-success" : "bg-status-danger"}`} />
+                <span className={`text-sm ${costCodeId ? "text-cream-muted" : "text-cream font-medium"}`}>
+                  {costCodeId ? `Cost Code: ${selectedCostCode?.code ?? "Assigned"}` : "Cost Code — not assigned"}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowMissingFieldsBlock(false)}
+                className="flex-1 px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium rounded-xl transition-colors">
+                Go Back and Assign
+              </button>
+              <button
+                onClick={() => { setShowMissingFieldsBlock(false); handleAction("hold", "Held — missing job or cost code assignment"); }}
+                disabled={saving}
+                className="flex-1 px-4 py-2.5 bg-brass hover:brightness-110 text-brand-bg font-medium rounded-xl disabled:opacity-50 transition-all">
+                Hold Instead
               </button>
             </div>
           </div>

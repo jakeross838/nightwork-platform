@@ -46,12 +46,24 @@ export async function POST(
 
     const { data: invoice, error: fetchError } = await supabase
       .from("invoices")
-      .select("status, status_history, pm_overrides, qa_overrides")
+      .select("status, status_history, pm_overrides, qa_overrides, job_id, cost_code_id")
       .eq("id", params.id)
       .single();
 
     if (fetchError || !invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+
+    // Hard block: cannot approve without job and cost code
+    if (action === "approve") {
+      const effectiveJobId = updates?.job_id ?? invoice.job_id;
+      const effectiveCostCodeId = updates?.cost_code_id ?? invoice.cost_code_id;
+      if (!effectiveJobId || !effectiveCostCodeId) {
+        return NextResponse.json(
+          { error: "Job and Cost Code are required before approving" },
+          { status: 422 }
+        );
+      }
     }
 
     const newStatus = ACTION_STATUS_MAP[action];
