@@ -39,7 +39,7 @@ export default function QueuePage() {
     <div className="min-h-screen">
       <NavBar />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="font-display text-2xl text-cream">PM Queue</h2>
@@ -62,45 +62,34 @@ export default function QueuePage() {
             <p className="text-cream-dim text-sm mt-1">No invoices pending review</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-brand-border animate-fade-up">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-brand-surface text-left">
-                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Invoice #</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Date</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Job</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Confidence</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Waiting</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv, i) => (
-                  <tr key={inv.id}
-                    className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors animate-fade-up"
-                    style={{ animationDelay: `${0.05 + i * 0.03}s` }}
-                    onClick={() => window.location.href = `/invoices/${inv.id}`}
-                  >
-                    <td className="py-4 px-5 text-cream font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
-                    <td className="py-4 px-5 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
-                    <td className="py-4 px-5 text-cream-muted">{inv.invoice_date ?? "—"}</td>
-                    <td className="py-4 px-5">
+          <>
+            {/* Mobile card layout */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {invoices.map((inv, i) => (
+                <div
+                  key={inv.id}
+                  className="bg-brand-card border border-brand-border rounded-xl p-4 cursor-pointer active:opacity-80 transition-opacity animate-fade-up"
+                  style={{ animationDelay: `${0.05 + i * 0.03}s` }}
+                  onClick={() => window.location.href = `/invoices/${inv.id}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-cream font-medium text-base">{inv.vendor_name_raw ?? "Unknown"}</span>
+                    <span className="text-cream font-display font-medium text-lg">{formatCents(inv.total_amount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div>
                       {inv.jobs?.name ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded bg-brass-muted text-brass text-xs font-medium">
                           {inv.jobs.name}
                         </span>
                       ) : (
-                        <span className="text-cream-dim">Unmatched</span>
+                        <span className="text-cream-dim text-xs">Unmatched</span>
                       )}
-                    </td>
-                    <td className="py-4 px-5 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
-                    <td className="py-4 px-5">
+                    </div>
+                    <div className="flex items-center gap-2">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${confidenceColor(inv.confidence_score)}`}>
                         {Math.round(inv.confidence_score * 100)}%
                       </span>
-                    </td>
-                    <td className="py-4 px-5 text-right">
                       {(() => {
                         const d = daysAgo(inv.received_date);
                         return (
@@ -109,12 +98,74 @@ export default function QueuePage() {
                           </span>
                         );
                       })()}
-                    </td>
+                    </div>
+                  </div>
+                  {(inv.invoice_number || inv.invoice_date) && (
+                    <div className="flex items-center gap-2 mt-2 text-xs text-cream-muted">
+                      {inv.invoice_number && <span className="font-mono">#{inv.invoice_number}</span>}
+                      {inv.invoice_number && inv.invoice_date && <span>&middot;</span>}
+                      {inv.invoice_date && <span>{inv.invoice_date}</span>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table layout */}
+            <div className="hidden md:block overflow-x-auto rounded-2xl border border-brand-border animate-fade-up">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-brand-surface text-left">
+                    <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Vendor</th>
+                    <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Invoice #</th>
+                    <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Date</th>
+                    <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Job</th>
+                    <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Amount</th>
+                    <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider">Confidence</th>
+                    <th className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider text-right">Waiting</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {invoices.map((inv, i) => (
+                    <tr key={inv.id}
+                      className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors animate-fade-up"
+                      style={{ animationDelay: `${0.05 + i * 0.03}s` }}
+                      onClick={() => window.location.href = `/invoices/${inv.id}`}
+                    >
+                      <td className="py-4 px-5 text-cream font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
+                      <td className="py-4 px-5 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                      <td className="py-4 px-5 text-cream-muted">{inv.invoice_date ?? "—"}</td>
+                      <td className="py-4 px-5">
+                        {inv.jobs?.name ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-brass-muted text-brass text-xs font-medium">
+                            {inv.jobs.name}
+                          </span>
+                        ) : (
+                          <span className="text-cream-dim">Unmatched</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-5 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
+                      <td className="py-4 px-5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${confidenceColor(inv.confidence_score)}`}>
+                          {Math.round(inv.confidence_score * 100)}%
+                        </span>
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        {(() => {
+                          const d = daysAgo(inv.received_date);
+                          return (
+                            <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
+                              {d}d
+                            </span>
+                          );
+                        })()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </main>
     </div>

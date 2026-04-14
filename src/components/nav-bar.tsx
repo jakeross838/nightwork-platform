@@ -2,15 +2,36 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
-function NavLink({ href, label, count, active }: { href: string; label: string; count?: number; active: boolean }) {
+function NavLink({
+  href,
+  label,
+  count,
+  active,
+  mobile,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  count?: number;
+  active: boolean;
+  mobile?: boolean;
+  onClick?: () => void;
+}) {
   return (
-    <Link href={href}
-      className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-        active ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream hover:bg-brand-surface"
-      }`}>
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`relative flex items-center gap-1.5 rounded-lg text-sm font-medium transition-colors ${
+        mobile ? "py-3 px-4 w-full" : "px-3 py-1.5"
+      } ${
+        active
+          ? "bg-brand-elevated text-cream"
+          : "text-cream-dim hover:text-cream hover:bg-brand-surface"
+      }`}
+    >
       {label}
       {count != null && count > 0 && (
         <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-brass text-brand-bg text-[10px] font-bold">
@@ -25,32 +46,169 @@ export default function NavBar() {
   const pathname = usePathname();
   const [pmCount, setPmCount] = useState(0);
   const [qaCount, setQaCount] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchCounts() {
       const [pmRes, qaRes] = await Promise.all([
-        supabase.from("invoices").select("id", { count: "exact", head: true }).in("status", ["pm_review", "ai_processed"]).is("deleted_at", null),
-        supabase.from("invoices").select("id", { count: "exact", head: true }).in("status", ["qa_review", "pm_approved"]).is("deleted_at", null),
+        supabase
+          .from("invoices")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["pm_review", "ai_processed"])
+          .is("deleted_at", null),
+        supabase
+          .from("invoices")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["qa_review", "pm_approved"])
+          .is("deleted_at", null),
       ]);
       setPmCount(pmRes.count ?? 0);
       setQaCount(qaRes.count ?? 0);
     }
     fetchCounts();
-  }, [pathname]); // refetch when navigating
+  }, [pathname]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Close mobile menu on click outside
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileOpen]);
+
+  const closeMobile = () => setMobileOpen(false);
+
+  const isUploadActive = pathname === "/invoices/upload";
+  const isPmActive =
+    pathname === "/invoices/queue" ||
+    (pathname.startsWith("/invoices/") &&
+      !pathname.includes("/qa") &&
+      !pathname.includes("/upload") &&
+      !pathname.includes("/draws"));
+  const isQaActive =
+    pathname === "/invoices/qa" || pathname.endsWith("/qa");
+  const isDrawsActive = pathname.startsWith("/draws");
 
   return (
-    <header className="border-b border-brand-border bg-brand-bg/80 backdrop-blur-sm sticky top-0 z-40">
+    <header
+      ref={menuRef}
+      className="border-b border-brand-border bg-brand-bg/80 backdrop-blur-sm sticky top-0 z-40"
+    >
       <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
-          <span className="font-display text-lg text-cream group-hover:text-teal transition-colors">Ross Command Center</span>
+          <span className="font-display text-lg text-cream group-hover:text-teal transition-colors">
+            Ross Command Center
+          </span>
         </Link>
-        <nav className="flex items-center gap-1">
-          <NavLink href="/invoices/upload" label="Upload" active={pathname === "/invoices/upload"} />
-          <NavLink href="/invoices/queue" label="PM Queue" count={pmCount} active={pathname === "/invoices/queue" || (pathname.startsWith("/invoices/") && !pathname.includes("/qa") && !pathname.includes("/upload") && !pathname.includes("/draws"))} />
-          <NavLink href="/invoices/qa" label="Accounting QA" count={qaCount} active={pathname === "/invoices/qa" || pathname.endsWith("/qa")} />
-          <NavLink href="/draws" label="Draws" active={pathname.startsWith("/draws")} />
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-1">
+          <NavLink
+            href="/invoices/upload"
+            label="Upload"
+            active={isUploadActive}
+          />
+          <NavLink
+            href="/invoices/queue"
+            label="PM Queue"
+            count={pmCount}
+            active={isPmActive}
+          />
+          <NavLink
+            href="/invoices/qa"
+            label="Accounting QA"
+            count={qaCount}
+            active={isQaActive}
+          />
+          <NavLink href="/draws" label="Draws" active={isDrawsActive} />
         </nav>
+
+        {/* Mobile hamburger + badge */}
+        <div className="flex md:hidden items-center gap-2">
+          {pmCount > 0 && (
+            <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-brass text-brand-bg text-[10px] font-bold">
+              {pmCount}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setMobileOpen((prev) => !prev)}
+            className="p-2 rounded-lg text-cream-dim hover:text-cream hover:bg-brand-surface transition-colors"
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              {mobileOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
+
+      {/* Mobile dropdown panel */}
+      {mobileOpen && (
+        <nav className="md:hidden bg-brand-card border-b border-brand-border px-4 pb-3 pt-1 flex flex-col gap-1">
+          <NavLink
+            href="/invoices/upload"
+            label="Upload"
+            active={isUploadActive}
+            mobile
+            onClick={closeMobile}
+          />
+          <NavLink
+            href="/invoices/queue"
+            label="PM Queue"
+            count={pmCount}
+            active={isPmActive}
+            mobile
+            onClick={closeMobile}
+          />
+          <NavLink
+            href="/invoices/qa"
+            label="Accounting QA"
+            count={qaCount}
+            active={isQaActive}
+            mobile
+            onClick={closeMobile}
+          />
+          <NavLink
+            href="/draws"
+            label="Draws"
+            active={isDrawsActive}
+            mobile
+            onClick={closeMobile}
+          />
+        </nav>
+      )}
     </header>
   );
 }

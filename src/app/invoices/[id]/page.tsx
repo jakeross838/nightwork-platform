@@ -176,6 +176,7 @@ export default function InvoiceReviewPage() {
   const [showNoteModal, setShowNoteModal] = useState<"hold" | "deny" | null>(null);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [showMissingFieldsBlock, setShowMissingFieldsBlock] = useState(false);
+  const [showDocPreview, setShowDocPreview] = useState(false);
 
   // Fetch invoice
   useEffect(() => {
@@ -321,11 +322,11 @@ export default function InvoiceReviewPage() {
       <NavBar />
 
       {/* Sub-header */}
-      <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
-        <div className="max-w-[1600px] mx-auto flex items-center gap-4 flex-wrap">
+      <div className="border-b border-brand-border bg-brand-surface/50 px-4 md:px-6 py-3">
+        <div className="max-w-[1600px] mx-auto flex items-center gap-3 md:gap-4 flex-wrap">
           <Link href="/invoices/queue" className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Queue</Link>
-          <h1 className="font-display text-xl text-cream">
-            {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim">&mdash;</span> {invoice.invoice_number ?? "No #"}
+          <h1 className="font-display text-base md:text-xl text-cream truncate">
+            {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim hidden md:inline">&mdash;</span><span className="md:hidden"> </span>{invoice.invoice_number ?? "No #"}
           </h1>
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${confidenceColor(invoice.confidence_score)}`}>
             {Math.round(invoice.confidence_score * 100)}% {confidenceLabel(invoice.confidence_score)}
@@ -351,25 +352,37 @@ export default function InvoiceReviewPage() {
         </div>
       )}
 
-      <main className="max-w-[1600px] mx-auto px-6 py-6">
+      <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 pb-32 md:pb-6">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
           {/* ── Left: Document Preview ── */}
           <div className="xl:col-span-1">
-            <div className="sticky top-24">
-              <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline">Original Document</p>
-              <div className="mt-5">
-                {invoice.signed_file_url ? (
-                  invoice.original_file_type === "image" ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={invoice.signed_file_url} alt="Invoice" className="w-full rounded-xl border border-brand-border" />
+            {/* Mobile: collapsible toggle */}
+            <button
+              onClick={() => setShowDocPreview(!showDocPreview)}
+              className="xl:hidden w-full flex items-center justify-between px-4 py-3 bg-brand-card border border-brand-border rounded-xl mb-4"
+            >
+              <span className="text-sm font-medium text-cream">View Original Document</span>
+              <svg className={`w-4 h-4 text-cream-dim transition-transform ${showDocPreview ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div className={`${showDocPreview ? "block" : "hidden"} xl:block`}>
+              <div className="xl:sticky xl:top-24">
+                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline hidden xl:block">Original Document</p>
+                <div className="xl:mt-5">
+                  {invoice.signed_file_url ? (
+                    invoice.original_file_type === "image" ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={invoice.signed_file_url} alt="Invoice" className="w-full rounded-xl border border-brand-border" />
+                    ) : (
+                      <iframe src={invoice.signed_file_url} className="w-full h-[500px] xl:h-[700px] rounded-xl border border-brand-border bg-brand-surface" title="Invoice PDF" />
+                    )
                   ) : (
-                    <iframe src={invoice.signed_file_url} className="w-full h-[700px] rounded-xl border border-brand-border bg-brand-surface" title="Invoice PDF" />
-                  )
-                ) : (
-                  <div className="h-64 rounded-xl border border-brand-border bg-brand-surface flex items-center justify-center">
-                    <p className="text-cream-dim text-sm">No preview available</p>
-                  </div>
-                )}
+                    <div className="h-48 xl:h-64 rounded-xl border border-brand-border bg-brand-surface flex items-center justify-center">
+                      <p className="text-cream-dim text-sm">No preview available</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -493,9 +506,9 @@ export default function InvoiceReviewPage() {
               )}
             </div>
 
-            {/* Actions */}
+            {/* Actions — desktop only (mobile uses sticky bar below) */}
             {isReviewable && (
-              <div className="border-t border-brand-border pt-6 space-y-3">
+              <div className="hidden md:block border-t border-brand-border pt-6 space-y-3">
                 <div className="flex gap-3">
                   <button onClick={() => { if (!jobId || !costCodeId) { setShowMissingFieldsBlock(true); } else { setShowApproveConfirm(true); } }} disabled={saving}
                     className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium rounded-xl transition-all">
@@ -599,6 +612,26 @@ export default function InvoiceReviewPage() {
           </div>
         </div>
       </main>
+
+      {/* ── Sticky Mobile Action Bar ── */}
+      {isReviewable && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-bg/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 z-30">
+          <div className="flex gap-2">
+            <button onClick={() => { if (!jobId || !costCodeId) { setShowMissingFieldsBlock(true); } else { setShowApproveConfirm(true); } }} disabled={saving}
+              className="flex-1 px-3 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium rounded-xl transition-all text-sm">
+              {saving ? "..." : "Approve"}
+            </button>
+            <button onClick={() => setShowNoteModal("hold")} disabled={saving}
+              className="flex-1 px-3 py-3 bg-brass hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium rounded-xl transition-all text-sm">
+              Hold
+            </button>
+            <button onClick={() => setShowNoteModal("deny")} disabled={saving}
+              className="flex-1 px-3 py-3 bg-status-danger hover:brightness-110 disabled:opacity-50 text-white font-medium rounded-xl transition-all text-sm">
+              Deny
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Approve Confirmation Modal ── */}
       {showApproveConfirm && (

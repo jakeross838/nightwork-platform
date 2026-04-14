@@ -298,14 +298,14 @@ export default function UploadPage() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         {/* Drop Zone */}
         <div
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={(e) => { e.preventDefault(); setIsDragging(false); processFiles(Array.from(e.dataTransfer.files)); }}
           onClick={() => inputRef.current?.click()}
-          className={`relative border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all duration-300 ${
+          className={`relative border-2 border-dashed rounded-2xl p-8 md:p-16 text-center cursor-pointer transition-all duration-300 ${
             isDragging ? "border-teal bg-teal/5 shadow-[0_0_40px_-10px_rgba(74,155,142,0.2)]" : "border-brand-border hover:border-brand-border-light bg-brand-surface/30"
           }`}
         >
@@ -317,8 +317,9 @@ export default function UploadPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
             </svg>
           </div>
-          <p className="text-lg text-cream font-display">{isDragging ? "Drop files here" : "Drag & drop invoices"}</p>
-          <p className="mt-1.5 text-sm text-cream-dim">or click to browse &mdash; PDF, DOCX, XLSX, JPG, PNG</p>
+          <p className="text-lg text-cream font-display">{isDragging ? "Drop files here" : <><span className="hidden md:inline">Drag & drop invoices</span><span className="md:hidden">Upload Invoices</span></>}</p>
+          <p className="mt-1.5 text-sm text-cream-dim hidden md:block">or click to browse &mdash; PDF, DOCX, XLSX, JPG, PNG</p>
+          <button className="mt-4 px-6 py-3 bg-teal hover:bg-teal-hover text-brand-bg font-medium rounded-xl transition-colors md:hidden">Browse Files</button>
         </div>
 
         {/* Results */}
