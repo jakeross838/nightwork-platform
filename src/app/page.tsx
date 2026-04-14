@@ -102,6 +102,7 @@ export default function Home() {
     { key: "qaQueue",  href: "/invoices/qa",     title: "Accounting QA",   subtitle: qaCount > 0 ? `${qaCount} ready for QA` : "QA queue clear",        count: qaCount, roles: ["admin", "accounting"] },
     { key: "draws",    href: "/draws",           title: "Draws",           subtitle: "G702/G703 pay applications", roles: ["admin", "pm"] },
     { key: "vendors",  href: "/vendors",         title: "Vendors",         subtitle: "Manage vendors and merge duplicates", roles: ["admin", "accounting"] },
+    { key: "jobs",     href: "/jobs",            title: "Jobs",            subtitle: "Create and manage projects", roles: ["admin"] },
   ];
 
   const visibleCards = role ? cards.filter((c) => c.roles.includes(role)) : [];

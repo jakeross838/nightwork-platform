@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ConnectionBanner from "@/components/connection-banner";
 
 export const metadata: Metadata = {
  title: "Ross Command Center",
@@ -14,6 +15,7 @@ export default function RootLayout({
  return (
  <html lang="en">
  <body className="grain antialiased">
+ <ConnectionBanner />
  {children}
  </body>
  </html>

@@ -594,12 +594,15 @@ export default function UploadPage() {
  <ProgressSteps currentStep={fileStatus.parseStep} startedAt={fileStatus.startedAt} />
  )}
 
- {/* Error with retry */}
+ {/* Error with retry — file stays in the list so user can retry or remove */}
  {fileStatus.status === "error" && (
- <div className="px-6 py-4 flex items-start gap-3">
+ <div className="px-6 py-4 flex items-start gap-3 bg-status-danger/5 border-t border-status-danger/20">
  <div className="flex-1">
- <p className="text-sm font-medium text-status-danger">Parse failed</p>
+ <p className="text-sm font-medium text-status-danger">AI parsing failed — try again or upload manually</p>
  <p className="text-xs text-status-danger/80 mt-1">{fileStatus.error}</p>
+ <p className="text-[11px] text-cream-dim mt-2">
+ The file is still attached. Click Retry to parse again, or remove it from the batch.
+ </p>
  </div>
  <button
  onClick={(e) => {

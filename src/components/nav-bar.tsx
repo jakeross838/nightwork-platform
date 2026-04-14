@@ -20,7 +20,8 @@ type NavItemKey =
   | "pmQueue"
   | "qaQueue"
   | "draws"
-  | "vendors";
+  | "vendors"
+  | "jobs";
 
 // Who sees which nav item.
 const ACCESS: Record<NavItemKey, UserRole[]> = {
@@ -30,6 +31,7 @@ const ACCESS: Record<NavItemKey, UserRole[]> = {
   qaQueue: ["admin", "accounting"],
   draws: ["admin", "pm"],
   vendors: ["admin", "accounting"],
+  jobs: ["admin"],
 };
 
 function can(role: UserRole | null, key: NavItemKey) {
@@ -209,6 +211,7 @@ export default function NavBar() {
     pathname === "/invoices/qa" || pathname.endsWith("/qa");
   const isDrawsActive = pathname.startsWith("/draws");
   const isVendorsActive = pathname === "/vendors";
+  const isJobsActive = pathname.startsWith("/jobs");
 
   const role = profile?.role ?? null;
   const show = {
@@ -218,6 +221,7 @@ export default function NavBar() {
     qaQueue: can(role, "qaQueue"),
     draws: can(role, "draws"),
     vendors: can(role, "vendors"),
+    jobs: can(role, "jobs"),
   };
 
   return (
@@ -273,6 +277,9 @@ export default function NavBar() {
               label="Vendors"
               active={isVendorsActive}
             />
+          )}
+          {show.jobs && (
+            <NavLink href="/jobs" label="Jobs" active={isJobsActive} />
           )}
         </nav>
 
@@ -419,6 +426,15 @@ export default function NavBar() {
               href="/vendors"
               label="Vendors"
               active={isVendorsActive}
+              mobile
+              onClick={closeMobile}
+            />
+          )}
+          {show.jobs && (
+            <NavLink
+              href="/jobs"
+              label="Jobs"
+              active={isJobsActive}
               mobile
               onClick={closeMobile}
             />
