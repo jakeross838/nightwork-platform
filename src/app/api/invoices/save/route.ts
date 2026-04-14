@@ -10,6 +10,7 @@ interface SaveRequest {
   file_url: string;
   file_name: string;
   file_type: string;
+  force_save?: boolean;
 }
 
 async function matchVendor(supabase: ReturnType<typeof createServerClient>, vendorName: string) {
@@ -45,6 +46,28 @@ async function matchCostCode(
   return data?.[0] ?? null;
 }
 
+async function checkDuplicate(
+  supabase: ReturnType<typeof createServerClient>,
+  vendorNameRaw: string,
+  totalAmountCents: number,
+  invoiceDate: string | null
+) {
+  if (!vendorNameRaw || !invoiceDate) return null;
+
+  const trimmedVendor = vendorNameRaw.trim();
+  const { data } = await supabase
+    .from("invoices")
+    .select("id, vendor_name_raw, total_amount, status")
+    .ilike("vendor_name_raw", trimmedVendor)
+    .eq("total_amount", totalAmountCents)
+    .eq("invoice_date", invoiceDate)
+    .is("deleted_at", null)
+    .neq("status", "void")
+    .limit(1);
+
+  return data?.[0] ?? null;
+}
+
 function dollarsToCents(dollars: number): number {
   return Math.round(dollars * 100);
 }
@@ -69,8 +92,49 @@ export async function POST(request: NextRequest) {
     const supabase = createServerClient();
     const savedIds: string[] = [];
 
-    for (const item of items) {
-      const { parsed, file_url, file_type } = item;
+    const duplicates: Array<{
+      index: number;
+      existing: { id: string; vendor_name_raw: string; total_amount: number; status: string };
+    }> = [];
+
+    for (let idx = 0; idx < items.length; idx++) {
+      const item = items[idx];
+      const { parsed, file_url, file_type, force_save } = item;
+
+      const totalAmountCents = dollarsToCents(parsed.total_amount);
+
+      // Check for duplicate before inserting
+      const existingDuplicate = await checkDuplicate(
+        supabase,
+        parsed.vendor_name,
+        totalAmountCents,
+        parsed.invoice_date
+      );
+
+      if (existingDuplicate && !force_save) {
+        // For batch requests, collect duplicates; for single, return immediately
+        if (items.length === 1) {
+          return NextResponse.json({
+            duplicate: true,
+            existing: {
+              id: existingDuplicate.id,
+              vendor_name_raw: existingDuplicate.vendor_name_raw,
+              total_amount: existingDuplicate.total_amount,
+              status: existingDuplicate.status,
+            },
+          });
+        }
+        duplicates.push({
+          index: idx,
+          existing: {
+            id: existingDuplicate.id,
+            vendor_name_raw: existingDuplicate.vendor_name_raw,
+            total_amount: existingDuplicate.total_amount,
+            status: existingDuplicate.status,
+          },
+        });
+        continue;
+      }
 
       const today = new Date().toISOString().split("T")[0];
       const paymentDate = computePaymentDate(today);
@@ -103,12 +167,17 @@ export async function POST(request: NextRequest) {
       if (autoFilledJob) autoFills.job_id = true;
       if (autoFilledCostCode) autoFills.cost_code_id = true;
 
+      // Build status history note — include duplicate flag if force-saving
+      const duplicateNote = (existingDuplicate && force_save)
+        ? ` Force-saved as possible duplicate of invoice ${existingDuplicate.id}.`
+        : "";
+
       const statusEntry = {
         who: "system",
         when: new Date().toISOString(),
         old_status: "received",
         new_status: status,
-        note: `AI parsed with ${Math.round(parsed.confidence_score * 100)}% confidence. Auto-routed.${autoFilledJob ? " Job auto-matched." : ""}${autoFilledCostCode ? ` Cost code auto-assigned: ${matchedCostCode?.code}.` : ""}`,
+        note: `AI parsed with ${Math.round(parsed.confidence_score * 100)}% confidence. Auto-routed.${autoFilledJob ? " Job auto-matched." : ""}${autoFilledCostCode ? ` Cost code auto-assigned: ${matchedCostCode?.code}.` : ""}${duplicateNote}`,
       };
 
       const { data, error } = await supabase
@@ -125,7 +194,7 @@ export async function POST(request: NextRequest) {
           po_reference_raw: parsed.po_reference,
           description: parsed.description,
           line_items: parsed.line_items,
-          total_amount: dollarsToCents(parsed.total_amount),
+          total_amount: totalAmountCents,
           invoice_type: parsed.invoice_type,
           co_reference_raw: parsed.co_reference,
           confidence_score: parsed.confidence_score,
@@ -133,6 +202,9 @@ export async function POST(request: NextRequest) {
             ...parsed.confidence_details,
             cost_code_suggestion: parsed.cost_code_suggestion?.confidence ?? 0,
             auto_fills: autoFills,
+            ...(existingDuplicate && force_save
+              ? { possible_duplicate_of: existingDuplicate.id }
+              : {}),
           },
           ai_model_used: "claude-sonnet-4-20250514",
           ai_raw_response: parsed,
@@ -158,7 +230,10 @@ export async function POST(request: NextRequest) {
       savedIds.push(data.id);
     }
 
-    return NextResponse.json({ saved: savedIds });
+    return NextResponse.json({
+      saved: savedIds,
+      ...(duplicates.length > 0 ? { duplicates } : {}),
+    });
   } catch (err) {
     console.error("Save error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";

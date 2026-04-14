@@ -308,7 +308,7 @@ export default function InvoiceReviewPage() {
     </div>
   );
 
-  const isReviewable = ["pm_review", "ai_processed"].includes(invoice.status);
+  const isReviewable = ["pm_review", "ai_processed", "pm_held"].includes(invoice.status);
   const autoFills = (invoice.confidence_details as Record<string, unknown>)?.auto_fills as Record<string, boolean> | undefined;
 
   // Filter cost codes based on CO toggle
@@ -338,6 +338,35 @@ export default function InvoiceReviewPage() {
     );
     return entry ? String(entry.note ?? "") : null;
   })();
+
+  // Detect hold reason
+  const holdInfo = (() => {
+    if (!invoice.status_history || invoice.status !== "pm_held") return null;
+    const entry = [...invoice.status_history].reverse().find(
+      e => String(e.new_status) === "pm_held"
+    );
+    return entry ? String(entry.note ?? "") : null;
+  })();
+
+  // Detect deny reason
+  const denyInfo = (() => {
+    if (!invoice.status_history || invoice.status !== "pm_denied") return null;
+    const entry = [...invoice.status_history].reverse().find(
+      e => String(e.new_status) === "pm_denied"
+    );
+    return entry ? String(entry.note ?? "") : null;
+  })();
+
+  const handleReopen = async () => {
+    setSaving(true);
+    const res = await fetch(`/api/invoices/${invoiceId}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "reopen", note: "Reopened for review" }),
+    });
+    setSaving(false);
+    if (res.ok) window.location.reload();
+  };
 
   return (
     <div className="min-h-screen">
@@ -383,6 +412,43 @@ export default function InvoiceReviewPage() {
             <div>
               <p className="text-sm font-medium text-status-danger">Kicked Back by Accounting</p>
               <p className="text-sm text-status-danger/80 mt-0.5">{kickBackInfo}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hold banner */}
+      {holdInfo !== null && (
+        <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-6 py-3">
+          <div className="max-w-[1600px] mx-auto flex items-start gap-3">
+            <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-yellow-400">This invoice is on hold</p>
+              {holdInfo && <p className="text-sm text-yellow-400/80 mt-0.5">{holdInfo}</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deny banner with reopen */}
+      {denyInfo !== null && (
+        <div className="bg-status-danger-muted border-b border-status-danger/20 px-6 py-3">
+          <div className="max-w-[1600px] mx-auto flex items-start gap-3">
+            <svg className="w-5 h-5 text-status-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-status-danger">This invoice was denied</p>
+              {denyInfo && <p className="text-sm text-status-danger/80 mt-0.5">{denyInfo}</p>}
+              <button
+                onClick={handleReopen}
+                disabled={saving}
+                className="mt-2 px-3 py-1.5 bg-brand-surface border border-brand-border hover:border-brand-border-light text-cream text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {saving ? "Reopening..." : "Reopen for Review"}
+              </button>
             </div>
           </div>
         </div>
@@ -588,7 +654,14 @@ export default function InvoiceReviewPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-cream-dim">{jobId && costCodeId ? "No budget line found" : "Select job + cost code"}</p>
+                  jobId && costCodeId ? (
+                    <div className="px-3 py-2.5 bg-brass/10 border border-brass/20 rounded-xl">
+                      <p className="text-xs text-brass font-medium">No budget set for this cost code</p>
+                      <p className="text-[11px] text-cream-dim mt-1">Approving will create a $0 budget line — this invoice will show as over-budget on the draw.</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-cream-dim">Select job + cost code</p>
+                  )
                 )}
               </SidebarCard>
 

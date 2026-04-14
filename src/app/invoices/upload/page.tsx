@@ -30,6 +30,16 @@ type FileStatus = {
   saving?: boolean;
 };
 
+type DuplicateInfo = {
+  fileIndex: number;
+  existing: {
+    id: string;
+    vendor_name_raw: string;
+    total_amount: number;
+    status: string;
+  };
+};
+
 const ACCEPTED_EXTENSIONS = ".pdf,.docx,.xlsx,.jpg,.jpeg,.png";
 const ACCEPTED_MIME_TYPES = [
   "application/pdf", "image/jpeg", "image/png",
@@ -305,10 +315,83 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   );
 }
 
+function DuplicateModal({
+  duplicate,
+  onSaveAnyway,
+  onCancel,
+  saving,
+}: {
+  duplicate: DuplicateInfo;
+  onSaveAnyway: () => void;
+  onCancel: () => void;
+  saving: boolean;
+}) {
+  const amountDollars = duplicate.existing.total_amount / 100;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-brand-card border border-brand-border rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
+        {/* Warning icon */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-status-warning-muted flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-brass" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-display text-cream">Possible Duplicate Detected</h3>
+        </div>
+
+        <p className="text-sm text-cream-muted mb-4">
+          An invoice from <span className="font-medium text-cream">{duplicate.existing.vendor_name_raw}</span> for{" "}
+          <span className="font-medium text-brass">{formatDollars(amountDollars)}</span> already
+          exists in the system.
+        </p>
+
+        <div className="bg-brand-surface border border-brand-border rounded-xl px-4 py-3 mb-5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-cream-dim">Status</span>
+            <span className="text-cream font-medium capitalize">{duplicate.existing.status.replace(/_/g, " ")}</span>
+          </div>
+        </div>
+
+        <a
+          href={`/invoices/${duplicate.existing.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-sm text-teal hover:text-teal-hover transition-colors mb-5"
+        >
+          View existing invoice
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+        </a>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 border border-brand-border text-cream text-sm font-medium rounded-xl hover:bg-brand-surface transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSaveAnyway}
+            disabled={saving}
+            className="flex-1 px-4 py-2.5 bg-status-warning-muted text-brass text-sm font-medium rounded-xl hover:brightness-110 disabled:opacity-50 transition-all"
+          >
+            {saving ? "Saving..." : "Save Anyway"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UploadPage() {
   const [files, setFiles] = useState<FileStatus[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [savingAll, setSavingAll] = useState(false);
+  const [duplicateModal, setDuplicateModal] = useState<DuplicateInfo | null>(null);
+  const [duplicateSaving, setDuplicateSaving] = useState(false);
+  const duplicateHitRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const processFiles = useCallback(async (newFiles: File[]) => {
@@ -355,14 +438,31 @@ export default function UploadPage() {
     );
   }, []);
 
-  const saveOne = async (index: number) => {
+  const saveOne = async (index: number, forceSave = false) => {
     const fs = files[index];
     if (!fs.result || fs.saved) return;
     setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, saving: true } : f)));
     try {
-      const res = await fetch("/api/invoices/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fs.result) });
-      if (res.ok) setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, saving: false, saved: true } : f)));
-      else { const err = await res.json(); throw new Error(err.error); }
+      const payload = forceSave
+        ? { ...fs.result, force_save: true }
+        : fs.result;
+      const res = await fetch("/api/invoices/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Handle duplicate response
+      if (data.duplicate && data.existing) {
+        setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, saving: false } : f)));
+        duplicateHitRef.current = true;
+        setDuplicateModal({ fileIndex: index, existing: data.existing });
+        return;
+      }
+
+      setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, saving: false, saved: true } : f)));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Save failed";
       setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, saving: false, error: message } : f)));
@@ -371,13 +471,29 @@ export default function UploadPage() {
 
   const saveAll = async () => {
     setSavingAll(true);
-    const unsaved = files.filter((f) => f.status === "done" && f.result && !f.saved);
-    const payload = unsaved.map((f) => f.result);
-    try {
-      const res = await fetch("/api/invoices/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (res.ok) setFiles((prev) => prev.map((f) => (f.status === "done" && f.result && !f.saved ? { ...f, saved: true } : f)));
-    } catch { /* handled per-file */ }
+    duplicateHitRef.current = false;
+    // Save one at a time so duplicates can be resolved individually
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (f.status === "done" && f.result && !f.saved && !f.saving) {
+        await saveOne(i);
+        // If a duplicate was detected, stop batch so user can resolve it
+        if (duplicateHitRef.current) break;
+      }
+    }
     setSavingAll(false);
+  };
+
+  const handleDuplicateSaveAnyway = async () => {
+    if (!duplicateModal) return;
+    setDuplicateSaving(true);
+    await saveOne(duplicateModal.fileIndex, true);
+    setDuplicateSaving(false);
+    setDuplicateModal(null);
+  };
+
+  const handleDuplicateCancel = () => {
+    setDuplicateModal(null);
   };
 
   const parsedUnsaved = files.filter((f) => f.status === "done" && f.result && !f.saved);
@@ -528,6 +644,16 @@ export default function UploadPage() {
           </div>
         )}
       </main>
+
+      {/* Duplicate invoice warning modal */}
+      {duplicateModal && (
+        <DuplicateModal
+          duplicate={duplicateModal}
+          onSaveAnyway={handleDuplicateSaveAnyway}
+          onCancel={handleDuplicateCancel}
+          saving={duplicateSaving}
+        />
+      )}
     </div>
   );
 }

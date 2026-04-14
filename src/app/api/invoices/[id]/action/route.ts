@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 interface ActionRequest {
-  action: "approve" | "hold" | "deny" | "request_info" | "qa_approve" | "kick_back";
+  action: "approve" | "hold" | "deny" | "request_info" | "qa_approve" | "kick_back" | "reopen";
   note?: string;
   pm_overrides?: Record<string, { old: unknown; new: unknown }>;
   qa_overrides?: Record<string, { old: unknown; new: unknown }>;
@@ -16,6 +16,7 @@ const ACTION_STATUS_MAP: Record<string, string> = {
   request_info: "pm_held",
   qa_approve: "qa_approved",
   kick_back: "qa_kicked_back",
+  reopen: "pm_review",
 };
 
 // After reaching this status, auto-advance to next

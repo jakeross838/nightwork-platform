@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, confidenceColor, daysAgo, formatDate } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
@@ -14,6 +14,8 @@ interface QueueInvoice {
   confidence_score: number;
   received_date: string;
   status: string;
+  job_id: string | null;
+  cost_code_id: string | null;
   jobs: { name: string } | null;
   assigned_pm: { id: string; full_name: string } | null;
 }
@@ -26,7 +28,7 @@ interface PmUser {
 type SortKey = "vendor" | "date" | "amount" | "confidence" | "waiting" | "pm";
 type SortDir = "asc" | "desc";
 type ConfidenceFilter = "all" | "high" | "medium" | "low";
-type StatusFilter = "pending" | "held" | "kicked_back" | "all";
+type StatusFilter = "pending" | "held" | "denied" | "kicked_back" | "all";
 type AmountRange = "all" | "0-5k" | "5k-25k" | "25k-100k" | "100k+";
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -56,15 +58,24 @@ export default function QueuePage() {
   const [sortKey, setSortKey] = useState<SortKey>("waiting");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
+  // Batch selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchProcessing, setBatchProcessing] = useState(false);
+  const [showHoldNoteModal, setShowHoldNoteModal] = useState(false);
+  const [holdNote, setHoldNote] = useState("");
+  const [showMissingModal, setShowMissingModal] = useState(false);
+  const [missingInvoices, setMissingInvoices] = useState<QueueInvoice[]>([]);
+  const selectAllRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     async function fetchData() {
       const [invoiceResult, pmResult] = await Promise.all([
         supabase
           .from("invoices")
           .select(
-            "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
+            "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
           )
-          .in("status", ["pm_review", "ai_processed", "pm_held"])
+          .in("status", ["pm_review", "ai_processed", "pm_held", "pm_denied"])
           .is("deleted_at", null)
           .order("received_date", { ascending: true }),
         supabase
@@ -150,6 +161,8 @@ export default function QueuePage() {
         );
       } else if (statusFilter === "held") {
         result = result.filter((inv) => inv.status === "pm_held");
+      } else if (statusFilter === "denied") {
+        result = result.filter((inv) => inv.status === "pm_denied");
       } else if (statusFilter === "kicked_back") {
         // Kicked-back items return to pm_review status
         result = result.filter((inv) => inv.status === "pm_review");
@@ -257,6 +270,92 @@ export default function QueuePage() {
     setDateStart("");
     setDateEnd("");
   };
+
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [search, jobFilter, pmFilter, confidenceFilter, statusFilter, amountRange, dateStart, dateEnd]);
+
+  // Update indeterminate state on select-all checkbox
+  useEffect(() => {
+    if (selectAllRef.current) {
+      const allSelected = filtered.length > 0 && filtered.every((inv) => selectedIds.has(inv.id));
+      const someSelected = filtered.some((inv) => selectedIds.has(inv.id));
+      selectAllRef.current.indeterminate = someSelected && !allSelected;
+    }
+  }, [selectedIds, filtered]);
+
+  const toggleSelectAll = useCallback(() => {
+    const allFilteredIds = filtered.map((inv) => inv.id);
+    const allSelected = allFilteredIds.every((id) => selectedIds.has(id));
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allFilteredIds));
+    }
+  }, [filtered, selectedIds]);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleBatchApprove = useCallback(async () => {
+    // Check for invoices missing job_id or cost_code_id
+    const selected = filtered.filter((inv) => selectedIds.has(inv.id));
+    const missing = selected.filter((inv) => !inv.job_id || !inv.cost_code_id);
+    if (missing.length > 0) {
+      setMissingInvoices(missing);
+      setShowMissingModal(true);
+      return;
+    }
+
+    setBatchProcessing(true);
+    try {
+      const res = await fetch("/api/invoices/batch-action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve", invoice_ids: Array.from(selectedIds) }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        const successSet = new Set(result.success as string[]);
+        setInvoices((prev) => prev.filter((inv) => !successSet.has(inv.id)));
+        setSelectedIds(new Set());
+      }
+    } finally {
+      setBatchProcessing(false);
+    }
+  }, [filtered, selectedIds]);
+
+  const handleBatchHold = useCallback(async () => {
+    if (!holdNote.trim()) return;
+    setBatchProcessing(true);
+    setShowHoldNoteModal(false);
+    try {
+      const res = await fetch("/api/invoices/batch-action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "hold", invoice_ids: Array.from(selectedIds), note: holdNote.trim() }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        const successSet = new Set(result.success as string[]);
+        setInvoices((prev) => prev.filter((inv) => !successSet.has(inv.id)));
+        setSelectedIds(new Set());
+        setHoldNote("");
+      }
+    } finally {
+      setBatchProcessing(false);
+    }
+  }, [selectedIds, holdNote]);
 
   return (
     <div className="min-h-screen">
@@ -444,6 +543,7 @@ export default function QueuePage() {
                   >
                     <option value="pending">Pending Review</option>
                     <option value="held">Held</option>
+                    <option value="denied">Denied</option>
                     <option value="kicked_back">Kicked Back</option>
                     <option value="all">All Statuses</option>
                   </select>
@@ -510,11 +610,11 @@ export default function QueuePage() {
             {filtered.length > 0 && (
               <>
                 {/* Mobile card layout */}
-                <div className="flex flex-col gap-3 md:hidden">
+                <div className={`flex flex-col gap-3 md:hidden ${selectedIds.size > 0 ? "pb-20" : ""}`}>
                   {filtered.map((inv, i) => (
                     <div
                       key={inv.id}
-                      className="bg-brand-card border border-brand-border rounded-xl p-4 cursor-pointer active:opacity-80 transition-opacity animate-fade-up"
+                      className={`bg-brand-card border rounded-xl p-4 cursor-pointer active:opacity-80 transition-opacity animate-fade-up ${selectedIds.has(inv.id) ? "border-teal/60 bg-teal/5" : "border-brand-border"}`}
                       style={{ animationDelay: `${0.05 + i * 0.03}s` }}
                       onClick={() =>
                         (window.location.href = `/invoices/${inv.id}`)
@@ -524,9 +624,18 @@ export default function QueuePage() {
                         <span className="text-cream font-medium text-base">
                           {inv.vendor_name_raw ?? "Unknown"}
                         </span>
-                        <span className="text-cream font-display font-medium text-lg">
-                          {formatCents(inv.total_amount)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-cream font-display font-medium text-lg">
+                            {formatCents(inv.total_amount)}
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(inv.id)}
+                            onChange={() => toggleSelect(inv.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-4 h-4 accent-teal rounded cursor-pointer"
+                          />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <div>
@@ -585,15 +694,31 @@ export default function QueuePage() {
                           </span>
                         </div>
                       )}
+                      {inv.status === "pm_denied" && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-red-500/15 text-red-400 text-xs font-medium border border-red-500/25">
+                            Denied
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
 
                 {/* Desktop table layout */}
-                <div className="hidden md:block overflow-x-auto rounded-2xl border border-brand-border animate-fade-up">
+                <div className={`hidden md:block overflow-x-auto rounded-2xl border border-brand-border animate-fade-up ${selectedIds.size > 0 ? "mb-20" : ""}`}>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-brand-surface text-left">
+                        <th className="py-3 px-3 w-10">
+                          <input
+                            ref={selectAllRef}
+                            type="checkbox"
+                            checked={filtered.length > 0 && filtered.every((inv) => selectedIds.has(inv.id))}
+                            onChange={toggleSelectAll}
+                            className="w-4 h-4 accent-teal rounded cursor-pointer"
+                          />
+                        </th>
                         <th
                           className="py-3 px-5 text-[11px] text-cream font-semibold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
                           onClick={() => toggleSort("vendor")}
@@ -666,16 +791,30 @@ export default function QueuePage() {
                       {filtered.map((inv) => (
                         <tr
                           key={inv.id}
-                          className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                          className={`border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors ${selectedIds.has(inv.id) ? "bg-teal/5" : ""}`}
                           onClick={() =>
                             (window.location.href = `/invoices/${inv.id}`)
                           }
                         >
+                          <td className="py-4 px-3 w-10">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(inv.id)}
+                              onChange={() => toggleSelect(inv.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 accent-teal rounded cursor-pointer"
+                            />
+                          </td>
                           <td className="py-4 px-5 text-cream font-medium">
                             {inv.vendor_name_raw ?? "Unknown"}
                             {inv.status === "pm_held" && (
                               <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-yellow-500/15 text-yellow-400 text-[10px] font-medium border border-yellow-500/25">
                                 Held
+                              </span>
+                            )}
+                            {inv.status === "pm_denied" && (
+                              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 text-[10px] font-medium border border-red-500/25">
+                                Denied
                               </span>
                             )}
                           </td>
@@ -737,6 +876,113 @@ export default function QueuePage() {
               </>
             )}
           </>
+        )}
+        {/* Floating batch action bar */}
+        {selectedIds.size > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-brand-surface/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 animate-fade-up">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+              <span className="text-sm text-cream font-medium">
+                {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""} selected
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border rounded-xl hover:border-brand-border-light transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={() => { setHoldNote(""); setShowHoldNoteModal(true); }}
+                  disabled={batchProcessing}
+                  className="px-4 py-2 text-sm font-medium bg-brass text-brand-bg rounded-xl hover:bg-brass-hover transition-colors disabled:opacity-50"
+                >
+                  Batch Hold
+                </button>
+                <button
+                  onClick={handleBatchApprove}
+                  disabled={batchProcessing}
+                  className="px-4 py-2 text-sm font-medium bg-status-success text-white rounded-xl hover:bg-status-success/90 transition-colors disabled:opacity-50"
+                >
+                  {batchProcessing ? "Processing..." : "Batch Approve"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hold Note Modal */}
+        {showHoldNoteModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+            <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-md animate-fade-up">
+              <h3 className="font-display text-lg text-cream mb-1">Batch Hold</h3>
+              <p className="text-sm text-cream-dim mb-4">
+                Hold {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""}. Add a note explaining why.
+              </p>
+              <textarea
+                value={holdNote}
+                onChange={(e) => setHoldNote(e.target.value)}
+                placeholder="Add a note (required)..."
+                className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border rounded-xl text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
+                autoFocus
+              />
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setShowHoldNoteModal(false)}
+                  className="flex-1 px-4 py-2.5 text-sm text-cream-dim border border-brand-border rounded-xl hover:text-cream hover:border-brand-border-light transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBatchHold}
+                  disabled={!holdNote.trim() || batchProcessing}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium bg-brass text-brand-bg rounded-xl hover:bg-brass-hover transition-colors disabled:opacity-50"
+                >
+                  Hold
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Missing Fields Modal */}
+        {showMissingModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+            <div className="bg-brand-card border border-brand-border rounded-2xl p-6 w-full max-w-lg animate-fade-up">
+              <h3 className="font-display text-lg text-cream mb-1">Cannot Batch Approve</h3>
+              <p className="text-sm text-cream-dim mb-4">
+                The following invoice{missingInvoices.length !== 1 ? "s need" : " needs"} a job and cost code assigned before approval:
+              </p>
+              <div className="max-h-60 overflow-y-auto space-y-2 mb-4">
+                {missingInvoices.map((inv) => (
+                  <div key={inv.id} className="flex items-center justify-between px-3 py-2 bg-brand-surface rounded-lg border border-brand-border">
+                    <div>
+                      <span className="text-sm text-cream">{inv.vendor_name_raw ?? "Unknown"}</span>
+                      {inv.invoice_number && (
+                        <span className="ml-2 text-xs text-cream-dim font-mono">#{inv.invoice_number}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      {!inv.job_id && (
+                        <span className="px-1.5 py-0.5 rounded bg-status-danger/15 text-status-danger border border-status-danger/25">No Job</span>
+                      )}
+                      {!inv.cost_code_id && (
+                        <span className="px-1.5 py-0.5 rounded bg-status-danger/15 text-status-danger border border-status-danger/25">No Cost Code</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-cream-dim mb-4">
+                Open each invoice individually to assign the missing fields, then try batch approve again.
+              </p>
+              <button
+                onClick={() => { setShowMissingModal(false); setMissingInvoices([]); }}
+                className="w-full px-4 py-2.5 text-sm font-medium text-cream border border-brand-border rounded-xl hover:border-brand-border-light transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
         )}
       </main>
     </div>
