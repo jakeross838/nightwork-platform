@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { ParseResult, ParsedInvoice } from "@/lib/types/invoice";
 import {
   formatDollars, confidenceColor, confidenceLabel,
@@ -8,10 +8,22 @@ import {
 } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 
+type ParseStep = "uploading" | "analyzing" | "extracting" | "matching" | "complete";
+
+const PARSE_STEPS: { key: ParseStep; label: string }[] = [
+  { key: "uploading", label: "Uploading file..." },
+  { key: "analyzing", label: "Analyzing document..." },
+  { key: "extracting", label: "Extracting invoice data..." },
+  { key: "matching", label: "Matching vendor and job..." },
+  { key: "complete", label: "Complete" },
+];
+
 type FileStatus = {
   file: File;
   objectUrl: string;
   status: "uploading" | "done" | "error";
+  parseStep: ParseStep;
+  startedAt: number;
   result?: ParseResult;
   error?: string;
   saved?: boolean;
@@ -29,6 +41,59 @@ function isAcceptedFile(file: File): boolean {
   if (ACCEPTED_MIME_TYPES.includes(file.type)) return true;
   const ext = file.name.split(".").pop()?.toLowerCase();
   return ["pdf", "docx", "xlsx", "jpg", "jpeg", "png"].includes(ext ?? "");
+}
+
+function ProgressSteps({ currentStep, startedAt, error }: { currentStep: ParseStep; startedAt: number; error?: string }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (currentStep === "complete" || error) return;
+    const interval = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => clearInterval(interval);
+  }, [currentStep, startedAt, error]);
+
+  const currentIdx = PARSE_STEPS.findIndex(s => s.key === currentStep);
+
+  return (
+    <div className="px-6 py-5">
+      <div className="space-y-2.5">
+        {PARSE_STEPS.map((step, i) => {
+          const isDone = i < currentIdx || currentStep === "complete";
+          const isActive = i === currentIdx && currentStep !== "complete";
+          const isPending = i > currentIdx && currentStep !== "complete";
+
+          return (
+            <div key={step.key} className={`flex items-center gap-3 transition-opacity duration-300 ${isPending ? "opacity-30" : "opacity-100"}`}>
+              {/* Icon */}
+              {isDone ? (
+                <div className="w-5 h-5 rounded-full bg-status-success/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3 h-3 text-status-success" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                </div>
+              ) : isActive ? (
+                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                  <div className="w-2.5 h-2.5 rounded-full bg-teal animate-pulse" />
+                </div>
+              ) : (
+                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-brand-border" />
+                </div>
+              )}
+              {/* Label */}
+              <span className={`text-sm ${isDone ? "text-cream-dim" : isActive ? "text-cream font-medium" : "text-cream-dim"}`}>
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {/* Slow parse warning */}
+      {elapsed >= 15 && currentStep !== "complete" && !error && (
+        <p className="mt-3 text-xs text-cream-dim animate-fade-up">
+          Complex documents take a bit longer — still working...
+        </p>
+      )}
+    </div>
+  );
 }
 
 function FilePreview({ fileStatus }: { fileStatus: FileStatus }) {
@@ -234,19 +299,39 @@ export default function UploadPage() {
   const processFiles = useCallback(async (newFiles: File[]) => {
     const accepted = newFiles.filter(isAcceptedFile);
     if (accepted.length === 0) return;
+    const now = Date.now();
     const newEntries: FileStatus[] = accepted.map((file) => ({
       file, objectUrl: URL.createObjectURL(file), status: "uploading" as const,
+      parseStep: "uploading" as ParseStep, startedAt: now,
     }));
     setFiles((prev) => [...prev, ...newEntries]);
     await Promise.allSettled(
       newEntries.map(async (entry) => {
+        // Advance through simulated steps on realistic timers
+        const advanceStep = (step: ParseStep, delay: number) =>
+          new Promise<void>((resolve) => setTimeout(() => {
+            setFiles((prev) => prev.map((f) =>
+              f.file === entry.file && f.status === "uploading" ? { ...f, parseStep: step } : f
+            ));
+            resolve();
+          }, delay));
+
         const formData = new FormData();
         formData.append("file", entry.file);
+
+        // Start the fetch and the step timers in parallel
+        const fetchPromise = fetch("/api/invoices/parse", { method: "POST", body: formData });
+
+        // Advance steps at realistic intervals (the actual fetch runs in parallel)
+        advanceStep("analyzing", 1500);
+        advanceStep("extracting", 4000);
+        advanceStep("matching", 8000);
+
         try {
-          const res = await fetch("/api/invoices/parse", { method: "POST", body: formData });
+          const res = await fetchPromise;
           if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`); }
           const result: ParseResult = await res.json();
-          setFiles((prev) => prev.map((f) => f.file === entry.file ? { ...f, status: "done" as const, result } : f));
+          setFiles((prev) => prev.map((f) => f.file === entry.file ? { ...f, status: "done" as const, parseStep: "complete" as ParseStep, result } : f));
         } catch (err) {
           const message = err instanceof Error ? err.message : "Unknown error";
           setFiles((prev) => prev.map((f) => f.file === entry.file ? { ...f, status: "error" as const, error: message } : f));
@@ -331,36 +416,83 @@ export default function UploadPage() {
                 style={{ animationDelay: `${index * 0.05}s` }}>
                 {/* Card Header */}
                 <div className="px-6 py-4 border-b border-brand-border flex items-center gap-3">
-                  {fileStatus.status === "uploading" && <div className="w-5 h-5 rounded-full border-2 border-teal/30 border-t-teal animate-spin" />}
+                  {fileStatus.status === "uploading" && (
+                    <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                      <div className="w-2.5 h-2.5 rounded-full bg-teal animate-pulse" />
+                    </div>
+                  )}
                   {fileStatus.status === "done" && !fileStatus.saved && (
-                    <div className="w-5 h-5 rounded-full bg-status-success/20 flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-status-success/20 flex items-center justify-center flex-shrink-0">
                       <svg className="w-3 h-3 text-status-success" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                     </div>
                   )}
                   {fileStatus.saved && (
-                    <div className="w-5 h-5 rounded-full bg-teal/20 flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-teal/20 flex items-center justify-center flex-shrink-0">
                       <svg className="w-3 h-3 text-teal" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                     </div>
                   )}
                   {fileStatus.status === "error" && (
-                    <div className="w-5 h-5 rounded-full bg-status-danger/20 flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-status-danger/20 flex items-center justify-center flex-shrink-0">
                       <svg className="w-3 h-3 text-status-danger" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
                     </div>
                   )}
-                  <span className="text-sm font-medium text-cream">{fileStatus.file.name}</span>
-                  <span className="text-xs text-cream-dim">{(fileStatus.file.size / 1024).toFixed(0)} KB</span>
-                  {fileStatus.status === "uploading" && <span className="text-xs text-teal ml-auto">Parsing with AI...</span>}
-                  {fileStatus.saved && <span className="text-xs text-teal ml-auto">Saved &amp; Routed</span>}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-cream">{fileStatus.file.name}</span>
+                    <span className="text-xs text-cream-dim ml-2">{(fileStatus.file.size / 1024).toFixed(0)} KB</span>
+                  </div>
+                  {fileStatus.saved && <span className="text-xs text-teal flex-shrink-0">Saved &amp; Routed</span>}
                   {fileStatus.status === "done" && fileStatus.result && !fileStatus.saved && (
-                    <button onClick={() => saveOne(index)} disabled={fileStatus.saving}
-                      className="ml-auto px-4 py-1.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-xs font-semibold rounded-lg transition-colors">
+                    <button onClick={(e) => { e.stopPropagation(); saveOne(index); }} disabled={fileStatus.saving}
+                      className="flex-shrink-0 px-4 py-1.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-xs font-semibold rounded-lg transition-colors">
                       {fileStatus.saving ? "Saving..." : "Save & Route"}
                     </button>
                   )}
                 </div>
 
+                {/* Progress steps while parsing */}
+                {fileStatus.status === "uploading" && (
+                  <ProgressSteps currentStep={fileStatus.parseStep} startedAt={fileStatus.startedAt} />
+                )}
+
+                {/* Error with retry */}
                 {fileStatus.status === "error" && (
-                  <div className="px-6 py-4"><p className="text-sm text-status-danger">{fileStatus.error}</p></div>
+                  <div className="px-6 py-4 flex items-start gap-3">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-status-danger">Parse failed</p>
+                      <p className="text-xs text-status-danger/80 mt-1">{fileStatus.error}</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Reset this file to uploading and retry
+                        setFiles((prev) => prev.map((f, i) => i === index ? { ...f, status: "uploading" as const, parseStep: "uploading" as ParseStep, startedAt: Date.now(), error: undefined } : f));
+                        const formData = new FormData();
+                        formData.append("file", fileStatus.file);
+                        const advanceStep = (step: ParseStep, delay: number) =>
+                          setTimeout(() => {
+                            setFiles((prev) => prev.map((f, i) =>
+                              i === index && f.status === "uploading" ? { ...f, parseStep: step } : f
+                            ));
+                          }, delay);
+                        advanceStep("analyzing", 1500);
+                        advanceStep("extracting", 4000);
+                        advanceStep("matching", 8000);
+                        fetch("/api/invoices/parse", { method: "POST", body: formData })
+                          .then(async (res) => {
+                            if (!res.ok) { const err = await res.json(); throw new Error(err.error || `HTTP ${res.status}`); }
+                            const result: ParseResult = await res.json();
+                            setFiles((prev) => prev.map((f, i) => i === index ? { ...f, status: "done" as const, parseStep: "complete" as ParseStep, result } : f));
+                          })
+                          .catch((err) => {
+                            const message = err instanceof Error ? err.message : "Unknown error";
+                            setFiles((prev) => prev.map((f, i) => i === index ? { ...f, status: "error" as const, error: message } : f));
+                          });
+                      }}
+                      className="flex-shrink-0 px-4 py-2 bg-status-danger hover:brightness-110 text-white text-xs font-medium rounded-lg transition-all"
+                    >
+                      Retry
+                    </button>
+                  </div>
                 )}
 
                 {/* Side-by-side: balanced 50/50 */}
