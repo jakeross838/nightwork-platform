@@ -15,27 +15,57 @@ type Profile = {
 };
 
 type NavItemKey =
-  | "upload"
+  | "dashboard"
   | "invoices"
-  | "pmQueue"
-  | "qaQueue"
+  | "jobs"
   | "draws"
-  | "vendors"
-  | "jobs";
+  | "vendors";
 
-// Who sees which nav item.
+// Who can see what. "invoices" covers the whole dropdown — individual
+// child items check their own ACCESS list.
 const ACCESS: Record<NavItemKey, UserRole[]> = {
-  upload: ["admin", "accounting"],
+  dashboard: ["admin", "pm", "accounting"],
   invoices: ["admin", "pm", "accounting"],
-  pmQueue: ["admin", "pm"],
-  qaQueue: ["admin", "accounting"],
+  jobs: ["admin"],
   draws: ["admin", "pm"],
   vendors: ["admin", "accounting"],
-  jobs: ["admin"],
+};
+
+type SubItemKey = "upload" | "all" | "pmQueue" | "qaQueue";
+
+const SUB_ACCESS: Record<SubItemKey, UserRole[]> = {
+  upload: ["admin", "accounting"],
+  all: ["admin", "pm", "accounting"],
+  pmQueue: ["admin", "pm"],
+  qaQueue: ["admin", "accounting"],
 };
 
 function can(role: UserRole | null, key: NavItemKey) {
   return role != null && ACCESS[key].includes(role);
+}
+function canSub(role: UserRole | null, key: SubItemKey) {
+  return role != null && SUB_ACCESS[key].includes(role);
+}
+
+const ROLE_LABEL: Record<UserRole, string> = {
+  admin: "Admin",
+  pm: "PM",
+  accounting: "Accounting",
+};
+
+function RoleBadge({ role }: { role: UserRole }) {
+  return (
+    <span
+      className="px-1.5 py-0.5 text-[10px] font-bold tracking-[0.08em] uppercase border rounded-none"
+      style={{ color: "var(--text-inverse)", borderColor: "var(--text-inverse)" }}
+    >
+      {ROLE_LABEL[role]}
+    </span>
+  );
+}
+
+function firstNameOf(fullName: string) {
+  return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
 function NavLink({
@@ -60,9 +90,7 @@ function NavLink({
       className={`relative flex items-center gap-1.5 text-[14px] font-medium transition-colors ${
         mobile ? "py-3 px-4 w-full" : "px-3 py-1.5"
       } ${
-        active
-          ? "text-white nav-underline active"
-          : "text-white/70 hover:text-white nav-underline"
+        active ? "text-white nav-underline active" : "text-white/70 hover:text-white nav-underline"
       }`}
     >
       {label}
@@ -75,44 +103,20 @@ function NavLink({
   );
 }
 
-const ROLE_LABEL: Record<UserRole, string> = {
-  admin: "Admin",
-  pm: "PM",
-  accounting: "Accounting",
-};
-
-function RoleBadge({ role }: { role: UserRole }) {
-  return (
-    <span
-      className="px-1.5 py-0.5 text-[10px] font-bold tracking-[0.08em] uppercase border rounded-none"
-      style={{
-        color: "var(--text-inverse)",
-        borderColor: "var(--text-inverse)",
-      }}
-    >
-      {ROLE_LABEL[role]}
-    </span>
-  );
-}
-
-function firstNameOf(fullName: string) {
-  return fullName.trim().split(/\s+/)[0] ?? fullName;
-}
-
 export default function NavBar() {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [pmCount, setPmCount] = useState(0);
   const [qaCount, setQaCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [invoicesOpen, setInvoicesOpen] = useState(false);
+  const [mobileInvoicesOpen, setMobileInvoicesOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const invoicesMenuRef = useRef<HTMLDivElement>(null);
 
-  // Load profile once on mount. Middleware guarantees a session exists.
   useEffect(() => {
     async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
@@ -124,30 +128,22 @@ export default function NavBar() {
     loadProfile();
   }, []);
 
-  // Fetch queue counts (only if the user can see the relevant queue).
-  // For PMs, scope the PM count to their own jobs/assignments.
   useEffect(() => {
     if (!profile) return;
-    const showPm = can(profile.role, "pmQueue");
-    const showQa = can(profile.role, "qaQueue");
+    const showPm = canSub(profile.role, "pmQueue");
+    const showQa = canSub(profile.role, "qaQueue");
     if (!showPm && !showQa) return;
 
     async function fetchCounts() {
       let pmCountVal = 0;
       if (showPm && profile) {
         if (profile.role === "pm") {
-          // Fetch this PM's own jobs, then count invoices assigned to them
-          // OR on one of their jobs.
           const { data: myJobs } = await supabase
-            .from("jobs")
-            .select("id")
-            .eq("pm_id", profile.id)
-            .is("deleted_at", null);
+            .from("jobs").select("id").eq("pm_id", profile.id).is("deleted_at", null);
           const jobIds = (myJobs ?? []).map((j) => j.id as string);
-          const orClause =
-            jobIds.length > 0
-              ? `assigned_pm_id.eq.${profile.id},job_id.in.(${jobIds.join(",")})`
-              : `assigned_pm_id.eq.${profile.id}`;
+          const orClause = jobIds.length > 0
+            ? `assigned_pm_id.eq.${profile.id},job_id.in.(${jobIds.join(",")})`
+            : `assigned_pm_id.eq.${profile.id}`;
           const { count } = await supabase
             .from("invoices")
             .select("id", { count: "exact", head: true })
@@ -164,7 +160,6 @@ export default function NavBar() {
           pmCountVal = count ?? 0;
         }
       }
-
       let qaCountVal = 0;
       if (showQa) {
         const { count } = await supabase
@@ -174,55 +169,49 @@ export default function NavBar() {
           .is("deleted_at", null);
         qaCountVal = count ?? 0;
       }
-
       setPmCount(pmCountVal);
       setQaCount(qaCountVal);
     }
     fetchCounts();
   }, [pathname, profile]);
 
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+  useEffect(() => { setMobileOpen(false); setInvoicesOpen(false); setMobileInvoicesOpen(false); }, [pathname]);
 
   useEffect(() => {
-    if (!mobileOpen) return;
     function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMobileOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMobileOpen(false);
+      if (invoicesMenuRef.current && !invoicesMenuRef.current.contains(e.target as Node)) setInvoicesOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [mobileOpen]);
+  }, []);
 
-  const closeMobile = () => setMobileOpen(false);
+  const closeMobile = () => { setMobileOpen(false); setMobileInvoicesOpen(false); };
 
+  const isDashboardActive = pathname === "/";
   const isUploadActive = pathname === "/invoices/upload";
   const isAllInvoicesActive = pathname === "/invoices";
-  const isPmActive =
+  const isPmQueueActive =
     pathname === "/invoices/queue" ||
-    (pathname.startsWith("/invoices/") &&
-      pathname !== "/invoices" &&
-      !pathname.includes("/qa") &&
-      !pathname.includes("/upload") &&
-      !pathname.includes("/draws"));
-  const isQaActive =
-    pathname === "/invoices/qa" || pathname.endsWith("/qa");
-  const isDrawsActive = pathname.startsWith("/draws");
-  const isVendorsActive = pathname === "/vendors";
+    (pathname.startsWith("/invoices/") && pathname !== "/invoices" &&
+      !pathname.endsWith("/qa") && !pathname.includes("/upload") && !pathname.includes("/qa/"));
+  const isQaActive = pathname === "/invoices/qa" || pathname.endsWith("/qa");
+  const isInvoicesSectionActive =
+    isUploadActive || isAllInvoicesActive || isPmQueueActive || isQaActive;
   const isJobsActive = pathname.startsWith("/jobs");
+  const isDrawsActive = pathname.startsWith("/draws");
+  const isVendorsActive = pathname.startsWith("/vendors");
 
   const role = profile?.role ?? null;
   const show = {
-    upload: can(role, "upload"),
+    dashboard: can(role, "dashboard"),
     invoices: can(role, "invoices"),
-    pmQueue: can(role, "pmQueue"),
-    qaQueue: can(role, "qaQueue"),
+    jobs: can(role, "jobs"),
     draws: can(role, "draws"),
     vendors: can(role, "vendors"),
-    jobs: can(role, "jobs"),
   };
+
+  const totalInvoicesCount = pmCount + qaCount;
 
   return (
     <header
@@ -238,48 +227,63 @@ export default function NavBar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
-          {show.upload && (
-            <NavLink
-              href="/invoices/upload"
-              label="Upload"
-              active={isUploadActive}
-            />
+          {show.dashboard && (
+            <NavLink href="/" label="Dashboard" active={isDashboardActive} />
           )}
           {show.invoices && (
-            <NavLink
-              href="/invoices"
-              label="All Invoices"
-              active={isAllInvoicesActive}
-            />
+            <div ref={invoicesMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setInvoicesOpen((o) => !o)}
+                onMouseEnter={() => setInvoicesOpen(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[14px] font-medium transition-colors nav-underline ${
+                  isInvoicesSectionActive ? "text-white active" : "text-white/70 hover:text-white"
+                }`}
+                aria-haspopup="menu"
+                aria-expanded={invoicesOpen}
+              >
+                Invoices
+                {totalInvoicesCount > 0 && (
+                  <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-white/50 text-white text-[10px] font-bold bg-transparent">
+                    {totalInvoicesCount}
+                  </span>
+                )}
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform ${invoicesOpen ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {invoicesOpen && (
+                <div
+                  onMouseLeave={() => setInvoicesOpen(false)}
+                  className="absolute left-0 top-full mt-1 min-w-[220px] bg-brand-card border border-brand-border shadow-2xl z-50"
+                >
+                  {canSub(role, "upload") && (
+                    <DropdownItem href="/invoices/upload" label="Upload" active={isUploadActive} onClick={() => setInvoicesOpen(false)} />
+                  )}
+                  {canSub(role, "all") && (
+                    <DropdownItem href="/invoices" label="All Invoices" active={isAllInvoicesActive} onClick={() => setInvoicesOpen(false)} />
+                  )}
+                  {canSub(role, "pmQueue") && (
+                    <DropdownItem href="/invoices/queue" label="PM Queue" count={pmCount} active={isPmQueueActive} onClick={() => setInvoicesOpen(false)} />
+                  )}
+                  {canSub(role, "qaQueue") && (
+                    <DropdownItem href="/invoices/qa" label="Accounting QA" count={qaCount} active={isQaActive} onClick={() => setInvoicesOpen(false)} />
+                  )}
+                </div>
+              )}
+            </div>
           )}
-          {show.pmQueue && (
-            <NavLink
-              href="/invoices/queue"
-              label="PM Queue"
-              count={pmCount}
-              active={isPmActive}
-            />
-          )}
-          {show.qaQueue && (
-            <NavLink
-              href="/invoices/qa"
-              label="Accounting QA"
-              count={qaCount}
-              active={isQaActive}
-            />
+          {show.jobs && (
+            <NavLink href="/jobs" label="Jobs" active={isJobsActive} />
           )}
           {show.draws && (
             <NavLink href="/draws" label="Draws" active={isDrawsActive} />
           )}
           {show.vendors && (
-            <NavLink
-              href="/vendors"
-              label="Vendors"
-              active={isVendorsActive}
-            />
-          )}
-          {show.jobs && (
-            <NavLink href="/jobs" label="Jobs" active={isJobsActive} />
+            <NavLink href="/vendors" label="Vendors" active={isVendorsActive} />
           )}
         </nav>
 
@@ -287,27 +291,17 @@ export default function NavBar() {
         <div className="hidden md:flex items-center gap-3 shrink-0">
           {profile && (
             <div className="flex items-center gap-2">
-              <span
-                className="text-[13px] font-medium"
-                style={{ color: "var(--text-inverse)" }}
-              >
+              <span className="text-[13px] font-medium" style={{ color: "var(--text-inverse)" }}>
                 {firstNameOf(profile.full_name)}
               </span>
-              <span
-                className="text-[13px]"
-                style={{ color: "var(--text-inverse)", opacity: 0.6 }}
-              >
-                &middot;
-              </span>
+              <span className="text-[13px]" style={{ color: "var(--text-inverse)", opacity: 0.6 }}>&middot;</span>
               <RoleBadge role={profile.role} />
             </div>
           )}
           <form action={logoutAction}>
-            <button
-              type="submit"
+            <button type="submit"
               className="text-[13px] px-2 py-1 transition-colors hover:underline underline-offset-4"
-              style={{ color: "var(--text-inverse)", opacity: 0.8 }}
-            >
+              style={{ color: "var(--text-inverse)", opacity: 0.8 }}>
               Sign Out
             </button>
           </form>
@@ -315,37 +309,18 @@ export default function NavBar() {
 
         {/* Mobile hamburger + badge */}
         <div className="flex md:hidden items-center gap-2">
-          {pmCount > 0 && show.pmQueue && (
+          {totalInvoicesCount > 0 && (
             <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-white/50 text-white text-[10px] font-bold bg-transparent">
-              {pmCount}
+              {totalInvoicesCount}
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => setMobileOpen((prev) => !prev)}
-            className="p-2 text-white/70 hover:text-white nav-underline transition-colors"
-            aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
+          <button type="button" onClick={() => setMobileOpen((p) => !p)}
+            className="p-2 text-white/70 hover:text-white transition-colors" aria-label="Toggle menu" aria-expanded={mobileOpen}>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               {mobileOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               )}
             </svg>
           </button>
@@ -358,98 +333,80 @@ export default function NavBar() {
           {profile && (
             <div className="flex items-center justify-between py-2 px-4 border-b border-white/10 mb-1">
               <div className="flex items-center gap-2">
-                <span
-                  className="text-[13px] font-medium"
-                  style={{ color: "var(--text-inverse)" }}
-                >
+                <span className="text-[13px] font-medium" style={{ color: "var(--text-inverse)" }}>
                   {firstNameOf(profile.full_name)}
                 </span>
-                <span
-                  className="text-[13px]"
-                  style={{ color: "var(--text-inverse)", opacity: 0.6 }}
-                >
-                  &middot;
-                </span>
+                <span className="text-[13px]" style={{ color: "var(--text-inverse)", opacity: 0.6 }}>&middot;</span>
                 <RoleBadge role={profile.role} />
               </div>
             </div>
           )}
-          {show.upload && (
-            <NavLink
-              href="/invoices/upload"
-              label="Upload"
-              active={isUploadActive}
-              mobile
-              onClick={closeMobile}
-            />
-          )}
+          {show.dashboard && <NavLink href="/" label="Dashboard" active={isDashboardActive} mobile onClick={closeMobile} />}
           {show.invoices && (
-            <NavLink
-              href="/invoices"
-              label="All Invoices"
-              active={isAllInvoicesActive}
-              mobile
-              onClick={closeMobile}
-            />
+            <>
+              <button
+                type="button"
+                onClick={() => setMobileInvoicesOpen((o) => !o)}
+                className={`flex items-center justify-between py-3 px-4 w-full text-[14px] font-medium transition-colors ${
+                  isInvoicesSectionActive ? "text-white" : "text-white/70"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  Invoices
+                  {totalInvoicesCount > 0 && (
+                    <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-white/50 text-white text-[10px] font-bold">
+                      {totalInvoicesCount}
+                    </span>
+                  )}
+                </span>
+                <svg className={`w-3.5 h-3.5 transition-transform ${mobileInvoicesOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {mobileInvoicesOpen && (
+                <div className="pl-4">
+                  {canSub(role, "upload") && <NavLink href="/invoices/upload" label="Upload" active={isUploadActive} mobile onClick={closeMobile} />}
+                  {canSub(role, "all") && <NavLink href="/invoices" label="All Invoices" active={isAllInvoicesActive} mobile onClick={closeMobile} />}
+                  {canSub(role, "pmQueue") && <NavLink href="/invoices/queue" label="PM Queue" count={pmCount} active={isPmQueueActive} mobile onClick={closeMobile} />}
+                  {canSub(role, "qaQueue") && <NavLink href="/invoices/qa" label="Accounting QA" count={qaCount} active={isQaActive} mobile onClick={closeMobile} />}
+                </div>
+              )}
+            </>
           )}
-          {show.pmQueue && (
-            <NavLink
-              href="/invoices/queue"
-              label="PM Queue"
-              count={pmCount}
-              active={isPmActive}
-              mobile
-              onClick={closeMobile}
-            />
-          )}
-          {show.qaQueue && (
-            <NavLink
-              href="/invoices/qa"
-              label="Accounting QA"
-              count={qaCount}
-              active={isQaActive}
-              mobile
-              onClick={closeMobile}
-            />
-          )}
-          {show.draws && (
-            <NavLink
-              href="/draws"
-              label="Draws"
-              active={isDrawsActive}
-              mobile
-              onClick={closeMobile}
-            />
-          )}
-          {show.vendors && (
-            <NavLink
-              href="/vendors"
-              label="Vendors"
-              active={isVendorsActive}
-              mobile
-              onClick={closeMobile}
-            />
-          )}
-          {show.jobs && (
-            <NavLink
-              href="/jobs"
-              label="Jobs"
-              active={isJobsActive}
-              mobile
-              onClick={closeMobile}
-            />
-          )}
+          {show.jobs && <NavLink href="/jobs" label="Jobs" active={isJobsActive} mobile onClick={closeMobile} />}
+          {show.draws && <NavLink href="/draws" label="Draws" active={isDrawsActive} mobile onClick={closeMobile} />}
+          {show.vendors && <NavLink href="/vendors" label="Vendors" active={isVendorsActive} mobile onClick={closeMobile} />}
           <form action={logoutAction} className="mt-1">
-            <button
-              type="submit"
-              className="w-full text-left py-3 px-4 text-[14px] transition-colors hover:underline underline-offset-4"
-              style={{ color: "var(--text-inverse)", opacity: 0.8 }}
-            >
+            <button type="submit" className="w-full text-left py-3 px-4 text-[14px] transition-colors hover:underline underline-offset-4"
+              style={{ color: "var(--text-inverse)", opacity: 0.8 }}>
               Sign Out
             </button>
           </form>
         </nav>
       )}
     </header>
+  );
+}
+
+function DropdownItem({
+  href, label, count, active, onClick,
+}: {
+  href: string; label: string; count?: number; active: boolean; onClick?: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`flex items-center justify-between gap-3 px-4 py-2.5 text-[13px] transition-colors border-b border-brand-row-border last:border-0 ${
+        active ? "bg-brand-surface text-cream font-medium" : "text-cream hover:bg-brand-surface/60"
+      }`}
+    >
+      <span>{label}</span>
+      {count != null && count > 0 && (
+        <span className="flex items-center justify-center min-w-[20px] h-[18px] px-1 text-[10px] font-bold text-teal border border-teal">
+          {count}
+        </span>
+      )}
+    </Link>
   );
 }

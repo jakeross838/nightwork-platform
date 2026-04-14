@@ -61,9 +61,6 @@ export default function QueuePage() {
  const [currentRole, setCurrentRole] = useState<"admin" | "pm" | "accounting" | null>(null);
  const [myJobIds, setMyJobIds] = useState<Set<string>>(new Set());
 
- // Admin-only "Viewing as" PM selector
- const [viewingAs, setViewingAs] = useState("");
-
  // Primary filters (always visible)
  const [search, setSearch] = useState("");
  const [jobFilter, setJobFilter] = useState("");
@@ -179,11 +176,6 @@ export default function QueuePage() {
  );
  }
 
- // Admin "Viewing as" pre-filter
- if (currentRole === "admin" && viewingAs) {
- result = result.filter((inv) => inv.assigned_pm?.id === viewingAs);
- }
-
  // Text search
  if (search.trim()) {
  const q = search.toLowerCase();
@@ -296,7 +288,6 @@ export default function QueuePage() {
  return result;
  }, [
  invoices,
- viewingAs,
  currentRole,
  currentUserId,
  myJobIds,
@@ -442,16 +433,6 @@ export default function QueuePage() {
  : `${filtered.length} invoice${filtered.length !== 1 ? "s" : ""} pending PM review`}
  </p>
  </div>
- {currentRole === "admin" && (
-  <div className="flex items-center gap-2">
-   <span className="text-xs text-cream-dim uppercase tracking-wider">Viewing as</span>
-   <select value={viewingAs} onChange={(e) => { setViewingAs(e.target.value); setSelectedIds(new Set()); }}
-    className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none">
-    <option value="">All PMs</option>
-    {pmUsers.map(u => <option key={u.id} value={u.id}>{u.full_name}</option>)}
-   </select>
-  </div>
- )}
  </div>
 
  {loading ? (

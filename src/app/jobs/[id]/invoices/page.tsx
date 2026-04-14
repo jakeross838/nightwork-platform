@@ -1,0 +1,204 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import NavBar from "@/components/nav-bar";
+import JobTabs from "@/components/job-tabs";
+import Breadcrumbs from "@/components/breadcrumbs";
+import { supabase } from "@/lib/supabase/client";
+import { formatCents, formatDate, formatStatus, statusBadgeOutline } from "@/lib/utils/format";
+
+interface Job { id: string; name: string; address: string | null; }
+
+interface InvoiceRow {
+  id: string;
+  invoice_number: string | null;
+  invoice_date: string | null;
+  total_amount: number;
+  status: string;
+  parent_invoice_id: string | null;
+  vendor_name_raw: string | null;
+  vendors: { name: string } | null;
+  cost_codes: { code: string; description: string } | null;
+}
+
+export default function JobInvoicesPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const [job, setJob] = useState<Job | null>(null);
+  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.replace(`/login?redirect=/jobs/${params.id}/invoices`); return; }
+
+      const { data: j } = await supabase
+        .from("jobs").select("id, name, address")
+        .eq("id", params.id).is("deleted_at", null).single();
+      if (j) setJob(j as Job);
+
+      const { data: inv } = await supabase
+        .from("invoices")
+        .select(`
+          id, invoice_number, invoice_date, total_amount, status, parent_invoice_id,
+          vendor_name_raw,
+          vendors:vendor_id(name),
+          cost_codes:cost_code_id(code, description)
+        `)
+        .eq("job_id", params.id)
+        .is("deleted_at", null)
+        .order("invoice_date", { ascending: false });
+      if (inv) setInvoices(inv as unknown as InvoiceRow[]);
+      setLoading(false);
+    }
+    load();
+  }, [params.id, router]);
+
+  const filtered = useMemo(() => {
+    return invoices.filter((inv) => {
+      if (statusFilter !== "all" && inv.status !== statusFilter) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const vendor = (inv.vendors?.name ?? inv.vendor_name_raw ?? "").toLowerCase();
+        const num = (inv.invoice_number ?? "").toLowerCase();
+        if (!vendor.includes(q) && !num.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [invoices, statusFilter, search]);
+
+  const statuses = useMemo(() => {
+    const set = new Set(invoices.map((i) => i.status));
+    return Array.from(set).sort();
+  }, [invoices]);
+
+  const totals = useMemo(() => ({
+    count: filtered.length,
+    sum: filtered.reduce((s, i) => s + (i.total_amount ?? 0), 0),
+  }), [filtered]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <NavBar />
+        <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
+          <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        </main>
+      </div>
+    );
+  }
+  if (!job) {
+    return (
+      <div className="min-h-screen">
+        <NavBar />
+        <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
+          <p className="text-cream">Job not found</p>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen">
+      <NavBar />
+      <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
+        <Breadcrumbs
+          items={[
+            { label: "Jobs", href: "/jobs" },
+            { label: job.name, href: `/jobs/${job.id}` },
+            { label: "Invoices" },
+          ]}
+        />
+        <div className="mb-4">
+          <h2 className="font-display text-2xl text-cream">{job.name}</h2>
+          <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
+        </div>
+        <JobTabs jobId={job.id} active="invoices" />
+
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <input
+            type="text"
+            placeholder="Search vendor or invoice number…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 min-w-[200px] px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+          >
+            <option value="all">All statuses</option>
+            {statuses.map((s) => (
+              <option key={s} value={s}>{formatStatus(s)}</option>
+            ))}
+          </select>
+          <p className="text-[11px] text-cream-dim uppercase tracking-wider">
+            {totals.count} · {formatCents(totals.sum)}
+          </p>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="bg-brand-card border border-brand-border p-12 text-center">
+            <p className="text-cream-dim text-sm">No invoices match the current filters.</p>
+          </div>
+        ) : (
+          <div className="bg-brand-card border border-brand-border overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
+                  <th className="text-left px-3 py-3 font-medium">Date</th>
+                  <th className="text-left px-3 py-3 font-medium">Vendor</th>
+                  <th className="text-left px-3 py-3 font-medium">Inv #</th>
+                  <th className="text-left px-3 py-3 font-medium">Cost Code</th>
+                  <th className="text-right px-3 py-3 font-medium">Amount</th>
+                  <th className="text-left px-3 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((inv) => {
+                  const vendor = inv.vendors?.name ?? inv.vendor_name_raw ?? "—";
+                  return (
+                    <tr
+                      key={inv.id}
+                      className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface/40 cursor-pointer"
+                      onClick={() => router.push(`/invoices/${inv.id}`)}
+                    >
+                      <td className="px-3 py-2 text-cream-muted">{formatDate(inv.invoice_date)}</td>
+                      <td className="px-3 py-2 text-cream">{vendor}</td>
+                      <td className="px-3 py-2 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                      <td className="px-3 py-2 text-cream-muted text-xs">
+                        {inv.cost_codes ? `${inv.cost_codes.code} ${inv.cost_codes.description}` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(inv.total_amount)}</td>
+                      <td className="px-3 py-2">
+                        <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${statusBadgeOutline(inv.status)}`}>
+                          {formatStatus(inv.status)}
+                        </span>
+                        {inv.parent_invoice_id && (
+                          <span className="ml-2 inline-block px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-brass/50 text-brass">
+                            Partial
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <p className="mt-4 text-[11px] text-cream-dim">
+          <Link href={`/invoices?jobId=${job.id}`} className="text-teal hover:underline">
+            Open in All Invoices →
+          </Link>
+        </p>
+      </main>
+    </div>
+  );
+}

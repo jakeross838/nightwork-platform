@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
+import Breadcrumbs from "@/components/breadcrumbs";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 
 interface DrawData {
@@ -205,6 +206,13 @@ export default function DrawDetailPage() {
  )}
 
  <main className="max-w-[1600px] mx-auto px-6 py-6">
+ <Breadcrumbs
+ items={[
+ { label: "Draws", href: "/draws" },
+ ...(draw.jobs ? [{ label: draw.jobs.name, href: `/jobs/${draw.jobs.id}` }] : []),
+ { label: `Draw #${draw.draw_number}${draw.revision_number > 0 ? ` Rev ${draw.revision_number}` : ""}` },
+ ]}
+ />
  <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-up">
 
  {/* G702 Summary */}

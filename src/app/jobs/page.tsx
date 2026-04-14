@@ -42,7 +42,6 @@ function StatusBadge({ status }: { status: JobStatus }) {
 export default function JobsPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [role, setRole] = useState<"admin" | "pm" | "accounting" | null>(null);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
@@ -65,7 +64,6 @@ export default function JobsPage() {
         .single();
 
       const userRole = (profile?.role as "admin" | "pm" | "accounting" | null) ?? null;
-      setRole(userRole);
 
       if (userRole !== "admin") {
         setAuthorized(false);

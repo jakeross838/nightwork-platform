@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 import InvoiceFilePreview from "@/components/invoice-file-preview";
+import Breadcrumbs from "@/components/breadcrumbs";
 import { invoiceDisplayName } from "@/lib/invoices/display";
 
 interface Job { id: string; name: string; address: string | null; }
@@ -39,6 +40,8 @@ interface InvoiceLineItem {
 
 interface InvoiceData {
  id: string; job_id: string | null; vendor_id: string | null; cost_code_id: string | null; po_id: string | null;
+ parent_invoice_id: string | null;
+ partial_approval_note: string | null;
  invoice_number: string | null; invoice_date: string | null; vendor_name_raw: string | null;
  job_reference_raw: string | null; po_reference_raw: string | null; description: string | null;
  line_items: Array<{ description: string; qty: number | null; unit: string | null; rate: number | null; amount: number; }>;
@@ -211,9 +214,8 @@ function resolveVariant(
  return partner ? partner.id : costCodeId;
 }
 
-// Compact cost-code picker sized for the per-line-item table.
-// Shares option data with the main SearchCombobox but renders as a native
-// <select> so the table rows stay dense.
+// Compact searchable cost-code picker sized for the per-line-item table.
+// Renders as a filterable dropdown — 230+ codes would be unusable otherwise.
 function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }: {
  value: string;
  onChange: (v: string) => void;
@@ -221,30 +223,140 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
  disabled?: boolean;
  aiSuggestion?: { code: string; confidence: number } | null;
 }) {
- const groups = Array.from(new Set(options.filter(o => o.group).map(o => o.group!)));
+ const [open, setOpen] = useState(false);
+ const [search, setSearch] = useState("");
+ const [highlight, setHighlight] = useState(0);
+ const rootRef = useRef<HTMLDivElement>(null);
+ const inputRef = useRef<HTMLInputElement>(null);
+
+ const selected = options.find(o => o.value === value) ?? null;
+
+ useEffect(() => {
+ if (!open) return;
+ function handleClick(e: MouseEvent) {
+ if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+ }
+ document.addEventListener("mousedown", handleClick);
+ return () => document.removeEventListener("mousedown", handleClick);
+ }, [open]);
+
+ useEffect(() => {
+ if (open) {
+ setSearch("");
+ setHighlight(0);
+ setTimeout(() => inputRef.current?.focus(), 0);
+ }
+ }, [open]);
+
+ const filtered = search.trim()
+ ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
+ : options;
+ const groups = Array.from(new Set(filtered.filter(o => o.group).map(o => o.group!)));
+ const flat = filtered;
+
+ function commit(v: string) {
+ onChange(v);
+ setOpen(false);
+ }
+
+ const borderColor = open ? "border-teal" : aiSuggestion ? "border-teal/40" : "border-brand-border";
+
  return (
- <div className="relative">
- <select
- value={value}
- onChange={(e) => onChange(e.target.value)}
- disabled={disabled}
- className={`w-full px-2 py-1 bg-brand-surface border text-xs text-cream focus:outline-none disabled:opacity-50 ${aiSuggestion ? "border-teal/40 focus:border-teal" : "border-brand-border focus:border-teal"}`}
+ <div ref={rootRef} className="relative">
+ <div
+ role="combobox"
+ aria-expanded={open}
+ tabIndex={disabled ? -1 : 0}
+ onClick={() => !disabled && setOpen(o => !o)}
+ onKeyDown={(e) => {
+ if (disabled) return;
+ if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+ e.preventDefault();
+ setOpen(true);
+ }
+ }}
+ className={`flex items-center w-full min-h-[26px] px-2 py-1 bg-brand-surface border ${borderColor} text-xs text-cream cursor-pointer transition-colors ${disabled ? "opacity-50 pointer-events-none" : "hover:border-teal/60"}`}
  >
- {options.filter(o => !o.group).map(o => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- {groups.map(group => (
- <optgroup key={group} label={group}>
- {options.filter(o => o.group === group).map(o => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </optgroup>
- ))}
- </select>
+ <span className={`flex-1 truncate ${selected && selected.value ? "text-cream" : "text-cream-dim"}`}>
+ {selected?.label || "Select…"}
+ </span>
+ <svg className={`w-3 h-3 ml-1 text-cream-dim transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+ </svg>
+ </div>
  {aiSuggestion && (
- <span className="absolute -top-2 right-1 text-[9px] px-1 bg-brand-card text-teal border border-teal tracking-tight">
+ <span className="absolute -top-2 right-1 text-[9px] px-1 bg-brand-card text-teal border border-teal tracking-tight z-10">
  AI {Math.round(aiSuggestion.confidence * 100)}%
  </span>
+ )}
+ {open && (
+ <div className="absolute z-40 mt-1 min-w-[280px] max-w-[400px] bg-brand-card border border-brand-border shadow-2xl left-0">
+ <div className="p-1.5 border-b border-brand-border bg-brand-surface">
+ <input
+ ref={inputRef}
+ value={search}
+ onChange={(e) => { setSearch(e.target.value); setHighlight(0); }}
+ placeholder="Type to filter…"
+ className="w-full px-2 py-1 bg-brand-card border border-brand-border text-xs text-cream placeholder-cream-dim focus:outline-none focus:border-teal"
+ onKeyDown={(e) => {
+ if (e.key === "Escape") { e.preventDefault(); setOpen(false); }
+ else if (e.key === "ArrowDown") { e.preventDefault(); setHighlight(h => Math.min(h + 1, flat.length - 1)); }
+ else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight(h => Math.max(h - 1, 0)); }
+ else if (e.key === "Enter" && flat[highlight]) { e.preventDefault(); commit(flat[highlight].value); }
+ }}
+ />
+ </div>
+ <div className="max-h-56 overflow-y-auto">
+ {flat.length === 0 ? (
+ <div className="px-3 py-3 text-xs text-cream-dim text-center">No matches</div>
+ ) : groups.length > 0 ? (
+ <>
+ {filtered.filter(o => !o.group).map(o => {
+ const idx = flat.indexOf(o);
+ const isHl = idx === highlight;
+ return (
+ <button key={o.value} data-idx={idx} type="button"
+ onMouseEnter={() => setHighlight(idx)}
+ onClick={() => commit(o.value)}
+ className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-teal-muted" : ""} ${o.value === value ? "text-teal font-medium" : o.value === "" ? "text-cream-dim" : "text-cream"}`}>
+ {o.label}
+ </button>
+ );
+ })}
+ {groups.map(group => (
+ <div key={group}>
+ <div className="sticky top-0 px-2.5 py-1 text-[10px] font-semibold text-cream-dim uppercase tracking-wider bg-brand-surface border-b border-brand-border">{group}</div>
+ {filtered.filter(o => o.group === group).map(o => {
+ const idx = flat.indexOf(o);
+ const isHl = idx === highlight;
+ return (
+ <button key={o.value} data-idx={idx} type="button"
+ onMouseEnter={() => setHighlight(idx)}
+ onClick={() => commit(o.value)}
+ className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-teal-muted" : ""} ${o.value === value ? "text-teal font-medium" : "text-cream"}`}>
+ {o.label}
+ </button>
+ );
+ })}
+ </div>
+ ))}
+ </>
+ ) : (
+ flat.map(o => {
+ const idx = flat.indexOf(o);
+ const isHl = idx === highlight;
+ return (
+ <button key={o.value} data-idx={idx} type="button"
+ onMouseEnter={() => setHighlight(idx)}
+ onClick={() => commit(o.value)}
+ className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-teal-muted" : ""} ${o.value === value ? "text-teal font-medium" : "text-cream"}`}>
+ {o.label}
+ </button>
+ );
+ })
+ )}
+ </div>
+ </div>
  )}
  </div>
  );
@@ -300,6 +412,15 @@ export default function InvoiceReviewPage() {
  const [showRequestInfoModal, setShowRequestInfoModal] = useState(false);
  const [infoRecipient, setInfoRecipient] = useState("");
  const [infoQuestion, setInfoQuestion] = useState("");
+ const [showPartialModal, setShowPartialModal] = useState(false);
+ const [partialApprovedIds, setPartialApprovedIds] = useState<Set<string>>(new Set());
+ const [partialNote, setPartialNote] = useState("");
+ const [partialSubmitting, setPartialSubmitting] = useState(false);
+ const [partialError, setPartialError] = useState<string | null>(null);
+ const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set());
+
+ // Cross-link to the "other side" of a partial split
+ const [siblingInvoice, setSiblingInvoice] = useState<{ id: string; status: string; total_amount: number } | null>(null);
 
  // Payment tracking
  const [checkNumber, setCheckNumber] = useState("");
@@ -314,6 +435,30 @@ export default function InvoiceReviewPage() {
  if (res.ok) {
  const data: InvoiceData = await res.json();
  setInvoice(data);
+ // If this is a partial-approval split (either parent or child),
+ // pull the sibling so we can show a cross-link banner.
+ try {
+ if (data.parent_invoice_id) {
+ // This is a child (approved portion). Parent is the held remainder.
+ const { data: sib } = await supabase
+ .from("invoices")
+ .select("id, status, total_amount")
+ .eq("id", data.parent_invoice_id)
+ .maybeSingle();
+ if (sib) setSiblingInvoice(sib as { id: string; status: string; total_amount: number });
+ } else if (data.partial_approval_note) {
+ // This is a parent (held portion). Child has parent_invoice_id=this.id.
+ const { data: sib } = await supabase
+ .from("invoices")
+ .select("id, status, total_amount")
+ .eq("parent_invoice_id", data.id)
+ .is("deleted_at", null)
+ .order("created_at", { ascending: false })
+ .limit(1)
+ .maybeSingle();
+ if (sib) setSiblingInvoice(sib as { id: string; status: string; total_amount: number });
+ }
+ } catch { /* sibling lookup is best-effort */ }
  setJobId(data.job_id ?? "");
  setCostCodeId(data.cost_code_id ?? "");
  setPoId(data.po_id ?? "");
@@ -477,22 +622,23 @@ export default function InvoiceReviewPage() {
  return o;
  }, [invoice, invoiceNumber, invoiceDate, totalAmount, invoiceType, description, jobId, costCodeId]);
 
- // "Convert to Change Order" — flip every line to CO, swap to C-variant
- // cost codes where one exists, and stamp a CO reference. PMs use this
- // when an allowance or base-contract line overruns and needs a formal CO.
- const handleConvertToChangeOrder = useCallback(() => {
- setIsChangeOrder(true);
- if (!coReference.trim()) setCoReference("Pending CO — overage");
- setLineItems(prev => prev.map(li => ({
- ...li,
- is_change_order: true,
- cost_code_id: resolveVariant(costCodes, li.cost_code_id, true),
- co_reference: li.co_reference || "Pending CO — overage",
- })));
- setCostCodeId(prev => resolveVariant(costCodes, prev, true) ?? prev);
+ // "Convert to Change Order" — navigate to a draft CO pre-filled with the
+ // invoice's job, overage amount, and a descriptive title. The PM reviews
+ // line allocations on the CO form and submits for owner approval.
+ const handleConvertToChangeOrder = () => {
+ if (!invoice || !jobId) return;
+ const amountDollars = (totalCents / 100).toFixed(2);
+ const vendor = invoice.vendor_name_raw ?? invoice.vendors?.name ?? "vendor";
+ const desc = `Overage from ${vendor}${invoice.invoice_number ? ` inv ${invoice.invoice_number}` : ""}`;
+ const params = new URLSearchParams({
+ source_invoice_id: invoice.id,
+ amount: amountDollars,
+ description: desc,
+ });
  setShowOverBudgetModal(false);
  setOverBudgetNote("");
- }, [costCodes, coReference]);
+ router.push(`/jobs/${jobId}/change-orders/new?${params.toString()}`);
+ };
 
  const handleAction = async (action: "approve" | "hold" | "deny" | "request_info" | "info_received", note?: string) => {
  setSaving(true);
@@ -600,10 +746,15 @@ export default function InvoiceReviewPage() {
  // Per-line-item breakdown (for summary display)
  const costCodeSummary = uniqueLineCodeIds.map(ccId => {
  const cc = costCodes.find(c => c.id === ccId);
- const total = lineItems
- .filter(l => l.cost_code_id === ccId)
- .reduce((s, l) => s + l.amount_cents, 0);
- return { id: ccId, code: cc?.code ?? "???", description: cc?.description ?? "", total };
+ const rows = lineItems.filter(l => l.cost_code_id === ccId);
+ const total = rows.reduce((s, l) => s + l.amount_cents, 0);
+ return {
+ id: ccId,
+ code: cc?.code ?? "???",
+ description: cc?.description ?? "",
+ total,
+ count: rows.length,
+ };
  });
 
  // Over-budget severity classifier. Returns the worst-case severity across
@@ -875,6 +1026,57 @@ export default function InvoiceReviewPage() {
  )}
 
  <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 pb-32 md:pb-6">
+ <Breadcrumbs
+ items={[
+ { label: "Invoices", href: "/invoices" },
+ { label: "PM Queue", href: "/invoices/queue" },
+ {
+ label: `${invoice.vendor_name_raw ?? "Invoice"}${invoice.invoice_number ? ` — ${invoice.invoice_number}` : ""}`,
+ },
+ ]}
+ />
+ {/* Partial approval banner — shown on both halves of a split */}
+ {(invoice.parent_invoice_id || invoice.partial_approval_note) && (
+ <div className="mb-4 border border-brass/50 bg-brass/5 px-4 py-3 text-sm text-cream animate-fade-up">
+ <div className="flex items-start gap-3">
+ <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-brass text-brass">
+ Partial
+ </span>
+ <div className="flex-1">
+ {invoice.parent_invoice_id ? (
+ <p>
+ <span className="font-medium text-cream">Approved portion</span> of a split invoice.{" "}
+ {siblingInvoice && (
+ <Link href={`/invoices/${siblingInvoice.id}`} className="text-teal hover:underline">
+ See held portion ({formatCents(siblingInvoice.total_amount)} · {formatStatus(siblingInvoice.status)}) →
+ </Link>
+ )}
+ </p>
+ ) : (
+ <>
+ <p>
+ <span className="font-medium text-cream">Held portion</span> — {siblingInvoice && (
+ <>{formatCents(siblingInvoice.total_amount)} approved,{" "}</>
+ )}
+ {formatCents(invoice.total_amount)} held.
+ </p>
+ {invoice.partial_approval_note && (
+ <p className="mt-1 text-cream-dim">
+ <span className="uppercase tracking-wider text-[10px] mr-2">Reason:</span>
+ {invoice.partial_approval_note}
+ </p>
+ )}
+ {siblingInvoice && (
+ <Link href={`/invoices/${siblingInvoice.id}`} className="inline-block mt-1 text-teal hover:underline">
+ See approved portion →
+ </Link>
+ )}
+ </>
+ )}
+ </div>
+ </div>
+ </div>
+ )}
  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
  {/* ── Left: Document Preview ── */}
  <div className="xl:col-span-1">
@@ -1044,16 +1246,32 @@ export default function InvoiceReviewPage() {
 
  {/* Cost code summary */}
  {costCodeSummary.length > 0 && (
- <div className="mb-2 px-3 py-2 bg-brand-surface/60 border border-brand-border">
- <p className="text-[10px] text-cream-dim uppercase tracking-wider mb-1">Cost Code Split</p>
- <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
- {costCodeSummary.map(cs => (
- <span key={cs.id} className="text-cream">
- <span className="text-teal font-mono">{cs.code}</span>{" "}
- {cs.description} <span className="text-cream-dim">({formatCents(cs.total)})</span>
- </span>
- ))}
+ <div className="mb-2 bg-brand-surface/60 border border-brand-border">
+ <div className="px-3 py-2 border-b border-brand-border">
+ <p className="text-[10px] text-cream-dim uppercase tracking-wider">
+ Cost Code Split · {costCodeSummary.length} code{costCodeSummary.length !== 1 ? "s" : ""}
+ </p>
  </div>
+ <table className="w-full text-xs">
+ <thead>
+ <tr className="text-[10px] uppercase tracking-wider text-cream-dim">
+ <th className="text-left px-3 py-1.5 font-medium">Code</th>
+ <th className="text-left px-3 py-1.5 font-medium">Description</th>
+ <th className="text-right px-3 py-1.5 font-medium">Lines</th>
+ <th className="text-right px-3 py-1.5 font-medium">Total</th>
+ </tr>
+ </thead>
+ <tbody>
+ {costCodeSummary.map(cs => (
+ <tr key={cs.id} className="border-t border-brand-row-border">
+ <td className="px-3 py-1.5 font-mono text-teal">{cs.code}</td>
+ <td className="px-3 py-1.5 text-cream-muted">{cs.description}</td>
+ <td className="px-3 py-1.5 text-right text-cream-dim tabular-nums">{cs.count}</td>
+ <td className="px-3 py-1.5 text-right text-cream font-medium tabular-nums">{formatCents(cs.total)}</td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
  </div>
  )}
 
@@ -1062,9 +1280,9 @@ export default function InvoiceReviewPage() {
  <thead>
  <tr className="bg-brand-surface">
  <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
- <th className="py-2 px-3 text-left text-cream font-semibold min-w-[180px]">Cost Code</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold min-w-[220px]">Cost Code</th>
  <th className="py-2 px-3 text-center text-cream font-semibold">CO</th>
- <th className="py-2 px-3 text-left text-cream font-semibold">CO Ref</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold min-w-[120px]">CO Ref</th>
  <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
  </tr>
  </thead>
@@ -1075,8 +1293,30 @@ export default function InvoiceReviewPage() {
  const missingCoRef = li.is_change_order && !li.co_reference.trim();
  return (
  <tr key={li.id ?? idx} className="border-t border-brand-row-border align-top">
- <td className="py-2 px-3 text-cream">
- <div>{li.description || <span className="text-cream-dim italic">(no description)</span>}</div>
+ <td className="py-2 px-3 text-cream max-w-[360px]">
+ {li.description ? (
+ <>
+ <div className={expandedDescriptions.has(idx) ? "" : "line-clamp-2"}>
+ {li.description}
+ </div>
+ {li.description.length > 100 && (
+ <button
+ type="button"
+ onClick={() => setExpandedDescriptions(prev => {
+ const next = new Set(prev);
+ if (next.has(idx)) next.delete(idx);
+ else next.add(idx);
+ return next;
+ })}
+ className="text-[10px] text-teal hover:underline mt-0.5"
+ >
+ {expandedDescriptions.has(idx) ? "Show less" : "Show more"}
+ </button>
+ )}
+ </>
+ ) : (
+ <span className="text-cream-dim italic">(no description)</span>
+ )}
  {(li.qty != null || li.rate != null) && (
  <div className="text-[10px] text-cream-dim mt-0.5">
  {li.qty != null && <span>{li.qty}{li.unit ? ` ${li.unit}` : ""}</span>}
@@ -1121,7 +1361,7 @@ export default function InvoiceReviewPage() {
  onChange={(e) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, co_reference: e.target.value } : item))}
  disabled={!isReviewable}
  placeholder="PCCO #"
- className={`w-20 px-2 py-1 bg-brand-surface border text-xs text-cream focus:outline-none disabled:opacity-50 ${missingCoRef ? "border-status-danger" : "border-brand-border focus:border-teal"}`}
+ className={`w-full max-w-[140px] px-2 py-1 bg-brand-surface border text-xs text-cream focus:outline-none disabled:opacity-50 ${missingCoRef ? "border-status-danger" : "border-brand-border focus:border-teal"}`}
  />
  ) : (
  <span className="text-cream-dim">—</span>
@@ -1167,6 +1407,11 @@ export default function InvoiceReviewPage() {
  <button onClick={openApproveFlow} disabled={saving}
  className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
  {saving ? "Saving..." : "Approve"}
+ </button>
+ <button onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }} disabled={saving || lineItems.length < 2}
+ title={lineItems.length < 2 ? "Partial approval requires 2+ line items" : "Split this invoice into approved and held portions"}
+ className="flex-1 px-4 py-3 border-2 border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 font-medium transition-all">
+ Partial Approve
  </button>
  <button onClick={() => setShowNoteModal("hold")} disabled={saving}
  className="flex-1 px-4 py-3 bg-brass hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all">
@@ -1360,15 +1605,19 @@ export default function InvoiceReviewPage() {
  <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-bg/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 z-30">
  <div className="flex gap-2">
  <button onClick={openApproveFlow} disabled={saving}
- className="flex-1 px-3 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
+ className="flex-1 px-2 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
  {saving ? "..." : "Approve"}
  </button>
+ <button onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }} disabled={saving || lineItems.length < 2}
+ className="flex-1 px-2 py-3 border border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 font-medium transition-all text-sm">
+ Partial
+ </button>
  <button onClick={() => setShowNoteModal("hold")} disabled={saving}
- className="flex-1 px-3 py-3 bg-brass hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all text-sm">
+ className="flex-1 px-2 py-3 bg-brass hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all text-sm">
  Hold
  </button>
  <button onClick={() => setShowNoteModal("deny")} disabled={saving}
- className="flex-1 px-3 py-3 bg-status-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
+ className="flex-1 px-2 py-3 bg-status-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
  Deny
  </button>
  </div>
@@ -1740,6 +1989,149 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  )}
+
+ {/* ── Partial Approve Modal ── */}
+ {showPartialModal && (
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-3xl max-h-[92vh] overflow-y-auto animate-fade-up shadow-2xl">
+ <h3 className="font-display text-xl text-cream mb-2">Partial Approval</h3>
+ <p className="text-sm text-cream-dim mb-5">
+ Check the lines to approve now. The rest stays on Hold with a required note. Approved lines split into a new invoice that flows to QA; held lines remain on this record.
+ </p>
+ <div className="border border-brand-border">
+ <table className="w-full text-sm">
+ <thead>
+ <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
+ <th className="text-left px-3 py-2 font-medium w-8">
+ <input
+ type="checkbox"
+ className="accent-teal w-4 h-4"
+ checked={partialApprovedIds.size === lineItems.length && lineItems.length > 0}
+ onChange={(e) => {
+ if (e.target.checked) setPartialApprovedIds(new Set(lineItems.map((l) => l.id!).filter(Boolean) as string[]));
+ else setPartialApprovedIds(new Set());
+ }}
+ />
+ </th>
+ <th className="text-left px-3 py-2 font-medium">Description</th>
+ <th className="text-left px-3 py-2 font-medium">Cost Code</th>
+ <th className="text-right px-3 py-2 font-medium">Amount</th>
+ </tr>
+ </thead>
+ <tbody>
+ {lineItems.map((li) => {
+ const cc = costCodes.find((c) => c.id === li.cost_code_id);
+ const id = li.id;
+ if (!id) return null;
+ const checked = partialApprovedIds.has(id);
+ return (
+ <tr key={id} className={`border-b border-brand-row-border last:border-0 ${checked ? "bg-status-success/5" : ""}`}>
+ <td className="px-3 py-2">
+ <input
+ type="checkbox"
+ className="accent-teal w-4 h-4"
+ checked={checked}
+ onChange={(e) => {
+ setPartialApprovedIds((prev) => {
+ const next = new Set(prev);
+ if (e.target.checked) next.add(id);
+ else next.delete(id);
+ return next;
+ });
+ }}
+ />
+ </td>
+ <td className="px-3 py-2 text-cream">
+ <span className="line-clamp-2">{li.description || "—"}</span>
+ {li.is_change_order && li.co_reference && (
+ <span className="ml-2 text-[10px] uppercase tracking-wider text-brass">CO {li.co_reference}</span>
+ )}
+ </td>
+ <td className="px-3 py-2 text-cream-muted text-xs font-mono">
+ {cc ? `${cc.code} ${cc.description}` : "—"}
+ </td>
+ <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(li.amount_cents)}</td>
+ </tr>
+ );
+ })}
+ </tbody>
+ <tfoot>
+ <tr className="border-t-2 border-brand-border bg-brand-surface">
+ <td colSpan={3} className="px-3 py-2 text-[11px] uppercase tracking-wider text-cream-dim">
+ Approving {partialApprovedIds.size} of {lineItems.length} lines
+ </td>
+ <td className="px-3 py-2 text-right text-status-success font-display tabular-nums">
+ {formatCents(lineItems.filter((l) => l.id && partialApprovedIds.has(l.id)).reduce((s, l) => s + l.amount_cents, 0))}
+ </td>
+ </tr>
+ <tr className="bg-brand-surface">
+ <td colSpan={3} className="px-3 py-2 text-[11px] uppercase tracking-wider text-cream-dim">
+ Holding the remaining
+ </td>
+ <td className="px-3 py-2 text-right text-brass font-display tabular-nums">
+ {formatCents(lineItems.filter((l) => l.id && !partialApprovedIds.has(l.id)).reduce((s, l) => s + l.amount_cents, 0))}
+ </td>
+ </tr>
+ </tfoot>
+ </table>
+ </div>
+
+ <div className="mt-5">
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+ Why is the rest held? (required)
+ </label>
+ <textarea
+ value={partialNote}
+ onChange={(e) => setPartialNote(e.target.value)}
+ rows={3}
+ placeholder="e.g. Scope on lines 3-5 wasn't agreed — waiting on confirmation from vendor"
+ className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
+ />
+ </div>
+
+ {partialError && (
+ <div className="mt-3 border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">
+ {partialError}
+ </div>
+ )}
+
+ <div className="flex gap-3 mt-5 pt-4 border-t border-brand-border">
+ <button
+ disabled={partialSubmitting || partialApprovedIds.size === 0 || partialApprovedIds.size === lineItems.length || !partialNote.trim()}
+ onClick={async () => {
+ setPartialError(null);
+ setPartialSubmitting(true);
+ try {
+ const res = await fetch(`/api/invoices/${invoiceId}/partial-approve`, {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({
+ approved_line_item_ids: Array.from(partialApprovedIds),
+ note: partialNote.trim(),
+ }),
+ });
+ const data = await res.json();
+ if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+ setShowPartialModal(false);
+ router.push("/invoices/queue");
+ } catch (err) {
+ setPartialError(err instanceof Error ? err.message : "Failed");
+ } finally {
+ setPartialSubmitting(false);
+ }
+ }}
+ className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all"
+ >
+ {partialSubmitting ? "Splitting…" : `Approve ${partialApprovedIds.size} line${partialApprovedIds.size !== 1 ? "s" : ""} & hold the rest`}
+ </button>
+ <button onClick={() => setShowPartialModal(false)}
+ className="px-5 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ Cancel
+ </button>
+ </div>
+ </div>
+ </div>
+ )}
  </div>
  );
 }
@@ -1762,18 +2154,32 @@ function OverBudgetAlert({ severity, overage, pct, isAllowance }: {
  const c = colorMap[severity];
  const fmt = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
  return (
- <div className={`mt-2 px-3 py-2 ${c.bg} border ${c.border}`}>
- <p className={`text-[11px] ${c.text} font-medium`}>
- {c.label} by {fmt(overage)} ({pct.toFixed(1)}%)
+ <div className={`mt-3 p-3 ${c.bg} border ${c.border}`}>
+ <div className="flex items-start gap-2">
+ <svg className={`w-4 h-4 ${c.text} shrink-0 mt-0.5`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M4.93 19.07A10 10 0 1119.07 4.93 10 10 0 014.93 19.07z" />
+ </svg>
+ <div className="flex-1 min-w-0">
+ <p className={`text-xs ${c.text} font-semibold break-words`}>
+ {c.label}
+ </p>
+ <p className={`text-[11px] ${c.text}/90 mt-0.5 break-words`}>
+ +{fmt(overage)} · {pct.toFixed(1)}% over
  </p>
  {severity === "orange" && (
- <p className="text-[10px] text-cream-dim mt-0.5">Note required at approval.</p>
- )}
- {severity === "red" && (
- <p className="text-[10px] text-cream-dim mt-0.5">
- {isAllowance ? "Allowances usually become change orders — convert below." : "Approve as overage or convert to a change order."}
+ <p className="text-[11px] text-cream-dim mt-1.5 leading-snug">
+ A note is required at approval time.
  </p>
  )}
+ {severity === "red" && (
+ <p className="text-[11px] text-cream-dim mt-1.5 leading-snug">
+ {isAllowance
+ ? "Allowances usually become change orders. Use Convert to Change Order below."
+ : "Approve as overage with a note, or convert to a formal change order."}
+ </p>
+ )}
+ </div>
+ </div>
  </div>
  );
 }

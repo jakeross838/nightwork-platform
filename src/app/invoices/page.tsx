@@ -20,6 +20,8 @@ interface Invoice {
  mailed_date: string | null;
  document_category: string | null;
  is_change_order: boolean;
+ parent_invoice_id: string | null;
+ partial_approval_note: string | null;
  jobs: { name: string } | null;
  cost_codes: { code: string; description: string } | null;
  assigned_pm: { id: string; full_name: string } | null;
@@ -92,7 +94,7 @@ export default function AllInvoicesPage() {
  const [invResult, pmResult, lineItemResult] = await Promise.all([
  supabase
  .from("invoices")
- .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
+ .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
  .is("deleted_at", null)
  .order("created_at", { ascending: false }),
  supabase
@@ -505,9 +507,16 @@ export default function AllInvoicesPage() {
  </td>
  <td className="py-3 px-4 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
  <td className="py-3 px-4">
+ <div className="flex items-center gap-1.5">
  <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${statusBadgeColor(inv.status)}`}>
  {formatStatus(inv.status)}
  </span>
+ {(inv.parent_invoice_id || inv.partial_approval_note) && (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-brass text-brass" title="Part of a partial-approval split">
+ Partial
+ </span>
+ )}
+ </div>
  </td>
  <td className="py-3 px-4 text-cream-muted text-xs">{inv.assigned_pm?.full_name ?? <span className="text-cream-dim">—</span>}</td>
  <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
