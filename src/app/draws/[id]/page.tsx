@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
-import { formatCents, formatStatus } from "@/lib/utils/format";
+import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 
 interface DrawData {
   id: string; draw_number: number; application_date: string; period_start: string; period_end: string;
@@ -174,8 +174,8 @@ export default function DrawDetailPage() {
                 <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">Details</p>
                 <div className="mt-5 space-y-2 text-sm">
                   <div className="flex justify-between"><span className="text-cream-dim">Application #</span><span className="text-cream">{draw.draw_number}</span></div>
-                  <div className="flex justify-between"><span className="text-cream-dim">Period</span><span className="text-cream">{draw.period_start} — {draw.period_end}</span></div>
-                  <div className="flex justify-between"><span className="text-cream-dim">App Date</span><span className="text-cream">{draw.application_date}</span></div>
+                  <div className="flex justify-between"><span className="text-cream-dim">Period</span><span className="text-cream">{formatDate(draw.period_start)} — {formatDate(draw.period_end)}</span></div>
+                  <div className="flex justify-between"><span className="text-cream-dim">App Date</span><span className="text-cream">{formatDate(draw.application_date)}</span></div>
                   <div className="flex justify-between"><span className="text-cream-dim">Owner</span><span className="text-cream">{draw.jobs?.client_name ?? "—"}</span></div>
                   <div className="flex justify-between"><span className="text-cream-dim">Invoices</span><span className="text-cream">{draw.invoices?.length ?? 0}</span></div>
                 </div>

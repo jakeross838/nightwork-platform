@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
-import { formatCents, formatStatus, formatFlag, formatInvoiceType, confidenceColor } from "@/lib/utils/format";
+import { formatCents, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime } from "@/lib/utils/format";
 
 interface InvoiceData {
   id: string; job_id: string | null; vendor_name_raw: string | null; invoice_number: string | null;
@@ -170,7 +170,7 @@ export default function QaReviewPage() {
                   if (!approvalEntry) return null;
                   return (
                     <p className="text-[11px] text-cream-dim mb-3">
-                      Approved by {String(approvalEntry.who)} &mdash; {new Date(String(approvalEntry.when)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      Approved by {String(approvalEntry.who)} &mdash; {formatDateTime(String(approvalEntry.when))}
                     </p>
                   );
                 })()}
@@ -182,7 +182,7 @@ export default function QaReviewPage() {
                     <LockedField label="Invoice #" value={invoice.invoice_number ?? "—"} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <LockedField label="Date" value={invoice.invoice_date ?? "—"} />
+                    <LockedField label="Date" value={formatDate(invoice.invoice_date)} />
                     <LockedField label="Type" value={formatInvoiceType(invoice.invoice_type)} />
                   </div>
                   {invoice.description && <LockedField label="Description" value={invoice.description} />}
@@ -237,8 +237,8 @@ export default function QaReviewPage() {
               <div className="bg-brand-card border border-brand-border rounded-2xl p-5">
                 <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">Payment</p>
                 <div className="mt-5 space-y-2.5 text-sm">
-                  <div className="flex justify-between"><span className="text-cream-dim">Received</span><span className="text-cream">{invoice.received_date ?? "—"}</span></div>
-                  <div className="flex justify-between"><span className="text-cream-dim">Scheduled</span><span className="text-cream">{invoice.payment_date ?? "—"}</span></div>
+                  <div className="flex justify-between"><span className="text-cream-dim">Received</span><span className="text-cream">{formatDate(invoice.received_date)}</span></div>
+                  <div className="flex justify-between"><span className="text-cream-dim">Scheduled</span><span className="text-cream">{formatDate(invoice.payment_date)}</span></div>
                   <div className="flex justify-between border-t border-brand-border pt-2.5"><span className="text-cream-dim">Amount</span><span className="text-brass font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
                 </div>
               </div>
@@ -273,7 +273,7 @@ export default function QaReviewPage() {
                           <div className={`absolute left-0 top-1 w-[15px] h-[15px] rounded-full border-2 border-brand-card ${statusDotColor(ns)}`} />
                           <div className="text-xs">
                             <p className="text-cream font-medium">{formatStatus(String(entry.old_status))} &rarr; {formatStatus(ns)}</p>
-                            <p className="text-cream-dim mt-0.5">{String(entry.who)} &mdash; {new Date(String(entry.when)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>
+                            <p className="text-cream-dim mt-0.5">{String(entry.who)} &mdash; {formatDateTime(String(entry.when))}</p>
                             {entry.note ? <p className="text-cream-dim/80 mt-1 italic text-[11px]">{String(entry.note)}</p> : null}
                           </div>
                         </div>

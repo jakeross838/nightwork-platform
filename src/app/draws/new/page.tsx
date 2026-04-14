@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents } from "@/lib/utils/format";
+import { formatCents, formatDate } from "@/lib/utils/format";
 
 interface Job { id: string; name: string; address: string | null; original_contract_amount: number; deposit_percentage: number; }
 interface AvailableInvoice { id: string; vendor_name_raw: string | null; invoice_number: string | null; total_amount: number; cost_code_id: string | null; cost_codes: { code: string; description: string } | null; }
@@ -237,7 +237,7 @@ export default function NewDrawPage() {
               <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">Draw Details</p>
               <div className="grid grid-cols-3 gap-4 text-sm mt-3">
                 <div><span className="text-cream-dim">Job:</span> <span className="text-cream ml-1">{job?.name}</span></div>
-                <div><span className="text-cream-dim">Period:</span> <span className="text-cream ml-1">{periodStart} to {periodEnd}</span></div>
+                <div><span className="text-cream-dim">Period:</span> <span className="text-cream ml-1">{formatDate(periodStart)} to {formatDate(periodEnd)}</span></div>
                 <div><span className="text-cream-dim">Invoices:</span> <span className="text-cream ml-1">{selected.size} totaling {formatCents(selectedTotal)}</span></div>
               </div>
             </div>

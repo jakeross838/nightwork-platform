@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, daysAgo } from "@/lib/utils/format";
+import { formatCents, daysAgo, formatDateTime } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 
 interface QaInvoice {
@@ -110,7 +110,7 @@ export default function QaQueuePage() {
                         {approval ? (
                           <>
                             <span className="text-cream-muted">{approval.who}</span>
-                            <span className="text-cream-dim"> — {new Date(approval.when).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                            <span className="text-cream-dim"> — {formatDateTime(approval.when)}</span>
                           </>
                         ) : "—"}
                       </td>

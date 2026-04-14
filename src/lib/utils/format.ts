@@ -17,6 +17,25 @@ export function dollarsToCents(dollars: number): number {
   return Math.round(dollars * 100);
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Format date string or Date to "Apr 13, 2026" */
+export function formatDate(d: string | Date | null | undefined): string {
+  if (!d) return "—";
+  const dt = typeof d === "string" ? new Date(d.includes("T") ? d : d + "T00:00:00") : d;
+  if (isNaN(dt.getTime())) return "—";
+  return `${MONTHS[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()}`;
+}
+
+/** Format datetime to "Apr 13, 2026 at 2:45 PM" */
+export function formatDateTime(d: string | Date | null | undefined): string {
+  if (!d) return "—";
+  const dt = typeof d === "string" ? new Date(d) : d;
+  if (isNaN(dt.getTime())) return "—";
+  const time = dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  return `${MONTHS[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()} at ${time}`;
+}
+
 export function confidenceColor(score: number): string {
   if (score >= 0.85) return "bg-green-500/20 text-green-400 border-green-500/30";
   if (score >= 0.7) return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";

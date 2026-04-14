@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import NavBar from "@/components/nav-bar";
-import { formatCents, formatStatus } from "@/lib/utils/format";
+import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 
 interface Draw {
   id: string;
@@ -96,8 +96,8 @@ export default function DrawsPage() {
                           className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
                           onClick={() => window.location.href = `/draws/${d.id}`}>
                           <td className="py-4 px-5 text-cream font-display font-medium">#{d.draw_number}</td>
-                          <td className="py-4 px-5 text-cream-muted">{d.period_start} — {d.period_end}</td>
-                          <td className="py-4 px-5 text-cream-muted">{d.application_date}</td>
+                          <td className="py-4 px-5 text-cream-muted">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
+                          <td className="py-4 px-5 text-cream-muted">{formatDate(d.application_date)}</td>
                           <td className="py-4 px-5">
                             <span className="text-xs text-cream bg-brand-surface px-3 py-1.5 rounded-full border border-brand-border-light font-medium">
                               {formatStatus(d.status)}

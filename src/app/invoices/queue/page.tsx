@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, confidenceColor, daysAgo } from "@/lib/utils/format";
+import { formatCents, confidenceColor, daysAgo, formatDate } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 
 interface QueueInvoice {
@@ -574,7 +574,7 @@ export default function QueuePage() {
                             {inv.invoice_number && inv.invoice_date && (
                               <span>&middot;</span>
                             )}
-                            {inv.invoice_date && <span>{inv.invoice_date}</span>}
+                            {inv.invoice_date && <span>{formatDate(inv.invoice_date)}</span>}
                           </>
                         )}
                       </div>
@@ -685,9 +685,7 @@ export default function QueuePage() {
                             )}
                           </td>
                           <td className="py-4 px-5 text-cream-muted">
-                            {inv.invoice_date ?? (
-                              <span className="text-cream-dim">&mdash;</span>
-                            )}
+                            {formatDate(inv.invoice_date)}
                           </td>
                           <td className="py-4 px-5">
                             {inv.jobs?.name ? (

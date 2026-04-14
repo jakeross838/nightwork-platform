@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag } from "@/lib/utils/format";
+import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 
 interface Job { id: string; name: string; address: string | null; }
@@ -595,8 +595,8 @@ export default function InvoiceReviewPage() {
               {/* Payment */}
               <SidebarCard title="Payment">
                 <div className="space-y-2.5 text-sm">
-                  <div className="flex justify-between"><span className="text-cream-dim">Received</span><span className="text-cream">{invoice.received_date ?? "—"}</span></div>
-                  <div className="flex justify-between"><span className="text-cream-dim">Scheduled</span><span className="text-cream">{invoice.payment_date ?? "—"}</span></div>
+                  <div className="flex justify-between"><span className="text-cream-dim">Received</span><span className="text-cream">{formatDate(invoice.received_date)}</span></div>
+                  <div className="flex justify-between"><span className="text-cream-dim">Scheduled</span><span className="text-cream">{formatDate(invoice.payment_date)}</span></div>
                   <div className="flex justify-between border-t border-brand-border pt-2.5"><span className="text-cream-dim">Amount</span><span className="text-brass font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
                 </div>
               </SidebarCard>
@@ -634,7 +634,7 @@ export default function InvoiceReviewPage() {
                               {formatStatus(String(entry.old_status))} &rarr; {formatStatus(newStatus)}
                             </p>
                             <p className="text-cream-dim mt-0.5">
-                              {String(entry.who)} &mdash; {new Date(String(entry.when)).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                              {String(entry.who)} &mdash; {formatDateTime(String(entry.when))}
                             </p>
                             {entry.note ? <p className="text-cream-dim/80 mt-1 italic text-[11px] leading-relaxed">{String(entry.note)}</p> : null}
                           </div>

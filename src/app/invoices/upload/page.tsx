@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import type { ParseResult, ParsedInvoice } from "@/lib/types/invoice";
 import {
   formatDollars, confidenceColor, confidenceLabel,
-  formatInvoiceType, formatFlag, formatDocumentType,
+  formatInvoiceType, formatFlag, formatDocumentType, formatDate,
 } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 
@@ -167,7 +167,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
         <Field label="Vendor" value={parsed.vendor_name} />
         <Field label="Invoice #" value={parsed.invoice_number} />
-        <Field label="Date" value={parsed.invoice_date} />
+        <Field label="Date" value={formatDate(parsed.invoice_date)} />
         <Field label="Type" value={formatInvoiceType(parsed.invoice_type)} />
         <Field label="Job Reference" value={parsed.job_reference} />
         <Field label="PO Reference" value={parsed.po_reference} />

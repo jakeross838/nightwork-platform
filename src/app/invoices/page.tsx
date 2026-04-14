@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatStatus } from "@/lib/utils/format";
+import { formatCents, formatStatus, formatDate } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 
 interface Invoice {
@@ -372,7 +372,7 @@ export default function AllInvoicesPage() {
                         }}>
                         <td className="py-3 px-4 text-cream font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
                         <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? <span className="text-cream-dim">—</span>}</td>
-                        <td className="py-3 px-4 text-cream-muted">{inv.invoice_date ?? <span className="text-cream-dim">—</span>}</td>
+                        <td className="py-3 px-4 text-cream-muted">{formatDate(inv.invoice_date)}</td>
                         <td className="py-3 px-4">
                           {inv.jobs?.name ? (
                             <span className="inline-flex items-center px-2 py-0.5 rounded bg-brass-muted text-brass text-xs font-medium">{inv.jobs.name}</span>
@@ -390,7 +390,7 @@ export default function AllInvoicesPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-cream-muted text-xs">{inv.assigned_pm?.full_name ?? <span className="text-cream-dim">—</span>}</td>
-                        <td className="py-3 px-4 text-cream-muted text-xs">{inv.payment_date ?? <span className="text-cream-dim">—</span>}</td>
+                        <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
                       </tr>
                     ))}
                   </tbody>
