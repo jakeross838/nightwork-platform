@@ -18,6 +18,7 @@ interface Invoice {
  check_number: string | null;
  picked_up: boolean;
  mailed_date: string | null;
+ document_category: string | null;
  jobs: { name: string } | null;
  cost_codes: { code: string; description: string } | null;
  assigned_pm: { id: string; full_name: string } | null;
@@ -88,7 +89,7 @@ export default function AllInvoicesPage() {
  const [invResult, pmResult] = await Promise.all([
  supabase
  .from("invoices")
- .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
+ .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
  .is("deleted_at", null)
  .order("created_at", { ascending: false }),
  supabase
@@ -449,6 +450,11 @@ export default function AllInvoicesPage() {
  <td className="py-3 px-4">
  {inv.jobs?.name ? (
  <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">{inv.jobs.name}</span>
+ ) : inv.document_category === "overhead" ? (
+ <span
+  className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-transparent border"
+  style={{ color: "var(--color-warning, #E65100)", borderColor: "var(--color-warning, #E65100)" }}
+ >Overhead</span>
  ) : (
  <span className="text-cream-dim">—</span>
  )}

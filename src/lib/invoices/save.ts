@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computePaymentDate } from "@/lib/utils/payment-schedule";
 import type { ParsedInvoice } from "@/lib/types/invoice";
+import {
+  detectOverhead,
+  loadJobCandidates,
+  matchJobForInvoice,
+  type MatchResult,
+} from "@/lib/invoices/job-matcher";
 
 export const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -79,16 +85,6 @@ async function findOrCreateVendor(
   return data;
 }
 
-async function matchJob(supabase: SupabaseClient, jobRef: string) {
-  const { data } = await supabase
-    .from("jobs")
-    .select("id, name, address, pm_id")
-    .is("deleted_at", null)
-    .or(`name.ilike.%${jobRef}%,address.ilike.%${jobRef}%`)
-    .limit(1);
-  return data?.[0] ?? null;
-}
-
 async function matchCostCode(supabase: SupabaseClient, code: string) {
   const { data } = await supabase
     .from("cost_codes")
@@ -153,7 +149,7 @@ export async function saveParsedInvoice(
   supabase: SupabaseClient,
   req: SaveInvoiceRequest
 ): Promise<SaveInvoiceResult> {
-  const { parsed, file_url, file_type, force_save } = req;
+  const { parsed, file_url, file_name, file_type, force_save } = req;
 
   const totalAmountCents = dollarsToCents(parsed.total_amount);
 
@@ -188,11 +184,26 @@ export async function saveParsedInvoice(
     }
   }
 
-  const jobConfidence = parsed.confidence_details?.job_reference ?? 0;
-  const matchedJob = parsed.job_reference
-    ? await matchJob(supabase, parsed.job_reference)
-    : null;
-  const autoFilledJob = matchedJob != null && jobConfidence >= 0.85;
+  // ---- Job matching (improved: name, address, client, filename, description) ----
+  const jobs = await loadJobCandidates(supabase);
+  const match: MatchResult | null = matchJobForInvoice(jobs, {
+    job_reference_raw: parsed.job_reference,
+    po_reference_raw: parsed.po_reference,
+    vendor_name_raw: parsed.vendor_name,
+    description: parsed.description,
+    filename: file_name,
+  });
+
+  // ---- Overhead detection (only when no job matched) ----
+  const overhead =
+    match === null
+      ? detectOverhead({
+          vendor_name_raw: parsed.vendor_name,
+          description: parsed.description,
+          job_reference_raw: parsed.job_reference,
+          po_reference_raw: parsed.po_reference,
+        })
+      : { isOverhead: false };
 
   let matchedCostCode: { id: string; code: string } | null = null;
   let autoFilledCostCode = false;
@@ -205,8 +216,14 @@ export async function saveParsedInvoice(
   }
 
   const autoFills: Record<string, boolean> = {};
-  if (autoFilledJob) autoFills.job_id = true;
+  if (match) autoFills.job_id = true;
   if (autoFilledCostCode) autoFills.cost_code_id = true;
+
+  const matchNote = match
+    ? ` Job auto-matched to ${match.job.name} (score ${match.score}: ${match.reasons.join("; ")}${match.ambiguous ? "; flagged as ambiguous" : ""}).`
+    : overhead.isOverhead
+      ? ` Flagged as overhead expense — ${overhead.reason ?? "overhead pattern match"}.`
+      : "";
 
   const duplicateNote =
     existingDuplicate && force_save
@@ -218,15 +235,15 @@ export async function saveParsedInvoice(
     when: new Date().toISOString(),
     old_status: "received",
     new_status: status,
-    note: `AI parsed with ${Math.round(parsed.confidence_score * 100)}% confidence. Auto-routed.${autoFilledJob ? " Job auto-matched." : ""}${autoFilledCostCode ? ` Cost code auto-assigned: ${matchedCostCode?.code}.` : ""}${duplicateNote}`,
+    note: `AI parsed with ${Math.round(parsed.confidence_score * 100)}% confidence. Auto-routed.${matchNote}${autoFilledCostCode ? ` Cost code auto-assigned: ${matchedCostCode?.code}.` : ""}${duplicateNote}`,
   };
 
   const { data, error } = await supabase
     .from("invoices")
     .insert({
       vendor_id: matchedVendor?.id ?? null,
-      job_id: matchedJob?.id ?? null,
-      assigned_pm_id: matchedJob?.pm_id ?? null,
+      job_id: match?.job.id ?? null,
+      assigned_pm_id: match?.job.pm_id ?? null,
       cost_code_id: matchedCostCode?.id ?? null,
       invoice_number: parsed.invoice_number,
       invoice_date: parsed.invoice_date,
@@ -243,6 +260,16 @@ export async function saveParsedInvoice(
         ...parsed.confidence_details,
         cost_code_suggestion: parsed.cost_code_suggestion?.confidence ?? 0,
         auto_fills: autoFills,
+        ...(match
+          ? {
+              job_match: {
+                score: match.score,
+                reasons: match.reasons,
+                ambiguous: match.ambiguous,
+              },
+            }
+          : {}),
+        ...(overhead.isOverhead ? { overhead_reason: overhead.reason } : {}),
         ...(existingDuplicate && force_save
           ? { possible_duplicate_of: existingDuplicate.id }
           : {}),
@@ -254,7 +281,9 @@ export async function saveParsedInvoice(
       received_date: today,
       payment_date: paymentDate,
       original_file_url: file_url,
+      original_filename: file_name,
       original_file_type: mapFileType(file_type),
+      document_category: overhead.isOverhead ? "overhead" : "job_cost",
       org_id: ORG_ID,
     })
     .select("id")

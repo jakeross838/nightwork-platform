@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "bulk-import": "npx tsx scripts/bulk-import.ts"
+    "bulk-import": "npx tsx scripts/bulk-import.ts",
+    "rematch-jobs": "npx tsx scripts/rematch-jobs.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",

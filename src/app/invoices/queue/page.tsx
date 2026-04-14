@@ -16,6 +16,7 @@ interface QueueInvoice {
  status: string;
  job_id: string | null;
  cost_code_id: string | null;
+ document_category: string | null;
  jobs: { name: string } | null;
  assigned_pm: { id: string; full_name: string } | null;
 }
@@ -34,6 +35,20 @@ type AmountRange = "all" | "0-5k" | "5k-25k" | "25k-100k" | "100k+";
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
  if (!active) return <span className="ml-1 text-cream-dim">&#8597;</span>;
  return <span className="ml-1 text-teal">{dir === "asc" ? "\u2191" : "\u2193"}</span>;
+}
+
+/** Orange outlined badge for invoices that aren't job-costed (software,
+ *  storage, utilities). Shown in place of the "Unmatched" grey text so
+ *  PMs know they're not supposed to hunt for a job match. */
+function OverheadBadge() {
+ return (
+ <span
+ className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-transparent border"
+ style={{ color: "var(--color-warning, #E65100)", borderColor: "var(--color-warning, #E65100)" }}
+ >
+ Overhead
+ </span>
+ );
 }
 
 export default function QueuePage() {
@@ -108,7 +123,7 @@ export default function QueuePage() {
  supabase
  .from("invoices")
  .select(
- "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
+ "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, document_category, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
  )
  .in("status", ["pm_review", "ai_processed", "pm_held", "pm_denied", "info_requested"])
  .is("deleted_at", null)
@@ -710,6 +725,8 @@ export default function QueuePage() {
  <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
  {inv.jobs.name}
  </span>
+ ) : inv.document_category === "overhead" ? (
+ <OverheadBadge />
  ) : (
  <span className="text-cream-dim text-xs">
  Unmatched
@@ -910,6 +927,8 @@ export default function QueuePage() {
  <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
  {inv.jobs.name}
  </span>
+ ) : inv.document_category === "overhead" ? (
+ <OverheadBadge />
  ) : (
  <span className="text-cream-dim">Unmatched</span>
  )}
