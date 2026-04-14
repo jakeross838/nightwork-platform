@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import ExcelJS from "exceljs";
 
+export const dynamic = "force-dynamic";
+
 const ORG_CONTRACTOR_NAME = "ROSS BUILT, LLC";
 const ORG_CONTRACTOR_ADDR1 = "305 67th Street West";
 const ORG_CONTRACTOR_ADDR2 = "Bradenton, FL 34209";

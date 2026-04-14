@@ -3,6 +3,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { computePaymentDate } from "@/lib/utils/payment-schedule";
 import type { ParsedInvoice } from "@/lib/types/invoice";
 
+export const dynamic = "force-dynamic";
+
 const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 interface SaveRequest {

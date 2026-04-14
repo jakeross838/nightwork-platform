@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 interface BatchActionRequest {
   action: "approve" | "hold";
   invoice_ids: string[];

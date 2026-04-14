@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 interface ActionRequest {
   action: "approve" | "hold" | "deny" | "request_info" | "info_received" | "qa_approve" | "kick_back" | "reopen";
   note?: string;

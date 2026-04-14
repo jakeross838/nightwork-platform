@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 const STATUS_FLOW: Record<string, string> = {
   submit: "pm_review",
   approve: "approved",

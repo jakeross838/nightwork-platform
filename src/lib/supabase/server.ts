@@ -8,5 +8,9 @@ export function createServerClient() {
     throw new Error("Missing Supabase environment variables");
   }
 
-  return createClient(supabaseUrl, supabaseKey);
+  return createClient(supabaseUrl, supabaseKey, {
+    global: {
+      fetch: (url, options = {}) => fetch(url, { ...options, cache: "no-store" }),
+    },
+  });
 }

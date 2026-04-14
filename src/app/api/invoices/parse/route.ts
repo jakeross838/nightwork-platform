@@ -6,6 +6,8 @@ import {
   parseInvoiceFromText,
 } from "@/lib/claude/parse-invoice";
 
+export const dynamic = "force-dynamic";
+
 const ACCEPTED_TYPES: Record<string, string> = {
   "application/pdf": "pdf",
   "image/jpeg": "image",
