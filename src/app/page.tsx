@@ -4,14 +4,38 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 
+type UserRole = "admin" | "pm" | "accounting";
+
+type NavItem = {
+  key: string;
+  href: string;
+  title: string;
+  subtitle: string;
+  count?: number;
+  roles: UserRole[];
+};
+
 export default function Home() {
   const [status, setStatus] = useState<"loading" | "connected" | "error">("loading");
+  const [role, setRole] = useState<UserRole | null>(null);
   const [pmCount, setPmCount] = useState(0);
   const [qaCount, setQaCount] = useState(0);
 
   useEffect(() => {
     async function check() {
       try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+          if (profile?.role) setRole(profile.role as UserRole);
+        }
+
         const { error } = await supabase.from("cost_codes").select("id").limit(1);
         setStatus(error ? "error" : "connected");
         const [pmRes, qaRes] = await Promise.all([
@@ -26,6 +50,17 @@ export default function Home() {
     }
     check();
   }, []);
+
+  const cards: NavItem[] = [
+    { key: "upload",   href: "/invoices/upload", title: "Upload Invoices", subtitle: "Drag and drop — AI parses instantly", roles: ["admin", "accounting"] },
+    { key: "all",      href: "/invoices",        title: "All Invoices",    subtitle: "Search, filter, track every invoice", roles: ["admin", "pm", "accounting"] },
+    { key: "pmQueue",  href: "/invoices/queue",  title: "PM Queue",        subtitle: pmCount > 0 ? `${pmCount} pending review` : "No invoices waiting", count: pmCount, roles: ["admin", "pm"] },
+    { key: "qaQueue",  href: "/invoices/qa",     title: "Accounting QA",   subtitle: qaCount > 0 ? `${qaCount} ready for QA` : "QA queue clear",        count: qaCount, roles: ["admin", "accounting"] },
+    { key: "draws",    href: "/draws",           title: "Draws",           subtitle: "G702/G703 pay applications", roles: ["admin", "pm"] },
+    { key: "vendors",  href: "/vendors",         title: "Vendors",         subtitle: "Manage vendors and merge duplicates", roles: ["admin", "accounting"] },
+  ];
+
+  const visibleCards = role ? cards.filter((c) => c.roles.includes(role)) : [];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
@@ -47,14 +82,11 @@ export default function Home() {
           <span>Bradenton</span><span className="text-teal">&#x2022;</span><span>Anna Maria Island</span>
         </div>
 
-        {/* Navigation cards — all destinations */}
+        {/* Navigation cards — filtered by role */}
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up stagger-4">
-          <NavCard href="/invoices/upload" title="Upload Invoices" subtitle="Drag and drop — AI parses instantly" />
-          <NavCard href="/invoices" title="All Invoices" subtitle="Search, filter, track every invoice" />
-          <NavCard href="/invoices/queue" title="PM Queue" subtitle={pmCount > 0 ? `${pmCount} pending review` : "No invoices waiting"} count={pmCount} />
-          <NavCard href="/invoices/qa" title="Accounting QA" subtitle={qaCount > 0 ? `${qaCount} ready for QA` : "QA queue clear"} count={qaCount} />
-          <NavCard href="/draws" title="Draws" subtitle="G702/G703 pay applications" />
-          <NavCard href="/vendors" title="Vendors" subtitle="Manage vendors and merge duplicates" />
+          {visibleCards.map((c) => (
+            <NavCard key={c.key} href={c.href} title={c.title} subtitle={c.subtitle} count={c.count} />
+          ))}
         </div>
       </div>
 
