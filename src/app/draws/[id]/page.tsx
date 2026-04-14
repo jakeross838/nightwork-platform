@@ -60,7 +60,6 @@ export default function DrawDetailPage() {
       body: JSON.stringify({ action }),
     });
     if (res.ok) {
-      // Refetch to update status
       const res2 = await fetch(`/api/draws/${drawId}`);
       if (res2.ok) setDraw(await res2.json());
     }
@@ -76,29 +75,26 @@ export default function DrawDetailPage() {
 
   const action = ACTION_MAP[draw.status];
 
-  // Build G703 rows: merge line_items with all_budget_lines
-  const lineItemMap = new Map(draw.line_items.map(li => [li.budget_lines.id, li]));
-  const g703Rows = draw.all_budget_lines
-    .map((bl) => {
-      const li = lineItemMap.get(bl.id);
-      return {
-        code: bl.cost_codes.code,
-        description: bl.cost_codes.description,
-        sort_order: bl.cost_codes.sort_order,
-        original_estimate: bl.original_estimate,
-        revised_estimate: bl.revised_estimate,
-        previous_applications: li?.previous_applications ?? 0,
-        this_period: li?.this_period ?? 0,
-        total_to_date: li?.total_to_date ?? 0,
-        percent_complete: li?.percent_complete ?? 0,
-        balance_to_finish: li ? li.balance_to_finish : bl.revised_estimate,
-        hasActivity: !!li,
-      };
-    })
+  // G703 rows come directly from computed line_items (API already merged budget_lines + invoices)
+  const g703Rows = draw.line_items
+    .map((li) => ({
+      code: li.budget_lines.cost_codes.code,
+      description: li.budget_lines.cost_codes.description,
+      sort_order: li.budget_lines.cost_codes.sort_order,
+      original_estimate: li.budget_lines.original_estimate,
+      revised_estimate: li.budget_lines.revised_estimate,
+      previous_applications: li.previous_applications,
+      this_period: li.this_period,
+      total_to_date: li.total_to_date,
+      percent_complete: li.percent_complete,
+      balance_to_finish: li.balance_to_finish,
+    }))
     .sort((a, b) => a.sort_order - b.sort_order);
 
-  // Only show rows with activity or nonzero estimate
-  const visibleRows = g703Rows.filter(r => r.hasActivity || r.original_estimate > 0);
+  // Only show rows with a nonzero estimate OR baseline OR invoice activity
+  const visibleRows = g703Rows.filter(r =>
+    r.original_estimate > 0 || r.revised_estimate > 0 || r.previous_applications > 0 || r.this_period > 0
+  );
 
   // Grand totals
   const totals = visibleRows.reduce(
@@ -111,6 +107,9 @@ export default function DrawDetailPage() {
     }),
     { original: 0, previous: 0, thisPeriod: 0, totalToDate: 0, balance: 0 }
   );
+
+  // G702/G703 balance check: G703 This Period must equal G702 Current Payment Due
+  const isOutOfBalance = totals.thisPeriod !== draw.current_payment_due;
 
   return (
     <div className="min-h-screen">
@@ -129,7 +128,14 @@ export default function DrawDetailPage() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <button disabled className="px-4 py-2 border border-brand-border text-cream-dim text-sm rounded-lg opacity-50 cursor-not-allowed">
+            <button
+              onClick={() => {
+                const a = document.createElement("a");
+                a.href = `/api/draws/${drawId}/export`;
+                a.download = "";
+                a.click();
+              }}
+              className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm rounded-lg transition-colors">
               Export to Excel
             </button>
             {action && (
@@ -179,6 +185,18 @@ export default function DrawDetailPage() {
 
           {/* G703 Table */}
           <div className="xl:col-span-3">
+            {isOutOfBalance && (
+              <div className="mb-4 p-4 bg-red-900/30 border border-red-500/50 rounded-xl flex items-start gap-3">
+                <span className="text-red-400 text-lg leading-none mt-0.5">!</span>
+                <div>
+                  <p className="text-red-300 font-medium text-sm">G702 / G703 Out of Balance</p>
+                  <p className="text-red-400/80 text-xs mt-1">
+                    G703 This Period total ({formatCents(totals.thisPeriod)}) does not match G702 Line 6 Current Payment Due ({formatCents(draw.current_payment_due)}).
+                    Check that all invoices are mapped to budget lines with correct cost codes.
+                  </p>
+                </div>
+              </div>
+            )}
             <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline">G703 — Continuation Sheet</p>
             <div className="mt-5 overflow-x-auto rounded-2xl border border-brand-border">
               <table className="w-full text-sm">
@@ -195,18 +213,21 @@ export default function DrawDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleRows.map((row) => (
-                    <tr key={row.code} className={`border-t border-brand-border/50 ${row.this_period > 0 ? "bg-teal/5" : ""}`}>
-                      <td className="py-2.5 px-4 text-cream font-mono text-xs">{row.code}</td>
-                      <td className="py-2.5 px-4 text-cream-muted">{row.description}</td>
-                      <td className="py-2.5 px-4 text-cream-muted text-right">{formatCents(row.original_estimate)}</td>
-                      <td className="py-2.5 px-4 text-cream-dim text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : "—"}</td>
-                      <td className="py-2.5 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
-                      <td className="py-2.5 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : "—"}</td>
-                      <td className="py-2.5 px-4 text-cream-dim text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : "—"}</td>
-                      <td className="py-2.5 px-4 text-cream-muted text-right">{formatCents(row.balance_to_finish)}</td>
-                    </tr>
-                  ))}
+                  {visibleRows.map((row) => {
+                    const overBudget = row.balance_to_finish < 0;
+                    return (
+                      <tr key={row.code} className={`border-t border-brand-border/50 ${row.this_period > 0 ? "bg-teal/5" : ""}`}>
+                        <td className="py-2.5 px-4 text-cream font-mono text-xs">{row.code}</td>
+                        <td className="py-2.5 px-4 text-cream-muted">{row.description}</td>
+                        <td className="py-2.5 px-4 text-cream-muted text-right">{formatCents(row.original_estimate)}</td>
+                        <td className="py-2.5 px-4 text-cream-dim text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : "—"}</td>
+                        <td className="py-2.5 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
+                        <td className="py-2.5 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : "—"}</td>
+                        <td className="py-2.5 px-4 text-cream-dim text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : "—"}</td>
+                        <td className={`py-2.5 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream-muted"}`}>{formatCents(row.balance_to_finish)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-brand-border bg-brand-surface">

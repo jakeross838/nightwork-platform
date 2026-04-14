@@ -43,14 +43,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    // Get all budget lines for this job
-    const { data: budgetLines } = await supabase
+    // Get all budget lines for this job (including baseline)
+    const { data: budgetLines, error: blError } = await supabase
       .from("budget_lines")
-      .select("id, cost_code_id, original_estimate, revised_estimate")
+      .select("id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline")
       .eq("job_id", job_id)
       .is("deleted_at", null);
 
-    // G702 Line 1: Original Contract Sum from job record, NOT budget lines
+    if (blError) {
+      return NextResponse.json({ error: blError.message }, { status: 500 });
+    }
+
+    // G702 Line 1: Original Contract Sum from job record
     const originalContractSum = job.original_contract_amount;
 
     // Get selected invoices
@@ -60,28 +64,55 @@ export async function POST(request: NextRequest) {
       .in("id", invoice_ids)
       .is("deleted_at", null);
 
-    // Get sum of all prior draws for this job (less_previous_payments)
-    const { data: priorDraws } = await supabase
-      .from("draws")
-      .select("current_payment_due")
-      .eq("job_id", job_id)
-      .is("deleted_at", null)
-      .neq("status", "void");
+    // Auto-create missing budget lines for invoice cost codes
+    const existingCostCodeIds = new Set((budgetLines ?? []).map(bl => bl.cost_code_id));
+    const missingCostCodeIds = new Set<string>();
+    for (const inv of invoices ?? []) {
+      if (inv.cost_code_id && !existingCostCodeIds.has(inv.cost_code_id)) {
+        missingCostCodeIds.add(inv.cost_code_id);
+      }
+    }
 
-    const lessPreviousPayments = priorDraws?.reduce((s, d) => s + d.current_payment_due, 0) ?? 0;
+    if (missingCostCodeIds.size > 0) {
+      const newBudgetLines = Array.from(missingCostCodeIds).map(ccId => ({
+        job_id,
+        cost_code_id: ccId,
+        original_estimate: 0,
+        revised_estimate: 0,
+        previous_applications_baseline: 0,
+        org_id: ORG_ID,
+      }));
+      const { data: inserted, error: insertBlError } = await supabase
+        .from("budget_lines")
+        .insert(newBudgetLines)
+        .select("id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline");
 
-    // Compute this period total
-    const thisPeriodTotal = invoices?.reduce((s, inv) => s + inv.total_amount, 0) ?? 0;
+      if (insertBlError) {
+        return NextResponse.json({ error: `Failed to create budget lines: ${insertBlError.message}` }, { status: 500 });
+      }
 
-    // Get total from all prior draws' invoices (previous applications total)
-    const { data: priorInvoices } = await supabase
+      if (inserted) {
+        for (const bl of inserted) {
+          budgetLines!.push(bl);
+        }
+      }
+    }
+
+    // Sum baseline from all budget lines (pre-system draw history)
+    const totalBaseline = (budgetLines ?? []).reduce((s, bl) => s + (bl.previous_applications_baseline ?? 0), 0);
+
+    // Get invoices from prior draws for this job
+    const { data: priorDrawInvoices } = await supabase
       .from("invoices")
       .select("total_amount")
       .eq("job_id", job_id)
       .eq("status", "in_draw")
       .is("deleted_at", null);
 
-    const previousApplicationsTotal = priorInvoices?.reduce((s, inv) => s + inv.total_amount, 0) ?? 0;
+    const priorDrawInvoiceTotal = priorDrawInvoices?.reduce((s, inv) => s + inv.total_amount, 0) ?? 0;
+
+    // This period total
+    const thisPeriodTotal = invoices?.reduce((s, inv) => s + inv.total_amount, 0) ?? 0;
 
     // G702 Line 2: Net Change Orders from executed change_orders
     const { data: changeOrders } = await supabase
@@ -92,9 +123,13 @@ export async function POST(request: NextRequest) {
       .is("deleted_at", null);
     const netChangeOrders = changeOrders?.reduce((s, co) => s + co.total_with_fee, 0) ?? 0;
 
-    // G702 Line 3: Contract Sum to Date
+    // G702 calculations
     const contractSumToDate = originalContractSum + netChangeOrders;
-    const totalCompletedToDate = previousApplicationsTotal + thisPeriodTotal;
+    // Line 4: baseline + all prior draw invoices + this draw invoices
+    const totalCompletedToDate = totalBaseline + priorDrawInvoiceTotal + thisPeriodTotal;
+    // Line 5: baseline + all prior draw invoices (NOT this draw)
+    const lessPreviousPayments = totalBaseline + priorDrawInvoiceTotal;
+    // Line 6: what's new this draw
     const currentPaymentDue = totalCompletedToDate - lessPreviousPayments;
     const balanceToFinish = contractSumToDate - totalCompletedToDate;
     const depositAmount = Math.round(originalContractSum * (job.deposit_percentage ?? 0.10));
@@ -131,41 +166,6 @@ export async function POST(request: NextRequest) {
 
     if (drawError) {
       return NextResponse.json({ error: drawError.message }, { status: 500 });
-    }
-
-    // Create draw_line_items for each budget line that has activity
-    if (budgetLines && invoices) {
-      const lineItems = budgetLines
-        .map((bl) => {
-          // Invoices in this draw for this cost code
-          const thisDrawInvoices = invoices.filter(inv => inv.cost_code_id === bl.cost_code_id);
-          const thisPeriod = thisDrawInvoices.reduce((s, inv) => s + inv.total_amount, 0);
-
-          // For now, previous applications = 0 (first draw)
-          // In a real scenario, we'd query prior draw_line_items
-          const previousApps = 0;
-          const totalToDate = previousApps + thisPeriod;
-          const percentComplete = bl.revised_estimate > 0
-            ? Math.round((totalToDate / bl.revised_estimate) * 10000) / 100
-            : 0;
-          const balToFinish = bl.revised_estimate - totalToDate;
-
-          return {
-            draw_id: draw.id,
-            budget_line_id: bl.id,
-            previous_applications: previousApps,
-            this_period: thisPeriod,
-            total_to_date: totalToDate,
-            percent_complete: percentComplete,
-            balance_to_finish: balToFinish,
-            org_id: ORG_ID,
-          };
-        })
-        .filter(li => li.this_period > 0 || li.previous_applications > 0);
-
-      if (lineItems.length > 0) {
-        await supabase.from("draw_line_items").insert(lineItems);
-      }
     }
 
     // Update invoices: set draw_id and status to "in_draw"
