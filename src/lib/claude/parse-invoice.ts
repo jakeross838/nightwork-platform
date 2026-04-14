@@ -5,51 +5,51 @@ import { createServerClient } from "@/lib/supabase/server";
 const anthropic = new Anthropic();
 
 async function callWithRetry(
-  fn: () => Promise<Anthropic.Messages.Message>,
-  maxRetries = 5
+ fn: () => Promise<Anthropic.Messages.Message>,
+ maxRetries = 5
 ): Promise<Anthropic.Messages.Message> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      const isRetryable =
-        err instanceof Anthropic.APIError &&
-        (err.status === 529 || err.status === 503 || err.status === 429);
-      if (!isRetryable || attempt === maxRetries) {
-        if (isRetryable) {
-          throw new Error("Claude API is overloaded. Please try again in a minute.");
-        }
-        throw err;
-      }
-      const delay = Math.min(2000 * Math.pow(2, attempt), 30000);
-      console.log(`Claude API overloaded, retry ${attempt + 1}/${maxRetries} in ${delay}ms`);
-      await new Promise((r) => setTimeout(r, delay));
-    }
-  }
-  throw new Error("Retry logic failed unexpectedly");
+ for (let attempt = 0; attempt <= maxRetries; attempt++) {
+ try {
+ return await fn();
+ } catch (err) {
+ const isRetryable =
+ err instanceof Anthropic.APIError &&
+ (err.status === 529 || err.status === 503 || err.status === 429);
+ if (!isRetryable || attempt === maxRetries) {
+ if (isRetryable) {
+ throw new Error("Claude API is overloaded. Please try again in a minute.");
+ }
+ throw err;
+ }
+ const delay = Math.min(2000 * Math.pow(2, attempt), 30000);
+ console.log(`Claude API overloaded, retry ${attempt + 1}/${maxRetries} in ${delay}ms`);
+ await new Promise((r) => setTimeout(r, delay));
+ }
+ }
+ throw new Error("Retry logic failed unexpectedly");
 }
 
 async function getCostCodeList(): Promise<string> {
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from("cost_codes")
-    .select("code, description, category, is_change_order")
-    .is("deleted_at", null)
-    .order("sort_order");
+ const supabase = createServerClient();
+ const { data } = await supabase
+ .from("cost_codes")
+ .select("code, description, category, is_change_order")
+ .is("deleted_at", null)
+ .order("sort_order");
 
-  if (!data || data.length === 0) return "";
+ if (!data || data.length === 0) return "";
 
-  return data
-    .map((c) => `${c.code} - ${c.description} [${c.category}]${c.is_change_order ? " (CO)" : ""}`)
-    .join("\n");
+ return data
+ .map((c) => `${c.code} - ${c.description} [${c.category}]${c.is_change_order ? " (CO)" : ""}`)
+ .join("\n");
 }
 
 function buildPrompt(costCodeList: string): string {
-  const costCodeSection = costCodeList
-    ? `\n\nAlso suggest the most likely Ross Built cost code from the list below. If the invoice references a change order (CO, PCCO, change order, extra work, additional), prefer the C-variant code. Return your suggestion in the cost_code_suggestion field.\n\nCOST CODES:\n${costCodeList}`
-    : "";
+ const costCodeSection = costCodeList
+ ? `\n\nAlso suggest the most likely Ross Built cost code from the list below. If the invoice references a change order (CO, PCCO, change order, extra work, additional), prefer the C-variant code. Return your suggestion in the cost_code_suggestion field.\n\nCOST CODES:\n${costCodeList}`
+ : "";
 
-  return `You are parsing a construction document for Ross Built Custom Homes, a luxury coastal custom home builder in Bradenton/Anna Maria Island, FL. They run cost-plus (open book) projects in the $1.5M–$10M+ range.
+ return `You are parsing a construction document for Ross Built Custom Homes, a luxury coastal custom home builder in Bradenton/Anna Maria Island, FL. They run cost-plus (open book) projects in the $1.5M–$10M+ range.
 
 FIRST: Determine the document type. Is this an invoice, a proposal/agreement, a quote/estimate, a credit memo, a statement, or unknown? Set "document_type" accordingly.
 
@@ -77,44 +77,44 @@ Flag issues in the flags array. Common flags:
 Return ONLY valid JSON matching this exact schema (no markdown, no code fences):
 
 {
-  "document_type": "invoice | proposal | quote | credit_memo | statement | unknown",
-  "vendor_name": "string",
-  "vendor_address": "string | null",
-  "invoice_number": "string | null",
-  "invoice_date": "YYYY-MM-DD | null",
-  "po_reference": "string | null",
-  "job_reference": "string | null",
-  "description": "string",
-  "invoice_type": "progress | time_and_materials | lump_sum",
-  "co_reference": "string | null",
-  "line_items": [
-    {
-      "description": "string",
-      "date": "YYYY-MM-DD | null",
-      "qty": "number | null",
-      "unit": "string | null",
-      "rate": "number | null",
-      "amount": "number"
-    }
-  ],
-  "subtotal": "number",
-  "tax": "number | null",
-  "total_amount": "number",
-  "confidence_score": "number 0.0-1.0",
-  "confidence_details": {
-    "vendor_name": "number 0.0-1.0",
-    "invoice_number": "number 0.0-1.0",
-    "total_amount": "number 0.0-1.0",
-    "job_reference": "number 0.0-1.0",
-    "cost_code_suggestion": "number 0.0-1.0"
-  },
-  "cost_code_suggestion": {
-    "code": "string — the 5-digit code (with C suffix if change order)",
-    "description": "string",
-    "confidence": "number 0.0-1.0",
-    "is_change_order": "boolean"
-  },
-  "flags": ["string"]
+ "document_type": "invoice | proposal | quote | credit_memo | statement | unknown",
+ "vendor_name": "string",
+ "vendor_address": "string | null",
+ "invoice_number": "string | null",
+ "invoice_date": "YYYY-MM-DD | null",
+ "po_reference": "string | null",
+ "job_reference": "string | null",
+ "description": "string",
+ "invoice_type": "progress | time_and_materials | lump_sum",
+ "co_reference": "string | null",
+ "line_items": [
+ {
+ "description": "string",
+ "date": "YYYY-MM-DD | null",
+ "qty": "number | null",
+ "unit": "string | null",
+ "rate": "number | null",
+ "amount": "number"
+ }
+ ],
+ "subtotal": "number",
+ "tax": "number | null",
+ "total_amount": "number",
+ "confidence_score": "number 0.0-1.0",
+ "confidence_details": {
+ "vendor_name": "number 0.0-1.0",
+ "invoice_number": "number 0.0-1.0",
+ "total_amount": "number 0.0-1.0",
+ "job_reference": "number 0.0-1.0",
+ "cost_code_suggestion": "number 0.0-1.0"
+ },
+ "cost_code_suggestion": {
+ "code": "string — the 5-digit code (with C suffix if change order)",
+ "description": "string",
+ "confidence": "number 0.0-1.0",
+ "is_change_order": "boolean"
+ },
+ "flags": ["string"]
 }
 
 All dollar amounts should be in dollars (not cents). We convert to cents on our end.`;
@@ -123,96 +123,96 @@ All dollar amounts should be in dollars (not cents). We convert to cents on our 
 type ImageMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
 export async function parseInvoiceWithVision(
-  fileBuffer: Buffer,
-  mediaType: string,
-  fileName: string
+ fileBuffer: Buffer,
+ mediaType: string,
+ fileName: string
 ): Promise<ParsedInvoice> {
-  const base64 = fileBuffer.toString("base64");
-  const costCodeList = await getCostCodeList();
-  const prompt = buildPrompt(costCodeList);
+ const base64 = fileBuffer.toString("base64");
+ const costCodeList = await getCostCodeList();
+ const prompt = buildPrompt(costCodeList);
 
-  const contentBlocks: Anthropic.Messages.ContentBlockParam[] = [];
+ const contentBlocks: Anthropic.Messages.ContentBlockParam[] = [];
 
-  if (mediaType === "application/pdf") {
-    contentBlocks.push({
-      type: "document",
-      source: {
-        type: "base64",
-        media_type: "application/pdf",
-        data: base64,
-      },
-    });
-  } else if (mediaType.startsWith("image/")) {
-    contentBlocks.push({
-      type: "image",
-      source: {
-        type: "base64",
-        media_type: mediaType as ImageMediaType,
-        data: base64,
-      },
-    });
-  }
+ if (mediaType === "application/pdf") {
+ contentBlocks.push({
+ type: "document",
+ source: {
+ type: "base64",
+ media_type: "application/pdf",
+ data: base64,
+ },
+ });
+ } else if (mediaType.startsWith("image/")) {
+ contentBlocks.push({
+ type: "image",
+ source: {
+ type: "base64",
+ media_type: mediaType as ImageMediaType,
+ data: base64,
+ },
+ });
+ }
 
-  contentBlocks.push({
-    type: "text",
-    text: `Parse this invoice file (${fileName}). ${prompt}`,
-  });
+ contentBlocks.push({
+ type: "text",
+ text: `Parse this invoice file (${fileName}). ${prompt}`,
+ });
 
-  const response = await callWithRetry(() =>
-    anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      messages: [
-        {
-          role: "user",
-          content: contentBlocks,
-        },
-      ],
-    })
-  );
+ const response = await callWithRetry(() =>
+ anthropic.messages.create({
+ model: "claude-sonnet-4-20250514",
+ max_tokens: 4096,
+ messages: [
+ {
+ role: "user",
+ content: contentBlocks,
+ },
+ ],
+ })
+ );
 
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("No text response from Claude");
-  }
+ const textBlock = response.content.find((block) => block.type === "text");
+ if (!textBlock || textBlock.type !== "text") {
+ throw new Error("No text response from Claude");
+ }
 
-  const jsonText = textBlock.text
-    .replace(/```json\s*/g, "")
-    .replace(/```\s*/g, "")
-    .trim();
+ const jsonText = textBlock.text
+ .replace(/```json\s*/g, "")
+ .replace(/```\s*/g, "")
+ .trim();
 
-  return JSON.parse(jsonText) as ParsedInvoice;
+ return JSON.parse(jsonText) as ParsedInvoice;
 }
 
 export async function parseInvoiceFromText(
-  text: string,
-  fileName: string
+ text: string,
+ fileName: string
 ): Promise<ParsedInvoice> {
-  const costCodeList = await getCostCodeList();
-  const prompt = buildPrompt(costCodeList);
+ const costCodeList = await getCostCodeList();
+ const prompt = buildPrompt(costCodeList);
 
-  const response = await callWithRetry(() =>
-    anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      messages: [
-        {
-          role: "user",
-          content: `Below is the extracted text content from a construction invoice file (${fileName}). ${prompt}\n\n--- INVOICE TEXT ---\n${text}\n--- END INVOICE TEXT ---`,
-        },
-      ],
-    })
-  );
+ const response = await callWithRetry(() =>
+ anthropic.messages.create({
+ model: "claude-sonnet-4-20250514",
+ max_tokens: 4096,
+ messages: [
+ {
+ role: "user",
+ content: `Below is the extracted text content from a construction invoice file (${fileName}). ${prompt}\n\n--- INVOICE TEXT ---\n${text}\n--- END INVOICE TEXT ---`,
+ },
+ ],
+ })
+ );
 
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("No text response from Claude");
-  }
+ const textBlock = response.content.find((block) => block.type === "text");
+ if (!textBlock || textBlock.type !== "text") {
+ throw new Error("No text response from Claude");
+ }
 
-  const jsonText = textBlock.text
-    .replace(/```json\s*/g, "")
-    .replace(/```\s*/g, "")
-    .trim();
+ const jsonText = textBlock.text
+ .replace(/```json\s*/g, "")
+ .replace(/```\s*/g, "")
+ .trim();
 
-  return JSON.parse(jsonText) as ParsedInvoice;
+ return JSON.parse(jsonText) as ParsedInvoice;
 }
