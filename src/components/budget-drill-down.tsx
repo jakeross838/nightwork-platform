@@ -20,10 +20,13 @@ interface InvoiceRow {
   id: string;
   vendor: string | null;
   invoice_number: string | null;
-  amount: number;
+  amount: number; // amount allocated to THIS budget line
   received_date: string | null;
   status: string;
+  po_id: string | null;
   po_number: string | null;
+  description_preview: string;
+  description_full: string | null;
 }
 
 interface CORow {
@@ -31,7 +34,17 @@ interface CORow {
   pcco_number: number | null;
   title: string | null;
   amount: number;
+  status: string;
   approved_date: string | null;
+}
+
+interface ActivityRow {
+  id: string;
+  created_at: string;
+  entity_type: string;
+  action: string;
+  user_name: string | null;
+  details: Record<string, unknown> | null;
 }
 
 const PO_OPEN_STATUSES = ["issued", "partially_invoiced", "fully_invoiced"];
@@ -44,13 +57,43 @@ const INVOICE_COUNTING_STATUSES = [
   "paid",
 ];
 const CO_APPROVED_STATUSES = ["approved", "executed"];
+const PREVIEW_MAX = 120;
 
 /**
- * Panel body for a single budget line's drill-down. Loaded when the user
- * clicks Committed / Invoiced / CO +/- / line description on the budget
- * table. "full" mode shows all three sections stacked (used when clicking
- * the line description).
+ * Builds a short description preview for an invoice, narrowed to what was
+ * charged to a specific budget line.
+ *
+ *   1. If invoice.description is set → use first PREVIEW_MAX chars.
+ *   2. Else, concatenate descriptions from invoice_line_items whose
+ *      budget_line_id equals the budget line we're drilling into. (Other
+ *      line items on the same invoice, charged to different budget lines,
+ *      are not relevant here.)
+ *   3. Else → "No description available".
  */
+function buildPreview(
+  invoiceDescription: string | null | undefined,
+  lineItemDescriptions: string[]
+): { preview: string; full: string | null } {
+  const inv = (invoiceDescription ?? "").trim();
+  if (inv) {
+    return {
+      preview: inv.length > PREVIEW_MAX ? inv.slice(0, PREVIEW_MAX) + "…" : inv,
+      full: inv,
+    };
+  }
+  const concat = lineItemDescriptions
+    .map((d) => (d ?? "").trim())
+    .filter(Boolean)
+    .join(" · ");
+  if (concat) {
+    return {
+      preview: concat.length > PREVIEW_MAX ? concat.slice(0, PREVIEW_MAX) + "…" : concat,
+      full: concat,
+    };
+  }
+  return { preview: "No description available", full: null };
+}
+
 export default function BudgetDrillDown({
   budgetLineId,
   mode,
@@ -59,8 +102,11 @@ export default function BudgetDrillDown({
   mode: Mode;
 }) {
   const [pos, setPos] = useState<PORow[] | null>(null);
-  const [invoices, setInvoices] = useState<InvoiceRow[] | null>(null);
+  // invoices split into PO-linked and direct-spend groups.
+  const [invoicesByPo, setInvoicesByPo] = useState<Map<string, InvoiceRow[]> | null>(null);
+  const [directInvoices, setDirectInvoices] = useState<InvoiceRow[] | null>(null);
   const [cos, setCos] = useState<CORow[] | null>(null);
+  const [activity, setActivity] = useState<ActivityRow[] | null>(null);
   const [line, setLine] = useState<{
     code: string;
     description: string;
@@ -78,7 +124,7 @@ export default function BudgetDrillDown({
       const { data: bl } = await supabase
         .from("budget_lines")
         .select(
-          "id, original_estimate, revised_estimate, committed, invoiced, co_adjustments, cost_codes:cost_code_id (code, description)"
+          "id, original_estimate, revised_estimate, committed, invoiced, co_adjustments, description, cost_codes:cost_code_id (code, description)"
         )
         .eq("id", budgetLineId)
         .is("deleted_at", null)
@@ -90,12 +136,16 @@ export default function BudgetDrillDown({
           committed: number;
           invoiced: number;
           co_adjustments: number;
-          cost_codes: { code: string; description: string } | { code: string; description: string }[] | null;
+          description: string | null;
+          cost_codes:
+            | { code: string; description: string }
+            | { code: string; description: string }[]
+            | null;
         };
         const cc = Array.isArray(raw.cost_codes) ? raw.cost_codes[0] : raw.cost_codes;
         setLine({
           code: cc?.code ?? "—",
-          description: cc?.description ?? "—",
+          description: raw.description || cc?.description || "—",
           original_estimate: raw.original_estimate ?? 0,
           revised_estimate: raw.revised_estimate ?? 0,
           committed: raw.committed ?? 0,
@@ -104,7 +154,12 @@ export default function BudgetDrillDown({
         });
       }
 
-      if (mode === "committed" || mode === "full") {
+      const wantsPOs = mode === "committed" || mode === "full";
+      const wantsInvoices = mode === "invoiced" || mode === "committed" || mode === "full";
+      const wantsCOs = mode === "co" || mode === "full";
+      const wantsActivity = mode === "full";
+
+      if (wantsPOs) {
         // POs whose header points at this line OR whose po_line_items point
         // at it. Either way we want the PO row and an invoiced-against
         // rollup.
@@ -179,27 +234,28 @@ export default function BudgetDrillDown({
         if (!cancelled) setPos(rows);
       }
 
-      if (mode === "invoiced" || mode === "full") {
+      if (wantsInvoices) {
         const { data: invRows } = await supabase
           .from("invoice_line_items")
           .select(
-            `amount_cents, po_id,
+            `amount_cents, po_id, description, invoice_id,
              invoices:invoice_id (
-               id, invoice_number, total_amount, received_date, status, deleted_at,
+               id, description, invoice_number, total_amount, received_date, status, deleted_at,
                vendor_name_raw, vendors:vendor_id (name)
              ),
              purchase_orders:po_id (po_number)`
           )
           .eq("budget_line_id", budgetLineId)
           .is("deleted_at", null);
-        const out: InvoiceRow[] = [];
-        const seenInv = new Set<string>();
-        for (const li of invRows ?? []) {
-          const invRaw = (li as { invoices: unknown }).invoices;
-          const inv = Array.isArray(invRaw) ? invRaw[0] : invRaw;
-          if (!inv) continue;
-          const i = inv as {
+
+        type Row = {
+          amount_cents: number;
+          po_id: string | null;
+          description: string | null;
+          invoice_id: string;
+          invoices: {
             id: string;
+            description: string | null;
             invoice_number: string | null;
             total_amount: number;
             received_date: string | null;
@@ -207,42 +263,88 @@ export default function BudgetDrillDown({
             deleted_at: string | null;
             vendor_name_raw: string | null;
             vendors: { name: string } | { name: string }[] | null;
-          };
-          if (i.deleted_at) continue;
-          if (!INVOICE_COUNTING_STATUSES.includes(i.status)) continue;
-          // Dedup by invoice id — we list each invoice once even if it has
-          // multiple lines on this budget line, showing the LINE amount
-          // summed.
-          const poRaw = (li as { purchase_orders: unknown }).purchase_orders;
-          const po = Array.isArray(poRaw) ? poRaw[0] : poRaw;
-          const vendor = Array.isArray(i.vendors) ? i.vendors[0]?.name : i.vendors?.name;
-          const amt = (li as { amount_cents: number }).amount_cents ?? 0;
-          if (seenInv.has(i.id)) {
-            // Sum into the existing row.
-            const existing = out.find((r) => r.id === i.id);
-            if (existing) existing.amount += amt;
+          } | null;
+          purchase_orders: { po_number: string | null } | null;
+        };
+
+        const mapByInv = new Map<
+          string,
+          {
+            inv: NonNullable<Row["invoices"]>;
+            po_id: string | null;
+            po_number: string | null;
+            amount: number;
+            lineDescriptions: string[];
+          }
+        >();
+
+        for (const liRaw of (invRows ?? []) as unknown as Row[]) {
+          const invAny = (liRaw as { invoices: unknown }).invoices;
+          const inv = Array.isArray(invAny) ? invAny[0] : invAny;
+          if (!inv) continue;
+          const typedInv = inv as NonNullable<Row["invoices"]>;
+          if (typedInv.deleted_at) continue;
+          if (!INVOICE_COUNTING_STATUSES.includes(typedInv.status)) continue;
+          const poAny = (liRaw as { purchase_orders: unknown }).purchase_orders;
+          const po = Array.isArray(poAny) ? poAny[0] : poAny;
+
+          const existing = mapByInv.get(typedInv.id);
+          if (existing) {
+            existing.amount += liRaw.amount_cents ?? 0;
+            if (liRaw.description) existing.lineDescriptions.push(liRaw.description);
           } else {
-            seenInv.add(i.id);
-            out.push({
-              id: i.id,
-              vendor: vendor ?? i.vendor_name_raw ?? null,
-              invoice_number: i.invoice_number,
-              amount: amt,
-              received_date: i.received_date,
-              status: i.status,
-              po_number: (po as { po_number: string | null } | null)?.po_number ?? null,
+            mapByInv.set(typedInv.id, {
+              inv: typedInv,
+              po_id: liRaw.po_id,
+              po_number: (po as { po_number?: string | null } | null)?.po_number ?? null,
+              amount: liRaw.amount_cents ?? 0,
+              lineDescriptions: liRaw.description ? [liRaw.description] : [],
             });
           }
         }
-        if (!cancelled) setInvoices(out);
+
+        const poGroup = new Map<string, InvoiceRow[]>();
+        const direct: InvoiceRow[] = [];
+        for (const entry of Array.from(mapByInv.values())) {
+          const { preview, full } = buildPreview(
+            entry.inv.description,
+            entry.lineDescriptions
+          );
+          const vendor = Array.isArray(entry.inv.vendors)
+            ? entry.inv.vendors[0]?.name
+            : entry.inv.vendors?.name;
+          const row: InvoiceRow = {
+            id: entry.inv.id,
+            vendor: vendor ?? entry.inv.vendor_name_raw ?? null,
+            invoice_number: entry.inv.invoice_number,
+            amount: entry.amount,
+            received_date: entry.inv.received_date,
+            status: entry.inv.status,
+            po_id: entry.po_id,
+            po_number: entry.po_number,
+            description_preview: preview,
+            description_full: full,
+          };
+          if (entry.po_id) {
+            const arr = poGroup.get(entry.po_id) ?? [];
+            arr.push(row);
+            poGroup.set(entry.po_id, arr);
+          } else {
+            direct.push(row);
+          }
+        }
+        if (!cancelled) {
+          setInvoicesByPo(poGroup);
+          setDirectInvoices(direct);
+        }
       }
 
-      if (mode === "co" || mode === "full") {
+      if (wantsCOs) {
         const { data: coRows } = await supabase
           .from("change_order_lines")
           .select(
             `amount,
-             change_orders:change_order_id (id, pcco_number, description, status, approved_date, deleted_at)`
+             change_orders:co_id (id, pcco_number, description, status, approved_date, deleted_at)`
           )
           .eq("budget_line_id", budgetLineId)
           .is("deleted_at", null);
@@ -273,11 +375,59 @@ export default function BudgetDrillDown({
               pcco_number: c.pcco_number,
               title: c.description,
               amount: amt,
+              status: c.status,
               approved_date: c.approved_date,
             });
           }
         }
         if (!cancelled) setCos(out);
+      }
+
+      if (wantsActivity) {
+        const { data: actRows } = await supabase
+          .from("activity_log")
+          .select("id, created_at, entity_type, action, user_id, details")
+          .eq("entity_type", "budget_line")
+          .eq("entity_id", budgetLineId)
+          .order("created_at", { ascending: false })
+          .limit(10);
+        const rows =
+          (actRows as Array<{
+            id: string;
+            created_at: string;
+            entity_type: string;
+            action: string;
+            user_id: string | null;
+            details: Record<string, unknown> | null;
+          }> | null) ?? [];
+        const userIds = Array.from(
+          new Set(rows.map((a) => a.user_id).filter((id): id is string => !!id))
+        );
+        const nameById = new Map<string, string>();
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", userIds);
+          for (const p of profiles ?? []) {
+            nameById.set(
+              (p as { id: string }).id,
+              (p as { full_name: string }).full_name
+            );
+          }
+        }
+        if (!cancelled) {
+          setActivity(
+            rows.map((a) => ({
+              id: a.id,
+              created_at: a.created_at,
+              entity_type: a.entity_type,
+              action: a.action,
+              user_name: a.user_id ? nameById.get(a.user_id) ?? null : null,
+              details: a.details,
+            }))
+          );
+        }
       }
     }
     load();
@@ -286,6 +436,12 @@ export default function BudgetDrillDown({
     };
   }, [budgetLineId, mode]);
 
+  const directTotal = directInvoices
+    ? directInvoices.reduce((s, r) => s + r.amount, 0)
+    : null;
+  const coNet = cos ? cos.reduce((s, r) => s + r.amount, 0) : null;
+  const poCommittedTotal = pos ? pos.reduce((s, r) => s + r.amount, 0) : null;
+
   return (
     <div className="space-y-6">
       {mode === "full" && line && (
@@ -293,17 +449,28 @@ export default function BudgetDrillDown({
           <p className="text-[11px] uppercase tracking-wider text-cream-dim font-medium">
             Reconciliation
           </p>
-          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[12px]">
+          <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1.5 text-[12px]">
             <ReconLine label="Original" value={formatCents(line.original_estimate)} />
             <ReconLine label="CO +/−" value={formatCents(line.co_adjustments)} />
             <ReconLine label="Revised" value={formatCents(line.revised_estimate)} strong />
-            <ReconLine label="Committed (POs)" value={formatCents(line.committed)} />
+            <ReconLine label="Committed" value={formatCents(line.committed)} />
             <ReconLine label="Invoiced" value={formatCents(line.invoiced)} />
             <ReconLine
+              label="Remaining"
+              value={formatCents(line.revised_estimate - line.invoiced)}
+            />
+            <ReconLine
               label="Variance"
-              value={formatCents(line.revised_estimate - line.invoiced - Math.max(0, line.committed - line.invoiced))}
+              value={formatCents(
+                line.revised_estimate -
+                  line.invoiced -
+                  Math.max(0, line.committed - line.invoiced)
+              )}
               tone={
-                line.revised_estimate - line.invoiced - Math.max(0, line.committed - line.invoiced) < 0
+                line.revised_estimate -
+                  line.invoiced -
+                  Math.max(0, line.committed - line.invoiced) <
+                0
                   ? "negative"
                   : "positive"
               }
@@ -313,74 +480,117 @@ export default function BudgetDrillDown({
       )}
 
       {(mode === "committed" || mode === "full") && (
-        <Section title="Purchase Orders" total={pos?.reduce((s, r) => s + r.amount, 0) ?? null}>
-          {pos === null ? (
+        <Section title="Purchase Orders" total={poCommittedTotal}>
+          {pos === null || invoicesByPo === null ? (
             <Loading />
           ) : pos.length === 0 ? (
             <Empty label="No open POs against this line." />
           ) : (
             <ul className="divide-y divide-brand-row-border">
-              {pos.map((p) => (
-                <li key={p.id} className="py-3 text-[12px]">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/purchase-orders/${p.id}`}
-                        className="text-cream font-medium hover:text-teal transition-colors"
-                      >
-                        {p.po_number ? `PO ${p.po_number}` : "PO"}
-                      </Link>
-                      <span className="text-cream-dim ml-2">· {p.vendor ?? "—"}</span>
-                      <p className="mt-0.5 text-[11px] text-cream-dim uppercase tracking-wider">
-                        {p.status.replace(/_/g, " ")}
-                      </p>
+              {pos.map((p) => {
+                const nested = invoicesByPo.get(p.id) ?? [];
+                const remaining = Math.max(0, p.amount - p.invoiced_total);
+                return (
+                  <li key={p.id} className="py-3 text-[12px]">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          href={`/purchase-orders/${p.id}`}
+                          className="text-cream font-medium hover:text-teal transition-colors"
+                        >
+                          {p.po_number ? `PO ${p.po_number}` : "PO"}
+                        </Link>
+                        <span className="text-cream-dim ml-2">· {p.vendor ?? "—"}</span>
+                        <p className="mt-0.5 text-[11px] text-cream-dim uppercase tracking-wider">
+                          {p.status.replace(/_/g, " ")}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0 tabular-nums">
+                        <p className="text-cream">{formatCents(p.amount)}</p>
+                        <p className="text-[11px] text-cream-dim">
+                          Invoiced {formatCents(p.invoiced_total)} · Remaining{" "}
+                          {formatCents(remaining)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right shrink-0 tabular-nums">
-                      <p className="text-cream">{formatCents(p.amount)}</p>
-                      <p className="text-[11px] text-cream-dim">
-                        Invoiced {formatCents(p.invoiced_total)} · Remaining{" "}
-                        {formatCents(Math.max(0, p.amount - p.invoiced_total))}
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              ))}
+
+                    {/* Nested invoices under this PO */}
+                    {nested.length > 0 && (
+                      <ul className="mt-2 pl-3 border-l-2 border-brand-border divide-y divide-brand-row-border">
+                        {nested.map((i) => (
+                          <InvoiceItem key={i.id} row={i} showPoBadge={false} />
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Section>
       )}
 
-      {(mode === "invoiced" || mode === "full") && (
-        <Section title="Invoices" total={invoices?.reduce((s, r) => s + r.amount, 0) ?? null}>
-          {invoices === null ? (
+      {mode === "invoiced" && (
+        <>
+          {/* Invoiced-only mode: group by PO for PO-linked invoices, then Direct Spend. */}
+          <Section
+            title="Against PO"
+            total={
+              invoicesByPo
+                ? Array.from(invoicesByPo.values()).reduce(
+                    (s, arr) => s + arr.reduce((a, r) => a + r.amount, 0),
+                    0
+                  )
+                : null
+            }
+          >
+            {invoicesByPo === null ? (
+              <Loading />
+            ) : invoicesByPo.size === 0 ? (
+              <Empty label="No PO-linked invoices on this line." />
+            ) : (
+              <ul className="divide-y divide-brand-row-border">
+                {Array.from(invoicesByPo.entries()).map(([poId, rows]) => (
+                  <li key={poId} className="py-2">
+                    <p className="text-[11px] text-cream-dim uppercase tracking-wider">
+                      {rows[0]?.po_number ? `PO ${rows[0].po_number}` : "PO"}
+                    </p>
+                    <ul className="mt-1 divide-y divide-brand-row-border">
+                      {rows.map((r) => (
+                        <InvoiceItem key={r.id} row={r} showPoBadge={false} />
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+          <Section title="Direct Spend (no PO)" total={directTotal}>
+            {directInvoices === null ? (
+              <Loading />
+            ) : directInvoices.length === 0 ? (
+              <Empty label="No direct-spend invoices on this line." />
+            ) : (
+              <ul className="divide-y divide-brand-row-border">
+                {directInvoices.map((r) => (
+                  <InvoiceItem key={r.id} row={r} showPoBadge={false} />
+                ))}
+              </ul>
+            )}
+          </Section>
+        </>
+      )}
+
+      {mode === "full" && (
+        <Section title="Direct Spend (no PO)" total={directTotal}>
+          {directInvoices === null ? (
             <Loading />
-          ) : invoices.length === 0 ? (
-            <Empty label="No approved invoices on this line." />
+          ) : directInvoices.length === 0 ? (
+            <Empty label="No direct-spend invoices on this line." />
           ) : (
             <ul className="divide-y divide-brand-row-border">
-              {invoices.map((i) => (
-                <li key={i.id} className="py-3 text-[12px]">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/invoices/${i.id}`}
-                        className="text-cream font-medium hover:text-teal transition-colors"
-                      >
-                        {i.vendor ?? "—"}
-                      </Link>
-                      <span className="text-cream-dim ml-2">
-                        {i.invoice_number ? `· #${i.invoice_number}` : ""}
-                      </span>
-                      <p className="mt-0.5 text-[11px] text-cream-dim">
-                        {formatDate(i.received_date)} · {i.status.replace(/_/g, " ")}
-                        {i.po_number ? ` · PO ${i.po_number}` : " · direct"}
-                      </p>
-                    </div>
-                    <p className="text-cream shrink-0 tabular-nums">
-                      {formatCents(i.amount)}
-                    </p>
-                  </div>
-                </li>
+              {directInvoices.map((r) => (
+                <InvoiceItem key={r.id} row={r} showPoBadge={false} />
               ))}
             </ul>
           )}
@@ -388,11 +598,11 @@ export default function BudgetDrillDown({
       )}
 
       {(mode === "co" || mode === "full") && (
-        <Section title="Change Orders" total={cos?.reduce((s, r) => s + r.amount, 0) ?? null}>
+        <Section title="Change Orders" total={coNet}>
           {cos === null ? (
             <Loading />
           ) : cos.length === 0 ? (
-            <Empty label="No approved COs affecting this line." />
+            <Empty label="No approved change orders affecting this line." />
           ) : (
             <ul className="divide-y divide-brand-row-border">
               {cos.map((c) => (
@@ -407,7 +617,7 @@ export default function BudgetDrillDown({
                       </Link>
                       <span className="text-cream-dim ml-2">· {c.title ?? "—"}</span>
                       <p className="mt-0.5 text-[11px] text-cream-dim">
-                        Approved {formatDate(c.approved_date)}
+                        {c.status.replace(/_/g, " ")} · Approved {formatDate(c.approved_date)}
                       </p>
                     </div>
                     <p
@@ -425,7 +635,91 @@ export default function BudgetDrillDown({
           )}
         </Section>
       )}
+
+      {mode === "full" && (
+        <Section title="Timeline" total={null}>
+          {activity === null ? (
+            <Loading />
+          ) : activity.length === 0 ? (
+            <Empty label="No activity recorded for this line yet." />
+          ) : (
+            <ul className="divide-y divide-brand-row-border">
+              {activity.map((a) => (
+                <li key={a.id} className="py-2 flex items-start gap-3 text-[12px]">
+                  <span className="text-cream-dim tabular-nums shrink-0 w-28">
+                    {formatActivityTs(a.created_at)}
+                  </span>
+                  <span className="text-cream flex-1">
+                    <span className="font-medium">
+                      {formatEntityAction(a.entity_type, a.action)}
+                    </span>
+                    {summarizeDetails(a.details) && (
+                      <span className="text-cream-dim"> · {summarizeDetails(a.details)}</span>
+                    )}
+                  </span>
+                  <span className="text-cream-dim shrink-0">{a.user_name ?? "—"}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      )}
     </div>
+  );
+}
+
+function InvoiceItem({
+  row,
+  showPoBadge,
+}: {
+  row: InvoiceRow;
+  showPoBadge: boolean;
+}) {
+  return (
+    <li className="py-2.5 text-[12px]">
+      <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link
+              href={`/invoices/${row.id}`}
+              className="text-cream font-medium hover:text-teal transition-colors"
+            >
+              {row.vendor ?? "—"}
+            </Link>
+            {row.invoice_number && (
+              <span className="text-cream-dim">· #{row.invoice_number}</span>
+            )}
+            <span
+              className={`inline-block px-1.5 py-0.5 text-[9px] uppercase tracking-wider border ${
+                row.status === "paid"
+                  ? "border-status-success/50 text-status-success"
+                  : row.status === "in_draw"
+                    ? "border-teal/50 text-teal"
+                    : "border-brand-border text-cream-dim"
+              }`}
+            >
+              {row.status.replace(/_/g, " ")}
+            </span>
+            {showPoBadge && row.po_number && (
+              <span className="text-[11px] text-cream-dim">PO {row.po_number}</span>
+            )}
+            {showPoBadge && !row.po_number && (
+              <span className="text-[11px] text-cream-dim">direct</span>
+            )}
+          </div>
+          <p
+            className="mt-1 text-[11px] text-cream-muted leading-snug"
+            title={row.description_full ?? undefined}
+          >
+            {row.description_preview}
+          </p>
+          <p className="mt-0.5 text-[10px] text-cream-dim">
+            {formatDate(row.received_date)}
+          </p>
+        </div>
+        <p className="text-cream shrink-0 tabular-nums">{formatCents(row.amount)}</p>
+      </div>
+    </li>
   );
 }
 
@@ -483,13 +777,48 @@ function ReconLine({
         ? "text-status-danger"
         : "text-cream";
   return (
-    <>
+    <div className="flex items-center justify-between gap-2">
       <span className="text-cream-dim">{label}</span>
       <span
         className={`text-right tabular-nums ${toneClass} ${strong ? "font-semibold" : ""}`}
       >
         {value}
       </span>
-    </>
+    </div>
   );
+}
+
+function formatActivityTs(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) {
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function formatEntityAction(entity: string, action: string) {
+  const e = entity.replace(/_/g, " ");
+  const a = action.replace(/_/g, " ");
+  return `${e[0].toUpperCase()}${e.slice(1)} ${a}`;
+}
+
+function summarizeDetails(details: Record<string, unknown> | null): string | null {
+  if (!details) return null;
+  if (typeof details.from === "object" && typeof details.to === "object" && details.from && details.to) {
+    const f = (details.from as Record<string, unknown>).original_estimate;
+    const t = (details.to as Record<string, unknown>).original_estimate;
+    if (typeof f === "number" && typeof t === "number") {
+      return `original ${formatCents(f)} → ${formatCents(t)}`;
+    }
+  }
+  if (typeof details.field === "string") {
+    const to = details.to;
+    if (typeof to === "number" || typeof to === "string" || typeof to === "boolean") {
+      return `${details.field} → ${String(to)}`;
+    }
+    return `${details.field} changed`;
+  }
+  return null;
 }

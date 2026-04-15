@@ -13,7 +13,7 @@ export default function SlideOutPanel({
   title,
   subtitle,
   children,
-  widthClass = "md:w-[45vw] lg:w-[40vw] min-w-[360px] max-w-[720px]",
+  widthClass = "md:w-[55vw] lg:w-[50vw] min-w-[360px] max-w-[900px]",
 }: {
   open: boolean;
   onClose: () => void;
