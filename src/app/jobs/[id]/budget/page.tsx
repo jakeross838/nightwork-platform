@@ -15,6 +15,7 @@ interface Job {
   address: string | null;
   original_contract_amount: number;
   current_contract_amount: number;
+  approved_cos_total: number | null;
 }
 
 interface BudgetRow {
@@ -26,12 +27,12 @@ interface BudgetRow {
   original_estimate: number;
   revised_estimate: number;
   is_allowance: boolean;
-  approved_cos: number; // sum of CO allocations to this line
-  committed: number;    // sum of POs (zero for now)
-  spent: number;        // sum of approved/downstream invoices
+  approved_cos: number;
+  committed: number;           // sum of open POs
+  invoiced_with_po: number;    // invoices linked to a PO
+  invoiced_without_po: number; // direct spend (no PO)
 }
 
-// Matches which invoice statuses count toward Spent.
 const SPENT_STATUSES = [
   "pm_approved",
   "qa_review",
@@ -45,6 +46,8 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
   const [rows, setRows] = useState<BudgetRow[]>([]);
+  const [totalCommittedAll, setTotalCommittedAll] = useState(0);
+  const [totalInvoicedAll, setTotalInvoicedAll] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,35 +55,39 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.replace(`/login?redirect=/jobs/${params.id}/budget`); return; }
 
-      const [jobRes, blRes, coRes, ilRes] = await Promise.all([
+      const [jobRes, blRes, coRes, ilRes, poRes] = await Promise.all([
         supabase
           .from("jobs")
-          .select("id, name, address, original_contract_amount, current_contract_amount")
+          .select("id, name, address, original_contract_amount, current_contract_amount, approved_cos_total")
           .eq("id", params.id)
           .is("deleted_at", null)
           .single(),
         supabase
           .from("budget_lines")
-          .select("id, cost_code_id, original_estimate, revised_estimate, is_allowance, cost_codes:cost_code_id(code, description, sort_order)")
+          .select("id, cost_code_id, original_estimate, revised_estimate, committed, co_adjustments, is_allowance, cost_codes:cost_code_id(code, description, sort_order)")
           .eq("job_id", params.id)
           .is("deleted_at", null),
-        // Approved + executed CO allocations
-        (
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          supabase.from("change_order_budget_lines") as any
-        )
+        // Approved CO allocations.
+        supabase
+          .from("change_order_lines")
           .select("budget_line_id, amount, change_orders!inner(job_id, status)")
           .eq("change_orders.job_id", params.id)
-          .eq("change_orders.status", "executed")
+          .in("change_orders.status", ["approved", "executed"])
           .is("deleted_at", null),
-        // Approved invoice line items (spent)
+        // All approved invoice lines on this job — split by PO-linked vs direct.
         supabase
           .from("invoice_line_items")
-          .select("amount_cents, budget_line_id, invoices!inner(job_id, status, deleted_at)")
+          .select("amount_cents, budget_line_id, po_id, invoices!inner(job_id, status, deleted_at)")
           .eq("invoices.job_id", params.id)
           .in("invoices.status", SPENT_STATUSES)
           .is("deleted_at", null)
           .is("invoices.deleted_at", null),
+        // All POs on this job for summary count.
+        supabase
+          .from("purchase_orders")
+          .select("amount, invoiced_total, status")
+          .eq("job_id", params.id)
+          .is("deleted_at", null),
       ]);
 
       if (jobRes.data) setJob(jobRes.data as Job);
@@ -90,20 +97,25 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         cost_code_id: string | null;
         original_estimate: number;
         revised_estimate: number;
+        committed: number;
+        co_adjustments: number;
         is_allowance: boolean;
         cost_codes: { code: string; description: string; sort_order: number | null } | null;
       }>;
 
       const coByLine = new Map<string, number>();
-      const coData = ((coRes as { data?: Array<{ budget_line_id: string; amount: number }> })?.data) ?? [];
+      const coData = ((coRes as { data?: Array<{ budget_line_id: string | null; amount: number }> })?.data) ?? [];
       for (const alloc of coData) {
+        if (!alloc.budget_line_id) continue;
         coByLine.set(alloc.budget_line_id, (coByLine.get(alloc.budget_line_id) ?? 0) + alloc.amount);
       }
 
-      const spentByLine = new Map<string, number>();
-      for (const li of ((ilRes.data ?? []) as Array<{ budget_line_id: string | null; amount_cents: number }>)) {
+      const invWithPoByLine = new Map<string, number>();
+      const invWithoutPoByLine = new Map<string, number>();
+      for (const li of ((ilRes.data ?? []) as Array<{ budget_line_id: string | null; po_id: string | null; amount_cents: number }>)) {
         if (!li.budget_line_id) continue;
-        spentByLine.set(li.budget_line_id, (spentByLine.get(li.budget_line_id) ?? 0) + (li.amount_cents ?? 0));
+        const target = li.po_id ? invWithPoByLine : invWithoutPoByLine;
+        target.set(li.budget_line_id, (target.get(li.budget_line_id) ?? 0) + (li.amount_cents ?? 0));
       }
 
       const rowData: BudgetRow[] = blData.map((bl) => ({
@@ -115,9 +127,10 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         original_estimate: bl.original_estimate,
         revised_estimate: bl.revised_estimate,
         is_allowance: bl.is_allowance,
-        approved_cos: coByLine.get(bl.id) ?? 0,
-        committed: 0,
-        spent: spentByLine.get(bl.id) ?? 0,
+        approved_cos: coByLine.get(bl.id) ?? bl.co_adjustments ?? 0,
+        committed: bl.committed ?? 0,
+        invoiced_with_po: invWithPoByLine.get(bl.id) ?? 0,
+        invoiced_without_po: invWithoutPoByLine.get(bl.id) ?? 0,
       }));
 
       rowData.sort((a, b) => {
@@ -126,6 +139,15 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
       });
 
       setRows(rowData);
+
+      // Summary-card totals (all POs & all approved invoices, not just those on budget lines).
+      const pos = poRes.data ?? [];
+      const committedAll = pos
+        .filter((p: { status: string }) => ["issued", "partially_invoiced", "fully_invoiced"].includes(p.status))
+        .reduce((s: number, p: { amount: number }) => s + (p.amount ?? 0), 0);
+      setTotalCommittedAll(committedAll);
+      setTotalInvoicedAll(((ilRes.data ?? []) as Array<{ amount_cents: number }>).reduce((s, li) => s + li.amount_cents, 0));
+
       setLoading(false);
     }
     load();
@@ -137,10 +159,11 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         original: acc.original + r.original_estimate,
         approved_cos: acc.approved_cos + r.approved_cos,
         revised: acc.revised + r.revised_estimate,
-        committed: acc.committed + (r.committed ?? 0),
-        spent: acc.spent + r.spent,
+        committed: acc.committed + r.committed,
+        invoiced_with_po: acc.invoiced_with_po + r.invoiced_with_po,
+        invoiced_without_po: acc.invoiced_without_po + r.invoiced_without_po,
       }),
-      { original: 0, approved_cos: 0, revised: 0, committed: 0, spent: 0 }
+      { original: 0, approved_cos: 0, revised: 0, committed: 0, invoiced_with_po: 0, invoiced_without_po: 0 }
     );
   }, [rows]);
 
@@ -183,15 +206,16 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         </div>
         <JobTabs jobId={job.id} active="budget" />
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-          <Stat label="Original" value={formatCents(totals.original)} />
-          <Stat label="Approved COs" value={formatCents(totals.approved_cos)} />
-          <Stat label="Revised" value={formatCents(totals.revised)} highlight />
-          <Stat label="Spent" value={formatCents(totals.spent)} />
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
+          <Stat label="Original Contract" value={formatCents(job.original_contract_amount)} />
+          <Stat label="Approved COs" value={formatCents(job.approved_cos_total ?? totals.approved_cos)} />
+          <Stat label="Revised Contract" value={formatCents(job.current_contract_amount)} highlight />
+          <Stat label="Committed (POs)" value={formatCents(totalCommittedAll)} />
+          <Stat label="Invoiced" value={formatCents(totalInvoicedAll)} />
           <Stat
             label="Remaining"
-            value={formatCents(totals.revised - totals.spent)}
-            negative={totals.spent > totals.revised}
+            value={formatCents(job.current_contract_amount - totalInvoicedAll)}
+            negative={totalInvoicedAll > job.current_contract_amount}
           />
         </div>
 
@@ -223,35 +247,42 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                 <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
                   <th className="text-left px-3 py-3 font-medium sticky left-0 bg-brand-surface/90 z-10">Code</th>
                   <th className="text-left px-3 py-3 font-medium">Description</th>
-                  <th className="text-right px-3 py-3 font-medium">Original Budget</th>
+                  <th className="text-right px-3 py-3 font-medium">Original</th>
                   <th className="text-right px-3 py-3 font-medium">CO +/-</th>
-                  <th className="text-right px-3 py-3 font-medium">Revised Budget</th>
+                  <th className="text-right px-3 py-3 font-medium">Revised</th>
                   <th className="text-right px-3 py-3 font-medium">Committed</th>
                   <th className="text-right px-3 py-3 font-medium">Invoiced</th>
-                  <th className="text-right px-3 py-3 font-medium">Remaining</th>
+                  <th className="text-right px-3 py-3 font-medium">Remaining PO</th>
+                  <th className="text-right px-3 py-3 font-medium">Uncommitted</th>
+                  <th className="text-right px-3 py-3 font-medium">Projected</th>
                   <th className="text-right px-3 py-3 font-medium">Variance</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => {
-                  // Phase 6 row colors. remaining = revised - invoiced.
-                  // > 20% remaining → green (bg-status-success/5)
-                  // 0-20% remaining → yellow (bg-status-warning/5)
-                  // negative remaining (over budget) → red (bg-status-danger/5)
-                  const remaining = r.revised_estimate - r.spent;
-                  const pct = r.revised_estimate > 0 ? (r.spent / r.revised_estimate) * 100 : 0;
-                  const over = remaining < 0;
-                  const tight = !over && r.revised_estimate > 0 && remaining <= 0.2 * r.revised_estimate;
-                  const rowBg = over
+                  const invoiced = r.invoiced_with_po + r.invoiced_without_po;
+                  const remainingPo = Math.max(0, r.committed - r.invoiced_with_po);
+                  const uncommitted = r.revised_estimate - r.committed - r.invoiced_without_po;
+                  const projected = invoiced + remainingPo + Math.max(0, r.invoiced_with_po - r.committed);
+                  const variance = r.revised_estimate - projected;
+                  const variancePct = r.revised_estimate > 0 ? variance / r.revised_estimate : 0;
+
+                  // Row colors per spec:
+                  //   variance > 0 → green (under budget)
+                  //   0 >= variance >= -5% of revised → yellow (slightly over)
+                  //   variance < -5% of revised → red (significantly over)
+                  const badBand = r.revised_estimate > 0 && variancePct < -0.05;
+                  const tightBand = r.revised_estimate > 0 && variancePct <= 0 && !badBand;
+                  const rowBg = badBand
                     ? "bg-status-danger/10"
-                    : tight
+                    : tightBand
                       ? "bg-status-warning/10"
                       : r.revised_estimate > 0
                         ? "bg-status-success/5"
                         : "";
-                  const stickyBg = over
+                  const stickyBg = badBand
                     ? "bg-[#FBE4E4]"
-                    : tight
+                    : tightBand
                       ? "bg-[#FCF3DC]"
                       : r.revised_estimate > 0
                         ? "bg-[#E9F4EB]"
@@ -275,28 +306,21 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                         {r.approved_cos ? formatCents(r.approved_cos) : "—"}
                       </td>
                       <td className="px-3 py-2 text-right text-cream font-medium tabular-nums">{formatCents(r.revised_estimate)}</td>
-                      <td className="px-3 py-2 text-right text-cream-dim tabular-nums">
-                        {r.committed > 0 ? formatCents(r.committed) : "—"}
+                      <td className="px-3 py-2 text-right text-cream tabular-nums">
+                        {r.committed > 0 ? formatCents(r.committed) : <span className="text-cream-dim">—</span>}
                       </td>
-                      <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(r.spent)}</td>
-                      <td
-                        className={`px-3 py-2 text-right tabular-nums font-medium ${
-                          over
-                            ? "text-status-danger"
-                            : tight
-                              ? "text-status-warning"
-                              : "text-status-success"
-                        }`}
-                      >
-                        {formatCents(remaining)}
+                      <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(invoiced)}</td>
+                      <td className="px-3 py-2 text-right text-cream-muted tabular-nums">
+                        {remainingPo > 0 ? formatCents(remainingPo) : <span className="text-cream-dim">—</span>}
                       </td>
-                      <td
-                        className={`px-3 py-2 text-right tabular-nums ${
-                          over ? "text-status-danger font-medium" : tight ? "text-status-warning" : "text-status-success"
-                        }`}
-                        title={`${pct.toFixed(1)}% of revised budget invoiced`}
-                      >
-                        {over ? formatCents(remaining) : formatCents(remaining)}
+                      <td className={`px-3 py-2 text-right tabular-nums ${uncommitted < 0 ? "text-status-warning" : "text-cream"}`}>
+                        {formatCents(uncommitted)}
+                      </td>
+                      <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(projected)}</td>
+                      <td className={`px-3 py-2 text-right tabular-nums font-medium ${
+                        badBand ? "text-status-danger" : tightBand ? "text-status-warning" : variance > 0 ? "text-status-success" : "text-cream"
+                      }`}>
+                        {formatCents(variance)}
                       </td>
                     </tr>
                   );
@@ -310,21 +334,33 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                     {totals.approved_cos ? formatCents(totals.approved_cos) : "—"}
                   </td>
                   <td className="px-3 py-3 text-right text-cream tabular-nums font-display">{formatCents(totals.revised)}</td>
-                  <td className="px-3 py-3 text-right text-cream-dim tabular-nums">
+                  <td className="px-3 py-3 text-right text-cream tabular-nums">
                     {totals.committed > 0 ? formatCents(totals.committed) : "—"}
                   </td>
-                  <td className="px-3 py-3 text-right text-cream tabular-nums font-display">{formatCents(totals.spent)}</td>
                   <td className="px-3 py-3 text-right text-cream tabular-nums font-display">
-                    {formatCents(totals.revised - totals.spent)}
+                    {formatCents(totals.invoiced_with_po + totals.invoiced_without_po)}
                   </td>
-                  <td
-                    className={`px-3 py-3 text-right tabular-nums font-display ${
-                      totals.revised - totals.spent < 0 ? "text-status-danger" : "text-cream"
-                    }`}
-                  >
-                    {totals.revised > 0
-                      ? `${(((totals.revised - totals.spent) / totals.revised) * 100).toFixed(0)}% healthy`
-                      : "—"}
+                  <td className="px-3 py-3 text-right text-cream-muted tabular-nums">
+                    {formatCents(Math.max(0, totals.committed - totals.invoiced_with_po))}
+                  </td>
+                  <td className="px-3 py-3 text-right text-cream tabular-nums">
+                    {formatCents(totals.revised - totals.committed - totals.invoiced_without_po)}
+                  </td>
+                  <td className="px-3 py-3 text-right text-cream tabular-nums">
+                    {formatCents(
+                      totals.invoiced_with_po + totals.invoiced_without_po
+                      + Math.max(0, totals.committed - totals.invoiced_with_po)
+                      + Math.max(0, totals.invoiced_with_po - totals.committed)
+                    )}
+                  </td>
+                  <td className={`px-3 py-3 text-right tabular-nums font-display ${
+                    totals.revised - (totals.invoiced_with_po + totals.invoiced_without_po + Math.max(0, totals.committed - totals.invoiced_with_po)) < 0 ? "text-status-danger" : "text-cream"
+                  }`}>
+                    {formatCents(totals.revised - (
+                      totals.invoiced_with_po + totals.invoiced_without_po
+                      + Math.max(0, totals.committed - totals.invoiced_with_po)
+                      + Math.max(0, totals.invoiced_with_po - totals.committed)
+                    ))}
                   </td>
                 </tr>
               </tbody>
@@ -333,8 +369,8 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         )}
 
         <p className="mt-4 text-[11px] text-cream-dim">
-          Invoiced = sum of invoice line-item amounts allocated to each budget line (approved or downstream). Committed (POs) arrives in Phase 7.
-          Rows turn yellow at 20% remaining and red when the invoiced total exceeds the revised budget.
+          Committed = sum of issued POs against this line. Invoiced = sum of approved invoices (with and without POs). Remaining PO = committed − invoiced on POs.
+          Uncommitted = revised − committed − direct invoices (no PO). Projected = invoiced + remaining PO + any overage. Variance = revised − projected.
         </p>
       </main>
     </div>

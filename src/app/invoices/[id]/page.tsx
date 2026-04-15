@@ -12,7 +12,15 @@ import { invoiceDisplayName } from "@/lib/invoices/display";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
-interface PurchaseOrder { id: string; po_number: string | null; description: string | null; amount: number; }
+interface PurchaseOrder {
+ id: string;
+ po_number: string | null;
+ description: string | null;
+ amount: number;
+ invoiced_total: number;
+ budget_line_id: string | null;
+ status: string;
+}
 interface BudgetInfo {
  original_estimate: number;
  revised_estimate: number;
@@ -30,6 +38,7 @@ interface InvoiceLineItem {
  rate: number | null;
  amount_cents: number;
  cost_code_id: string | null;
+ po_id: string | null;
  budget_line_id: string | null;
  is_change_order: boolean;
  co_reference: string | null;
@@ -75,6 +84,7 @@ interface EditableLineItem {
  rate: number | null;
  amount_cents: number;
  cost_code_id: string | null;
+ po_id: string | null;
  is_change_order: boolean;
  co_reference: string;
  ai_suggested_cost_code_id: string | null;
@@ -491,6 +501,7 @@ export default function InvoiceReviewPage() {
  rate: li.rate,
  amount_cents: li.amount_cents,
  cost_code_id: li.cost_code_id,
+ po_id: li.po_id ?? null,
  is_change_order: li.is_change_order,
  co_reference: li.co_reference ?? "",
  ai_suggested_cost_code_id: li.ai_suggested_cost_code_id,
@@ -521,7 +532,13 @@ export default function InvoiceReviewPage() {
  useEffect(() => {
  async function fetchPOs() {
  if (!jobId) { setPurchaseOrders([]); return; }
- const { data } = await supabase.from("purchase_orders").select("id, po_number, description, amount").eq("job_id", jobId).is("deleted_at", null).order("po_number");
+ const { data } = await supabase
+ .from("purchase_orders")
+ .select("id, po_number, description, amount, invoiced_total, budget_line_id, status")
+ .eq("job_id", jobId)
+ .is("deleted_at", null)
+ .in("status", ["issued", "partially_invoiced", "fully_invoiced"])
+ .order("po_number");
  if (data) setPurchaseOrders(data);
  }
  fetchPOs();
@@ -671,6 +688,7 @@ export default function InvoiceReviewPage() {
  rate: li.rate,
  amount_cents: li.amount_cents,
  cost_code_id: li.cost_code_id,
+ po_id: li.po_id ?? null,
  is_change_order: li.is_change_order,
  co_reference: li.co_reference.trim() || null,
  })),
@@ -1281,6 +1299,7 @@ export default function InvoiceReviewPage() {
  <tr className="bg-brand-surface">
  <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
  <th className="py-2 px-3 text-left text-cream font-semibold min-w-[220px]">Cost Code</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold min-w-[180px]">PO</th>
  <th className="py-2 px-3 text-center text-cream font-semibold">CO</th>
  <th className="py-2 px-3 text-left text-cream font-semibold min-w-[120px]">CO Ref</th>
  <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
@@ -1352,6 +1371,52 @@ export default function InvoiceReviewPage() {
  );
  })()}
  </td>
+ <td className="py-2 px-3">
+ <select
+ value={li.po_id ?? ""}
+ onChange={(e) => {
+ const newPoId = e.target.value || null;
+ const po = newPoId ? purchaseOrders.find(p => p.id === newPoId) : null;
+ setLineItems(prev => prev.map((item, i) => {
+ if (i !== idx) return item;
+ return {
+ ...item,
+ po_id: newPoId,
+ // If PO has a budget_line_id, try to match its cost code.
+ cost_code_id: po?.budget_line_id
+ ? (costCodes.find(c => budgetByCostCode.has(c.id))?.id ?? item.cost_code_id)
+ : item.cost_code_id,
+ };
+ }));
+ }}
+ disabled={!isReviewable}
+ className="w-full px-2 py-1 bg-brand-surface border border-brand-border text-xs text-cream focus:outline-none focus:border-teal disabled:opacity-50"
+ >
+ <option value="">— No PO —</option>
+ {purchaseOrders.map(po => {
+ const remaining = po.amount - po.invoiced_total;
+ return (
+ <option key={po.id} value={po.id}>
+ {po.po_number ?? "—"}: {formatCents(remaining)} left
+ </option>
+ );
+ })}
+ </select>
+ {(() => {
+ if (!li.po_id) return null;
+ const po = purchaseOrders.find(p => p.id === li.po_id);
+ if (!po) return null;
+ const remaining = po.amount - po.invoiced_total;
+ const over = li.amount_cents > remaining;
+ return (
+ <p className={`mt-1 text-[10px] ${over ? "text-status-warning font-medium" : "text-cream-dim"}`}>
+ {over
+ ? `Exceeds PO by ${formatCents(li.amount_cents - remaining)}`
+ : `${formatCents(remaining)} remaining on PO`}
+ </p>
+ );
+ })()}
+ </td>
  <td className="py-2 px-3 text-center">
  <button
  onClick={() => setLineItems(prev => prev.map((item, i) => {
@@ -1392,7 +1457,7 @@ export default function InvoiceReviewPage() {
  </tbody>
  <tfoot>
  <tr className="border-t-2 border-brand-border bg-brand-surface/40">
- <td colSpan={4} className="py-2 px-3 text-right text-cream-dim text-[11px] uppercase tracking-wider">Line Items Sum</td>
+ <td colSpan={5} className="py-2 px-3 text-right text-cream-dim text-[11px] uppercase tracking-wider">Line Items Sum</td>
  <td className={`py-2 px-3 text-right font-medium ${hasAmountMismatch ? "text-status-danger" : "text-cream"}`}>
  {formatCents(lineItemSumCents)}
  </td>

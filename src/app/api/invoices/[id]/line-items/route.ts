@@ -14,6 +14,7 @@ interface LineItemPayload {
  rate: number | null;
  amount_cents: number;
  cost_code_id: string | null;
+ po_id?: string | null;
  is_change_order: boolean;
  co_reference: string | null;
 }
@@ -82,6 +83,23 @@ export async function PUT(
  }
  }
 
+ // If a PO was selected on a line, grab its budget_line_id so it overrides
+ // the cost-code-matched budget line (a PO explicitly binds the line to a
+ // specific budget line, regardless of cost code).
+ const uniquePoIds = Array.from(
+ new Set(payload.map((p) => p.po_id).filter(Boolean) as string[])
+ );
+ const poBudgetLineById = new Map<string, string | null>();
+ if (uniquePoIds.length > 0) {
+ const { data: poRows } = await supabase
+ .from("purchase_orders")
+ .select("id, budget_line_id")
+ .in("id", uniquePoIds);
+ for (const po of poRows ?? []) {
+ poBudgetLineById.set(po.id as string, (po.budget_line_id as string | null) ?? null);
+ }
+ }
+
  const rows = payload.map((p) => ({
  id: p.id ?? undefined,
  invoice_id: params.id,
@@ -92,7 +110,10 @@ export async function PUT(
  rate: p.rate,
  amount_cents: p.amount_cents,
  cost_code_id: p.cost_code_id,
- budget_line_id: p.cost_code_id ? budgetLineByCode.get(p.cost_code_id) ?? null : null,
+ po_id: p.po_id ?? null,
+ budget_line_id:
+ (p.po_id && poBudgetLineById.get(p.po_id)) ||
+ (p.cost_code_id ? budgetLineByCode.get(p.cost_code_id) ?? null : null),
  is_change_order: p.is_change_order,
  co_reference: p.co_reference,
  org_id: ORG_ID,

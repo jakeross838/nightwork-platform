@@ -124,14 +124,22 @@ export default function VendorsPage() {
             <h2 className="font-display text-2xl text-cream">Vendors</h2>
             <p className="text-sm text-cream-dim mt-1">Click a vendor to view details &middot; select multiple to merge</p>
           </div>
-          {selected.size >= 2 && (
-            <button
-              onClick={openMerge}
-              className="px-4 py-2 bg-brass hover:bg-brass/80 text-brand-bg text-sm font-medium transition-colors"
+          <div className="flex items-center gap-2">
+            {selected.size >= 2 && (
+              <button
+                onClick={openMerge}
+                className="px-4 py-2 bg-brass hover:bg-brass/80 text-brand-bg text-sm font-medium transition-colors"
+              >
+                Merge {selected.size} Vendors
+              </button>
+            )}
+            <Link
+              href="/vendors/import"
+              className="px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
             >
-              Merge {selected.size} Vendors
-            </button>
-          )}
+              Import Vendors
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 mb-6">

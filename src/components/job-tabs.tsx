@@ -6,6 +6,7 @@ export type JobTabKey =
   | "overview"
   | "budget"
   | "change-orders"
+  | "purchase-orders"
   | "invoices"
   | "draws";
 
@@ -13,6 +14,7 @@ const TABS: { key: JobTabKey; label: string; slug: string }[] = [
   { key: "overview", label: "Overview", slug: "" },
   { key: "budget", label: "Budget", slug: "/budget" },
   { key: "change-orders", label: "Change Orders", slug: "/change-orders" },
+  { key: "purchase-orders", label: "Purchase Orders", slug: "/purchase-orders" },
   { key: "invoices", label: "Invoices", slug: "/invoices" },
   { key: "draws", label: "Draws", slug: "/draws" },
 ];

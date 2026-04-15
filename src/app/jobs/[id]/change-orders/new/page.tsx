@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import NavBar from "@/components/nav-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
-import CostCodeCombobox, { CostCodeOption } from "@/components/cost-code-combobox";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents } from "@/lib/utils/format";
 
@@ -18,11 +17,19 @@ interface Job {
 interface BudgetLine {
   id: string;
   cost_code_id: string;
-  cost_codes: { id: string; code: string; description: string; category: string | null; is_change_order: boolean } | null;
+  revised_estimate: number;
+  cost_codes: {
+    id: string;
+    code: string;
+    description: string;
+    category: string | null;
+  } | null;
 }
 
-interface Allocation {
+interface CoLine {
   budget_line_id: string;
+  cost_code: string;
+  description: string;
   amount_dollars: string;
 }
 
@@ -35,12 +42,15 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
 
   const [job, setJob] = useState<Job | null>(null);
   const [budgetLines, setBudgetLines] = useState<BudgetLine[]>([]);
-  const [description, setDescription] = useState(prefillDescription);
+
+  const [title, setTitle] = useState(prefillDescription);
+  const [description, setDescription] = useState("");
+  const [coType, setCoType] = useState<"owner" | "internal">("owner");
   const [amount, setAmount] = useState(prefillAmount ?? "");
   const [rateOption, setRateOption] = useState<"default" | "18" | "0" | "custom">("default");
   const [customRate, setCustomRate] = useState("20");
   const [days, setDays] = useState("0");
-  const [allocations, setAllocations] = useState<Allocation[]>([{ budget_line_id: "", amount_dollars: "" }]);
+  const [lines, setLines] = useState<CoLine[]>([{ budget_line_id: "", cost_code: "", description: "", amount_dollars: "" }]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,13 +69,19 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
 
       const { data: bl } = await supabase
         .from("budget_lines")
-        .select("id, cost_code_id, cost_codes:cost_code_id(id, code, description, category, is_change_order)")
+        .select("id, cost_code_id, revised_estimate, cost_codes:cost_code_id(id, code, description, category)")
         .eq("job_id", params.id)
         .is("deleted_at", null);
       if (bl) setBudgetLines(bl as unknown as BudgetLine[]);
     }
     load();
   }, [params.id, router]);
+
+  const budgetLineById = useMemo(() => {
+    const m = new Map<string, BudgetLine>();
+    for (const bl of budgetLines) m.set(bl.id, bl);
+    return m;
+  }, [budgetLines]);
 
   const effectiveRate = useMemo(() => {
     if (rateOption === "default") return job?.gc_fee_percentage ?? 0.2;
@@ -82,49 +98,46 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
   const feeCents = Math.round(amountCents * effectiveRate);
   const totalCents = amountCents + feeCents;
 
-  const allocationRows = allocations.map((a) => ({
-    ...a,
-    amount_cents: Math.round((parseFloat(a.amount_dollars) || 0) * 100),
-  }));
-  const allocTotal = allocationRows.reduce((s, a) => s + a.amount_cents, 0);
+  const lineTotal = useMemo(() => {
+    return lines.reduce((s, l) => {
+      const d = parseFloat(l.amount_dollars);
+      return s + (isNaN(d) ? 0 : Math.round(d * 100));
+    }, 0);
+  }, [lines]);
 
-  const budgetLineOptions: CostCodeOption[] = budgetLines
-    .filter((bl) => bl.cost_codes)
-    .map((bl) => ({
-      id: bl.id, // select budget_line_id, not cost_code_id, so the API gets the right target
-      code: bl.cost_codes!.code,
-      description: bl.cost_codes!.description,
-      category: bl.cost_codes!.category,
-      is_change_order: bl.cost_codes!.is_change_order,
-    }));
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(submit: boolean) {
     setError(null);
-    if (!description.trim()) return setError("Description is required");
-    if (amountCents <= 0) return setError("Amount must be greater than zero");
-    // If any allocation is provided, require they sum to amountCents
-    const validAllocs = allocationRows.filter((a) => a.budget_line_id && a.amount_cents > 0);
-    if (validAllocs.length > 0 && allocTotal !== amountCents) {
+    if (!title.trim()) return setError("Title is required");
+    if (amountCents === 0 && lineTotal === 0) return setError("Amount or line items required");
+
+    // If lines are provided, require they sum to amountCents (unless amount is blank)
+    const validLines = lines.filter((l) => l.amount_dollars && parseFloat(l.amount_dollars) !== 0);
+    if (validLines.length > 0 && amountCents !== 0 && lineTotal !== amountCents) {
       return setError(
-        `Allocations (${formatCents(allocTotal)}) must equal the base amount (${formatCents(amountCents)}). Remove allocations or adjust amounts.`
+        `Line items total (${formatCents(lineTotal)}) must equal amount (${formatCents(amountCents)}). Remove lines or adjust.`
       );
     }
 
     setSaving(true);
     try {
+      const finalAmount = amountCents > 0 ? amountCents : lineTotal;
       const res = await fetch(`/api/jobs/${params.id}/change-orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          description: description.trim(),
-          amount: amountCents,
+          title: title.trim(),
+          description: description.trim() || null,
+          amount: finalAmount,
           gc_fee_rate: effectiveRate,
           estimated_days_added: parseInt(days) || 0,
+          co_type: coType,
           source_invoice_id: sourceInvoiceId,
-          allocations: validAllocs.map((a) => ({
-            budget_line_id: a.budget_line_id,
-            amount: a.amount_cents,
+          submit_for_approval: submit,
+          lines: validLines.map((l) => ({
+            budget_line_id: l.budget_line_id || null,
+            cost_code: l.cost_code || null,
+            description: l.description || null,
+            amount: Math.round((parseFloat(l.amount_dollars) || 0) * 100),
           })),
         }),
       });
@@ -137,14 +150,14 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
     }
   }
 
-  function addAlloc() {
-    setAllocations([...allocations, { budget_line_id: "", amount_dollars: "" }]);
+  function addLine() {
+    setLines([...lines, { budget_line_id: "", cost_code: "", description: "", amount_dollars: "" }]);
   }
-  function removeAlloc(i: number) {
-    setAllocations(allocations.filter((_, idx) => idx !== i));
+  function removeLine(i: number) {
+    setLines(lines.filter((_, idx) => idx !== i));
   }
-  function updateAlloc(i: number, patch: Partial<Allocation>) {
-    setAllocations(allocations.map((a, idx) => (idx === i ? { ...a, ...patch } : a)));
+  function updateLine(i: number, patch: Partial<CoLine>) {
+    setLines(lines.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   }
 
   if (!job) {
@@ -181,22 +194,47 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-brand-card border border-brand-border p-6 space-y-5">
+        <form className="bg-brand-card border border-brand-border p-6 space-y-5">
           <div>
             <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
-              Description
+              Title
             </label>
-            <textarea
+            <input
               className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Upgrade kitchen appliances to Sub-Zero"
               required
             />
           </div>
 
+          <div>
+            <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+              Description (optional)
+            </label>
+            <textarea
+              className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Scope, justification, etc."
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+                CO Type
+              </label>
+              <select
+                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                value={coType}
+                onChange={(e) => setCoType(e.target.value as "owner" | "internal")}
+              >
+                <option value="owner">Owner (affects contract)</option>
+                <option value="internal">Internal (budget-only)</option>
+              </select>
+            </div>
             <div>
               <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
                 Base Amount ($)
@@ -207,7 +245,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
                 className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                required
+                placeholder="Positive or negative"
               />
             </div>
             <div>
@@ -235,6 +273,9 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
                 />
               )}
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
                 Days Added
@@ -270,36 +311,53 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
               </label>
               <button
                 type="button"
-                onClick={addAlloc}
+                onClick={addLine}
                 className="text-[11px] text-teal hover:underline"
               >
-                + Add allocation
+                + Add line
               </button>
             </div>
             <p className="text-[11px] text-cream-dim mb-3">
-              Which budget lines does this CO affect? On execution, each line&apos;s revised estimate will be bumped by its allocation. Totals must match the base amount, or leave empty for a contract-only CO.
+              Which budget lines does this CO affect? On approval, each line&apos;s co_adjustments (and revised estimate) will reflect its amount. Totals must match the base amount, or leave empty for a contract-only CO.
             </p>
             <div className="space-y-2">
-              {allocations.map((a, i) => (
-                <div key={i} className="grid grid-cols-[1fr_140px_auto] gap-2 items-start">
-                  <CostCodeCombobox
-                    value={a.budget_line_id}
-                    onChange={(id) => updateAlloc(i, { budget_line_id: id ?? "" })}
-                    options={budgetLineOptions}
-                    placeholder="Choose budget line…"
-                    size="sm"
+              {lines.map((l, i) => (
+                <div key={i} className="grid grid-cols-[1.5fr_1fr_140px_auto] gap-2 items-start">
+                  <select
+                    className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                    value={l.budget_line_id}
+                    onChange={(e) => {
+                      const bl = budgetLineById.get(e.target.value);
+                      updateLine(i, {
+                        budget_line_id: e.target.value,
+                        cost_code: bl?.cost_codes?.code ?? l.cost_code,
+                      });
+                    }}
+                  >
+                    <option value="">Choose budget line…</option>
+                    {budgetLines.map((bl) => (
+                      <option key={bl.id} value={bl.id}>
+                        {bl.cost_codes?.code} — {bl.cost_codes?.description}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                    placeholder="Description"
+                    value={l.description}
+                    onChange={(e) => updateLine(i, { description: e.target.value })}
                   />
                   <input
                     type="number"
                     step="0.01"
                     className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
-                    placeholder="$"
-                    value={a.amount_dollars}
-                    onChange={(e) => updateAlloc(i, { amount_dollars: e.target.value })}
+                    placeholder="$ (+ or -)"
+                    value={l.amount_dollars}
+                    onChange={(e) => updateLine(i, { amount_dollars: e.target.value })}
                   />
                   <button
                     type="button"
-                    onClick={() => removeAlloc(i)}
+                    onClick={() => removeLine(i)}
                     className="text-cream-dim hover:text-status-danger px-2"
                     aria-label="Remove"
                   >
@@ -308,9 +366,9 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
                 </div>
               ))}
             </div>
-            {allocationRows.filter((a) => a.budget_line_id).length > 0 && (
-              <p className={`text-[11px] mt-2 ${allocTotal === amountCents ? "text-status-success" : "text-status-warning"}`}>
-                Allocated: {formatCents(allocTotal)} / {formatCents(amountCents)}
+            {lines.filter((l) => l.budget_line_id || parseFloat(l.amount_dollars)).length > 0 && (
+              <p className={`text-[11px] mt-2 ${lineTotal === amountCents || amountCents === 0 ? "text-status-success" : "text-status-warning"}`}>
+                Line total: {formatCents(lineTotal)} / {formatCents(amountCents)}
               </p>
             )}
           </div>
@@ -329,11 +387,20 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
               Cancel
             </Link>
             <button
-              type="submit"
+              type="button"
               disabled={saving}
+              onClick={() => handleSubmit(false)}
+              className="px-4 py-2 border border-brand-border text-sm text-cream hover:bg-brand-surface disabled:opacity-60 transition-colors"
+            >
+              {saving ? "Saving…" : "Save as Draft"}
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSubmit(true)}
               className="px-5 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
-              {saving ? "Creating…" : "Create Draft"}
+              {saving ? "Saving…" : "Submit for Approval"}
             </button>
           </div>
         </form>
