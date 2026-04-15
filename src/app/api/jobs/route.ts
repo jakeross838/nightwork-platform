@@ -16,6 +16,7 @@ type JobBody = {
   original_contract_amount?: number; // cents
   deposit_percentage?: number;       // 0..1 (e.g. 0.10)
   gc_fee_percentage?: number;        // 0..1
+  retainage_percent?: number;        // 0..100 (e.g. 10 = 10%)
   pm_id?: string | null;
   contract_date?: string | null;     // YYYY-MM-DD
   status?: "active" | "complete" | "warranty" | "cancelled";
@@ -76,6 +77,9 @@ export const POST = withApiError(async (request: NextRequest) => {
       current_contract_amount: original, // start equal; COs adjust later
       deposit_percentage: body.deposit_percentage ?? 0.1,
       gc_fee_percentage: body.gc_fee_percentage ?? 0.2,
+      ...(body.retainage_percent !== undefined
+        ? { retainage_percent: Number(body.retainage_percent) }
+        : {}),
       pm_id: body.pm_id ?? null,
       contract_date: body.contract_date ?? null,
       status: body.status ?? "active",
@@ -116,6 +120,13 @@ export const PATCH = withApiError(async (request: NextRequest) => {
   if (body.original_contract_amount !== undefined) patch.original_contract_amount = body.original_contract_amount;
   if (body.deposit_percentage !== undefined) patch.deposit_percentage = body.deposit_percentage;
   if (body.gc_fee_percentage !== undefined) patch.gc_fee_percentage = body.gc_fee_percentage;
+  if (body.retainage_percent !== undefined) {
+    const pct = Number(body.retainage_percent);
+    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
+      throw new ApiError("retainage_percent must be between 0 and 100", 400);
+    }
+    patch.retainage_percent = pct;
+  }
   if (body.pm_id !== undefined) patch.pm_id = body.pm_id;
   if (body.contract_date !== undefined) patch.contract_date = body.contract_date;
   if (body.status !== undefined) patch.status = body.status;

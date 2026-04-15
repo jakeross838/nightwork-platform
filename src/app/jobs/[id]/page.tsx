@@ -26,6 +26,7 @@ interface Job {
   current_contract_amount: number;
   deposit_percentage: number;
   gc_fee_percentage: number;
+  retainage_percent: number;
   pm_id: string | null;
   contract_date: string | null;
   status: "active" | "complete" | "warranty" | "cancelled";
@@ -208,6 +209,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             <Detail label="Current Contract" value={formatCents(job.current_contract_amount)} />
             <Detail label="Deposit %" value={`${(job.deposit_percentage * 100).toFixed(1)}%`} />
             <Detail label="GC Fee %" value={`${(job.gc_fee_percentage * 100).toFixed(1)}%`} />
+            <Detail label="Retainage %" value={`${Number(job.retainage_percent ?? 0).toFixed(1)}%`} />
             <Detail label="Assigned PM" value={pms.find((p) => p.id === job.pm_id)?.full_name ?? "Unassigned"} />
             <Detail label="Status" value={job.status} />
           </div>
@@ -257,6 +259,17 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               </EditField>
               <EditField label="GC Fee (0–1)">
                 <input type="number" step="0.01" className="input" value={form.gc_fee_percentage ?? 0.2} onChange={(e) => setForm({ ...form, gc_fee_percentage: Number(e.target.value) })} />
+              </EditField>
+              <EditField label="Retainage % (0–100)">
+                <input
+                  type="number"
+                  step="0.5"
+                  min={0}
+                  max={100}
+                  className="input"
+                  value={form.retainage_percent ?? 0}
+                  onChange={(e) => setForm({ ...form, retainage_percent: Number(e.target.value) })}
+                />
               </EditField>
               <EditField label="Assigned PM" full>
                 <select className="input" value={form.pm_id ?? ""} onChange={(e) => setForm({ ...form, pm_id: e.target.value || null })}>
