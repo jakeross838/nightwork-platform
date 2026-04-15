@@ -37,13 +37,14 @@ const ACCESS: Record<NavItemKey, UserRole[]> = {
   settings: ["owner", "admin"],
 };
 
-type SubItemKey = "upload" | "all" | "pmQueue" | "qaQueue";
+type SubItemKey = "upload" | "all" | "pmQueue" | "qaQueue" | "payments";
 
 const SUB_ACCESS: Record<SubItemKey, UserRole[]> = {
   upload: ["owner", "admin", "accounting"],
   all: ["owner", "admin", "pm", "accounting"],
   pmQueue: ["owner", "admin", "pm"],
   qaQueue: ["owner", "admin", "accounting"],
+  payments: ["owner", "admin", "accounting"],
 };
 
 function can(role: UserRole | null, key: NavItemKey) {
@@ -305,6 +306,9 @@ export default function NavBar() {
                   {canSub(role, "qaQueue") && (
                     <DropdownItem href="/invoices/qa" label="Accounting QA" count={qaCount} active={isQaActive} onClick={() => setInvoicesOpen(false)} />
                   )}
+                  {canSub(role, "payments") && (
+                    <DropdownItem href="/invoices/payments" label="Payment Tracking" active={pathname?.startsWith("/invoices/payments") ?? false} onClick={() => setInvoicesOpen(false)} />
+                  )}
                 </div>
               )}
             </div>
@@ -408,6 +412,7 @@ export default function NavBar() {
                   {canSub(role, "all") && <NavLink href="/invoices" label="All Invoices" active={isAllInvoicesActive} mobile onClick={closeMobile} />}
                   {canSub(role, "pmQueue") && <NavLink href="/invoices/queue" label="PM Queue" count={pmCount} active={isPmQueueActive} mobile onClick={closeMobile} />}
                   {canSub(role, "qaQueue") && <NavLink href="/invoices/qa" label="Accounting QA" count={qaCount} active={isQaActive} mobile onClick={closeMobile} />}
+                  {canSub(role, "payments") && <NavLink href="/invoices/payments" label="Payment Tracking" active={pathname?.startsWith("/invoices/payments") ?? false} mobile onClick={closeMobile} />}
                 </div>
               )}
             </>

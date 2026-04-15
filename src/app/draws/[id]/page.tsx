@@ -2,430 +2,839 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import NavBar from "@/components/nav-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 
-interface DrawData {
- id: string; draw_number: number; application_date: string; period_start: string; period_end: string;
- status: string; revision_number: number;
- original_contract_sum: number; net_change_orders: number; contract_sum_to_date: number;
- total_completed_to_date: number; less_previous_payments: number; current_payment_due: number;
- balance_to_finish: number; deposit_amount: number;
- status_history: Array<Record<string, unknown>>;
- jobs: { id: string; name: string; address: string | null; client_name: string | null; deposit_percentage: number; gc_fee_percentage: number } | null;
- line_items: Array<{
- id: string; previous_applications: number; this_period: number; total_to_date: number;
- percent_complete: number; balance_to_finish: number;
- budget_lines: {
- id: string; original_estimate: number; revised_estimate: number;
- cost_codes: { code: string; description: string; category: string; sort_order: number };
- };
- }>;
- all_budget_lines: Array<{
- id: string; original_estimate: number; revised_estimate: number;
- cost_codes: { code: string; description: string; category: string; sort_order: number };
- }>;
- invoices: Array<{ id: string; vendor_name_raw: string | null; invoice_number: string | null; total_amount: number; cost_code_id: string | null }>;
+interface LienReleaseRow {
+  id: string;
+  vendor_id: string | null;
+  amount: number | null;
+  release_type: string;
+  status: string;
+  through_date: string | null;
+  received_at: string | null;
+  document_url: string | null;
+  notes: string | null;
+  vendors: { id: string; name: string } | null;
 }
 
-const ACTION_MAP: Record<string, { label: string; next: string }> = {
- draft: { label: "Submit for Review", next: "submit" },
- pm_review: { label: "Approve", next: "approve" },
- approved: { label: "Mark Submitted", next: "mark_submitted" },
- submitted: { label: "Mark Paid", next: "mark_paid" },
-};
+interface DrawData {
+  id: string;
+  draw_number: number;
+  application_date: string;
+  period_start: string;
+  period_end: string;
+  status: string;
+  revision_number: number;
+  is_final: boolean;
+  parent_draw_id: string | null;
+  retainage_percent: number;
+  original_contract_sum: number;
+  net_change_orders: number;
+  contract_sum_to_date: number;
+  total_completed_to_date: number;
+  retainage_on_completed: number;
+  retainage_on_stored: number;
+  total_retainage: number;
+  total_earned_less_retainage: number;
+  less_previous_certificates: number;
+  current_payment_due: number;
+  balance_to_finish: number;
+  deposit_amount: number;
+  status_history: Array<Record<string, unknown>>;
+  jobs: {
+    id: string;
+    name: string;
+    address: string | null;
+    client_name: string | null;
+    deposit_percentage: number;
+    gc_fee_percentage: number;
+    retainage_percent: number;
+  } | null;
+  line_items: Array<{
+    id: string;
+    previous_applications: number;
+    this_period: number;
+    total_to_date: number;
+    percent_complete: number;
+    balance_to_finish: number;
+    retainage: number;
+    scheduled_value: number;
+    co_adjustment: number;
+    is_change_order_line: boolean;
+    budget_lines: {
+      id: string;
+      original_estimate: number;
+      revised_estimate: number;
+      cost_codes: { code: string; description: string; category: string; sort_order: number };
+    };
+  }>;
+  invoices: Array<{
+    id: string;
+    vendor_id: string | null;
+    vendor_name_raw: string | null;
+    invoice_number: string | null;
+    total_amount: number;
+    cost_code_id: string | null;
+    payment_status: string | null;
+  }>;
+  lien_releases: LienReleaseRow[];
+}
 
 export default function DrawDetailPage() {
- const params = useParams();
- const router = useRouter();
- const drawId = params.id as string;
- const [draw, setDraw] = useState<DrawData | null>(null);
- const [loading, setLoading] = useState(true);
- const [acting, setActing] = useState(false);
+  const params = useParams();
+  const router = useRouter();
+  const drawId = params.id as string;
+  const [draw, setDraw] = useState<DrawData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [acting, setActing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
- useEffect(() => {
- async function fetchDraw() {
- const res = await fetch(`/api/draws/${drawId}`);
- if (res.ok) setDraw(await res.json());
- setLoading(false);
- }
- fetchDraw();
- }, [drawId]);
+  async function fetchDraw() {
+    const res = await fetch(`/api/draws/${drawId}`);
+    if (res.ok) setDraw(await res.json());
+    setLoading(false);
+  }
 
- const handleAction = async (action: string) => {
- setActing(true);
- const res = await fetch(`/api/draws/${drawId}/action`, {
- method: "POST",
- headers: { "Content-Type": "application/json" },
- body: JSON.stringify({ action }),
- });
- if (res.ok) {
- const res2 = await fetch(`/api/draws/${drawId}`);
- if (res2.ok) setDraw(await res2.json());
- }
- setActing(false);
- };
+  useEffect(() => {
+    fetchDraw();
+  }, [drawId]); // eslint-disable-line react-hooks/exhaustive-deps
 
- if (loading) return (
- <div className="min-h-screen"><NavBar /><div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" /></div></div>
- );
- if (!draw) return (
- <div className="min-h-screen"><NavBar /><div className="flex items-center justify-center py-32"><p className="text-status-danger font-display text-lg">Draw not found</p></div></div>
- );
+  const handleAction = async (action: string, confirm?: string) => {
+    if (confirm && !window.confirm(confirm)) return;
+    setActing(true);
+    setActionError(null);
+    const res = await fetch(`/api/draws/${drawId}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    if (res.ok) {
+      await fetchDraw();
+    } else {
+      const data = await res.json().catch(() => ({ error: "Action failed" }));
+      setActionError(data.error ?? "Action failed");
+    }
+    setActing(false);
+  };
 
- const action = ACTION_MAP[draw.status];
+  const handleCreateRevision = async () => {
+    setActing(true);
+    setActionError(null);
+    const res = await fetch(`/api/draws/${drawId}/revise`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      router.push(`/draws/${data.id}`);
+    } else {
+      const data = await res.json().catch(() => ({ error: "Revise failed" }));
+      setActionError(data.error ?? "Revise failed");
+      setActing(false);
+    }
+  };
 
- const handleCreateRevision = async () => {
- setActing(true);
- try {
- const res = await fetch(`/api/draws/${drawId}/revise`, {
- method: "POST",
- headers: { "Content-Type": "application/json" },
- });
- if (res.ok) {
- const data = await res.json();
- router.push(`/draws/${data.id}`);
- }
- } finally {
- setActing(false);
- }
- };
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <NavBar />
+        <div className="flex items-center justify-center py-32">
+          <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" />
+        </div>
+      </div>
+    );
+  }
+  if (!draw) {
+    return (
+      <div className="min-h-screen">
+        <NavBar />
+        <div className="flex items-center justify-center py-32">
+          <p className="text-status-danger font-display text-lg">Draw not found</p>
+        </div>
+      </div>
+    );
+  }
 
- // G703 rows come directly from computed line_items (API already merged budget_lines + invoices)
- const g703Rows = draw.line_items
- .map((li) => ({
- code: li.budget_lines.cost_codes.code,
- description: li.budget_lines.cost_codes.description,
- sort_order: li.budget_lines.cost_codes.sort_order,
- original_estimate: li.budget_lines.original_estimate,
- revised_estimate: li.budget_lines.revised_estimate,
- // Phase 7b: scheduled_value is the revised contract value for this line.
- scheduled_value: (li as unknown as { scheduled_value?: number }).scheduled_value ?? li.budget_lines.revised_estimate,
- co_adjustment: (li as unknown as { co_adjustment?: number }).co_adjustment ?? 0,
- is_change_order_line: !!(li as unknown as { is_change_order_line?: boolean }).is_change_order_line ||
- !!(li.budget_lines.cost_codes as { is_change_order?: boolean }).is_change_order,
- previous_applications: li.previous_applications,
- this_period: li.this_period,
- total_to_date: li.total_to_date,
- percent_complete: li.percent_complete,
- balance_to_finish: li.balance_to_finish,
- }))
- .sort((a, b) => a.sort_order - b.sort_order);
+  const pendingReleaseCount = draw.lien_releases.filter((l) => l.status === "pending").length;
+  const totalReleaseCount = draw.lien_releases.length;
 
- // Only show rows with a nonzero estimate OR baseline OR invoice activity
- const visibleRows = g703Rows.filter(r =>
- r.original_estimate > 0 || r.revised_estimate > 0 || r.previous_applications > 0 || r.this_period > 0
- );
+  const g703Rows = draw.line_items
+    .map((li) => ({
+      code: li.budget_lines.cost_codes.code,
+      description: li.budget_lines.cost_codes.description,
+      sort_order: li.budget_lines.cost_codes.sort_order,
+      original_estimate: li.budget_lines.original_estimate,
+      scheduled_value: li.scheduled_value,
+      co_adjustment: li.co_adjustment,
+      is_change_order_line: li.is_change_order_line,
+      previous_applications: li.previous_applications,
+      this_period: li.this_period,
+      total_to_date: li.total_to_date,
+      retainage: li.retainage,
+      percent_complete: li.percent_complete,
+      balance_to_finish: li.balance_to_finish,
+    }))
+    .sort((a, b) => a.sort_order - b.sort_order);
 
- // Phase 7b: split into base contract and CO lines so the G703 groups match
- // the AIA format where CO-driven scope sits below the base.
- const baseRows = visibleRows.filter((r) => !r.is_change_order_line);
- const coRows = visibleRows.filter((r) => r.is_change_order_line);
- const hasNoBudget = draw.line_items.length === 0;
+  const visibleRows = g703Rows.filter(
+    (r) =>
+      r.original_estimate > 0 ||
+      r.scheduled_value > 0 ||
+      r.previous_applications > 0 ||
+      r.this_period > 0
+  );
+  const baseRows = visibleRows.filter((r) => !r.is_change_order_line);
+  const coRows = visibleRows.filter((r) => r.is_change_order_line);
+  const hasNoBudget = draw.line_items.length === 0;
 
- // Grand totals
- const totals = visibleRows.reduce(
- (acc, r) => ({
- original: acc.original + r.original_estimate,
- scheduled: acc.scheduled + r.scheduled_value,
- previous: acc.previous + r.previous_applications,
- thisPeriod: acc.thisPeriod + r.this_period,
- totalToDate: acc.totalToDate + r.total_to_date,
- balance: acc.balance + r.balance_to_finish,
- }),
- { original: 0, scheduled: 0, previous: 0, thisPeriod: 0, totalToDate: 0, balance: 0 }
- );
+  const totals = visibleRows.reduce(
+    (acc, r) => ({
+      original: acc.original + r.original_estimate,
+      scheduled: acc.scheduled + r.scheduled_value,
+      previous: acc.previous + r.previous_applications,
+      thisPeriod: acc.thisPeriod + r.this_period,
+      totalToDate: acc.totalToDate + r.total_to_date,
+      retainage: acc.retainage + r.retainage,
+      balance: acc.balance + r.balance_to_finish,
+    }),
+    { original: 0, scheduled: 0, previous: 0, thisPeriod: 0, totalToDate: 0, retainage: 0, balance: 0 }
+  );
 
- // G702/G703 balance check: G703 This Period must equal G702 Current Payment Due
- const isOutOfBalance = totals.thisPeriod !== draw.current_payment_due;
+  // G703 grand-total retainage should equal G702 line 5c (total_retainage).
+  const isOutOfBalance = Math.abs(totals.retainage - draw.total_retainage) > 100;
 
- return (
- <div className="min-h-screen">
- <NavBar />
+  const showApprove = draw.status === "submitted";
+  const showSubmit = draw.status === "draft";
+  const showSendBack = draw.status === "submitted";
+  const showLock = draw.status === "approved";
+  const showMarkPaid = ["approved", "locked"].includes(draw.status);
+  const showVoid = ["draft", "submitted", "approved"].includes(draw.status);
+  const isLocked = ["locked", "paid", "void"].includes(draw.status);
 
- {/* Sub-header */}
- <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-5">
- <div className="max-w-[1600px] mx-auto flex items-center justify-between flex-wrap gap-4">
- <div className="flex items-center gap-4">
- <button onClick={() => router.push("/draws")} className="text-cream-dim hover:text-teal transition-colors text-sm">&larr; Draws</button>
- <h1 className="font-display text-xl text-cream">
- {draw.jobs?.name} <span className="text-cream-dim">&mdash;</span> Draw #{draw.draw_number}
- {draw.revision_number > 0 && <span className="text-brass ml-1">Rev {draw.revision_number}</span>}
- </h1>
- <span className={`text-[10px] px-2.5 py-1 font-medium uppercase tracking-[0.08em] ${
- draw.status === "submitted" ? "bg-transparent text-cream border border-cream" :
- draw.status === "paid" ? "bg-transparent text-status-success border border-status-success" :
- draw.status === "approved" ? "bg-transparent text-status-success border border-status-success" :
- draw.status === "draft" || draw.status === "pm_review" ? "bg-transparent text-brass border border-brass" :
- draw.status === "void" ? "bg-transparent text-status-danger border border-status-danger" :
- "bg-transparent text-cream-muted border border-brand-border-light"
- }`}>
- {formatStatus(draw.status)}
- </span>
- </div>
- <div className="flex items-center gap-3">
- {draw.status !== "paid" && (
- <button
- onClick={() => {
- const a = document.createElement("a");
- a.href = `/api/draws/${drawId}/export`;
- a.download = "";
- a.click();
- }}
- className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors">
- Export to Excel
- </button>
- )}
- {action && draw.status !== "paid" && (
- <button onClick={() => handleAction(action.next)} disabled={acting}
- className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors">
- {acting ? "Processing..." : action.label}
- </button>
- )}
- </div>
- </div>
- </div>
+  return (
+    <div className="min-h-screen">
+      <NavBar />
 
- {/* Locked banner for submitted/paid draws */}
- {draw.status === "submitted" && (
- <div className="bg-teal/10 border-b border-teal/30">
- <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
- <div className="flex items-center gap-3 min-w-0">
- <svg className="w-5 h-5 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
- </svg>
- <p className="text-teal text-sm">This draw has been submitted to the owner. It is locked — changes require a formal revision.</p>
- </div>
- <button
- onClick={handleCreateRevision}
- disabled={acting}
- className="px-4 py-1.5 bg-transparent hover:bg-teal/10 border border-teal text-teal text-sm font-medium transition-colors disabled:opacity-50 flex-shrink-0 whitespace-nowrap">
- {acting ? "Creating..." : "Create Revision"}
- </button>
- </div>
- </div>
- )}
- {draw.status === "paid" && (
- <div className="bg-teal/10 border-b border-teal/30">
- <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-3">
- <svg className="w-5 h-5 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
- </svg>
- <p className="text-teal text-sm">This draw has been paid.</p>
- </div>
- </div>
- )}
+      {/* Sub-header */}
+      <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-5">
+        <div className="max-w-[1600px] mx-auto flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <button
+              onClick={() => router.push("/draws")}
+              className="text-cream-dim hover:text-teal transition-colors text-sm"
+            >
+              &larr; Draws
+            </button>
+            <h1 className="font-display text-xl text-cream">
+              {draw.jobs?.name} <span className="text-cream-dim">&mdash;</span> Draw #{draw.draw_number}
+              {draw.revision_number > 0 && (
+                <span className="text-brass ml-1">Rev {draw.revision_number}</span>
+              )}
+              {draw.is_final && (
+                <span className="ml-2 text-[10px] px-2 py-0.5 border border-brass text-brass uppercase tracking-wider">
+                  FINAL
+                </span>
+              )}
+            </h1>
+            <span className={`text-[10px] px-2.5 py-1 font-medium uppercase tracking-[0.08em] ${badgeClass(draw.status)}`}>
+              {formatStatus(draw.status)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {!isLocked && (
+              <button
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = `/api/draws/${drawId}/export`;
+                  a.download = "";
+                  a.click();
+                }}
+                className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
+              >
+                Export to Excel
+              </button>
+            )}
+            {showSubmit && (
+              <button
+                onClick={() => handleAction("submit")}
+                disabled={acting}
+                className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+              >
+                {acting ? "Processing..." : "Submit for Approval"}
+              </button>
+            )}
+            {showApprove && (
+              <>
+                <button
+                  onClick={() => handleAction("send_back")}
+                  disabled={acting}
+                  className="px-4 py-2 border border-brass text-brass hover:bg-brass/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                >
+                  Send Back to Draft
+                </button>
+                <button
+                  onClick={() => handleAction("approve")}
+                  disabled={acting}
+                  className="px-4 py-2 bg-status-success hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                >
+                  {acting ? "Processing..." : "Approve Draw"}
+                </button>
+              </>
+            )}
+            {showLock && (
+              <button
+                onClick={() =>
+                  handleAction(
+                    "lock",
+                    "Locking this draw makes it permanent. Revisions must be created as new records. Continue?"
+                  )
+                }
+                disabled={acting}
+                className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+              >
+                Lock Draw
+              </button>
+            )}
+            {showMarkPaid && (
+              <button
+                onClick={() => handleAction("mark_paid")}
+                disabled={acting}
+                className="px-4 py-2 border border-status-success text-status-success hover:bg-status-success/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+              >
+                Mark Paid
+              </button>
+            )}
+            {showVoid && (
+              <button
+                onClick={() =>
+                  handleAction(
+                    "void",
+                    "Voiding this draw will release its invoices back to QA-approved and mark pending lien releases as not required. Continue?"
+                  )
+                }
+                disabled={acting}
+                className="px-4 py-2 border border-status-danger text-status-danger hover:bg-status-danger/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+              >
+                Void
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
- <main className="max-w-[1600px] mx-auto px-6 py-6">
- <Breadcrumbs
- items={[
- { label: "Draws", href: "/draws" },
- ...(draw.jobs ? [{ label: draw.jobs.name, href: `/jobs/${draw.jobs.id}` }] : []),
- { label: `Draw #${draw.draw_number}${draw.revision_number > 0 ? ` Rev ${draw.revision_number}` : ""}` },
- ]}
- />
- <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-up">
+      {actionError && (
+        <div className="bg-status-danger/10 border-b border-status-danger/40">
+          <div className="max-w-[1600px] mx-auto px-6 py-3 text-sm text-status-danger">
+            {actionError}
+          </div>
+        </div>
+      )}
 
- {/* G702 Summary */}
- <div className="xl:col-span-1">
- <div className="sticky top-24 space-y-5">
- <div className="bg-brand-card border border-teal/30 p-6">
- <p className="section-label">G702 — Application for Payment</p>
- <div className="mt-5 space-y-2.5">
- <G702Row num="1" label="Original Contract Sum" value={draw.original_contract_sum} />
- <G702Row num="" label="Deposit" value={draw.deposit_amount} sub />
- <G702Row num="2" label="Net Change Orders" value={draw.net_change_orders} />
- <G702Row num="3" label="Contract Sum to Date" value={draw.contract_sum_to_date} bold />
- <div className="border-t border-brand-border my-1" />
- <G702Row num="4" label="Total Completed to Date" value={draw.total_completed_to_date} />
- <G702Row num="5" label="Less Previous Payments" value={draw.less_previous_payments} />
- <G702Row num="6" label="Current Payment Due" value={draw.current_payment_due} bold highlight />
- <div className="border-t border-brand-border my-1" />
- <G702Row num="7" label="Balance to Finish" value={draw.balance_to_finish} />
- </div>
- </div>
+      {/* Locked banner */}
+      {draw.status === "locked" && (
+        <div className="bg-teal/10 border-b border-teal/30">
+          <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              <p className="text-teal text-sm">This draw is locked — permanent record. Changes require a revision.</p>
+            </div>
+            <button
+              onClick={handleCreateRevision}
+              disabled={acting}
+              className="px-4 py-1.5 bg-transparent hover:bg-teal/10 border border-teal text-teal text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {acting ? "Creating..." : "Create Revision"}
+            </button>
+          </div>
+        </div>
+      )}
+      {draw.status === "paid" && (
+        <div className="bg-teal/10 border-b border-teal/30">
+          <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-3">
+            <svg className="w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-teal text-sm">This draw has been paid.</p>
+          </div>
+        </div>
+      )}
 
- <div className="bg-brand-card border border-teal/30 p-6">
- <p className="section-label">Details</p>
- <div className="mt-5 space-y-2 text-sm">
- <div className="flex justify-between"><span className="text-cream-dim">Application #</span><span className="text-cream">{draw.draw_number}</span></div>
- <div className="flex justify-between"><span className="text-cream-dim">Period</span><span className="text-cream">{formatDate(draw.period_start)} — {formatDate(draw.period_end)}</span></div>
- <div className="flex justify-between"><span className="text-cream-dim">App Date</span><span className="text-cream">{formatDate(draw.application_date)}</span></div>
- <div className="flex justify-between"><span className="text-cream-dim">Owner</span><span className="text-cream">{draw.jobs?.client_name ?? "—"}</span></div>
- <div className="flex justify-between"><span className="text-cream-dim">Invoices</span><span className="text-cream">{draw.invoices?.length ?? 0}</span></div>
- </div>
- </div>
- </div>
- </div>
+      {/* Pending-releases warning banner for submitted draws */}
+      {draw.status === "submitted" && pendingReleaseCount > 0 && (
+        <div className="bg-brass/10 border-b border-brass/40">
+          <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-3">
+            <svg className="w-5 h-5 text-brass" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <p className="text-brass text-sm">
+              <span className="font-medium">
+                {pendingReleaseCount} of {totalReleaseCount}
+              </span>{" "}
+              lien release(s) still pending for this draw. Collect or waive before approving.
+            </p>
+          </div>
+        </div>
+      )}
 
- {/* G703 Table */}
- <div className="xl:col-span-3">
- {isOutOfBalance && (
- <div className="mb-4 p-4 bg-red-900/30 border border-red-500/50 flex items-start gap-3">
- <span className="text-red-400 text-lg leading-none mt-0.5">!</span>
- <div>
- <p className="text-red-300 font-medium text-sm">G702 / G703 Out of Balance</p>
- <p className="text-red-400/80 text-xs mt-1">
- G703 This Period total ({formatCents(totals.thisPeriod)}) does not match G702 Line 6 Current Payment Due ({formatCents(draw.current_payment_due)}).
- Check that all invoices are mapped to budget lines with correct cost codes.
- </p>
- </div>
- </div>
- )}
- <p className="section-label">G703 — Continuation Sheet</p>
- {hasNoBudget && (
- <div className="mt-3 border border-status-warning/40 bg-status-warning/5 px-4 py-3 text-sm text-status-warning">
- No budget loaded for this job — scheduled values fall back to the job contract. Import a budget on the Budget tab for accurate G703 math.
- </div>
- )}
- <div className="mt-5 overflow-x-auto border border-brand-border">
- <table className="w-full text-sm">
- <thead>
- <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider sticky left-0 bg-brand-surface z-10">A — Item</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">B — Description</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">C — Scheduled Value</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">D — Previous</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">E — This Period</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">F — Total to Date</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">G — %</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">H — Balance</th>
- </tr>
- </thead>
- <tbody>
- {/* Phase 7b: base contract rows first, then a divider, then CO rows. */}
- {baseRows.length > 0 && (
- <tr className="bg-brand-surface/40 border-t border-brand-border">
- <td colSpan={8} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-cream-dim font-semibold">Base Contract</td>
- </tr>
- )}
- {baseRows.map((row, idx) => {
- const overBudget = row.balance_to_finish < 0;
- const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
- const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
- return (
- <tr key={row.code} className={`border-t border-brand-row-border ${highlight}`}>
- <td className={`py-3 px-4 text-teal font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-brand-card"}`}>{row.code}</td>
- <td className="py-3 px-4 text-cream">{row.description}</td>
- <td className="py-3 px-4 text-cream text-right">
- {formatCents(row.scheduled_value)}
- {row.co_adjustment > 0 && (
- <span className="text-[10px] text-teal ml-1" title={`Includes ${formatCents(row.co_adjustment)} in approved COs`}>
- (+{formatCents(row.co_adjustment)} CO)
- </span>
- )}
- </td>
- <td className="py-3 px-4 text-cream text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}</td>
- <td className="py-3 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
- <td className="py-3 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}</td>
- <td className="py-3 px-4 text-cream-muted text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}</td>
- <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>
- {overBudget && <span className="mr-1 font-bold" title="Over original budget — see change order log">*</span>}
- {formatCents(row.balance_to_finish)}
- </td>
- </tr>
- );
- })}
- {coRows.length > 0 && (
- <tr className="bg-brass/10 border-t-2 border-brass/40">
- <td colSpan={8} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-brass font-semibold">
- Change Orders · PCCO adjustments
- </td>
- </tr>
- )}
- {coRows.map((row, idx) => {
- const overBudget = row.balance_to_finish < 0;
- const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
- const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
- return (
- <tr key={row.code} className={`border-t border-brand-row-border ${highlight}`}>
- <td className={`py-3 px-4 text-brass font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-brand-card"}`}>{row.code}</td>
- <td className="py-3 px-4 text-cream">
- {row.description}
- <span className="ml-2 text-[10px] text-brass uppercase tracking-wider">CO</span>
- </td>
- <td className="py-3 px-4 text-cream text-right">{formatCents(row.scheduled_value)}</td>
- <td className="py-3 px-4 text-cream text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}</td>
- <td className="py-3 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
- <td className="py-3 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}</td>
- <td className="py-3 px-4 text-cream-muted text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}</td>
- <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>
- {formatCents(row.balance_to_finish)}
- </td>
- </tr>
- );
- })}
- </tbody>
- <tfoot>
- <tr className="border-t border-brand-border-light bg-brand-surface">
- <td colSpan={2} className="py-3 px-4 text-cream font-medium">Grand Total</td>
- <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.scheduled)}</td>
- <td className="py-3 px-4 text-cream text-right font-display font-medium">{totals.previous > 0 ? formatCents(totals.previous) : <span className="text-cream-dim">—</span>}</td>
- <td className="py-3 px-4 text-teal text-right font-display font-medium">{formatCents(totals.thisPeriod)}</td>
- <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.totalToDate)}</td>
- <td className="py-3 px-4 text-cream-dim text-right">
- {totals.scheduled > 0 ? `${((totals.totalToDate / totals.scheduled) * 100).toFixed(1)}%` : "—"}
- </td>
- <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.balance)}</td>
- </tr>
- </tfoot>
- </table>
- </div>
- {visibleRows.some(r => r.balance_to_finish < 0) && (
- <p className="mt-3 text-[11px] text-cream-dim italic">
- <span className="text-red-400 font-bold mr-1">*</span>
- Indicates line items over original budget — see change order log for details.
- </p>
- )}
+      <main className="max-w-[1600px] mx-auto px-6 py-6">
+        <Breadcrumbs
+          items={[
+            { label: "Draws", href: "/draws" },
+            ...(draw.jobs ? [{ label: draw.jobs.name, href: `/jobs/${draw.jobs.id}` }] : []),
+            {
+              label: `Draw #${draw.draw_number}${draw.revision_number > 0 ? ` Rev ${draw.revision_number}` : ""}`,
+            },
+          ]}
+        />
 
- {/* Included Invoices */}
- {draw.invoices && draw.invoices.length > 0 && (
- <div className="mt-6">
- <p className="section-label">Included Invoices</p>
- <div className="mt-5 overflow-x-auto border border-brand-border">
- <table className="w-full text-sm">
- <thead>
- <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Invoice #</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
- </tr>
- </thead>
- <tbody>
- {draw.invoices.map((inv) => (
- <tr key={inv.id} className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
- onClick={() => window.location.href = `/invoices/${inv.id}`}>
- <td className="py-3 px-4 text-cream">{inv.vendor_name_raw ?? "Unknown"}</td>
- <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
- <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(inv.total_amount)}</td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- </div>
- )}
- </div>
- </div>
- </main>
- </div>
- );
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-up">
+          {/* G702 Summary */}
+          <div className="xl:col-span-1">
+            <div className="sticky top-24 space-y-5">
+              <div className="bg-brand-card border border-teal/30 p-6">
+                <p className="section-label">G702 — Application for Payment</p>
+                <div className="mt-5 space-y-2.5">
+                  <G702Row num="1" label="Original Contract Sum" value={draw.original_contract_sum} />
+                  <G702Row num="" label="Deposit" value={draw.deposit_amount} sub />
+                  <G702Row num="2" label="Net Change Orders" value={draw.net_change_orders} />
+                  <G702Row num="3" label="Contract Sum to Date" value={draw.contract_sum_to_date} bold />
+                  <div className="border-t border-brand-border my-1" />
+                  <G702Row num="4" label="Total Completed to Date" value={draw.total_completed_to_date} />
+                  <G702Row num="5a" label="Retainage on Completed" value={draw.retainage_on_completed} sub />
+                  <G702Row num="5b" label="Retainage on Stored" value={draw.retainage_on_stored} sub />
+                  <G702Row num="5c" label="Total Retainage" value={draw.total_retainage} />
+                  <G702Row
+                    num="6"
+                    label="Total Earned Less Retainage"
+                    value={draw.total_earned_less_retainage}
+                  />
+                  <G702Row num="7" label="Less Previous Certificates" value={draw.less_previous_certificates} />
+                  <G702Row num="8" label="Current Payment Due" value={draw.current_payment_due} bold highlight />
+                  <div className="border-t border-brand-border my-1" />
+                  <G702Row num="9" label="Balance + Retainage" value={draw.balance_to_finish} />
+                </div>
+              </div>
+
+              <div className="bg-brand-card border border-teal/30 p-6">
+                <p className="section-label">Details</p>
+                <div className="mt-5 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-cream-dim">Application #</span>
+                    <span className="text-cream">
+                      {draw.draw_number}
+                      {draw.revision_number > 0 ? ` Rev ${draw.revision_number}` : ""}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-cream-dim">Period</span>
+                    <span className="text-cream">
+                      {formatDate(draw.period_start)} — {formatDate(draw.period_end)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-cream-dim">App Date</span>
+                    <span className="text-cream">{formatDate(draw.application_date)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-cream-dim">Retainage %</span>
+                    <span className="text-cream">
+                      {draw.retainage_percent.toFixed(1)}%{draw.is_final && " (released)"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-cream-dim">Owner</span>
+                    <span className="text-cream">{draw.jobs?.client_name ?? "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-cream-dim">Invoices</span>
+                    <span className="text-cream">{draw.invoices?.length ?? 0}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* G703 Table */}
+          <div className="xl:col-span-3">
+            {isOutOfBalance && (
+              <div className="mb-4 p-4 bg-red-900/30 border border-red-500/50 flex items-start gap-3">
+                <span className="text-red-400 text-lg leading-none mt-0.5">!</span>
+                <div>
+                  <p className="text-red-300 font-medium text-sm">G702 / G703 Retainage Out of Balance</p>
+                  <p className="text-red-400/80 text-xs mt-1">
+                    G703 retainage total ({formatCents(totals.retainage)}) does not match G702 Line 5c
+                    Total Retainage ({formatCents(draw.total_retainage)}).
+                  </p>
+                </div>
+              </div>
+            )}
+            <p className="section-label">G703 — Continuation Sheet</p>
+            {hasNoBudget && (
+              <div className="mt-3 border border-status-warning/40 bg-status-warning/5 px-4 py-3 text-sm text-status-warning">
+                No budget loaded for this job — scheduled values fall back to the job contract. Import a
+                budget on the Budget tab for accurate G703 math.
+              </div>
+            )}
+            <div className="mt-5 overflow-x-auto border border-brand-border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-brand-surface text-left">
+                    <Th sticky>A — Item</Th>
+                    <Th>B — Description</Th>
+                    <Th right>C — Scheduled Value</Th>
+                    <Th right>D — Previous</Th>
+                    <Th right>E — This Period</Th>
+                    <Th right>F — Total to Date</Th>
+                    <Th right>G — %</Th>
+                    <Th right>H — Retainage</Th>
+                    <Th right>I — Balance</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {baseRows.length > 0 && (
+                    <tr className="bg-brand-surface/40 border-t border-brand-border">
+                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-cream-dim font-semibold">
+                        Base Contract
+                      </td>
+                    </tr>
+                  )}
+                  {baseRows.map((row, idx) => (
+                    <G703RowView key={row.code + "-b"} row={row} idx={idx} />
+                  ))}
+                  {coRows.length > 0 && (
+                    <tr className="bg-brass/10 border-t-2 border-brass/40">
+                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-brass font-semibold">
+                        Change Orders · PCCO adjustments
+                      </td>
+                    </tr>
+                  )}
+                  {coRows.map((row, idx) => (
+                    <G703RowView key={row.code + "-c"} row={row} idx={idx} co />
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-brand-border-light bg-brand-surface">
+                    <td colSpan={2} className="py-3 px-4 text-cream font-medium">
+                      Grand Total
+                    </td>
+                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                      {formatCents(totals.scheduled)}
+                    </td>
+                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                      {totals.previous > 0 ? formatCents(totals.previous) : <span className="text-cream-dim">—</span>}
+                    </td>
+                    <td className="py-3 px-4 text-teal text-right font-display font-medium">
+                      {formatCents(totals.thisPeriod)}
+                    </td>
+                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                      {formatCents(totals.totalToDate)}
+                    </td>
+                    <td className="py-3 px-4 text-cream-dim text-right">
+                      {totals.scheduled > 0
+                        ? `${((totals.totalToDate / totals.scheduled) * 100).toFixed(1)}%`
+                        : "—"}
+                    </td>
+                    <td className="py-3 px-4 text-brass text-right font-display font-medium">
+                      {formatCents(totals.retainage)}
+                    </td>
+                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                      {formatCents(totals.balance)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* Lien releases section */}
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-3">
+                <p className="section-label">Lien Releases</p>
+                {draw.jobs && (
+                  <Link
+                    href={`/jobs/${draw.jobs.id}/lien-releases`}
+                    className="text-xs text-teal hover:underline"
+                  >
+                    Manage all releases for this job →
+                  </Link>
+                )}
+              </div>
+              {draw.lien_releases.length === 0 ? (
+                <div className="border border-brand-border px-4 py-4 text-sm text-cream-dim">
+                  No lien releases yet. They will auto-generate when this draw is submitted.
+                </div>
+              ) : (
+                <div className="overflow-x-auto border border-brand-border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-brand-surface text-left">
+                        <Th>Vendor</Th>
+                        <Th>Type</Th>
+                        <Th right>Amount</Th>
+                        <Th>Status</Th>
+                        <Th>Through Date</Th>
+                        <Th>Document</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {draw.lien_releases.map((lr) => (
+                        <tr key={lr.id} className="border-t border-brand-row-border">
+                          <td className="py-3 px-4 text-cream">{lr.vendors?.name ?? "—"}</td>
+                          <td className="py-3 px-4 text-cream-muted text-xs">
+                            {formatReleaseType(lr.release_type)}
+                          </td>
+                          <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                            {lr.amount != null ? formatCents(lr.amount) : "—"}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${releaseBadge(lr.status)}`}>
+                              {formatReleaseStatus(lr.status)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(lr.through_date)}</td>
+                          <td className="py-3 px-4 text-cream-muted text-xs">
+                            {lr.document_url ? (
+                              <a href={lr.document_url} target="_blank" rel="noreferrer" className="text-teal hover:underline">
+                                View
+                              </a>
+                            ) : (
+                              <span className="text-cream-dim">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Included Invoices */}
+            {draw.invoices && draw.invoices.length > 0 && (
+              <div className="mt-8">
+                <p className="section-label">Included Invoices</p>
+                <div className="mt-3 overflow-x-auto border border-brand-border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-brand-surface text-left">
+                        <Th>Vendor</Th>
+                        <Th>Invoice #</Th>
+                        <Th right>Amount</Th>
+                        <Th>Payment</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {draw.invoices.map((inv) => (
+                        <tr
+                          key={inv.id}
+                          className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                          onClick={() => (window.location.href = `/invoices/${inv.id}`)}
+                        >
+                          <td className="py-3 px-4 text-cream">{inv.vendor_name_raw ?? "Unknown"}</td>
+                          <td className="py-3 px-4 text-cream-muted font-mono text-xs">
+                            {inv.invoice_number ?? "—"}
+                          </td>
+                          <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                            {formatCents(inv.total_amount)}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${paymentBadge(inv.payment_status)}`}>
+                              {inv.payment_status ?? "unpaid"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
 
-function G702Row({ num, label, value, bold, highlight, sub }: {
- num: string; label: string; value: number; bold?: boolean; highlight?: boolean; sub?: boolean;
+// ---- helpers -----------------------------------------------------------
+
+function Th({
+  children,
+  right,
+  sticky,
+}: {
+  children: React.ReactNode;
+  right?: boolean;
+  sticky?: boolean;
 }) {
- return (
- <div className={`flex items-center justify-between ${sub ? "pl-4 opacity-70" : ""}`}>
- <div className="flex items-center gap-2">
- {num && <span className="text-cream-dim text-[11px] font-mono w-4">{num}</span>}
- {!num && <span className="w-4" />}
- <span className={`text-xs ${bold ? "text-cream font-medium" : "text-cream-muted"}`}>{label}</span>
- </div>
- <span className={`font-display text-sm ${highlight ? "text-brass font-medium" : bold ? "text-cream font-medium" : "text-cream"}`}>
- {formatCents(value)}
- </span>
- </div>
- );
+  return (
+    <th
+      className={`py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider ${
+        right ? "text-right" : ""
+      } ${sticky ? "sticky left-0 bg-brand-surface z-10" : ""}`}
+    >
+      {children}
+    </th>
+  );
+}
+
+function G703RowView({
+  row,
+  idx,
+  co,
+}: {
+  row: {
+    code: string;
+    description: string;
+    scheduled_value: number;
+    co_adjustment: number;
+    previous_applications: number;
+    this_period: number;
+    total_to_date: number;
+    retainage: number;
+    percent_complete: number;
+    balance_to_finish: number;
+  };
+  idx: number;
+  co?: boolean;
+}) {
+  const overBudget = row.balance_to_finish < 0;
+  const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
+  const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
+  const codeColor = co ? "text-brass" : "text-teal";
+  return (
+    <tr className={`border-t border-brand-row-border ${highlight}`}>
+      <td className={`py-3 px-4 ${codeColor} font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-brand-card"}`}>
+        {row.code}
+      </td>
+      <td className="py-3 px-4 text-cream">
+        {row.description}
+        {co && <span className="ml-2 text-[10px] text-brass uppercase tracking-wider">CO</span>}
+      </td>
+      <td className="py-3 px-4 text-cream text-right">
+        {formatCents(row.scheduled_value)}
+        {row.co_adjustment > 0 && !co && (
+          <span className="text-[10px] text-teal ml-1" title={`Includes ${formatCents(row.co_adjustment)} in approved COs`}>
+            (+{formatCents(row.co_adjustment)} CO)
+          </span>
+        )}
+      </td>
+      <td className="py-3 px-4 text-cream text-right">
+        {row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}
+      </td>
+      <td className="py-3 px-4 text-right font-medium">
+        {row.this_period > 0 ? (
+          <span className="text-teal">{formatCents(row.this_period)}</span>
+        ) : (
+          <span className="text-cream-dim">—</span>
+        )}
+      </td>
+      <td className="py-3 px-4 text-cream text-right">
+        {row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}
+      </td>
+      <td className="py-3 px-4 text-cream-muted text-right">
+        {row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}
+      </td>
+      <td className="py-3 px-4 text-right">
+        {row.retainage > 0 ? (
+          <span className="text-brass">{formatCents(row.retainage)}</span>
+        ) : (
+          <span className="text-cream-dim">—</span>
+        )}
+      </td>
+      <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>
+        {overBudget && <span className="mr-1 font-bold" title="Over original budget — see change order log">*</span>}
+        {formatCents(row.balance_to_finish)}
+      </td>
+    </tr>
+  );
+}
+
+function badgeClass(status: string): string {
+  if (status === "submitted") return "bg-transparent text-cream border border-cream";
+  if (["approved", "locked", "paid"].includes(status))
+    return "bg-transparent text-status-success border border-status-success";
+  if (status === "draft" || status === "pm_review")
+    return "bg-transparent text-brass border border-brass";
+  if (status === "void") return "bg-transparent text-status-danger border border-status-danger";
+  return "bg-transparent text-cream-muted border border-brand-border-light";
+}
+
+function paymentBadge(status: string | null): string {
+  if (status === "paid") return "bg-transparent text-status-success border border-status-success";
+  if (status === "scheduled") return "bg-transparent text-teal border border-teal";
+  if (status === "partial") return "bg-transparent text-brass border border-brass";
+  return "bg-transparent text-cream-dim border border-brand-border-light";
+}
+
+function releaseBadge(status: string): string {
+  if (status === "received") return "bg-transparent text-status-success border border-status-success";
+  if (status === "pending") return "bg-transparent text-brass border border-brass";
+  if (status === "waived" || status === "not_required")
+    return "bg-transparent text-cream-dim border border-brand-border-light";
+  return "bg-transparent text-cream-dim border border-brand-border-light";
+}
+
+function formatReleaseType(t: string): string {
+  const map: Record<string, string> = {
+    conditional: "Conditional",
+    unconditional: "Unconditional",
+    partial: "Partial",
+    final: "Final",
+    conditional_progress: "Conditional Progress",
+    unconditional_progress: "Unconditional Progress",
+    conditional_final: "Conditional Final",
+    unconditional_final: "Unconditional Final",
+  };
+  return map[t] ?? t;
+}
+
+function formatReleaseStatus(s: string): string {
+  const map: Record<string, string> = {
+    pending: "Pending",
+    received: "Received",
+    waived: "Waived",
+    not_required: "Not Required",
+  };
+  return map[s] ?? s;
+}
+
+function G702Row({
+  num,
+  label,
+  value,
+  bold,
+  highlight,
+  sub,
+}: {
+  num: string;
+  label: string;
+  value: number;
+  bold?: boolean;
+  highlight?: boolean;
+  sub?: boolean;
+}) {
+  return (
+    <div className={`flex items-center justify-between ${sub ? "pl-4 opacity-70" : ""}`}>
+      <div className="flex items-center gap-2">
+        {num ? (
+          <span className="text-cream-dim text-[11px] font-mono w-6">{num}</span>
+        ) : (
+          <span className="w-6" />
+        )}
+        <span className={`text-xs ${bold ? "text-cream font-medium" : "text-cream-muted"}`}>{label}</span>
+      </div>
+      <span
+        className={`font-display text-sm ${
+          highlight ? "text-brass font-medium" : bold ? "text-cream font-medium" : "text-cream"
+        }`}
+      >
+        {formatCents(value)}
+      </span>
+    </div>
+  );
 }

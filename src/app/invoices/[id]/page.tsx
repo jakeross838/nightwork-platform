@@ -65,6 +65,8 @@ interface InvoiceData {
  status: string; status_history: Array<Record<string, unknown>>;
  received_date: string | null; payment_date: string | null; original_file_type: string | null;
  check_number: string | null; picked_up: boolean; mailed_date: string | null;
+ payment_status: string | null; payment_amount: number | null; payment_method: string | null;
+ payment_reference: string | null; scheduled_payment_date: string | null;
  pm_overrides: Record<string, { old: unknown; new: unknown }> | null;
  qa_overrides: Record<string, { old: unknown; new: unknown }> | null;
  signed_file_url: string | null;
@@ -439,7 +441,6 @@ export default function InvoiceReviewPage() {
  const [savingPayment, setSavingPayment] = useState(false);
 
  // Fetch invoice
- useEffect(() => {
  async function fetchInvoice() {
  const res = await fetch(`/api/invoices/${invoiceId}`);
  if (res.ok) {
@@ -512,8 +513,12 @@ export default function InvoiceReviewPage() {
  }
  setLoading(false);
  }
+ useEffect(() => {
  fetchInvoice();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [invoiceId]);
+
+ const refreshInvoice = () => fetchInvoice();
 
  // Fetch lookups (cost codes with category + is_change_order)
  useEffect(() => {
@@ -1589,14 +1594,8 @@ export default function InvoiceReviewPage() {
  )}
  </SidebarCard>
 
- {/* Payment */}
- <SidebarCard title="Payment">
- <div className="space-y-2.5 text-sm">
- <div className="flex justify-between"><span className="text-cream-muted">Received</span><span className="text-cream-muted">{formatDate(invoice.received_date)}</span></div>
- <div className="flex justify-between"><span className="text-cream-muted">Scheduled</span><span className="text-cream-muted">{formatDate(invoice.payment_date)}</span></div>
- <div className="flex justify-between border-t border-brand-border pt-2.5"><span className="text-cream-muted">Amount</span><span className="text-cream font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
- </div>
- </SidebarCard>
+ {/* Payment — Phase 8 */}
+ <PaymentSection invoice={invoice} onRefresh={refreshInvoice} />
 
  {/* Payment Tracking */}
  {showPaymentTracking && (
@@ -2384,5 +2383,183 @@ function BudgetRow({ label, value, highlight }: { label: string; value: number; 
  <span className="text-cream-dim">{label}</span>
  <span className={`font-medium font-display ${color}`}>{formatCents(value)}</span>
  </div>
+ );
+}
+
+// Phase 8 — payment actions panel (Schedule Payment / Mark as Paid / Reverse).
+function PaymentSection({
+ invoice,
+ onRefresh,
+}: {
+ invoice: InvoiceData;
+ onRefresh: () => void;
+}) {
+ const [busy, setBusy] = useState(false);
+ const [error, setError] = useState<string | null>(null);
+ const [showPayModal, setShowPayModal] = useState(false);
+ const [payDate, setPayDate] = useState(new Date().toISOString().slice(0, 10));
+ const [payMethod, setPayMethod] = useState<"check" | "ach" | "wire" | "credit_card">("check");
+ const [payReference, setPayReference] = useState("");
+ const [payAmount, setPayAmount] = useState((invoice.total_amount / 100).toFixed(2));
+
+ const status = invoice.payment_status ?? "unpaid";
+ const canPay = ["pm_approved", "qa_review", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(invoice.status);
+
+ async function call(body: Record<string, unknown>) {
+ setBusy(true);
+ setError(null);
+ const res = await fetch(`/api/invoices/${invoice.id}/payment`, {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify(body),
+ });
+ if (!res.ok) {
+ const data = await res.json().catch(() => ({ error: "Failed" }));
+ setError(data.error ?? "Failed");
+ } else {
+ onRefresh();
+ setShowPayModal(false);
+ }
+ setBusy(false);
+ }
+
+ return (
+ <>
+ <SidebarCard title="Payment">
+ <div className="space-y-2.5 text-sm">
+ <div className="flex justify-between items-center">
+ <span className="text-cream-muted">Status</span>
+ <span
+ className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${
+ status === "paid"
+ ? "border-status-success text-status-success"
+ : status === "scheduled"
+ ? "border-teal text-teal"
+ : status === "partial"
+ ? "border-brass text-brass"
+ : "border-brand-border-light text-cream-dim"
+ }`}
+ >
+ {status}
+ </span>
+ </div>
+ <div className="flex justify-between"><span className="text-cream-muted">Received</span><span className="text-cream-muted">{formatDate(invoice.received_date)}</span></div>
+ {invoice.scheduled_payment_date && (
+ <div className="flex justify-between"><span className="text-cream-muted">Scheduled</span><span className="text-cream">{formatDate(invoice.scheduled_payment_date)}</span></div>
+ )}
+ {invoice.payment_date && (
+ <div className="flex justify-between"><span className="text-cream-muted">Paid</span><span className="text-cream">{formatDate(invoice.payment_date)}</span></div>
+ )}
+ {invoice.payment_method && (
+ <div className="flex justify-between"><span className="text-cream-muted">Method</span><span className="text-cream">{invoice.payment_method}</span></div>
+ )}
+ {invoice.payment_reference && (
+ <div className="flex justify-between"><span className="text-cream-muted">Reference</span><span className="text-cream font-mono text-xs">{invoice.payment_reference}</span></div>
+ )}
+ <div className="flex justify-between border-t border-brand-border pt-2.5">
+ <span className="text-cream-muted">Total</span>
+ <span className="text-cream font-display text-base font-medium">{formatCents(invoice.total_amount)}</span>
+ </div>
+ {invoice.payment_amount != null && invoice.payment_amount !== invoice.total_amount && (
+ <div className="flex justify-between">
+ <span className="text-cream-muted">Paid so far</span>
+ <span className="text-brass font-display font-medium">{formatCents(invoice.payment_amount)}</span>
+ </div>
+ )}
+ </div>
+
+ {error && (
+ <div className="mt-3 bg-status-danger/10 border border-status-danger/40 px-3 py-2 text-xs text-status-danger">
+ {error}
+ </div>
+ )}
+
+ {canPay && (
+ <div className="mt-4 flex flex-col gap-2">
+ {status === "unpaid" && (
+ <button
+ onClick={() => call({ action: "schedule" })}
+ disabled={busy}
+ className="px-3 py-2 border border-teal text-teal hover:bg-teal/10 disabled:opacity-50 text-sm font-medium transition-colors"
+ >
+ {busy ? "Scheduling…" : "Schedule Payment"}
+ </button>
+ )}
+ {status !== "paid" && (
+ <button
+ onClick={() => setShowPayModal(true)}
+ disabled={busy}
+ className="px-3 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
+ >
+ Mark as Paid
+ </button>
+ )}
+ {(status === "paid" || status === "partial") && (
+ <button
+ onClick={() => {
+ if (window.confirm("Reverse payment? This unmarks the invoice and clears payment fields.")) {
+ call({ action: "reverse" });
+ }
+ }}
+ disabled={busy}
+ className="px-3 py-2 border border-status-danger text-status-danger hover:bg-status-danger/10 disabled:opacity-50 text-sm font-medium transition-colors"
+ >
+ Reverse Payment
+ </button>
+ )}
+ </div>
+ )}
+ </SidebarCard>
+
+ {showPayModal && (
+ <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={() => setShowPayModal(false)}>
+ <div className="bg-brand-card border border-brand-border max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+ <h3 className="font-display text-lg text-cream mb-1">Mark Invoice as Paid</h3>
+ <p className="text-sm text-cream-dim mb-4">{invoice.vendor_name_raw ?? "Vendor"} — {formatCents(invoice.total_amount)}</p>
+ <div className="space-y-3">
+ <label className="block">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">Payment Date</span>
+ <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none" />
+ </label>
+ <label className="block">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">Amount (dollars)</span>
+ <input type="number" step="0.01" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none" />
+ </label>
+ <label className="block">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">Method</span>
+ <select value={payMethod} onChange={(e) => setPayMethod(e.target.value as typeof payMethod)} className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none">
+ <option value="check">Check</option>
+ <option value="ach">ACH</option>
+ <option value="wire">Wire</option>
+ <option value="credit_card">Credit Card</option>
+ </select>
+ </label>
+ <label className="block">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">Reference (check #, txn ID)</span>
+ <input type="text" value={payReference} onChange={(e) => setPayReference(e.target.value)} placeholder="e.g. 10452" className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none" />
+ </label>
+ </div>
+ <div className="mt-5 flex items-center justify-end gap-3">
+ <button onClick={() => setShowPayModal(false)} className="px-4 py-2 text-cream-dim hover:text-cream text-sm">Cancel</button>
+ <button
+ onClick={() =>
+ call({
+ action: "mark_paid",
+ payment_date: payDate,
+ payment_amount: Math.round(Number(payAmount) * 100),
+ payment_method: payMethod,
+ payment_reference: payReference || null,
+ })
+ }
+ disabled={busy}
+ className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+ >
+ {busy ? "Recording…" : "Record Payment"}
+ </button>
+ </div>
+ </div>
+ </div>
+ )}
+ </>
  );
 }

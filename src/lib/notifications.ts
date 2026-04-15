@@ -20,7 +20,12 @@ export type NotificationType =
   | "invoice_pm_approved"
   | "invoice_pm_denied"
   | "invoice_qa_approved"
-  | "draw_created";
+  | "draw_created"
+  | "draw_submitted"
+  | "draw_approved"
+  | "lien_release_pending"
+  | "payment_scheduled"
+  | "invoice_overdue";
 
 export interface SendNotificationArgs {
   /** Recipient email (optional — if omitted only in-app row is created) */
