@@ -6,6 +6,16 @@ import { updateSession } from "@/lib/supabase/middleware";
 // to /dashboard itself, so we leave that branching to the page.
 const PUBLIC_PATHS = ["/", "/login", "/signup", "/pricing"];
 
+// Pages that remain reachable even when the billing gate is "expired".
+// Users need to be able to open the billing page to resubscribe, hit the
+// Stripe portal/checkout APIs, and still log out.
+const BILLING_ESCAPE_PATHS = [
+  "/settings/billing",
+  "/api/stripe",
+  "/pricing",
+  "/login",
+];
+
 function isPublic(pathname: string): boolean {
   if (pathname === "/") return true;
   return PUBLIC_PATHS.some(
@@ -13,8 +23,14 @@ function isPublic(pathname: string): boolean {
   );
 }
 
+function canEscapeBillingGate(pathname: string): boolean {
+  return BILLING_ESCAPE_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
+
 export async function middleware(request: NextRequest) {
-  const { response, user } = await updateSession(request);
+  const { response, user, gate } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
   // Bounce signed-in users away from auth-only pages.
@@ -30,6 +46,16 @@ export async function middleware(request: NextRequest) {
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Billing enforcement: expired trial / cancelled sub → force to billing
+  // page so they can resubscribe. Read-only mode is enforced at API-route
+  // level (middleware stays GET-only friendly so pages can still render).
+  if (user && gate === "expired" && !canEscapeBillingGate(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/settings/billing";
+    url.search = "?trial_expired=1";
+    return NextResponse.redirect(url);
   }
 
   return response;

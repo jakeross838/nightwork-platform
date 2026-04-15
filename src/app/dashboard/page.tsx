@@ -19,8 +19,19 @@ type NavItem = {
   roles: UserRole[];
 };
 
+type DashboardStats = {
+  activeJobs: number;
+  pendingInvoices: number;
+  currentDrawCents: number;
+  teamMembers: number;
+};
+
 function firstNameOf(fullName: string) {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
+}
+
+function formatCents(cents: number): string {
+  return `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 export default function Home() {
@@ -29,6 +40,7 @@ export default function Home() {
   const [firstName, setFirstName] = useState<string | null>(null);
   const [pmCount, setPmCount] = useState(0);
   const [qaCount, setQaCount] = useState(0);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     async function check() {
@@ -95,6 +107,45 @@ export default function Home() {
 
         setPmCount(pmCountVal);
         setQaCount(qaCountVal ?? 0);
+
+        // Dashboard stat cards — org-scoped (RLS handles org isolation).
+        // Run in parallel; any single failure leaves that stat at 0 so the
+        // rest of the dashboard still renders.
+        const [activeJobsRes, pendingInvoicesRes, drawInvoicesRes, teamMembersRes] =
+          await Promise.all([
+            supabase
+              .from("jobs")
+              .select("id", { count: "exact", head: true })
+              .eq("status", "active")
+              .is("deleted_at", null),
+            supabase
+              .from("invoices")
+              .select("id", { count: "exact", head: true })
+              .in("status", ["pm_review", "ai_processed", "qa_review", "pm_approved"])
+              .is("deleted_at", null),
+            supabase
+              .from("invoices")
+              .select("total_amount")
+              .in("status", ["qa_approved", "pushed_to_qb"])
+              .is("deleted_at", null)
+              .is("draw_id", null),
+            supabase
+              .from("org_members")
+              .select("id", { count: "exact", head: true })
+              .eq("is_active", true),
+          ]);
+
+        const currentDrawCents = (drawInvoicesRes.data ?? []).reduce(
+          (sum, row) => sum + (Number((row as { total_amount: number }).total_amount) || 0),
+          0
+        );
+
+        setStats({
+          activeJobs: activeJobsRes.count ?? 0,
+          pendingInvoices: pendingInvoicesRes.count ?? 0,
+          currentDrawCents,
+          teamMembers: teamMembersRes.count ?? 0,
+        });
       } catch {
         setStatus("error");
       }
@@ -121,7 +172,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <NavBar />
       <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden px-6 py-12">
-        <div className="relative z-10 text-center max-w-3xl">
+        <div className="relative z-10 text-center max-w-5xl w-full">
           <div className="animate-fade-up">
             <div className="inline-flex items-center gap-2 px-3 py-1 border border-brand-border mb-6 rounded-none">
               <span className={`h-1.5 w-1.5 ${status === "loading" ? "bg-brass animate-pulse" : status === "connected" ? "bg-status-success" : "bg-status-danger"}`} />
@@ -142,6 +193,16 @@ export default function Home() {
             </p>
           )}
 
+          {/* Stat cards — org-scoped KPIs */}
+          {stats && (role === "admin" || role === "owner") && (
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-up stagger-4">
+              <StatCard label="Active Jobs" value={stats.activeJobs.toString()} href="/jobs" />
+              <StatCard label="Pending Invoices" value={stats.pendingInvoices.toString()} href="/invoices" />
+              <StatCard label="Current Draw" value={formatCents(stats.currentDrawCents)} href="/draws" />
+              <StatCard label="Team Members" value={stats.teamMembers.toString()} href="/settings/team" />
+            </div>
+          )}
+
           {/* Navigation cards — filtered by role */}
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up stagger-4">
             {visibleCards.map((c) => (
@@ -159,6 +220,18 @@ export default function Home() {
         )}
       </div>
     </div>
+  );
+}
+
+function StatCard({ label, value, href }: { label: string; value: string; href: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col items-start p-4 border border-brand-border bg-white hover:border-teal/60 transition-colors text-left"
+    >
+      <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">{label}</span>
+      <span className="mt-2 font-display text-3xl text-cream">{value}</span>
+    </Link>
   );
 }
 

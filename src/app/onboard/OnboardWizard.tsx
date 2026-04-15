@@ -428,12 +428,11 @@ export default function OnboardWizard({
               <div className="sm:col-span-2">
                 <Field label="Address" value={job.address} onChange={(v) => setJob({ ...job, address: v })} />
               </div>
-              <Field
+              <CurrencyField
                 label="Contract Amount (USD)"
-                type="number"
                 value={job.contract_amount}
                 onChange={(v) => setJob({ ...job, contract_amount: v })}
-                placeholder="2500000"
+                placeholder="2,500,000"
               />
             </div>
             <NavFooter>
@@ -555,6 +554,37 @@ function Field({
   );
 }
 
+function CurrencyField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string; // raw digits, no commas
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  // Store raw digits in state, display with thousands separators.
+  const display = value ? Number(value).toLocaleString("en-US") : "";
+  return (
+    <label className="block">
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">{label}</span>
+      <div className="flex items-stretch">
+        <span className="flex items-center px-3 border border-r-0 border-brand-border bg-brand-surface text-cream-dim text-sm">$</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={display}
+          onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, ""))}
+          placeholder={placeholder}
+          className="w-full px-3 py-2.5 border border-brand-border bg-white text-sm"
+        />
+      </div>
+    </label>
+  );
+}
+
 function PctField({ label, value, onChange, help }: { label: string; value: number; onChange: (v: number) => void; help: string }) {
   return (
     <label className="block">
@@ -593,13 +623,19 @@ function ChoiceCard({
     <button
       type="button"
       onClick={onClick}
-      className={`text-left p-5 border flex flex-col transition-colors ${
-        selected ? "border-teal bg-teal-muted" : "border-brand-border bg-white hover:bg-brand-surface"
+      className={`group text-left p-5 border flex flex-col transition-colors ${
+        selected
+          ? "border-teal bg-teal-muted"
+          : "border-brand-border bg-white hover:border-teal hover:bg-teal-muted/40"
       }`}
     >
       <h3 className="font-display text-lg text-cream">{title}</h3>
       <p className="mt-2 text-sm text-cream-muted flex-1">{subtitle}</p>
-      <span className={`mt-4 text-[12px] tracking-[0.08em] uppercase ${selected ? "text-teal" : "text-cream"}`}>
+      <span
+        className={`mt-4 inline-flex items-center gap-1 text-[12px] tracking-[0.08em] uppercase text-teal border-b border-teal/40 group-hover:border-teal pb-0.5 self-start ${
+          selected ? "font-medium" : ""
+        }`}
+      >
         {selected ? "✓ " : ""}{cta}
       </span>
     </button>

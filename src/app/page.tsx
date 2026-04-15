@@ -49,7 +49,7 @@ export default async function Root() {
               See Pricing
             </Link>
           </div>
-          <p className="mt-4 text-xs text-cream-dim">No credit card required  14-day free trial</p>
+          <p className="mt-4 text-xs text-cream-dim">No credit card required · 14-day free trial</p>
         </div>
       </section>
 

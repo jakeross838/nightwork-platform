@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { logoutAction } from "@/app/login/actions";
 import { useOrgBranding } from "@/components/org-branding-provider";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
+import TrialBanner from "@/components/trial-banner";
 
 export type UserRole = "admin" | "pm" | "accounting" | "owner";
 
@@ -235,6 +236,7 @@ export default function NavBar() {
   const logoUrl = branding?.logo_url ?? null;
 
   return (
+    <>
     <header
       ref={menuRef}
       className="border-t-[3px] border-t-teal border-b border-brand-border bg-teal backdrop-blur-sm sticky top-0 z-40"
@@ -419,6 +421,8 @@ export default function NavBar() {
         </nav>
       )}
     </header>
+    <TrialBanner />
+    </>
   );
 }
 

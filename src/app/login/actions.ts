@@ -17,13 +17,39 @@ export async function loginAction(
   }
 
   const supabase = createServerClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: error.message };
   }
 
-  redirect("/");
+  // Route based on onboarding state so existing users don't bounce through
+  // the landing page on every sign-in. New orgs (or ones that ditched the
+  // wizard halfway) go to /onboard; everyone else lands on /dashboard.
+  if (user) {
+    const { data: member } = await supabase
+      .from("org_members")
+      .select("org_id")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    if (member?.org_id) {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("onboarding_complete")
+        .eq("id", member.org_id)
+        .maybeSingle();
+      if (org && !org.onboarding_complete) {
+        redirect("/onboard");
+      }
+    }
+  }
+
+  redirect("/dashboard");
 }
 
 export async function logoutAction() {

@@ -8,6 +8,7 @@ const TABS: Array<{ href: string; label: string }> = [
   { href: "/settings/team", label: "Team" },
   { href: "/settings/financial", label: "Financial" },
   { href: "/settings/cost-codes", label: "Cost Codes" },
+  { href: "/settings/billing", label: "Billing" },
 ];
 
 export default function SettingsTabs() {

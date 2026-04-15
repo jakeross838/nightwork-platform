@@ -1,6 +1,8 @@
 import Link from "next/link";
 import PublicHeader from "@/components/public-header";
 import PublicFooter from "@/components/public-footer";
+import { createServerClient } from "@/lib/supabase/server";
+import PricingCheckoutButton from "./PricingCheckoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -93,7 +95,7 @@ const PLANS: Plan[] = [
       "Dedicated account manager",
     ],
     cta: "Contact Us",
-    ctaHref: "mailto:sales@commandpost.app",
+    ctaHref: "mailto:hello@commandpost.app?subject=Enterprise%20Plan%20Inquiry",
   },
 ];
 
@@ -116,7 +118,13 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const supabase = createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isAuthed = Boolean(user);
+
   return (
     <div className="min-h-screen flex flex-col">
       <PublicHeader />
@@ -136,7 +144,7 @@ export default function PricingPage() {
       <section className="px-6 pb-20">
         <div className="max-w-[1240px] mx-auto grid md:grid-cols-2 xl:grid-cols-4 gap-4">
           {PLANS.map((p) => (
-            <PlanCard key={p.key} plan={p} />
+            <PlanCard key={p.key} plan={p} isAuthed={isAuthed} />
           ))}
         </div>
       </section>
@@ -160,8 +168,18 @@ export default function PricingPage() {
   );
 }
 
-function PlanCard({ plan }: { plan: Plan }) {
+function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
   const isContact = plan.ctaHref.startsWith("mailto:");
+  // For a logged-in admin/owner, paid plans should hit Stripe checkout
+  // directly rather than punt back through /signup. Logged-out users go to
+  // /signup like always — they have to have an org before they can subscribe.
+  const goesToCheckout = isAuthed && !isContact && plan.key !== "free_trial";
+
+  const buttonClass =
+    plan.highlight
+      ? "bg-teal text-white hover:bg-teal-hover"
+      : "border border-brand-border text-cream hover:bg-brand-surface";
+
   return (
     <div
       className={`flex flex-col p-6 border bg-white ${
@@ -202,14 +220,16 @@ function PlanCard({ plan }: { plan: Plan }) {
         >
           {plan.cta}
         </a>
+      ) : goesToCheckout ? (
+        <PricingCheckoutButton
+          plan={plan.key as "starter" | "professional" | "enterprise"}
+          label={plan.cta}
+          className={`mt-8 block text-center px-4 py-3 text-[13px] tracking-[0.08em] uppercase transition-colors ${buttonClass}`}
+        />
       ) : (
         <Link
           href={plan.ctaHref}
-          className={`mt-8 block text-center px-4 py-3 text-[13px] tracking-[0.08em] uppercase transition-colors ${
-            plan.highlight
-              ? "bg-teal text-white hover:bg-teal-hover"
-              : "border border-brand-border text-cream hover:bg-brand-surface"
-          }`}
+          className={`mt-8 block text-center px-4 py-3 text-[13px] tracking-[0.08em] uppercase transition-colors ${buttonClass}`}
         >
           {plan.cta}
         </Link>

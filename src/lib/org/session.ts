@@ -24,6 +24,8 @@ export type CurrentOrg = {
   payment_schedule_config: Record<string, unknown>;
   subscription_plan: "free_trial" | "starter" | "professional" | "enterprise";
   subscription_status: "trialing" | "active" | "past_due" | "cancelled";
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   trial_ends_at: string | null;
   ai_calls_this_month: number;
   ai_calls_limit: number;
@@ -44,7 +46,7 @@ const ORG_COLUMNS =
   "company_phone, company_email, company_website, " +
   "default_gc_fee_percentage, default_deposit_percentage, " +
   "payment_schedule_type, payment_schedule_config, " +
-  "subscription_plan, subscription_status, trial_ends_at, " +
+  "subscription_plan, subscription_status, stripe_customer_id, stripe_subscription_id, trial_ends_at, " +
   "ai_calls_this_month, ai_calls_limit, storage_used_bytes, " +
   "onboarding_complete, builder_type";
 
