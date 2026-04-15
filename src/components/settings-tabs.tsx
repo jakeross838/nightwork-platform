@@ -9,6 +9,7 @@ const TABS: Array<{ href: string; label: string }> = [
   { href: "/settings/financial", label: "Financial" },
   { href: "/settings/cost-codes", label: "Cost Codes" },
   { href: "/settings/usage", label: "Usage" },
+  { href: "/settings/admin", label: "Admin" },
   { href: "/settings/billing", label: "Billing" },
 ];
 

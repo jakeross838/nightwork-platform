@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { canDeleteVendor, formatBlockers } from "@/lib/deletion-guards";
+import { logActivity } from "@/lib/activity-log";
+import { getCurrentMembership } from "@/lib/org/session";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +68,53 @@ export async function PATCH(
     return NextResponse.json(data);
   } catch (err) {
     console.error("Vendor PATCH error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const membership = await getCurrentMembership();
+    if (!membership) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+    const supabase = createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const guard = await canDeleteVendor(id);
+    if (!guard.allowed) {
+      await logActivity({
+        org_id: membership.org_id,
+        user_id: user?.id ?? null,
+        entity_type: "vendor",
+        entity_id: id,
+        action: "delete_blocked",
+        details: { blockers: guard.blockers },
+      });
+      return NextResponse.json({ error: formatBlockers("delete vendor", guard) }, { status: 422 });
+    }
+
+    const { error } = await supabase
+      .from("vendors")
+      .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .is("deleted_at", null);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    await logActivity({
+      org_id: membership.org_id,
+      user_id: user?.id ?? null,
+      entity_type: "vendor",
+      entity_id: id,
+      action: "deleted",
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

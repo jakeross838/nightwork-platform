@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
+import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +132,22 @@ export const POST = withApiError(async (request: NextRequest, { params }: { para
       const { error: lineErr } = await supabase.from("change_order_lines").insert(rows);
       if (lineErr) throw new ApiError(lineErr.message, 500);
     }
+  }
+
+  if (coRow) {
+    await logActivity({
+      org_id: membership.org_id,
+      user_id: user.id,
+      entity_type: "change_order",
+      entity_id: coRow.id,
+      action: "created",
+      details: {
+        pcco_number: coRow.pcco_number,
+        amount,
+        co_type: coType,
+        initial_status: initialStatus,
+      },
+    });
   }
 
   return NextResponse.json({ id: coRow?.id, pcco_number: coRow?.pcco_number });

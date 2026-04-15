@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { notifyRole } from "@/lib/notifications";
+import { logActivity, logStatusChange } from "@/lib/activity-log";
+import { recalcLinesAndPOs } from "@/lib/recalc";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest) {
  // Get job info for G702 computations
  const { data: job } = await supabase
  .from("jobs")
- .select("original_contract_amount, current_contract_amount, deposit_percentage")
+ .select("original_contract_amount, current_contract_amount, deposit_percentage, approved_cos_total")
  .eq("id", job_id)
  .single();
 
@@ -117,14 +119,19 @@ export async function POST(request: NextRequest) {
  // This period total
  const thisPeriodTotal = invoices?.reduce((s, inv) => s + inv.total_amount, 0) ?? 0;
 
- // G702 Line 2: Net Change Orders from executed change_orders
+ // G702 Line 2: Net Change Orders. Phase 7b widens the source set —
+ // 'approved' and 'executed' both count. Only owner-type COs affect the
+ // contract (internal ones adjust budget only).
  const { data: changeOrders } = await supabase
  .from("change_orders")
- .select("total_with_fee")
+ .select("total_with_fee, amount, co_type")
  .eq("job_id", job_id)
- .eq("status", "executed")
+ .in("status", ["approved", "executed"])
  .is("deleted_at", null);
- const netChangeOrders = changeOrders?.reduce((s, co) => s + co.total_with_fee, 0) ?? 0;
+ const netChangeOrders =
+ changeOrders
+ ?.filter((co) => co.co_type === "owner")
+ .reduce((s, co) => s + (co.total_with_fee ?? co.amount ?? 0), 0) ?? 0;
 
  // G702 calculations
  const contractSumToDate = originalContractSum + netChangeOrders;
@@ -177,7 +184,51 @@ export async function POST(request: NextRequest) {
  .from("invoices")
  .update({ draw_id: draw.id, status: "in_draw" })
  .in("id", invoice_ids);
+
+ // Phase 7b: the flip from qa_approved → in_draw changes which invoice
+ // lines count toward budget invoiced / PO invoiced_total. Recalc every
+ // affected budget line + PO.
+ try {
+ const { data: lines } = await supabase
+ .from("invoice_line_items")
+ .select("budget_line_id, po_id")
+ .in("invoice_id", invoice_ids)
+ .is("deleted_at", null);
+ await recalcLinesAndPOs(
+ (lines ?? []).map((l) => l.budget_line_id),
+ (lines ?? []).map((l) => l.po_id)
+ );
+ } catch (recalcErr) {
+ console.warn(
+ `[draw create recalc] ${recalcErr instanceof Error ? recalcErr.message : recalcErr}`
+ );
  }
+
+ for (const id of invoice_ids) {
+ await logStatusChange({
+ org_id: ORG_ID,
+ user_id: null,
+ entity_type: "invoice",
+ entity_id: id,
+ from: "qa_approved",
+ to: "in_draw",
+ reason: `Pulled into draw #${drawNumber}`,
+ });
+ }
+ }
+
+ await logActivity({
+ org_id: ORG_ID,
+ user_id: null,
+ entity_type: "draw",
+ entity_id: draw.id as string,
+ action: "created",
+ details: {
+ draw_number: drawNumber,
+ invoice_count: invoice_ids.length,
+ current_payment_due: currentPaymentDue,
+ },
+ });
 
  // Notify owner + admins so they can review the new draw.
  try {

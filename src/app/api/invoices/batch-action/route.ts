@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { recalcLinesAndPOs } from "@/lib/recalc";
+import { logStatusChange } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
  // Fetch all requested invoices
  const { data: invoices, error: fetchError } = await supabase
  .from("invoices")
- .select("id, status, status_history, job_id, cost_code_id")
+ .select("id, status, status_history, job_id, cost_code_id, org_id")
  .in("id", invoice_ids)
  .is("deleted_at", null);
 
@@ -131,6 +133,40 @@ export async function POST(request: NextRequest) {
  } else {
  success.push(id);
  }
+ }
+ }
+
+ // Phase 7b: recalc + log for every successfully-flipped invoice.
+ if (success.length > 0) {
+ const { data: { user } } = await supabase.auth.getUser();
+ try {
+ const { data: lines } = await supabase
+ .from("invoice_line_items")
+ .select("invoice_id, budget_line_id, po_id")
+ .in("invoice_id", success)
+ .is("deleted_at", null);
+ await recalcLinesAndPOs(
+ (lines ?? []).map((l) => l.budget_line_id),
+ (lines ?? []).map((l) => l.po_id)
+ );
+ } catch (recalcErr) {
+ console.warn(
+ `[batch-action recalc] ${recalcErr instanceof Error ? recalcErr.message : recalcErr}`
+ );
+ }
+ for (const id of success) {
+ const inv = invoiceMap.get(id);
+ if (!inv) continue;
+ await logStatusChange({
+ org_id: (inv.org_id as string | null) ?? "00000000-0000-0000-0000-000000000001",
+ user_id: user?.id ?? null,
+ entity_type: "invoice",
+ entity_id: id,
+ from: inv.status,
+ to: action === "approve" ? "qa_review" : "pm_held",
+ reason: note,
+ extra: { action, batch: true },
+ });
  }
  }
 

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
+import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +62,19 @@ export async function POST(request: NextRequest) {
  );
  }
 
+ // Also repoint purchase_orders so the merge survives the finance chain.
+ const { error: poErr } = await supabase
+ .from("purchase_orders")
+ .update({ vendor_id: primary_id, updated_at: new Date().toISOString() })
+ .in("vendor_id", idsToMerge);
+ if (poErr) {
+ console.error("Failed to update POs during vendor merge:", poErr);
+ return NextResponse.json(
+ { error: `Failed to update purchase orders: ${poErr.message}` },
+ { status: 500 }
+ );
+ }
+
  // Soft-delete the merged vendors
  const { error: deleteErr } = await supabase
  .from("vendors")
@@ -72,6 +87,22 @@ export async function POST(request: NextRequest) {
  { error: `Failed to soft-delete vendors: ${deleteErr.message}` },
  { status: 500 }
  );
+ }
+
+ // Activity log: one entry per merged vendor pointing at the surviving vendor_id.
+ const membership = await getCurrentMembership();
+ const { data: { user } } = await supabase.auth.getUser();
+ if (membership) {
+ for (const mergedId of idsToMerge) {
+ await logActivity({
+ org_id: membership.org_id,
+ user_id: user?.id ?? null,
+ entity_type: "vendor",
+ entity_id: mergedId,
+ action: "merged",
+ details: { into_vendor_id: primary_id, into_vendor_name: primary.name },
+ });
+ }
  }
 
  return NextResponse.json({

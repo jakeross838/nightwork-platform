@@ -100,6 +100,11 @@ export default function DrawDetailPage() {
  sort_order: li.budget_lines.cost_codes.sort_order,
  original_estimate: li.budget_lines.original_estimate,
  revised_estimate: li.budget_lines.revised_estimate,
+ // Phase 7b: scheduled_value is the revised contract value for this line.
+ scheduled_value: (li as unknown as { scheduled_value?: number }).scheduled_value ?? li.budget_lines.revised_estimate,
+ co_adjustment: (li as unknown as { co_adjustment?: number }).co_adjustment ?? 0,
+ is_change_order_line: !!(li as unknown as { is_change_order_line?: boolean }).is_change_order_line ||
+ !!(li.budget_lines.cost_codes as { is_change_order?: boolean }).is_change_order,
  previous_applications: li.previous_applications,
  this_period: li.this_period,
  total_to_date: li.total_to_date,
@@ -113,16 +118,23 @@ export default function DrawDetailPage() {
  r.original_estimate > 0 || r.revised_estimate > 0 || r.previous_applications > 0 || r.this_period > 0
  );
 
+ // Phase 7b: split into base contract and CO lines so the G703 groups match
+ // the AIA format where CO-driven scope sits below the base.
+ const baseRows = visibleRows.filter((r) => !r.is_change_order_line);
+ const coRows = visibleRows.filter((r) => r.is_change_order_line);
+ const hasNoBudget = draw.line_items.length === 0;
+
  // Grand totals
  const totals = visibleRows.reduce(
  (acc, r) => ({
  original: acc.original + r.original_estimate,
+ scheduled: acc.scheduled + r.scheduled_value,
  previous: acc.previous + r.previous_applications,
  thisPeriod: acc.thisPeriod + r.this_period,
  totalToDate: acc.totalToDate + r.total_to_date,
  balance: acc.balance + r.balance_to_finish,
  }),
- { original: 0, previous: 0, thisPeriod: 0, totalToDate: 0, balance: 0 }
+ { original: 0, scheduled: 0, previous: 0, thisPeriod: 0, totalToDate: 0, balance: 0 }
  );
 
  // G702/G703 balance check: G703 This Period must equal G702 Current Payment Due
@@ -262,13 +274,18 @@ export default function DrawDetailPage() {
  </div>
  )}
  <p className="section-label">G703 — Continuation Sheet</p>
+ {hasNoBudget && (
+ <div className="mt-3 border border-status-warning/40 bg-status-warning/5 px-4 py-3 text-sm text-status-warning">
+ No budget loaded for this job — scheduled values fall back to the job contract. Import a budget on the Budget tab for accurate G703 math.
+ </div>
+ )}
  <div className="mt-5 overflow-x-auto border border-brand-border">
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider sticky left-0 bg-brand-surface z-10">A — Item</th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">B — Description</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">C — Original Est.</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">C — Scheduled Value</th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">D — Previous</th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">E — This Period</th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">F — Total to Date</th>
@@ -277,7 +294,13 @@ export default function DrawDetailPage() {
  </tr>
  </thead>
  <tbody>
- {visibleRows.map((row, idx) => {
+ {/* Phase 7b: base contract rows first, then a divider, then CO rows. */}
+ {baseRows.length > 0 && (
+ <tr className="bg-brand-surface/40 border-t border-brand-border">
+ <td colSpan={8} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-cream-dim font-semibold">Base Contract</td>
+ </tr>
+ )}
+ {baseRows.map((row, idx) => {
  const overBudget = row.balance_to_finish < 0;
  const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
  const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
@@ -285,7 +308,14 @@ export default function DrawDetailPage() {
  <tr key={row.code} className={`border-t border-brand-row-border ${highlight}`}>
  <td className={`py-3 px-4 text-teal font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-brand-card"}`}>{row.code}</td>
  <td className="py-3 px-4 text-cream">{row.description}</td>
- <td className="py-3 px-4 text-cream text-right">{formatCents(row.original_estimate)}</td>
+ <td className="py-3 px-4 text-cream text-right">
+ {formatCents(row.scheduled_value)}
+ {row.co_adjustment > 0 && (
+ <span className="text-[10px] text-teal ml-1" title={`Includes ${formatCents(row.co_adjustment)} in approved COs`}>
+ (+{formatCents(row.co_adjustment)} CO)
+ </span>
+ )}
+ </td>
  <td className="py-3 px-4 text-cream text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}</td>
  <td className="py-3 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
  <td className="py-3 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}</td>
@@ -297,16 +327,45 @@ export default function DrawDetailPage() {
  </tr>
  );
  })}
+ {coRows.length > 0 && (
+ <tr className="bg-brass/10 border-t-2 border-brass/40">
+ <td colSpan={8} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-brass font-semibold">
+ Change Orders · PCCO adjustments
+ </td>
+ </tr>
+ )}
+ {coRows.map((row, idx) => {
+ const overBudget = row.balance_to_finish < 0;
+ const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
+ const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
+ return (
+ <tr key={row.code} className={`border-t border-brand-row-border ${highlight}`}>
+ <td className={`py-3 px-4 text-brass font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-brand-card"}`}>{row.code}</td>
+ <td className="py-3 px-4 text-cream">
+ {row.description}
+ <span className="ml-2 text-[10px] text-brass uppercase tracking-wider">CO</span>
+ </td>
+ <td className="py-3 px-4 text-cream text-right">{formatCents(row.scheduled_value)}</td>
+ <td className="py-3 px-4 text-cream text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}</td>
+ <td className="py-3 px-4 text-right font-medium">{row.this_period > 0 ? <span className="text-teal">{formatCents(row.this_period)}</span> : <span className="text-cream-dim">—</span>}</td>
+ <td className="py-3 px-4 text-cream text-right">{row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}</td>
+ <td className="py-3 px-4 text-cream-muted text-right">{row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}</td>
+ <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>
+ {formatCents(row.balance_to_finish)}
+ </td>
+ </tr>
+ );
+ })}
  </tbody>
  <tfoot>
  <tr className="border-t border-brand-border-light bg-brand-surface">
  <td colSpan={2} className="py-3 px-4 text-cream font-medium">Grand Total</td>
- <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.original)}</td>
+ <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.scheduled)}</td>
  <td className="py-3 px-4 text-cream text-right font-display font-medium">{totals.previous > 0 ? formatCents(totals.previous) : <span className="text-cream-dim">—</span>}</td>
  <td className="py-3 px-4 text-teal text-right font-display font-medium">{formatCents(totals.thisPeriod)}</td>
  <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.totalToDate)}</td>
  <td className="py-3 px-4 text-cream-dim text-right">
- {totals.original > 0 ? `${((totals.totalToDate / totals.original) * 100).toFixed(1)}%` : "—"}
+ {totals.scheduled > 0 ? `${((totals.totalToDate / totals.scheduled) * 100).toFixed(1)}%` : "—"}
  </td>
  <td className="py-3 px-4 text-cream text-right font-display font-medium">{formatCents(totals.balance)}</td>
  </tr>

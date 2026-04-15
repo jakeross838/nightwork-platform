@@ -11,7 +11,8 @@ interface BudgetLineRow {
  original_estimate: number;
  revised_estimate: number;
  previous_applications_baseline: number;
- cost_codes: { code: string; description: string; category: string; sort_order: number };
+ co_adjustments?: number;
+ cost_codes: { code: string; description: string; category: string; sort_order: number; is_change_order?: boolean };
 }
 
 export async function GET(
@@ -55,8 +56,8 @@ export async function GET(
  const { data: fetchedBudgetLines } = await supabase
  .from("budget_lines")
  .select(`
- id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline,
- cost_codes:cost_code_id (code, description, category, sort_order)
+ id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline, co_adjustments,
+ cost_codes:cost_code_id (code, description, category, sort_order, is_change_order)
  `)
  .eq("job_id", draw.job_id)
  .is("deleted_at", null);
@@ -91,8 +92,8 @@ export async function GET(
  const { data: existingBl } = await supabase
  .from("budget_lines")
  .select(`
- id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline,
- cost_codes:cost_code_id (code, description, category, sort_order)
+ id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline, co_adjustments,
+ cost_codes:cost_code_id (code, description, category, sort_order, is_change_order)
  `)
  .eq("job_id", draw.job_id)
  .eq("cost_code_id", ccId)
@@ -110,8 +111,8 @@ export async function GET(
  .from("budget_lines")
  .insert({ job_id: draw.job_id, cost_code_id: ccId, original_estimate: 0, revised_estimate: 0, previous_applications_baseline: 0, org_id: ORG_ID })
  .select(`
- id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline,
- cost_codes:cost_code_id (code, description, category, sort_order)
+ id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline, co_adjustments,
+ cost_codes:cost_code_id (code, description, category, sort_order, is_change_order)
  `)
  .single();
  if (created) {
@@ -166,6 +167,11 @@ export async function GET(
  total_to_date: totalToDate,
  percent_complete: percentComplete,
  balance_to_finish: balanceToFinish,
+ // Phase 7b: scheduled_value = revised_estimate. The G703 should show
+ // revised (= original + approved COs) as the contract-value column.
+ scheduled_value: bl.revised_estimate,
+ co_adjustment: bl.co_adjustments ?? Math.max(0, bl.revised_estimate - bl.original_estimate),
+ is_change_order_line: !!bl.cost_codes?.is_change_order,
  budget_lines: {
  id: bl.id,
  original_estimate: bl.original_estimate,

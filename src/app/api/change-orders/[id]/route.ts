@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
+import { recalcBudgetLine, recalcJobContract } from "@/lib/recalc";
+import { logActivity, logStatusChange } from "@/lib/activity-log";
+import { canVoidCO, formatBlockers } from "@/lib/deletion-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +114,23 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     if (["approved", "denied"].includes(body.status) && !["owner", "admin"].includes(profile.role)) {
       throw new ApiError("Only owners/admins can approve or deny change orders", 403);
     }
+
+    // Void guard: block if draws were submitted after the CO was approved.
+    if (body.status === "void" && ["approved", "executed"].includes(co.status)) {
+      const guard = await canVoidCO(params.id);
+      if (!guard.allowed) {
+        await logActivity({
+          org_id: membership.org_id,
+          user_id: user.id,
+          entity_type: "change_order",
+          entity_id: params.id,
+          action: "void_blocked",
+          details: { blockers: guard.blockers },
+        });
+        throw new ApiError(formatBlockers("void", guard), 422);
+      }
+    }
+
     const history = Array.isArray(co.status_history) ? co.status_history : [];
     patch.status = body.status;
     patch.status_history = [
@@ -163,6 +183,94 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
       const { error: lineErr } = await supabase.from("change_order_lines").insert(rows);
       if (lineErr) throw new ApiError(lineErr.message, 500);
     }
+  }
+
+  // Phase 7b: on status flip or line changes, recalc every budget line the
+  // CO touches + the job contract; log the transition.
+  try {
+    const { data: allLines } = await supabase
+      .from("change_order_lines")
+      .select("budget_line_id, cost_code")
+      .eq("co_id", params.id)
+      .is("deleted_at", null);
+    const budgetLineIds = new Set<string>();
+    for (const l of allLines ?? []) {
+      if (l.budget_line_id) budgetLineIds.add(l.budget_line_id as string);
+    }
+
+    // On approval, any CO line that references a cost_code without a
+    // matching budget_line gets a new budget_line auto-created with
+    // original_estimate=0 so the CO adjustment has somewhere to land.
+    if (body.status === "approved") {
+      const missing = (allLines ?? []).filter(
+        (l) => !l.budget_line_id && l.cost_code
+      );
+      if (missing.length > 0) {
+        const { data: codes } = await supabase
+          .from("cost_codes")
+          .select("id, code")
+          .eq("org_id", membership.org_id)
+          .in(
+            "code",
+            missing.map((m) => String(m.cost_code))
+          )
+          .is("deleted_at", null);
+        const byCode = new Map((codes ?? []).map((c) => [c.code, c.id as string]));
+        for (const l of missing) {
+          const ccId = byCode.get(String(l.cost_code));
+          if (!ccId) continue;
+          const { data: created } = await supabase
+            .from("budget_lines")
+            .insert({
+              org_id: membership.org_id,
+              job_id: co.job_id,
+              cost_code_id: ccId,
+              original_estimate: 0,
+              revised_estimate: 0,
+              previous_applications_baseline: 0,
+            })
+            .select("id")
+            .single();
+          if (created?.id) {
+            budgetLineIds.add(created.id as string);
+            await supabase
+              .from("change_order_lines")
+              .update({ budget_line_id: created.id })
+              .eq("co_id", params.id)
+              .eq("cost_code", l.cost_code)
+              .is("deleted_at", null);
+          }
+        }
+      }
+    }
+
+    for (const bl of Array.from(budgetLineIds)) await recalcBudgetLine(bl);
+    await recalcJobContract(co.job_id);
+  } catch (recalcErr) {
+    console.warn(
+      `[co patch recalc] ${recalcErr instanceof Error ? recalcErr.message : recalcErr}`
+    );
+  }
+
+  if (body.status && body.status !== co.status) {
+    await logStatusChange({
+      org_id: membership.org_id,
+      user_id: user.id,
+      entity_type: "change_order",
+      entity_id: params.id,
+      from: co.status as string,
+      to: body.status,
+      reason: body.denied_reason ?? body.note,
+    });
+  } else {
+    await logActivity({
+      org_id: membership.org_id,
+      user_id: user.id,
+      entity_type: "change_order",
+      entity_id: params.id,
+      action: "updated",
+      details: { fields: Object.keys(patch) },
+    });
   }
 
   return NextResponse.json({ ok: true });

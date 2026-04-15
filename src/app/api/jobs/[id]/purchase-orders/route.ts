@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
+import { logActivity } from "@/lib/activity-log";
+import { recalcBudgetLine, recalcPO } from "@/lib/recalc";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +133,30 @@ export const POST = withApiError(async (request: NextRequest, { params }: { para
       if (liErr) throw new ApiError(liErr.message, 500);
     }
   }
+
+  // Recalc the referenced budget line(s) + the new PO's own totals, then log.
+  try {
+    const budgetLines = new Set<string>();
+    if (body.budget_line_id) budgetLines.add(body.budget_line_id);
+    for (const li of body.line_items ?? []) {
+      if (li.budget_line_id) budgetLines.add(li.budget_line_id);
+    }
+    for (const bl of Array.from(budgetLines)) await recalcBudgetLine(bl);
+    await recalcPO(inserted.id);
+  } catch (recalcErr) {
+    console.warn(
+      `[po create recalc] ${recalcErr instanceof Error ? recalcErr.message : recalcErr}`
+    );
+  }
+
+  await logActivity({
+    org_id: membership.org_id,
+    user_id: user.id,
+    entity_type: "purchase_order",
+    entity_id: inserted.id,
+    action: "created",
+    details: { po_number: inserted.po_number, amount: finalAmount, status },
+  });
 
   return NextResponse.json({ id: inserted.id, po_number: inserted.po_number });
 });

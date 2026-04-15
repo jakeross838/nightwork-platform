@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
+import { recalcBudgetLine, recalcPO } from "@/lib/recalc";
+import { logActivity, logStatusChange } from "@/lib/activity-log";
+import { canVoidPO, formatBlockers } from "@/lib/deletion-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +86,7 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
   const body: PatchBody = await request.json();
   const { data: po, error: fetchErr } = await supabase
     .from("purchase_orders")
-    .select("status, status_history, amount, issued_date")
+    .select("status, status_history, amount, issued_date, budget_line_id")
     .eq("id", params.id)
     .is("deleted_at", null)
     .single();
@@ -100,6 +103,23 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
   if (body.notes !== undefined) patch.notes = body.notes;
 
   if (body.status && body.status !== po.status) {
+    // Void guard: if an invoice linked to this PO is already in a draw or
+    // paid, voiding would orphan that committed spend.
+    if (body.status === "void") {
+      const guard = await canVoidPO(params.id);
+      if (!guard.allowed) {
+        await logActivity({
+          org_id: membership.org_id,
+          user_id: user.id,
+          entity_type: "purchase_order",
+          entity_id: params.id,
+          action: "void_blocked",
+          details: { blockers: guard.blockers },
+        });
+        throw new ApiError(formatBlockers("void", guard), 422);
+      }
+    }
+
     const history = Array.isArray(po.status_history) ? po.status_history : [];
     patch.status = body.status;
     patch.status_history = [
@@ -122,6 +142,29 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     .update(patch)
     .eq("id", params.id);
   if (updateErr) throw new ApiError(updateErr.message, 500);
+
+  // Phase 7b: void cascades. When a PO flips to void, detach every invoice
+  // line that pointed at it (set po_id = null) so those lines fall back to
+  // their cost-code-matched budget line. Log + recalc affected lines.
+  const flippedToVoid = body.status === "void" && po.status !== "void";
+  let affectedBudgetLineIds: string[] = [];
+  if (flippedToVoid) {
+    const { data: linked } = await supabase
+      .from("invoice_line_items")
+      .select("id, budget_line_id")
+      .eq("po_id", params.id)
+      .is("deleted_at", null);
+    affectedBudgetLineIds = (linked ?? [])
+      .map((l) => l.budget_line_id as string | null)
+      .filter((x): x is string => !!x);
+    if ((linked ?? []).length > 0) {
+      await supabase
+        .from("invoice_line_items")
+        .update({ po_id: null })
+        .eq("po_id", params.id)
+        .is("deleted_at", null);
+    }
+  }
 
   // Replace line items if provided.
   if (body.line_items) {
@@ -147,18 +190,96 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     }
   }
 
+  // Phase 7b: recalc + log. Recalc hits the PO itself (so invoiced_total/
+  // status are fresh) and the header's budget_line plus any detached lines.
+  try {
+    const budgetLinesToRecalc = new Set<string>();
+    if (po.budget_line_id) budgetLinesToRecalc.add(po.budget_line_id as unknown as string);
+    if (body.budget_line_id && body.budget_line_id !== po.budget_line_id) {
+      budgetLinesToRecalc.add(body.budget_line_id);
+    }
+    for (const bl of affectedBudgetLineIds) budgetLinesToRecalc.add(bl);
+    // If line_items were swapped, recalc every budget_line referenced in them.
+    if (body.line_items) {
+      for (const li of body.line_items) {
+        if (li.budget_line_id) budgetLinesToRecalc.add(li.budget_line_id);
+      }
+    }
+    for (const bl of Array.from(budgetLinesToRecalc)) await recalcBudgetLine(bl);
+    await recalcPO(params.id);
+  } catch (recalcErr) {
+    console.warn(
+      `[po patch recalc] ${recalcErr instanceof Error ? recalcErr.message : recalcErr}`
+    );
+  }
+
+  if (body.status && body.status !== po.status) {
+    await logStatusChange({
+      org_id: membership.org_id,
+      user_id: user.id,
+      entity_type: "purchase_order",
+      entity_id: params.id,
+      from: po.status as string,
+      to: body.status,
+      reason: body.note,
+      extra: flippedToVoid ? { detached_invoice_lines: affectedBudgetLineIds.length } : undefined,
+    });
+  } else {
+    await logActivity({
+      org_id: membership.org_id,
+      user_id: user.id,
+      entity_type: "purchase_order",
+      entity_id: params.id,
+      action: "updated",
+      details: { fields: Object.keys(patch) },
+    });
+  }
+
   return NextResponse.json({ ok: true });
 });
 
 export const DELETE = withApiError(async (_req: NextRequest, { params }: { params: { id: string } }) => {
+  const membership = await getCurrentMembership();
+  if (!membership) throw new ApiError("Not authenticated", 401);
   const supabase = createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
+
+  const guard = await canVoidPO(params.id);
+  if (!guard.allowed) {
+    await logActivity({
+      org_id: membership.org_id,
+      user_id: user.id,
+      entity_type: "purchase_order",
+      entity_id: params.id,
+      action: "delete_blocked",
+      details: { blockers: guard.blockers },
+    });
+    throw new ApiError(formatBlockers("delete", guard), 422);
+  }
+
+  // Grab budget_line_id so we can recalc after soft-delete.
+  const { data: existing } = await supabase
+    .from("purchase_orders")
+    .select("budget_line_id, status")
+    .eq("id", params.id)
+    .single();
 
   const { error } = await supabase
     .from("purchase_orders")
     .update({ deleted_at: new Date().toISOString(), status: "void" })
     .eq("id", params.id);
   if (error) throw new ApiError(error.message, 500);
+
+  if (existing?.budget_line_id) await recalcBudgetLine(existing.budget_line_id as string);
+  await logActivity({
+    org_id: membership.org_id,
+    user_id: user.id,
+    entity_type: "purchase_order",
+    entity_id: params.id,
+    action: "deleted",
+    details: { from_status: existing?.status ?? null },
+  });
+
   return NextResponse.json({ ok: true });
 });

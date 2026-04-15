@@ -4,6 +4,8 @@ import {
   notifyRole,
   notifyUser,
 } from "@/lib/notifications";
+import { recalcLinesAndPOs } from "@/lib/recalc";
+import { logStatusChange } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
 
@@ -174,6 +176,43 @@ export async function POST(
  if (updateError) {
  return NextResponse.json({ error: updateError.message }, { status: 500 });
  }
+
+ // ─── Phase 7b: recalc downstream totals + activity log ─────────────
+ // The DB triggers added in 00028 already keep these in sync, but we
+ // call the TS recalcs explicitly so any caller reading a fresh copy of
+ // the row sees the new totals in the same request cycle, and so this
+ // is the documented source of truth for the status transition.
+ try {
+ // Fetch every line item on this invoice so we know which budget lines
+ // and POs to recompute. Both old status → new status (and vice versa)
+ // change the "counting" set, so we recalc unconditionally.
+ const { data: lines } = await supabase
+ .from("invoice_line_items")
+ .select("budget_line_id, po_id")
+ .eq("invoice_id", params.id)
+ .is("deleted_at", null);
+ await recalcLinesAndPOs(
+ (lines ?? []).map((l) => l.budget_line_id),
+ (lines ?? []).map((l) => l.po_id)
+ );
+ } catch (recalcErr) {
+ console.warn(
+ `[invoice action recalc] ${recalcErr instanceof Error ? recalcErr.message : recalcErr}`
+ );
+ }
+
+ // Activity log — one row per user-visible status transition.
+ const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+ await logStatusChange({
+ org_id: (invoice.org_id as string | null) ?? "00000000-0000-0000-0000-000000000001",
+ user_id: userId,
+ entity_type: "invoice",
+ entity_id: params.id,
+ from: invoice.status,
+ to: finalStatus,
+ reason: note,
+ extra: { action },
+ });
 
  // Fire-and-forget notifications. Wrapped so any dispatch failure cannot
  // block the action response — the invoice already advanced status.
