@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatDollars, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
+import { formatCents, formatDollars, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, formatWho, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 import InvoiceFilePreview from "@/components/invoice-file-preview";
 import InvoiceStatusTimeline from "@/components/invoice-status-timeline";
@@ -395,29 +395,7 @@ function statusDotColor(newStatus: string): string {
  return "bg-teal"; // forward progress: pm_review, qa_review, ai_processed
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Renders a status_history `who` value for display. Newer entries store the
- * acting user's UUID so we can resolve to their real name; legacy entries
- * held a role string ("pm" / "accounting" / "system") and fall back to a
- * Title-Cased label.
- */
-const LEGACY_ROLE_LABEL: Record<string, string> = {
- pm: "PM",
- accounting: "Accounting",
- owner: "Owner",
- admin: "Admin",
- system: "System",
-};
-
-function formatWho(who: string, names: Map<string, string>): string {
- if (!who) return "";
- if (UUID_RE.test(who)) {
- return names.get(who) ?? "User";
- }
- return LEGACY_ROLE_LABEL[who] ?? (who.charAt(0).toUpperCase() + who.slice(1));
-}
+// formatWho is imported from lib/utils/format
 
 // ── Main Page ───────────────────────────────────────────
 export default function InvoiceReviewPage() {

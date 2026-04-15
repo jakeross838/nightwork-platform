@@ -105,8 +105,10 @@ export async function POST(
 
     const nowIso = new Date().toISOString();
     const existingHistory = Array.isArray(draw.status_history) ? draw.status_history : [];
+    // Prefer the acting user's UUID so the UI resolver can render their name.
+    const { data: { user: actor } } = await supabase.auth.getUser();
     const statusEntry = {
-      who: "user",
+      who: actor?.id ?? "user",
       when: nowIso,
       old_status: draw.status,
       new_status: rule.next,

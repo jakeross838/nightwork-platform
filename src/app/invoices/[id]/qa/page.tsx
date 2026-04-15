@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
-import { formatCents, formatDollars, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
+import { supabase } from "@/lib/supabase/client";
+import { formatCents, formatDollars, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime, formatWho, statusBadgeOutline } from "@/lib/utils/format";
 
 interface QaLineItem {
  id: string;
@@ -51,6 +52,7 @@ export default function QaReviewPage() {
  const [qbNotes, setQbNotes] = useState("");
  const [showKickBack, setShowKickBack] = useState(false);
  const [kickBackNote, setKickBackNote] = useState("");
+ const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
 
  useEffect(() => {
  async function fetch() {
@@ -69,6 +71,34 @@ export default function QaReviewPage() {
  }
  fetch();
  }, [invoiceId, router]);
+
+ // Resolve status_history `who` UUIDs to real names for the sidebar.
+ useEffect(() => {
+ const history = invoice?.status_history;
+ if (!history || history.length === 0) return;
+ const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+ const ids = new Set<string>();
+ for (const entry of history) {
+ const who = String((entry as { who?: unknown }).who ?? "");
+ if (uuidRe.test(who) && !userNames.has(who)) ids.add(who);
+ }
+ if (ids.size === 0) return;
+ (async () => {
+ const { data } = await supabase
+ .from("profiles")
+ .select("id, full_name")
+ .in("id", Array.from(ids));
+ if (!data) return;
+ setUserNames((prev) => {
+ const next = new Map(prev);
+ for (const row of data as Array<{ id: string; full_name: string | null }>) {
+ if (row.full_name) next.set(row.id, row.full_name);
+ }
+ return next;
+ });
+ })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [invoice?.status_history]);
 
  const handleQaApprove = async () => {
  setSaving(true);
@@ -336,7 +366,7 @@ export default function QaReviewPage() {
  <div className={`absolute left-0 top-1 w-[15px] h-[15px] border-2 border-brand-card ${statusDotColor(ns)}`} />
  <div className="text-xs">
  <p className="text-cream font-medium">{formatStatus(String(entry.old_status))} &rarr; {formatStatus(ns)}</p>
- <p className="text-cream-dim mt-0.5">{String(entry.who)} &mdash; {formatDateTime(String(entry.when))}</p>
+ <p className="text-cream-dim mt-0.5">{formatWho(String(entry.who), userNames)} &mdash; {formatDateTime(String(entry.when))}</p>
  {entry.note ? <p className="text-cream-dim/80 mt-1 italic text-[11px]">{String(entry.note)}</p> : null}
  </div>
  </div>

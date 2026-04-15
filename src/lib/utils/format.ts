@@ -131,3 +131,28 @@ function titleCase(str: string): string {
  .replace(/_/g, " ")
  .replace(/\b\w/g, (c) => c.toUpperCase());
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const LEGACY_ROLE_LABEL: Record<string, string> = {
+ pm: "PM",
+ accounting: "Accounting",
+ owner: "Owner",
+ admin: "Admin",
+ system: "System",
+ user: "User",
+};
+
+/**
+ * Render a status_history `who` value. Newer writes store the acting user's
+ * UUID so the UI can resolve to their real name via `names`. Legacy entries
+ * held a role string ("pm" / "accounting" / "system") and fall back to a
+ * title-cased label.
+ */
+export function formatWho(who: string, names?: Map<string, string>): string {
+ if (!who) return "";
+ if (UUID_RE.test(who)) {
+ return names?.get(who) ?? "User";
+ }
+ return LEGACY_ROLE_LABEL[who] ?? (who.charAt(0).toUpperCase() + who.slice(1));
+}

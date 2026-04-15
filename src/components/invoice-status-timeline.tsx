@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { formatWho } from "@/lib/utils/format";
 
 type StatusEntry = {
   who?: unknown;
@@ -21,21 +22,7 @@ type Props = {
   userNames?: Map<string, string>;
 };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const LEGACY_ROLE_LABEL: Record<string, string> = {
-  pm: "PM",
-  accounting: "Accounting",
-  owner: "Owner",
-  admin: "Admin",
-  system: "System",
-};
-
-function formatWho(who: string, names?: Map<string, string>): string {
-  if (!who) return "";
-  if (UUID_RE.test(who)) return names?.get(who) ?? "User";
-  return LEGACY_ROLE_LABEL[who] ?? (who.charAt(0).toUpperCase() + who.slice(1));
-}
+// formatWho is imported from lib/utils/format
 
 const STANDARD_FLOW: Array<{ key: string; label: string }> = [
   { key: "received", label: "Received" },
@@ -170,7 +157,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                   }
                 />
               )}
-              <TimelineDot stage={stage} />
+              <TimelineDot stage={stage} userNames={userNames} />
               <div className="mt-2 text-[10px] text-center text-cream-dim leading-tight px-1">
                 {stage.label}
                 {stage.entry?.when ? (
@@ -222,7 +209,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                 />
               )}
               <div className="absolute left-0 top-0.5">
-                <TimelineDot stage={stage} />
+                <TimelineDot stage={stage} userNames={userNames} />
               </div>
               <div className="text-xs">
                 <p className={`font-medium ${stage.isCurrent ? "text-cream" : stage.isPast ? "text-cream-muted" : "text-cream-dim"}`}>
@@ -266,6 +253,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
 
 function TimelineDot({
   stage,
+  userNames,
 }: {
   stage: {
     key: string;
@@ -274,6 +262,7 @@ function TimelineDot({
     isPast: boolean;
     entry: StatusEntry | null;
   };
+  userNames?: Map<string, string>;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -297,7 +286,7 @@ function TimelineDot({
           {stage.entry.when ? (
             <p className="text-cream-dim mt-0.5">
               {formatDateTime(String(stage.entry.when))}
-              {stage.entry.who ? ` — ${String(stage.entry.who)}` : ""}
+              {stage.entry.who ? ` — ${formatWho(String(stage.entry.who), userNames)}` : ""}
             </p>
           ) : null}
           {stage.entry.note ? (
