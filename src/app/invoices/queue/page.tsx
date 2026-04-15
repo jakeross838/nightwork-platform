@@ -956,17 +956,17 @@ export default function QueuePage() {
  </span>
  {(() => {
  const d = daysAgo(inv.received_date);
- let badge: { label: string; className: string } | null = null;
- if (d >= 90) badge = { label: "90d+", className: "bg-status-danger text-white border-status-danger" };
- else if (d >= 61) badge = { label: "60d", className: "bg-brass text-white border-brass" };
- else if (d >= 30) badge = { label: "30d", className: "bg-status-warning-muted text-brass border-brass/60" };
+ let badge: { label: string; style: React.CSSProperties } | null = null;
+ if (d >= 90) badge = { label: "90d+", style: { backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#DC2626" } };
+ else if (d >= 61) badge = { label: "60d+", style: { backgroundColor: "#F97316", color: "#FFFFFF", borderColor: "#EA580C" } };
+ else if (d >= 30) badge = { label: "30d+", style: { backgroundColor: "#EAB308", color: "#1F2937", borderColor: "#CA8A04" } };
  return (
  <>
  <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
  {d}d
  </span>
  {badge && (
- <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold border ${badge.className}`}>
+ <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border" style={badge.style}>
  {badge.label}
  </span>
  )}
@@ -1253,17 +1253,17 @@ export default function QueuePage() {
  <td className="py-4 px-5 text-right">
  {(() => {
  const d = daysAgo(inv.received_date);
- let badge: { label: string; className: string } | null = null;
- if (d >= 90) badge = { label: "90d+", className: "bg-status-danger text-white border-status-danger" };
- else if (d >= 61) badge = { label: "60d", className: "bg-brass text-white border-brass" };
- else if (d >= 30) badge = { label: "30d", className: "bg-status-warning-muted text-brass border-brass/60" };
+ let badge: { label: string; style: React.CSSProperties } | null = null;
+ if (d >= 90) badge = { label: "90d+", style: { backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#DC2626" } };
+ else if (d >= 61) badge = { label: "60d+", style: { backgroundColor: "#F97316", color: "#FFFFFF", borderColor: "#EA580C" } };
+ else if (d >= 30) badge = { label: "30d+", style: { backgroundColor: "#EAB308", color: "#1F2937", borderColor: "#CA8A04" } };
  return (
  <div className="flex items-center justify-end gap-1.5">
  <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
  {d}d
  </span>
  {badge && (
- <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold border ${badge.className}`}>
+ <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border" style={badge.style}>
  {badge.label}
  </span>
  )}

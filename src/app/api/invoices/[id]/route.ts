@@ -15,7 +15,7 @@ export async function GET(
  .select(`
  *,
  jobs:job_id (id, name, address, client_name, original_contract_amount, current_contract_amount),
- vendors:vendor_id (id, name),
+ vendors:vendor_id (id, name, phone, email, address),
  cost_codes:cost_code_id (id, code, description),
  assigned_pm:assigned_pm_id (id, full_name, role)
  `)

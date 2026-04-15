@@ -87,6 +87,29 @@ function PdfViewer({
   const [fitMode, setFitMode] = useState<FitMode>("width");
   const [firstPageSize, setFirstPageSize] = useState<{ w: number; h: number } | null>(null);
 
+  // Retry counter — PDF.js occasionally fails on first load when the signed
+  // URL is fresh (transient 403). Up to 2 retries at 3s, reset on success.
+  const [retryKey, setRetryKey] = useState<number>(0);
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const MAX_RETRIES = 2;
+
+  const handleLoadError = useCallback(
+    (err: { message: string }) => {
+      if (retryCount < MAX_RETRIES) {
+        const next = retryCount + 1;
+        const t = setTimeout(() => {
+          setRetryCount(next);
+          setRetryKey((k) => k + 1);
+          setError(null);
+        }, 3000);
+        // Keep the loading spinner visible during the retry delay.
+        return () => clearTimeout(t);
+      }
+      setError(err.message);
+    },
+    [retryCount]
+  );
+
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
@@ -224,13 +247,19 @@ function PdfViewer({
           </div>
         ) : (
           <Document
+            key={retryKey}
             file={fileUrl}
-            onLoadSuccess={({ numPages: n }) => setNumPages(n)}
-            onLoadError={(err) => setError(err.message)}
+            onLoadSuccess={({ numPages: n }) => {
+              setNumPages(n);
+              setRetryCount(0);
+            }}
+            onLoadError={handleLoadError}
             loading={
               <div className="p-8 text-center">
                 <div className="w-6 h-6 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
-                <p className="mt-2 text-xs text-cream-dim">Loading PDF…</p>
+                <p className="mt-2 text-xs text-cream-dim">
+                  {retryCount > 0 ? `Retrying (${retryCount}/${MAX_RETRIES})…` : "Loading PDF…"}
+                </p>
               </div>
             }
           >

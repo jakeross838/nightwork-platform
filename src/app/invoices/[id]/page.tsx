@@ -84,7 +84,7 @@ interface InvoiceData {
  qa_overrides: Record<string, { old: unknown; new: unknown }> | null;
  signed_file_url: string | null;
  assigned_pm: { id: string; full_name: string; role: string } | null;
- jobs: Job | null; vendors: { id: string; name: string } | null; cost_codes: CostCode | null;
+ jobs: Job | null; vendors: { id: string; name: string; phone: string | null; email: string | null; address: string | null } | null; cost_codes: CostCode | null;
  pm_users?: { id: string; full_name: string }[];
 }
 
@@ -911,6 +911,21 @@ export default function InvoiceReviewPage() {
  const missingInvoiceNumber = !invoiceNumber.trim();
  const missingInvoiceDate = !invoiceDate.trim();
 
+ // Phase 8e QA Fix C — compute approve button disabled state + tooltip.
+ // When require_invoice_date is ON and date is missing, the button must be
+ // visibly disabled (not just alert-on-click). Same for the duplicate flag.
+ const dateBlocked =
+ !!workflowSettings?.require_invoice_date && missingInvoiceDate;
+ const duplicateBlocked =
+ !!(invoice?.is_potential_duplicate &&
+ !invoice?.duplicate_dismissed_at &&
+ workflowSettings?.duplicate_detection_enabled !== false);
+ const approveDisabledReason = dateBlocked
+ ? "Invoice date is required before approval"
+ : duplicateBlocked
+ ? "Flagged as potential duplicate — dismiss or deny"
+ : null;
+
  // Date reasonableness warning (always on, regardless of settings).
  // Shows when the invoice date is >90 days in the past or in the future.
  const dateReasonablenessWarning = (() => {
@@ -998,11 +1013,12 @@ export default function InvoiceReviewPage() {
  <div className="border-b border-brand-border bg-brand-surface/50 px-4 md:px-6 py-3">
  <div className="max-w-[1600px] mx-auto flex items-center gap-3 md:gap-4 flex-wrap">
  <Link href="/invoices/queue" className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Queue</Link>
- <h1 className="font-display text-base md:text-xl text-cream truncate flex items-center gap-1.5 min-w-0">
+ <h1 className="font-display text-base md:text-xl text-cream flex items-center gap-2 min-w-0">
  <span className="truncate">{invoice.vendor_name_raw ?? "Invoice"}</span>
  <VendorContactPopover
  vendorId={invoice.vendor_id}
  vendorName={invoice.vendor_name_raw ?? invoice.vendors?.name ?? null}
+ vendor={invoice.vendors}
  />
  <span className="text-cream-dim hidden md:inline">&mdash;</span>
  <span className="md:hidden"> </span>
@@ -1629,13 +1645,18 @@ export default function InvoiceReviewPage() {
  {isReviewable && (
  <div className="hidden md:block border-t border-brand-border pt-6 space-y-3">
  <div className="flex gap-3">
- <button onClick={openApproveFlow} disabled={saving}
- className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
+ <button
+ onClick={openApproveFlow}
+ disabled={saving || !!approveDisabledReason}
+ title={approveDisabledReason ?? undefined}
+ style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
+ className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100 text-white font-medium transition-all">
  {saving ? "Saving..." : "Approve"}
  </button>
- <button onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }} disabled={saving || lineItems.length < 2}
- title={lineItems.length < 2 ? "Partial approval requires 2+ line items" : "Split this invoice into approved and held portions"}
- className="flex-1 px-4 py-3 border-2 border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 font-medium transition-all">
+ <button onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }} disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
+ title={approveDisabledReason ?? (lineItems.length < 2 ? "Partial approval requires 2+ line items" : "Split this invoice into approved and held portions")}
+ style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
+ className="flex-1 px-4 py-3 border-2 border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success font-medium transition-all">
  Partial Approve
  </button>
  <button onClick={() => setShowNoteModal("hold")} disabled={saving}
@@ -1823,12 +1844,18 @@ export default function InvoiceReviewPage() {
  {isReviewable && (
  <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-bg/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 z-30">
  <div className="flex gap-2">
- <button onClick={openApproveFlow} disabled={saving}
- className="flex-1 px-2 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
+ <button
+ onClick={openApproveFlow}
+ disabled={saving || !!approveDisabledReason}
+ title={approveDisabledReason ?? undefined}
+ style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
+ className="flex-1 px-2 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100 text-white font-medium transition-all text-sm">
  {saving ? "..." : "Approve"}
  </button>
- <button onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }} disabled={saving || lineItems.length < 2}
- className="flex-1 px-2 py-3 border border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 font-medium transition-all text-sm">
+ <button onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }} disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
+ title={approveDisabledReason ?? undefined}
+ style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
+ className="flex-1 px-2 py-3 border border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success font-medium transition-all text-sm">
  Partial
  </button>
  <button onClick={() => setShowNoteModal("hold")} disabled={saving}

@@ -45,33 +45,53 @@ function daysOutstanding(receivedDate: string | null): number {
   return Math.max(0, diff);
 }
 
-/** Returns { label, color } for aging badge, or null if not overdue enough. */
-function agingBadge(days: number): { label: string; className: string } | null {
+/** Returns { label, color } for aging badge, or null if not overdue enough.
+ *  Rounded-pill styling matching confidence badges. Explicit RGB for visibility. */
+function agingBadge(days: number): { label: string; style: React.CSSProperties; title: string } | null {
   if (days >= 90) {
     return {
       label: "90d+",
-      className: "bg-status-danger text-white border-status-danger",
+      // red #EF4444
+      style: {
+        backgroundColor: "#EF4444",
+        color: "#FFFFFF",
+        borderColor: "#DC2626",
+      },
+      title: `Outstanding for ${days} days (90+)`,
     };
   }
   if (days >= 61) {
     return {
-      label: "60d",
-      className: "bg-brass text-white border-brass",
+      label: "60d+",
+      // orange #F97316
+      style: {
+        backgroundColor: "#F97316",
+        color: "#FFFFFF",
+        borderColor: "#EA580C",
+      },
+      title: `Outstanding for ${days} days (61-90)`,
     };
   }
   if (days >= 30) {
     return {
-      label: "30d",
-      className: "bg-status-warning-muted text-brass border-brass/60",
+      label: "30d+",
+      // yellow #EAB308
+      style: {
+        backgroundColor: "#EAB308",
+        color: "#1F2937",
+        borderColor: "#CA8A04",
+      },
+      title: `Outstanding for ${days} days (30-60)`,
     };
   }
   return null;
 }
 
-/** True when invoice is unpaid — aging applies only to unpaid invoices. */
+/** True when invoice is unpaid — aging applies only to unpaid invoices.
+ *  Spec: "if payment_status = 'paid', show no badge". We also suppress for
+ *  voided invoices since those shouldn't age either. */
 function isUnpaidInvoice(inv: { payment_status: string | null; status: string }): boolean {
   if (inv.payment_status === "paid") return false;
-  if (inv.status === "paid") return false;
   if (inv.status === "void") return false;
   return true;
 }
@@ -585,18 +605,19 @@ export default function AllInvoicesPage() {
  const days = daysOutstanding(inv.received_date);
  const unpaid = isUnpaidInvoice(inv);
  const badge = unpaid ? agingBadge(days) : null;
+ if (badge) {
  return (
- <div className="flex items-center justify-end gap-1.5">
- <span className="text-xs text-cream-muted tabular-nums">{days}d</span>
- {badge && (
  <span
- className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold border ${badge.className}`}
- title={`Outstanding for ${days} days`}
+ className="inline-flex items-center px-2.5 py-0.5 text-[11px] font-bold rounded-full border"
+ style={badge.style}
+ title={badge.title}
  >
  {badge.label}
  </span>
- )}
- </div>
+ );
+ }
+ return (
+ <span className="text-xs text-cream-muted tabular-nums">{days}d</span>
  );
  })()}
  </td>
