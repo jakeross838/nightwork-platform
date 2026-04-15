@@ -13,6 +13,7 @@ import {
   renameStorageObject,
   storagePathFor,
 } from "@/lib/invoices/file-naming";
+import { notifyPmsForJob } from "@/lib/notifications";
 
 const INVOICES_BUCKET = "invoice-files";
 
@@ -456,6 +457,28 @@ export async function saveParsedInvoice(
       // table can be backfilled by a later reprocess job.
       console.warn(
         `[save] invoice_line_items insert failed for invoice ${invoiceId}: ${lineErr.message}`
+      );
+    }
+  }
+
+  // Fire PM notifications when a matched, non-overhead invoice lands in a
+  // queue they're responsible for. Wrapped so dispatch failures can't roll
+  // back the save.
+  if (match?.job.id && !overhead.isOverhead) {
+    const vendorName = parsed.vendor_name ?? "a vendor";
+    const jobName = match.job.name;
+    const totalDollars = `$${Math.round(parsed.total_amount ?? 0).toLocaleString("en-US")}`;
+    try {
+      await notifyPmsForJob(match.job.id, ORG_ID, {
+        notification_type: "invoice_uploaded",
+        subject: `New invoice — ${vendorName} · ${totalDollars}`,
+        body: `New invoice from ${vendorName} for ${totalDollars} on ${jobName} needs your review.`,
+        action_url: `/invoices/${invoiceId}`,
+        related_entity_id: invoiceId,
+      });
+    } catch (notifyErr) {
+      console.warn(
+        `[save] notifyPmsForJob failed for invoice ${invoiceId}: ${notifyErr instanceof Error ? notifyErr.message : notifyErr}`
       );
     }
   }

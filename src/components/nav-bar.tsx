@@ -8,6 +8,7 @@ import { logoutAction } from "@/app/login/actions";
 import { useOrgBranding } from "@/components/org-branding-provider";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
 import TrialBanner from "@/components/trial-banner";
+import NotificationBell from "@/components/notification-bell";
 
 export type UserRole = "admin" | "pm" | "accounting" | "owner";
 
@@ -324,6 +325,7 @@ export default function NavBar() {
 
         {/* Desktop user + logout */}
         <div className="hidden md:flex items-center gap-3 shrink-0">
+          {profile && <NotificationBell userId={profile.id} />}
           {profile && (
             <div className="flex items-center gap-2">
               <span className="text-[13px] font-medium" style={{ color: "var(--text-inverse)" }}>
@@ -342,15 +344,12 @@ export default function NavBar() {
           </form>
         </div>
 
-        {/* Mobile hamburger + badge */}
-        <div className="flex md:hidden items-center gap-2">
-          {totalInvoicesCount > 0 && (
-            <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-white/50 text-white text-[10px] font-bold bg-transparent">
-              {totalInvoicesCount}
-            </span>
-          )}
+        {/* Mobile notification bell + hamburger */}
+        <div className="flex md:hidden items-center gap-1">
+          {profile && <NotificationBell userId={profile.id} />}
           <button type="button" onClick={() => setMobileOpen((p) => !p)}
-            className="p-2 text-white/70 hover:text-white transition-colors" aria-label="Toggle menu" aria-expanded={mobileOpen}>
+            className="flex items-center justify-center w-11 h-11 text-white/80 hover:text-white transition-colors relative"
+            aria-label="Toggle menu" aria-expanded={mobileOpen}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               {mobileOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -358,6 +357,11 @@ export default function NavBar() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               )}
             </svg>
+            {totalInvoicesCount > 0 && !mobileOpen && (
+              <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-[16px] px-1 bg-brass text-white text-[9px] font-bold rounded-full">
+                {totalInvoicesCount}
+              </span>
+            )}
           </button>
         </div>
       </div>

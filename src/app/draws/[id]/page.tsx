@@ -266,7 +266,7 @@ export default function DrawDetailPage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">A — Item</th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider sticky left-0 bg-brand-surface z-10">A — Item</th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">B — Description</th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">C — Original Est.</th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">D — Previous</th>
@@ -283,7 +283,7 @@ export default function DrawDetailPage() {
  const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
  return (
  <tr key={row.code} className={`border-t border-brand-row-border ${highlight}`}>
- <td className="py-3 px-4 text-teal font-mono text-xs font-bold">{row.code}</td>
+ <td className={`py-3 px-4 text-teal font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-brand-card"}`}>{row.code}</td>
  <td className="py-3 px-4 text-cream">{row.description}</td>
  <td className="py-3 px-4 text-cream text-right">{formatCents(row.original_estimate)}</td>
  <td className="py-3 px-4 text-cream text-right">{row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}</td>

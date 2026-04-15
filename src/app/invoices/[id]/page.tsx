@@ -1184,12 +1184,12 @@ export default function InvoiceReviewPage() {
  disabled={!isReviewable} placeholder="Select PO..." />
  )}
 
- <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <FormField label="Invoice #" value={invoiceNumber} onChange={setInvoiceNumber} disabled={!isReviewable} />
  <FormField label="Invoice Date" value={invoiceDate} onChange={setInvoiceDate} type="date" disabled={!isReviewable} />
  </div>
 
- <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <div>
  <FormField label="Total ($)" value={totalAmount} onChange={setTotalAmount} type="number" disabled={!isReviewable} />
  {amountOverAi && !amountOver10Pct && (
@@ -1333,6 +1333,24 @@ export default function InvoiceReviewPage() {
  disabled={!isReviewable}
  aiSuggestion={aiSugActive ? { code: aiSug!.code, confidence: li.ai_suggestion_confidence ?? 0 } : null}
  />
+ {(() => {
+ // Budget allocation hint (Phase 6). Shows the matched budget
+ // line's remaining amount and flags over-budget pushes.
+ if (!li.cost_code_id) return null;
+ const budget = budgetByCostCode.get(li.cost_code_id);
+ if (!budget) return (
+ <p className="mt-1 text-[10px] text-cream-dim">No budget line for this cost code</p>
+ );
+ const remainingAfter = budget.remaining - li.amount_cents;
+ const willOver = remainingAfter < 0;
+ return (
+ <p className={`mt-1 text-[10px] ${willOver ? "text-status-danger font-medium" : "text-cream-dim"}`}>
+ {willOver
+ ? `Over budget by ${formatCents(Math.abs(remainingAfter))}`
+ : `${formatCents(budget.remaining)} remaining · after: ${formatCents(remainingAfter)}`}
+ </p>
+ );
+ })()}
  </td>
  <td className="py-2 px-3 text-center">
  <button

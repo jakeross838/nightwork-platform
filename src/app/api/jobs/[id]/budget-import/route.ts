@@ -6,6 +6,56 @@ import { ApiError, withApiError } from "@/lib/api/errors";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+/**
+ * Minimal CSV parser — splits on commas, respects double-quoted fields with
+ * embedded commas and escaped quotes (RFC 4180-ish). No external dependency
+ * because PapaParse would be overkill for a single-column-A-cost-code use
+ * case and the spec calls this "simple 5-row CSV".
+ */
+function parseCsv(input: string): string[][] {
+  const rows: string[][] = [];
+  let cur: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (input[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ",") {
+        cur.push(field);
+        field = "";
+      } else if (ch === "\n" || ch === "\r") {
+        // Skip \r\n duplicate newline
+        if (ch === "\r" && input[i + 1] === "\n") i++;
+        cur.push(field);
+        rows.push(cur);
+        cur = [];
+        field = "";
+      } else {
+        field += ch;
+      }
+    }
+  }
+  // Flush tail
+  if (field.length > 0 || cur.length > 0) {
+    cur.push(field);
+    rows.push(cur);
+  }
+  return rows;
+}
+
 const DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 type ParsedRow = {
@@ -97,70 +147,130 @@ export const POST = withApiError(async (
   if (!file) throw new ApiError("No file provided", 400);
 
   const arrayBuffer = await file.arrayBuffer();
-  const workbook = new ExcelJS.Workbook();
-  try {
-    await workbook.xlsx.load(arrayBuffer);
-  } catch (err) {
-    throw new ApiError(
-      `Could not read Excel file: ${err instanceof Error ? err.message : "unknown"}`,
-      400
-    );
-  }
+  const filename = (file.name ?? "").toLowerCase();
+  const isCsv =
+    filename.endsWith(".csv") ||
+    file.type === "text/csv" ||
+    file.type === "application/csv";
 
-  const sheet = workbook.worksheets[0];
-  if (!sheet) throw new ApiError("Workbook has no sheets", 400);
-
-  // Walk every row — take col A as cost code, col B as amount (col C optional description).
   const parsed: ParsedRow[] = [];
   const skipped: ImportResult["skipped"] = [];
 
-  sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-    const codeRaw = extractText(row.getCell(1).value);
-    const amountRaw = row.getCell(2).value;
-    const descRaw = extractText(row.getCell(3).value);
+  if (isCsv) {
+    // CSV branch — decode as UTF-8, walk each row.
+    const text = new TextDecoder("utf-8").decode(arrayBuffer);
+    const rows = parseCsv(text);
+    rows.forEach((cells, idx) => {
+      const rowNumber = idx + 1;
+      const codeRaw = extractText(cells[0] ?? "");
+      const descRaw = extractText(cells[1] ?? "");
+      // Column order: cost_code, description, category, amount — per the
+      // Phase 6 spec's suggested CSV format. Amount is column 4; if only
+      // three columns exist, fall back to column 3.
+      const amountRaw = cells[3] !== undefined && cells[3] !== ""
+        ? cells[3]
+        : cells[2] ?? null;
 
-    // Skip empty rows & header rows
-    if (!codeRaw && amountRaw == null) return;
-    const lowered = codeRaw.toLowerCase();
-    if (
-      lowered === "cost code" ||
-      lowered === "code" ||
-      lowered === "item" ||
-      lowered === "total" ||
-      lowered.startsWith("grand total")
-    ) {
-      return;
-    }
+      if (!codeRaw && (amountRaw == null || amountRaw === "")) return;
+      const lowered = codeRaw.toLowerCase();
+      if (
+        lowered === "cost code" ||
+        lowered === "cost_code" ||
+        lowered === "code" ||
+        lowered === "item"
+      ) {
+        return;
+      }
 
-    const normalized = normaliseCostCode(codeRaw);
-    if (!normalized) {
-      skipped.push({
-        row: rowNumber,
-        reason: "Column A is not a valid cost code",
-        raw_code: codeRaw,
+      const normalized = normaliseCostCode(codeRaw);
+      if (!normalized) {
+        skipped.push({
+          row: rowNumber,
+          reason: "Column 1 is not a valid cost code",
+          raw_code: codeRaw,
+        });
+        return;
+      }
+      const amount = extractNumber(amountRaw);
+      if (amount == null) {
+        skipped.push({
+          row: rowNumber,
+          reason: "Amount column is not a valid dollar amount",
+          raw_code: codeRaw,
+          raw_amount: amountRaw,
+        });
+        return;
+      }
+      parsed.push({
+        rowNumber,
+        codeCell: codeRaw,
+        code: normalized,
+        description: descRaw || undefined,
+        amountCents: Math.round(amount * 100),
       });
-      return;
-    }
-
-    const amount = extractNumber(amountRaw);
-    if (amount == null) {
-      skipped.push({
-        row: rowNumber,
-        reason: "Column B is not a valid dollar amount",
-        raw_code: codeRaw,
-        raw_amount: amountRaw,
-      });
-      return;
-    }
-
-    parsed.push({
-      rowNumber,
-      codeCell: codeRaw,
-      code: normalized,
-      description: descRaw || undefined,
-      amountCents: Math.round(amount * 100),
     });
-  });
+  } else {
+    // Excel branch — existing xlsx parsing path.
+    const workbook = new ExcelJS.Workbook();
+    try {
+      await workbook.xlsx.load(arrayBuffer);
+    } catch (err) {
+      throw new ApiError(
+        `Could not read Excel file: ${err instanceof Error ? err.message : "unknown"}`,
+        400
+      );
+    }
+
+    const sheet = workbook.worksheets[0];
+    if (!sheet) throw new ApiError("Workbook has no sheets", 400);
+
+    sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      const codeRaw = extractText(row.getCell(1).value);
+      const amountRaw = row.getCell(2).value;
+      const descRaw = extractText(row.getCell(3).value);
+
+      if (!codeRaw && amountRaw == null) return;
+      const lowered = codeRaw.toLowerCase();
+      if (
+        lowered === "cost code" ||
+        lowered === "code" ||
+        lowered === "item" ||
+        lowered === "total" ||
+        lowered.startsWith("grand total")
+      ) {
+        return;
+      }
+
+      const normalized = normaliseCostCode(codeRaw);
+      if (!normalized) {
+        skipped.push({
+          row: rowNumber,
+          reason: "Column A is not a valid cost code",
+          raw_code: codeRaw,
+        });
+        return;
+      }
+
+      const amount = extractNumber(amountRaw);
+      if (amount == null) {
+        skipped.push({
+          row: rowNumber,
+          reason: "Column B is not a valid dollar amount",
+          raw_code: codeRaw,
+          raw_amount: amountRaw,
+        });
+        return;
+      }
+
+      parsed.push({
+        rowNumber,
+        codeCell: codeRaw,
+        code: normalized,
+        description: descRaw || undefined,
+        amountCents: Math.round(amount * 100),
+      });
+    });
+  }
 
   if (parsed.length === 0) {
     throw new ApiError(

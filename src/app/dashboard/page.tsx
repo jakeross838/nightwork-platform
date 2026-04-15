@@ -26,6 +26,12 @@ type DashboardStats = {
   teamMembers: number;
 };
 
+type BudgetHealth = {
+  jobsWithBudget: number;
+  overBudgetLines: number;
+  totalVarianceCents: number;
+};
+
 function firstNameOf(fullName: string) {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
@@ -41,6 +47,7 @@ export default function Home() {
   const [pmCount, setPmCount] = useState(0);
   const [qaCount, setQaCount] = useState(0);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [budgetHealth, setBudgetHealth] = useState<BudgetHealth | null>(null);
 
   useEffect(() => {
     async function check() {
@@ -146,6 +153,30 @@ export default function Home() {
           currentDrawCents,
           teamMembers: teamMembersRes.count ?? 0,
         });
+
+        // Budget Health widget — live counts from budget_lines. Org-scoped
+        // via RLS; aggregate in JS because Postgres aggregate queries aren't
+        // trivial through the JS client.
+        const { data: budgetLinesForHealth } = await supabase
+          .from("budget_lines")
+          .select("job_id, revised_estimate, invoiced")
+          .is("deleted_at", null);
+        if (budgetLinesForHealth) {
+          const lines = budgetLinesForHealth as Array<{
+            job_id: string;
+            revised_estimate: number;
+            invoiced: number;
+          }>;
+          const jobsWithBudget = new Set(lines.map((l) => l.job_id)).size;
+          let overBudgetLines = 0;
+          let totalVarianceCents = 0;
+          for (const line of lines) {
+            const variance = line.revised_estimate - (line.invoiced ?? 0);
+            totalVarianceCents += variance;
+            if (variance < 0) overBudgetLines += 1;
+          }
+          setBudgetHealth({ jobsWithBudget, overBudgetLines, totalVarianceCents });
+        }
       } catch {
         setStatus("error");
       }
@@ -193,9 +224,11 @@ export default function Home() {
             </p>
           )}
 
-          {/* Stat cards — org-scoped KPIs */}
+          {/* Stat cards — org-scoped KPIs. Stack to a single column on the
+              smallest phones (<640px) so the values are comfortably readable;
+              2-up on sm, 4-up on md+. */}
           {stats && (role === "admin" || role === "owner") && (
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-up stagger-4">
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 animate-fade-up stagger-4">
               <StatCard label="Active Jobs" value={stats.activeJobs.toString()} href="/jobs" />
               <StatCard label="Pending Invoices" value={stats.pendingInvoices.toString()} href="/invoices" />
               <StatCard label="Current Draw" value={formatCents(stats.currentDrawCents)} href="/draws" />
@@ -203,8 +236,32 @@ export default function Home() {
             </div>
           )}
 
-          {/* Navigation cards — filtered by role */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up stagger-4">
+          {/* Budget Health widget (Phase 6) — only for admin/owner views */}
+          {budgetHealth && (role === "admin" || role === "owner") && budgetHealth.jobsWithBudget > 0 && (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-up stagger-4">
+              <BudgetHealthCard
+                label="Jobs With Budget"
+                value={budgetHealth.jobsWithBudget.toString()}
+                href="/jobs"
+              />
+              <BudgetHealthCard
+                label="Over-Budget Lines"
+                value={budgetHealth.overBudgetLines.toString()}
+                href="/jobs"
+                negative={budgetHealth.overBudgetLines > 0}
+              />
+              <BudgetHealthCard
+                label="Total Variance"
+                value={formatCents(budgetHealth.totalVarianceCents)}
+                href="/jobs"
+                negative={budgetHealth.totalVarianceCents < 0}
+              />
+            </div>
+          )}
+
+          {/* Navigation cards — filtered by role. One-column on mobile, 3-up
+              from sm so the cards are never cramped on a phone. */}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-up stagger-4">
             {visibleCards.map((c) => (
               <NavCard key={c.key} href={c.href} title={c.title} subtitle={c.subtitle} count={c.count} />
             ))}
@@ -240,7 +297,7 @@ function NavCard({ href, title, subtitle, count }: {
 }) {
   return (
     <Link href={href}
-      className="group relative flex flex-col items-start p-5 border border-brand-border bg-white hover:border-teal/40 transition-all duration-300 text-left rounded-none">
+      className="group relative flex flex-col items-start p-5 min-h-[88px] border border-brand-border bg-white hover:border-teal/40 transition-all duration-300 text-left rounded-none">
       <div className="flex items-center gap-2">
         <h2 className="font-display text-[15px] text-cream font-medium">{title}</h2>
         {count != null && count > 0 && (
@@ -251,6 +308,36 @@ function NavCard({ href, title, subtitle, count }: {
       <svg className="absolute top-5 right-5 w-4 h-4 text-cream-dim group-hover:text-teal group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
       </svg>
+    </Link>
+  );
+}
+
+function BudgetHealthCard({
+  label,
+  value,
+  href,
+  negative,
+}: {
+  label: string;
+  value: string;
+  href: string;
+  negative?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex flex-col items-start p-4 border bg-white hover:border-teal/60 transition-colors text-left ${
+        negative ? "border-status-danger/40 bg-status-danger/5" : "border-brand-border"
+      }`}
+    >
+      <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">{label}</span>
+      <span
+        className={`mt-2 font-display text-2xl ${
+          negative ? "text-status-danger" : "text-cream"
+        }`}
+      >
+        {value}
+      </span>
     </Link>
   );
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { notifyRole } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -176,6 +177,27 @@ export async function POST(request: NextRequest) {
  .from("invoices")
  .update({ draw_id: draw.id, status: "in_draw" })
  .in("id", invoice_ids);
+ }
+
+ // Notify owner + admins so they can review the new draw.
+ try {
+ const { data: jobRow } = await supabase
+ .from("jobs")
+ .select("name")
+ .eq("id", job_id)
+ .maybeSingle();
+ const totalDollars = `$${Math.round(currentPaymentDue / 100).toLocaleString("en-US")}`;
+ await notifyRole(ORG_ID, ["owner", "admin"], {
+ notification_type: "draw_created",
+ subject: `New draw #${drawNumber} — ${jobRow?.name ?? "Unknown job"}`,
+ body: `New draw #${drawNumber} for ${jobRow?.name ?? "a job"} totaling ${totalDollars} is ready for review.`,
+ action_url: `/draws/${draw.id}`,
+ related_entity_id: draw.id as string,
+ });
+ } catch (notifyErr) {
+ console.warn(
+ `[draw created notifications] ${notifyErr instanceof Error ? notifyErr.message : notifyErr}`
+ );
  }
 
  return NextResponse.json({ id: draw.id, draw_number: draw.draw_number });

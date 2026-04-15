@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import {
+  notifyRole,
+  notifyUser,
+} from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +54,7 @@ export async function POST(
 
  const { data: invoice, error: fetchError } = await supabase
  .from("invoices")
- .select("status, status_history, pm_overrides, qa_overrides, job_id, cost_code_id, total_amount, ai_parsed_total_amount")
+ .select("status, status_history, pm_overrides, qa_overrides, job_id, cost_code_id, total_amount, ai_parsed_total_amount, org_id, vendor_name_raw, vendors(name), jobs(name, pm_id), created_by, assigned_pm_id")
  .eq("id", params.id)
  .single();
 
@@ -169,6 +173,55 @@ export async function POST(
 
  if (updateError) {
  return NextResponse.json({ error: updateError.message }, { status: 500 });
+ }
+
+ // Fire-and-forget notifications. Wrapped so any dispatch failure cannot
+ // block the action response — the invoice already advanced status.
+ try {
+ const inv = invoice as typeof invoice & {
+ vendors?: { name: string } | null;
+ jobs?: { name: string; pm_id: string | null } | null;
+ };
+ const vendorName = inv.vendors?.name ?? inv.vendor_name_raw ?? "vendor";
+ const jobName = inv.jobs?.name ?? "job";
+ const totalDollars = `$${((typeof updates?.total_amount === "number" ? updates.total_amount : invoice.total_amount) / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+ const actionUrl = `/invoices/${params.id}`;
+
+ if (action === "approve" && invoice.org_id) {
+ await notifyRole(invoice.org_id, ["accounting", "admin", "owner"], {
+ notification_type: "invoice_pm_approved",
+ subject: `Invoice approved — ${vendorName} · ${totalDollars}`,
+ body: `${vendorName} invoice for ${totalDollars} on ${jobName} was approved and is ready for accounting QA.`,
+ action_url: actionUrl,
+ related_entity_id: params.id,
+ });
+ } else if (action === "deny" && invoice.org_id) {
+ const uploader = (invoice.created_by as string | null) ?? null;
+ if (uploader) {
+ await notifyUser(uploader, invoice.org_id, {
+ notification_type: "invoice_pm_denied",
+ subject: `Invoice denied — ${vendorName}`,
+ body: `${vendorName} invoice on ${jobName} was denied. Reason: ${note ?? "No reason provided"}`,
+ action_url: actionUrl,
+ related_entity_id: params.id,
+ });
+ }
+ } else if (action === "qa_approve" && invoice.org_id) {
+ const pmId = (invoice.assigned_pm_id as string | null) ?? (inv.jobs?.pm_id ?? null);
+ if (pmId) {
+ await notifyUser(pmId, invoice.org_id, {
+ notification_type: "invoice_qa_approved",
+ subject: `Invoice QA approved — ${vendorName}`,
+ body: `Accounting approved ${vendorName} invoice for ${totalDollars}. It will be included in the next draw.`,
+ action_url: actionUrl,
+ related_entity_id: params.id,
+ });
+ }
+ }
+ } catch (notifyErr) {
+ console.warn(
+ `[invoice action notifications] ${notifyErr instanceof Error ? notifyErr.message : notifyErr}`
+ );
  }
 
  return NextResponse.json({ status: finalStatus, action });

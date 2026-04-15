@@ -137,7 +137,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         original: acc.original + r.original_estimate,
         approved_cos: acc.approved_cos + r.approved_cos,
         revised: acc.revised + r.revised_estimate,
-        committed: acc.committed + r.committed,
+        committed: acc.committed + (r.committed ?? 0),
         spent: acc.spent + r.spent,
       }),
       { original: 0, approved_cos: 0, revised: 0, committed: 0, spent: 0 }
@@ -198,43 +198,70 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         {rows.length === 0 ? (
           <div className="bg-brand-card border border-brand-border p-12 text-center">
             <p className="text-cream-dim text-sm">No budget lines yet.</p>
-            <Link
-              href={`/jobs/${job.id}`}
-              className="inline-block mt-3 text-sm text-teal hover:underline"
-            >
-              Import a budget on the Overview tab
-            </Link>
+            <p className="mt-1 text-[11px] text-cream-dim">
+              Start a budget for this job from the overview tab.
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
+              <Link
+                href={`/jobs/${job.id}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
+              >
+                Import CSV / Excel
+              </Link>
+              <Link
+                href={`/jobs/${job.id}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-brand-border text-cream hover:bg-brand-surface text-sm font-medium transition-colors"
+              >
+                Create Manually
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="bg-brand-card border border-brand-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
-                  <th className="text-left px-3 py-3 font-medium">Code</th>
+                  <th className="text-left px-3 py-3 font-medium sticky left-0 bg-brand-surface/90 z-10">Code</th>
                   <th className="text-left px-3 py-3 font-medium">Description</th>
-                  <th className="text-right px-3 py-3 font-medium">Original</th>
-                  <th className="text-right px-3 py-3 font-medium">Approved COs</th>
-                  <th className="text-right px-3 py-3 font-medium">Revised</th>
+                  <th className="text-right px-3 py-3 font-medium">Original Budget</th>
+                  <th className="text-right px-3 py-3 font-medium">CO +/-</th>
+                  <th className="text-right px-3 py-3 font-medium">Revised Budget</th>
                   <th className="text-right px-3 py-3 font-medium">Committed</th>
-                  <th className="text-right px-3 py-3 font-medium">Spent</th>
+                  <th className="text-right px-3 py-3 font-medium">Invoiced</th>
                   <th className="text-right px-3 py-3 font-medium">Remaining</th>
-                  <th className="text-right px-3 py-3 font-medium">% Complete</th>
+                  <th className="text-right px-3 py-3 font-medium">Variance</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => {
+                  // Phase 6 row colors. remaining = revised - invoiced.
+                  // > 20% remaining → green (bg-status-success/5)
+                  // 0-20% remaining → yellow (bg-status-warning/5)
+                  // negative remaining (over budget) → red (bg-status-danger/5)
                   const remaining = r.revised_estimate - r.spent;
                   const pct = r.revised_estimate > 0 ? (r.spent / r.revised_estimate) * 100 : 0;
-                  const over = r.spent > r.revised_estimate;
-                  const highRisk = pct >= 75 && !over;
+                  const over = remaining < 0;
+                  const tight = !over && r.revised_estimate > 0 && remaining <= 0.2 * r.revised_estimate;
+                  const rowBg = over
+                    ? "bg-status-danger/10"
+                    : tight
+                      ? "bg-status-warning/10"
+                      : r.revised_estimate > 0
+                        ? "bg-status-success/5"
+                        : "";
+                  const stickyBg = over
+                    ? "bg-[#FBE4E4]"
+                    : tight
+                      ? "bg-[#FCF3DC]"
+                      : r.revised_estimate > 0
+                        ? "bg-[#E9F4EB]"
+                        : "bg-brand-card";
                   return (
                     <tr
                       key={r.id}
-                      className={`border-b border-brand-row-border last:border-0 ${
-                        over ? "bg-status-danger/5" : highRisk ? "bg-status-warning/5" : ""
-                      }`}
+                      className={`border-b border-brand-row-border last:border-0 ${rowBg}`}
                     >
-                      <td className="px-3 py-2 font-mono text-cream text-xs">{r.code}</td>
+                      <td className={`px-3 py-2 font-mono text-cream text-xs sticky left-0 z-[1] ${stickyBg}`}>{r.code}</td>
                       <td className="px-3 py-2 text-cream-muted">
                         {r.description}
                         {r.is_allowance && (
@@ -248,13 +275,15 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                         {r.approved_cos ? formatCents(r.approved_cos) : "—"}
                       </td>
                       <td className="px-3 py-2 text-right text-cream font-medium tabular-nums">{formatCents(r.revised_estimate)}</td>
-                      <td className="px-3 py-2 text-right text-cream-dim tabular-nums">—</td>
+                      <td className="px-3 py-2 text-right text-cream-dim tabular-nums">
+                        {r.committed > 0 ? formatCents(r.committed) : "—"}
+                      </td>
                       <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(r.spent)}</td>
                       <td
                         className={`px-3 py-2 text-right tabular-nums font-medium ${
                           over
                             ? "text-status-danger"
-                            : highRisk
+                            : tight
                               ? "text-status-warning"
                               : "text-status-success"
                         }`}
@@ -263,30 +292,39 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                       </td>
                       <td
                         className={`px-3 py-2 text-right tabular-nums ${
-                          over ? "text-status-danger" : highRisk ? "text-status-warning" : "text-cream"
+                          over ? "text-status-danger font-medium" : tight ? "text-status-warning" : "text-status-success"
                         }`}
+                        title={`${pct.toFixed(1)}% of revised budget invoiced`}
                       >
-                        {pct.toFixed(0)}%
+                        {over ? formatCents(remaining) : formatCents(remaining)}
                       </td>
                     </tr>
                   );
                 })}
                 <tr className="border-t-2 border-brand-border bg-brand-surface font-medium">
-                  <td colSpan={2} className="px-3 py-3 text-[11px] uppercase tracking-wider text-cream-dim font-medium">
-                    Totals
+                  <td colSpan={2} className="px-3 py-3 text-[11px] uppercase tracking-wider text-cream-dim font-medium sticky left-0 bg-brand-surface z-[1]">
+                    Project Totals
                   </td>
                   <td className="px-3 py-3 text-right text-cream tabular-nums font-display">{formatCents(totals.original)}</td>
                   <td className="px-3 py-3 text-right text-teal tabular-nums font-display">
                     {totals.approved_cos ? formatCents(totals.approved_cos) : "—"}
                   </td>
                   <td className="px-3 py-3 text-right text-cream tabular-nums font-display">{formatCents(totals.revised)}</td>
-                  <td className="px-3 py-3 text-right text-cream-dim tabular-nums">—</td>
+                  <td className="px-3 py-3 text-right text-cream-dim tabular-nums">
+                    {totals.committed > 0 ? formatCents(totals.committed) : "—"}
+                  </td>
                   <td className="px-3 py-3 text-right text-cream tabular-nums font-display">{formatCents(totals.spent)}</td>
                   <td className="px-3 py-3 text-right text-cream tabular-nums font-display">
                     {formatCents(totals.revised - totals.spent)}
                   </td>
-                  <td className="px-3 py-3 text-right text-cream tabular-nums font-display">
-                    {totals.revised > 0 ? `${((totals.spent / totals.revised) * 100).toFixed(0)}%` : "—"}
+                  <td
+                    className={`px-3 py-3 text-right tabular-nums font-display ${
+                      totals.revised - totals.spent < 0 ? "text-status-danger" : "text-cream"
+                    }`}
+                  >
+                    {totals.revised > 0
+                      ? `${(((totals.revised - totals.spent) / totals.revised) * 100).toFixed(0)}% healthy`
+                      : "—"}
                   </td>
                 </tr>
               </tbody>
@@ -295,7 +333,8 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         )}
 
         <p className="mt-4 text-[11px] text-cream-dim">
-          Spent = sum of line-item amounts on invoices in PM-approved or downstream statuses. Committed (POs) is a Phase 2 feature and shows as —.
+          Invoiced = sum of invoice line-item amounts allocated to each budget line (approved or downstream). Committed (POs) arrives in Phase 7.
+          Rows turn yellow at 20% remaining and red when the invoiced total exceeds the revised budget.
         </p>
       </main>
     </div>

@@ -301,13 +301,13 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               >
                 View Full Budget →
               </Link>
-              <input ref={fileRef} type="file" accept=".xlsx,.xlsm" onChange={handleImport} className="hidden" />
+              <input ref={fileRef} type="file" accept=".xlsx,.xlsm,.csv" onChange={handleImport} className="hidden" />
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={importing}
                 className="inline-flex items-center gap-1.5 px-4 py-2 border border-brand-border text-cream hover:bg-brand-surface disabled:opacity-60 text-sm font-medium transition-colors"
               >
-                {importing ? "Importing…" : "Import Budget (.xlsx)"}
+                {importing ? "Importing…" : "Import Budget (.xlsx / .csv)"}
               </button>
             </div>
           </div>
