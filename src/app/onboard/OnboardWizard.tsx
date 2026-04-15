@@ -632,7 +632,7 @@ function ChoiceCard({
       <h3 className="font-display text-lg text-cream">{title}</h3>
       <p className="mt-2 text-sm text-cream-muted flex-1">{subtitle}</p>
       <span
-        className={`mt-4 inline-flex items-center gap-1 text-[12px] tracking-[0.08em] uppercase text-teal border-b border-teal/40 group-hover:border-teal pb-0.5 self-start ${
+        className={`mt-4 inline-flex items-center gap-1 text-[12px] tracking-[0.08em] uppercase text-teal border-b-2 border-teal pb-0.5 self-start transition-opacity group-hover:opacity-70 ${
           selected ? "font-medium" : ""
         }`}
       >
