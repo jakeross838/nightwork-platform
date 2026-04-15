@@ -1650,13 +1650,23 @@ export default function InvoiceReviewPage() {
  disabled={saving || !!approveDisabledReason}
  title={approveDisabledReason ?? undefined}
  style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
- className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100 text-white font-medium transition-all">
+ className={`flex-1 px-4 py-3 font-medium transition-all text-white ${
+ approveDisabledReason
+ ? "bg-gray-400 opacity-50 hover:bg-gray-400"
+ : "bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
+ }`}>
  {saving ? "Saving..." : "Approve"}
  </button>
- <button onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }} disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
+ <button
+ onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }}
+ disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
  title={approveDisabledReason ?? (lineItems.length < 2 ? "Partial approval requires 2+ line items" : "Split this invoice into approved and held portions")}
  style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
- className="flex-1 px-4 py-3 border-2 border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success font-medium transition-all">
+ className={`flex-1 px-4 py-3 font-medium transition-all border-2 ${
+ approveDisabledReason
+ ? "bg-gray-100 border-gray-300 text-gray-400 opacity-60 hover:bg-gray-100 hover:text-gray-400"
+ : "border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success"
+ }`}>
  Partial Approve
  </button>
  <button onClick={() => setShowNoteModal("hold")} disabled={saving}
@@ -1849,13 +1859,23 @@ export default function InvoiceReviewPage() {
  disabled={saving || !!approveDisabledReason}
  title={approveDisabledReason ?? undefined}
  style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
- className="flex-1 px-2 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100 text-white font-medium transition-all text-sm">
+ className={`flex-1 px-2 py-3 font-medium transition-all text-white text-sm ${
+ approveDisabledReason
+ ? "bg-gray-400 opacity-50 hover:bg-gray-400"
+ : "bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
+ }`}>
  {saving ? "..." : "Approve"}
  </button>
- <button onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }} disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
+ <button
+ onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }}
+ disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
  title={approveDisabledReason ?? undefined}
  style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
- className="flex-1 px-2 py-3 border border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success font-medium transition-all text-sm">
+ className={`flex-1 px-2 py-3 font-medium transition-all text-sm border ${
+ approveDisabledReason
+ ? "bg-gray-100 border-gray-300 text-gray-400 opacity-60 hover:bg-gray-100 hover:text-gray-400"
+ : "border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success"
+ }`}>
  Partial
  </button>
  <button onClick={() => setShowNoteModal("hold")} disabled={saving}

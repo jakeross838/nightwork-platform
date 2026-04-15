@@ -88,10 +88,12 @@ function agingBadge(days: number): { label: string; style: React.CSSProperties; 
 }
 
 /** True when invoice is unpaid — aging applies only to unpaid invoices.
- *  Spec: "if payment_status = 'paid', show no badge". We also suppress for
- *  voided invoices since those shouldn't age either. */
+ *  Paid by either the workflow status OR the payment_status column counts as
+ *  paid (the two can drift if the user doesn't mark payment_status). Voided
+ *  invoices never age. */
 function isUnpaidInvoice(inv: { payment_status: string | null; status: string }): boolean {
   if (inv.payment_status === "paid") return false;
+  if (inv.status === "paid") return false;
   if (inv.status === "void") return false;
   return true;
 }
@@ -602,9 +604,12 @@ export default function AllInvoicesPage() {
  <td className="py-3 px-4 text-cream-muted text-xs">{inv.assigned_pm?.full_name ?? <span className="text-cream-dim">—</span>}</td>
  <td className="py-3 px-4 text-right">
  {(() => {
+ // Paid (or voided) invoices don't age — render a dash, no badge, no days text.
+ if (!isUnpaidInvoice(inv)) {
+ return <span className="text-cream-dim">&mdash;</span>;
+ }
  const days = daysOutstanding(inv.received_date);
- const unpaid = isUnpaidInvoice(inv);
- const badge = unpaid ? agingBadge(days) : null;
+ const badge = agingBadge(days);
  if (badge) {
  return (
  <span
