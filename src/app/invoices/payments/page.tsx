@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
+import PaymentBatchByVendorPanel from "@/components/payment-batch-by-vendor-panel";
 
 interface PaymentInvoice {
   id: string;
@@ -29,7 +30,7 @@ type AgingBucket = "current" | "31_60" | "61_90" | "90_plus";
 export default function PaymentsPage() {
   const [invoices, setInvoices] = useState<PaymentInvoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"tracking" | "aging">("tracking");
+  const [tab, setTab] = useState<"tracking" | "batch" | "aging">("tracking");
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<"all" | "unpaid" | "scheduled" | "paid" | "partial">("all");
@@ -220,6 +221,14 @@ export default function PaymentsPage() {
             Tracking
           </button>
           <button
+            onClick={() => setTab("batch")}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              tab === "batch" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+            }`}
+          >
+            Batch Payments
+          </button>
+          <button
             onClick={() => setTab("aging")}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab === "aging" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
@@ -233,6 +242,8 @@ export default function PaymentsPage() {
           <div className="py-16 text-center">
             <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
           </div>
+        ) : tab === "batch" ? (
+          <PaymentBatchByVendorPanel invoices={invoices} onRefresh={refresh} />
         ) : tab === "tracking" ? (
           <>
             {/* Filters */}

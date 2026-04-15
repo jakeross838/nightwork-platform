@@ -37,7 +37,62 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data ?? []);
+
+    // Phase 8f Part E: enrich each release with payment status of the
+    // invoices that share its (vendor_id, draw_id) so the table can show
+    // "Payment Status" without N+1 fetches client-side.
+    const releases = (data ?? []) as Array<Record<string, unknown>>;
+    const pairs = releases
+      .map((r) => ({
+        vendor_id: r.vendor_id as string | null,
+        draw_id: r.draw_id as string | null,
+      }))
+      .filter((p) => p.vendor_id && p.draw_id);
+
+    if (pairs.length > 0) {
+      const { data: invs } = await supabase
+        .from("invoices")
+        .select("id, vendor_id, draw_id, payment_status, total_amount, payment_amount")
+        .in("vendor_id", Array.from(new Set(pairs.map((p) => p.vendor_id))) as string[])
+        .in("draw_id", Array.from(new Set(pairs.map((p) => p.draw_id))) as string[])
+        .is("deleted_at", null);
+
+      const invByKey = new Map<
+        string,
+        { paid_count: number; total_count: number; paid_amount: number; total_amount: number }
+      >();
+      for (const inv of (invs ?? []) as Array<{
+        vendor_id: string | null;
+        draw_id: string | null;
+        payment_status: string | null;
+        total_amount: number;
+        payment_amount: number | null;
+      }>) {
+        if (!inv.vendor_id || !inv.draw_id) continue;
+        const key = `${inv.vendor_id}|${inv.draw_id}`;
+        const cur = invByKey.get(key) ?? {
+          paid_count: 0,
+          total_count: 0,
+          paid_amount: 0,
+          total_amount: 0,
+        };
+        cur.total_count += 1;
+        cur.total_amount += inv.total_amount;
+        if (inv.payment_status === "paid") {
+          cur.paid_count += 1;
+          cur.paid_amount += inv.payment_amount ?? inv.total_amount;
+        }
+        invByKey.set(key, cur);
+      }
+
+      for (const r of releases) {
+        const key = `${r.vendor_id ?? ""}|${r.draw_id ?? ""}`;
+        const stat = invByKey.get(key);
+        r.payment_summary = stat ?? null;
+      }
+    }
+
+    return NextResponse.json(releases);
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },

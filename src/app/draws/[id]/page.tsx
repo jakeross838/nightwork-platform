@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import NavBar from "@/components/nav-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
+import DrawCompareView from "@/components/draw-compare-view";
+import DrawCoverLetterEditor from "@/components/draw-cover-letter-editor";
+import DrawLienReleaseUploadList from "@/components/draw-lien-release-upload-list";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 
 interface LienReleaseRow {
@@ -91,6 +94,9 @@ export default function DrawDetailPage() {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"detail" | "compare" | "cover" | "lien-uploads">(
+    "detail"
+  );
 
   async function fetchDraw() {
     const res = await fetch(`/api/draws/${drawId}`);
@@ -160,6 +166,9 @@ export default function DrawDetailPage() {
 
   const pendingReleaseCount = draw.lien_releases.filter((l) => l.status === "pending").length;
   const totalReleaseCount = draw.lien_releases.length;
+  const missingDocCount = draw.lien_releases.filter(
+    (l) => (l.status === "pending" || l.status === "received") && !l.document_url
+  ).length;
 
   const g703Rows = draw.line_items
     .map((li) => ({
@@ -459,8 +468,45 @@ export default function DrawDetailPage() {
             </div>
           </div>
 
-          {/* G703 Table */}
+          {/* Right column with tabs */}
           <div className="xl:col-span-3">
+            <div className="flex gap-1 mb-4 bg-brand-surface border border-brand-border p-1 w-fit">
+              <TabButton active={activeTab === "detail"} onClick={() => setActiveTab("detail")}>
+                Detail
+              </TabButton>
+              <TabButton active={activeTab === "compare"} onClick={() => setActiveTab("compare")}>
+                Compare
+              </TabButton>
+              <TabButton active={activeTab === "cover"} onClick={() => setActiveTab("cover")}>
+                Cover Letter
+              </TabButton>
+              <TabButton
+                active={activeTab === "lien-uploads"}
+                onClick={() => setActiveTab("lien-uploads")}
+              >
+                Lien Releases
+                {missingDocCount > 0 && (
+                  <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-status-danger text-white">
+                    {missingDocCount}
+                  </span>
+                )}
+              </TabButton>
+            </div>
+
+            {activeTab === "compare" && <DrawCompareView drawId={drawId} />}
+            {activeTab === "cover" && draw && (
+              <DrawCoverLetterEditor drawId={drawId} jobId={draw.jobs?.id ?? ""} />
+            )}
+            {activeTab === "lien-uploads" && draw && (
+              <DrawLienReleaseUploadList
+                drawId={drawId}
+                releases={draw.lien_releases}
+                onChange={fetchDraw}
+              />
+            )}
+
+            {activeTab === "detail" && (
+              <>
             {isOutOfBalance && (
               <div className="mb-4 p-4 bg-red-900/30 border border-red-500/50 flex items-start gap-3">
                 <span className="text-red-400 text-lg leading-none mt-0.5">!</span>
@@ -653,10 +699,33 @@ export default function DrawDetailPage() {
                 </div>
               </div>
             )}
+              </>
+            )}
           </div>
         </div>
       </main>
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 text-sm font-medium transition-colors ${
+        active ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       const payment_method = body.payment_method ?? "check";
       const { data: invs } = await supabase
         .from("invoices")
-        .select("id, total_amount")
+        .select("id, total_amount, vendor_id, draw_id, vendor_name_raw")
         .in("id", ids);
       for (const inv of invs ?? []) {
         await supabase
@@ -71,13 +71,49 @@ export async function POST(request: NextRequest) {
           })
           .eq("id", inv.id);
       }
+
+      // Phase 8f Part E: identify vendors paid that don't yet have an
+      // received lien release for the corresponding draw.
+      const lienWarnings: { invoice_id: string; vendor_name: string; draw_id: string }[] = [];
+      for (const inv of invs ?? []) {
+        const i = inv as {
+          id: string;
+          vendor_id: string | null;
+          draw_id: string | null;
+          vendor_name_raw: string | null;
+        };
+        if (!i.vendor_id || !i.draw_id) continue;
+        const { data: lr } = await supabase
+          .from("lien_releases")
+          .select("status, document_url")
+          .eq("vendor_id", i.vendor_id)
+          .eq("draw_id", i.draw_id)
+          .is("deleted_at", null)
+          .maybeSingle();
+        if (!lr || (lr.status === "pending" && !lr.document_url)) {
+          lienWarnings.push({
+            invoice_id: i.id,
+            vendor_name: i.vendor_name_raw ?? "Unknown",
+            draw_id: i.draw_id,
+          });
+        }
+      }
+
       await logActivity({
         org_id: ORG_ID,
         entity_type: "invoice",
         action: "status_changed",
-        details: { bulk_paid: (invs ?? []).length, payment_method },
+        details: {
+          bulk_paid: (invs ?? []).length,
+          payment_method,
+          lien_warnings: lienWarnings.length,
+        },
       });
-      return NextResponse.json({ ok: true, updated: (invs ?? []).length });
+      return NextResponse.json({
+        ok: true,
+        updated: (invs ?? []).length,
+        lien_warnings: lienWarnings,
+      });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });

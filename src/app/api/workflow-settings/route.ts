@@ -58,6 +58,13 @@ export const PATCH = withApiError(async (request: NextRequest) => {
       VALID_SENSITIVITY.includes(v as DuplicateSensitivity)
     ) {
       update[k] = v;
+    } else if (
+      k === "cover_letter_template" &&
+      (typeof v === "string" || v === null)
+    ) {
+      // Empty string normalizes to NULL so "use default" is unambiguous.
+      const trimmed = typeof v === "string" ? v.trim() : null;
+      update[k] = trimmed && trimmed.length > 0 ? v : null;
     }
   }
   if (Object.keys(update).length === 0) {

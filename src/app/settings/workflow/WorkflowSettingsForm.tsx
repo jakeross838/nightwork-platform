@@ -24,6 +24,7 @@ type FormState = {
   require_lien_release_for_draw: boolean;
   co_approval_required: boolean;
   payment_auto_scheduling: boolean;
+  cover_letter_template: string;
 };
 
 function toFormState(s: WorkflowSettings): FormState {
@@ -42,6 +43,7 @@ function toFormState(s: WorkflowSettings): FormState {
     require_lien_release_for_draw: s.require_lien_release_for_draw,
     co_approval_required: s.co_approval_required,
     payment_auto_scheduling: s.payment_auto_scheduling,
+    cover_letter_template: s.cover_letter_template ?? "",
   };
 }
 
@@ -231,6 +233,30 @@ export default function WorkflowSettingsForm({ settings }: Props) {
           checked={form.payment_auto_scheduling}
           onChange={(v) => patch("payment_auto_scheduling", v)}
         />
+        <div className="py-3">
+          <p className="text-sm text-cream font-medium">Draw cover letter template</p>
+          <p className="text-xs text-cream-dim mt-0.5 mb-2">
+            Used as the body of the auto-generated cover letter. Leave blank to use the built-in
+            default. Placeholders: <code className="text-teal">{"{{job_name}}"}</code>,{" "}
+            <code className="text-teal">{"{{job_address}}"}</code>,{" "}
+            <code className="text-teal">{"{{owner_name}}"}</code>,{" "}
+            <code className="text-teal">{"{{draw_number}}"}</code>,{" "}
+            <code className="text-teal">{"{{period_start}}"}</code>,{" "}
+            <code className="text-teal">{"{{period_end}}"}</code>,{" "}
+            <code className="text-teal">{"{{current_payment_due}}"}</code>,{" "}
+            <code className="text-teal">{"{{contract_sum_to_date}}"}</code>,{" "}
+            <code className="text-teal">{"{{total_completed}}"}</code>,{" "}
+            <code className="text-teal">{"{{percent_complete}}"}</code>,{" "}
+            <code className="text-teal">{"{{retainage}}"}</code>.
+          </p>
+          <textarea
+            value={form.cover_letter_template}
+            onChange={(e) => patch("cover_letter_template", e.target.value)}
+            rows={10}
+            placeholder="Leave blank to use the built-in default template."
+            className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream font-mono focus:border-teal focus:outline-none"
+          />
+        </div>
       </Section>
 
       <div

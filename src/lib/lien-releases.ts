@@ -116,6 +116,37 @@ export async function pendingReleaseBlockers(
   return { count: pending, total: rows.length };
 }
 
+/**
+ * Phase 8f Part F: count releases that need a document attached. A release
+ * needs a document when its status is pending OR received AND document_url
+ * is empty.
+ */
+export async function missingDocumentBlockers(
+  draw_id: string
+): Promise<{ missing: number; total: number; vendors: string[] }> {
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase
+    .from("lien_releases")
+    .select("id, status, document_url, vendors:vendor_id (name)")
+    .eq("draw_id", draw_id)
+    .is("deleted_at", null);
+  const rows = (data ?? []) as Array<{
+    id: string;
+    status: string;
+    document_url: string | null;
+    vendors: { name?: string } | { name?: string }[] | null;
+  }>;
+  const totalRequired = rows.filter((r) => r.status !== "waived" && r.status !== "not_required");
+  const missing = totalRequired.filter((r) => !r.document_url);
+  const vendorNames = missing
+    .map((r) => {
+      const v = Array.isArray(r.vendors) ? r.vendors[0] : r.vendors;
+      return v?.name ?? null;
+    })
+    .filter((n): n is string => !!n);
+  return { missing: missing.length, total: totalRequired.length, vendors: vendorNames };
+}
+
 /** Mark all releases for a draw as not_required (used when draw is voided). */
 export async function markDrawReleasesNotRequired(draw_id: string): Promise<void> {
   const supabase = createServiceRoleClient();

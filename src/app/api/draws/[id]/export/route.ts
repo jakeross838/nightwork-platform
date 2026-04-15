@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentOrg } from "@/lib/org/session";
+import { getWorkflowSettings } from "@/lib/workflow-settings";
+import { renderCoverLetter, type CoverLetterContext } from "@/lib/cover-letter";
 import ExcelJS from "exceljs";
 
 export const dynamic = "force-dynamic";
@@ -177,6 +179,77 @@ export async function GET(
  const job = draw.jobs;
  const jobName = job?.name ?? "Unknown";
  const drawNum = draw.draw_number;
+
+ // ═══════════════════════════════════════════════
+ // SHEET 0: Cover Letter (Phase 8f) — first page
+ // ═══════════════════════════════════════════════
+ const settings = await getWorkflowSettings(draw.org_id ?? "00000000-0000-0000-0000-000000000001");
+ const coverDraw = draw as unknown as {
+ contract_sum_to_date?: number;
+ total_completed_to_date?: number;
+ current_payment_due?: number;
+ total_retainage?: number;
+ cover_letter_text?: string | null;
+ jobs?: { name?: string; address?: string; client_name?: string };
+ };
+ const coverCtx: CoverLetterContext = {
+ job_name: coverDraw.jobs?.name ?? jobName,
+ job_address: coverDraw.jobs?.address ?? "",
+ owner_name: coverDraw.jobs?.client_name ?? "",
+ draw_number: drawNum,
+ period_start: (draw as { period_start?: string | null }).period_start ?? null,
+ period_end: (draw as { period_end?: string | null }).period_end ?? null,
+ current_payment_due: coverDraw.current_payment_due ?? 0,
+ contract_sum_to_date: coverDraw.contract_sum_to_date ?? 0,
+ total_completed: coverDraw.total_completed_to_date ?? 0,
+ percent_complete:
+ (coverDraw.contract_sum_to_date ?? 0) > 0
+ ? ((coverDraw.total_completed_to_date ?? 0) / (coverDraw.contract_sum_to_date ?? 1)) * 100
+ : 0,
+ retainage: coverDraw.total_retainage ?? 0,
+ };
+ const coverBody =
+ coverDraw.cover_letter_text && coverDraw.cover_letter_text.trim().length > 0
+ ? coverDraw.cover_letter_text
+ : renderCoverLetter(settings.cover_letter_template, coverCtx);
+
+ const wsCover = wb.addWorksheet("Cover Letter", {
+ pageSetup: {
+ paperSize: 1 as unknown as ExcelJS.PaperSize,
+ orientation: "portrait",
+ fitToPage: true,
+ fitToWidth: 1,
+ fitToHeight: 1,
+ margins: { left: 0.75, right: 0.75, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 },
+ },
+ headerFooter: { oddHeader: headerText, oddFooter: "&RPage &P of &N" },
+ });
+ wsCover.columns = [{ width: 90 }];
+ if (ORG_CONTRACTOR_NAME) {
+ wsCover.addRow([ORG_CONTRACTOR_NAME]).font = FONT_TITLE;
+ if (ORG_CONTRACTOR_ADDR1) wsCover.addRow([ORG_CONTRACTOR_ADDR1]).font = FONT_VALUE;
+ if (ORG_CONTRACTOR_ADDR2) wsCover.addRow([ORG_CONTRACTOR_ADDR2]).font = FONT_VALUE;
+ wsCover.addRow([""]);
+ }
+ wsCover.addRow([formatDateStr(new Date().toISOString().slice(0, 10))]).font = FONT_VALUE;
+ wsCover.addRow([""]);
+ // Body — split on blank lines so paragraphs render with spacing.
+ const paragraphs = coverBody.split(/\n\s*\n/);
+ for (const para of paragraphs) {
+ const r = wsCover.addRow([para]);
+ r.getCell(1).alignment = { wrapText: true, vertical: "top" };
+ r.font = FONT_VALUE;
+ r.height = Math.max(20, Math.ceil(para.length / 90) * 16);
+ wsCover.addRow([""]);
+ }
+ if (ORG_SIGNATORY) {
+ wsCover.addRow([""]);
+ wsCover.addRow(["Sincerely,"]).font = FONT_VALUE;
+ wsCover.addRow([""]);
+ wsCover.addRow([""]);
+ wsCover.addRow([ORG_SIGNATORY]).font = FONT_LABEL;
+ if (ORG_CONTRACTOR_NAME) wsCover.addRow([ORG_CONTRACTOR_NAME]).font = FONT_VALUE;
+ }
 
  // ═══════════════════════════════════════════════
  // SHEET 1: G702 — Application for Payment

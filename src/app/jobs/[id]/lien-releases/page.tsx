@@ -22,6 +22,12 @@ interface LienRelease {
   created_at: string;
   vendors: { id: string; name: string } | null;
   draws: { id: string; draw_number: number; revision_number: number } | null;
+  payment_summary: {
+    paid_count: number;
+    total_count: number;
+    paid_amount: number;
+    total_amount: number;
+  } | null;
 }
 
 interface Job {
@@ -216,6 +222,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
                       <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Type</th>
                       <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
                       <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Status</th>
+                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Payment</th>
                       <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Through Date</th>
                       <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Document</th>
                       <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Actions</th>
@@ -237,14 +244,27 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
                             {humanStatus(r.status)}
                           </span>
                         </td>
+                        <td className="py-3 px-4">
+                          <PaymentStatusBadge summary={r.payment_summary} />
+                        </td>
                         <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(r.through_date)}</td>
                         <td className="py-3 px-4 text-cream-muted text-xs">
                           {r.document_url ? (
-                            <a className="text-teal hover:underline" href={r.document_url} target="_blank" rel="noreferrer">
-                              View
-                            </a>
+                            <span className="inline-flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                              <a className="text-teal hover:underline" href={r.document_url} target="_blank" rel="noreferrer">
+                                View
+                              </a>
+                            </span>
                           ) : (
-                            <span className="text-cream-dim">—</span>
+                            <span className="inline-flex items-center gap-1.5 text-status-danger">
+                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              <span className="text-xs">Missing</span>
+                            </span>
                           )}
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -429,4 +449,34 @@ function badgeFor(status: string): string {
   if (status === "received") return "bg-transparent text-status-success border border-status-success";
   if (status === "pending") return "bg-transparent text-brass border border-brass";
   return "bg-transparent text-cream-dim border border-brand-border-light";
+}
+
+function PaymentStatusBadge({
+  summary,
+}: {
+  summary: LienRelease["payment_summary"];
+}) {
+  if (!summary || summary.total_count === 0) {
+    return <span className="text-cream-dim text-xs">—</span>;
+  }
+  const { paid_count, total_count } = summary;
+  if (paid_count === total_count) {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-status-success text-status-success">
+        Paid {paid_count}/{total_count}
+      </span>
+    );
+  }
+  if (paid_count === 0) {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-brand-border-light text-cream-dim">
+        Unpaid 0/{total_count}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-brass text-brass">
+      Partial {paid_count}/{total_count}
+    </span>
+  );
 }

@@ -29,6 +29,9 @@ export type WorkflowSettings = {
   co_approval_required: boolean;
   payment_auto_scheduling: boolean;
 
+  // Phase 8f — draw cover letter (NULL = use built-in default)
+  cover_letter_template: string | null;
+
   created_at: string;
   updated_at: string;
 };
@@ -51,6 +54,7 @@ export const DEFAULT_WORKFLOW_SETTINGS: Omit<
   require_lien_release_for_draw: true,
   co_approval_required: true,
   payment_auto_scheduling: true,
+  cover_letter_template: null,
 };
 
 const COLUMNS =
@@ -59,6 +63,7 @@ const COLUMNS =
   "duplicate_detection_enabled, duplicate_detection_sensitivity, " +
   "auto_route_high_confidence, auto_route_confidence_threshold, " +
   "require_lien_release_for_draw, co_approval_required, payment_auto_scheduling, " +
+  "cover_letter_template, " +
   "created_at, updated_at";
 
 // In-process cache with 5-minute TTL so hot paths (invoice list, upload, approval)

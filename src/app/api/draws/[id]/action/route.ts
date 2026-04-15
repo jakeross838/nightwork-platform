@@ -6,9 +6,11 @@ import { notifyRole, notifyUser } from "@/lib/notifications";
 import {
   autoGenerateLienReleases,
   pendingReleaseBlockers,
+  missingDocumentBlockers,
   markDrawReleasesNotRequired,
 } from "@/lib/lien-releases";
 import { autoScheduleDrawPayments } from "@/lib/payment-schedule";
+import { getWorkflowSettings } from "@/lib/workflow-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -90,7 +92,8 @@ export async function POST(
       }
     }
 
-    // Approve guard: block if any pending lien releases.
+    // Approve guard: block if any pending lien releases OR (Phase 8f Part F)
+    // any required release document is missing when the org setting is on.
     if (action === "approve") {
       const blockers = await pendingReleaseBlockers(params.id);
       if (blockers.count > 0) {
@@ -100,6 +103,21 @@ export async function POST(
           },
           { status: 400 }
         );
+      }
+      const settings = await getWorkflowSettings(ORG_ID);
+      if (settings.require_lien_release_for_draw) {
+        const docs = await missingDocumentBlockers(params.id);
+        if (docs.missing > 0) {
+          return NextResponse.json(
+            {
+              error: `Cannot approve — ${docs.missing} of ${docs.total} lien release document(s) are missing${
+                docs.vendors.length > 0 ? ` (${docs.vendors.slice(0, 3).join(", ")}${docs.vendors.length > 3 ? "…" : ""})` : ""
+              }. Upload required before approval.`,
+              missing_lien_documents: docs,
+            },
+            { status: 400 }
+          );
+        }
       }
     }
 
@@ -123,6 +141,11 @@ export async function POST(
     if (rule.next === "approved") updates.approved_at = nowIso;
     if (rule.next === "locked") updates.locked_at = nowIso;
     if (rule.next === "paid") updates.paid_at = nowIso;
+    // Phase 8f: once a draw leaves draft, the wizard state is irrelevant. Drop
+    // it so the draws list doesn't keep showing it as "Resume draft".
+    if (draw.status === "draft" && rule.next !== "draft") {
+      updates.wizard_draft = null;
+    }
 
     const { error: updateError } = await supabase
       .from("draws")

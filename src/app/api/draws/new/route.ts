@@ -18,6 +18,7 @@ interface CreateDrawRequest {
   period_end: string;
   invoice_ids: string[];
   is_final?: boolean;
+  wizard_draft?: Record<string, unknown> | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
       period_end,
       invoice_ids,
       is_final,
+      wizard_draft,
     } = body;
 
     if (!job_id || !application_date || !period_start || !period_end) {
@@ -148,6 +150,7 @@ export async function POST(request: NextRequest) {
             note: `Draw #${drawNumber}${is_final ? " (FINAL)" : ""} created with ${invoice_ids.length} invoice(s). Period: ${period_start} to ${period_end}.`,
           },
         ],
+        wizard_draft: wizard_draft ?? null,
         org_id: ORG_ID,
       })
       .select("id, draw_number")
