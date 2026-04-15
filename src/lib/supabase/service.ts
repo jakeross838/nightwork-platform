@@ -22,3 +22,21 @@ export function createServiceRoleClient(): SupabaseClient {
   });
   return cached;
 }
+
+/**
+ * Best-effort variant. Returns null when SUPABASE_SERVICE_ROLE_KEY is not
+ * configured instead of throwing — used by non-critical paths like the
+ * api_usage logger and plan-limit counter where a missing service key
+ * should NOT break the user's flow (we'd rather skip logging than fail the
+ * invoice upload).
+ */
+export function tryCreateServiceRoleClient(): SupabaseClient | null {
+  if (cached) return cached;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) return null;
+  cached = createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return cached;
+}

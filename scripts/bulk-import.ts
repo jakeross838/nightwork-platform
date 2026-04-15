@@ -64,7 +64,13 @@ function mimeTypeForKind(kind: FileKind, fileName: string): string {
   return "application/octet-stream";
 }
 
-async function signInAsAdmin(): Promise<SupabaseClient> {
+type Session = {
+  supabase: SupabaseClient;
+  userId: string;
+  orgId: string;
+};
+
+async function signInAsAdmin(): Promise<Session> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
@@ -91,7 +97,7 @@ async function signInAsAdmin(): Promise<SupabaseClient> {
   // some RLS policies but silently blocked by others, so we fail loudly.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name")
+    .select("role, full_name, org_id")
     .eq("id", data.user.id)
     .single();
   if (profile?.role !== "admin") {
@@ -99,9 +105,12 @@ async function signInAsAdmin(): Promise<SupabaseClient> {
       `Bulk import requires an admin user. ${email} has role: ${profile?.role ?? "unknown"}`
     );
   }
+  if (!profile?.org_id) {
+    throw new Error(`Admin ${email} has no org_id — cannot meter API usage.`);
+  }
   console.log(`✓ Signed in as ${profile.full_name} (${email}, admin)\n`);
 
-  return supabase;
+  return { supabase, userId: data.user.id, orgId: profile.org_id };
 }
 
 async function uploadToStorage(
@@ -122,10 +131,11 @@ async function uploadToStorage(
 }
 
 async function processFile(
-  supabase: SupabaseClient,
+  session: Session,
   folder: string,
   fileName: string
 ): Promise<SuccessRecord> {
+  const { supabase, userId, orgId } = session;
   const fileKind = fileKindFromExtension(fileName);
   if (!fileKind || fileKind === "xlsx") {
     throw new Error(`Unsupported file kind for ${fileName}`);
@@ -145,6 +155,11 @@ async function processFile(
     fileKind,
     fileName,
     supabase,
+    meta: {
+      org_id: orgId,
+      user_id: userId,
+      metadata: { source: "bulk_import" },
+    },
   });
 
   // 3. Save — identical logic to the /api/invoices/save route
@@ -203,7 +218,7 @@ async function main() {
 
   console.log(`Found ${files.length} file${files.length === 1 ? "" : "s"} to process\n`);
 
-  const supabase = await signInAsAdmin();
+  const session = await signInAsAdmin();
 
   const successes: SuccessRecord[] = [];
   const failures: FailureRecord[] = [];
@@ -213,7 +228,7 @@ async function main() {
     const name = files[i];
     process.stdout.write(`Processing ${i + 1}/${files.length}: ${name}... `);
     try {
-      const result = await processFile(supabase, folder, name);
+      const result = await processFile(session, folder, name);
       successes.push(result);
       const dupTag = result.duplicate ? " [DUPLICATE, skipped]" : "";
       console.log(

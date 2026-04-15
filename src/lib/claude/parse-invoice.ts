@@ -1,14 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ParsedInvoice } from "@/lib/types/invoice";
-
-// Lazy so the SDK isn't instantiated at module-load time (before dotenv
-// runs in scripts, before env is injected on Vercel edge workers, etc.).
-let _anthropic: Anthropic | null = null;
-function getAnthropic(): Anthropic {
- if (!_anthropic) _anthropic = new Anthropic();
- return _anthropic;
-}
+import { callClaude } from "@/lib/claude";
 
 /**
  * A minimal interface covering the subset of SupabaseClient we rely on.
@@ -17,30 +10,13 @@ function getAnthropic(): Anthropic {
  */
 type Client = SupabaseClient | { from: (table: string) => unknown };
 
-async function callWithRetry(
- fn: () => Promise<Anthropic.Messages.Message>,
- maxRetries = 5
-): Promise<Anthropic.Messages.Message> {
- for (let attempt = 0; attempt <= maxRetries; attempt++) {
- try {
- return await fn();
- } catch (err) {
- const isRetryable =
- err instanceof Anthropic.APIError &&
- (err.status === 529 || err.status === 503 || err.status === 429);
- if (!isRetryable || attempt === maxRetries) {
- if (isRetryable) {
- throw new Error("Claude API is overloaded. Please try again in a minute.");
- }
- throw err;
- }
- const delay = Math.min(2000 * Math.pow(2, attempt), 30000);
- console.log(`Claude API overloaded, retry ${attempt + 1}/${maxRetries} in ${delay}ms`);
- await new Promise((r) => setTimeout(r, delay));
- }
- }
- throw new Error("Retry logic failed unexpectedly");
-}
+/** Metering context required by the Claude API wrapper. */
+export type ParseMeta = {
+  org_id: string;
+  user_id?: string | null;
+  /** Extra fields for api_usage.metadata (invoice_id, job_id, etc). */
+  metadata?: Record<string, unknown>;
+};
 
 async function getCostCodeList(supabase: Client): Promise<string> {
  // `any` here because this function supports both SSR and plain supabase-js
@@ -167,7 +143,8 @@ export async function parseInvoiceWithVision(
  fileBuffer: Buffer,
  mediaType: string,
  fileName: string,
- supabase: Client
+ supabase: Client,
+ meta: ParseMeta
 ): Promise<ParsedInvoice> {
  const base64 = fileBuffer.toString("base64");
  const costCodeList = await getCostCodeList(supabase);
@@ -200,8 +177,7 @@ export async function parseInvoiceWithVision(
  text: `Parse this invoice file (${fileName}). ${prompt}`,
  });
 
- const response = await callWithRetry(() =>
- getAnthropic().messages.create({
+ const response = await callClaude({
  model: "claude-sonnet-4-20250514",
  max_tokens: 4096,
  messages: [
@@ -210,8 +186,11 @@ export async function parseInvoiceWithVision(
  content: contentBlocks,
  },
  ],
- })
- );
+ function_type: "invoice_parse",
+ org_id: meta.org_id,
+ user_id: meta.user_id ?? null,
+ metadata: { ...meta.metadata, file_name: fileName, media_type: mediaType },
+ });
 
  const textBlock = response.content.find((block) => block.type === "text");
  if (!textBlock || textBlock.type !== "text") {
@@ -229,13 +208,13 @@ export async function parseInvoiceWithVision(
 export async function parseInvoiceFromText(
  text: string,
  fileName: string,
- supabase: Client
+ supabase: Client,
+ meta: ParseMeta
 ): Promise<ParsedInvoice> {
  const costCodeList = await getCostCodeList(supabase);
  const prompt = buildPrompt(costCodeList);
 
- const response = await callWithRetry(() =>
- getAnthropic().messages.create({
+ const response = await callClaude({
  model: "claude-sonnet-4-20250514",
  max_tokens: 4096,
  messages: [
@@ -244,8 +223,11 @@ export async function parseInvoiceFromText(
  content: `Below is the extracted text content from a construction invoice file (${fileName}). ${prompt}\n\n--- INVOICE TEXT ---\n${text}\n--- END INVOICE TEXT ---`,
  },
  ],
- })
- );
+ function_type: "invoice_parse",
+ org_id: meta.org_id,
+ user_id: meta.user_id ?? null,
+ metadata: { ...meta.metadata, file_name: fileName, source: "text" },
+ });
 
  const textBlock = response.content.find((block) => block.type === "text");
  if (!textBlock || textBlock.type !== "text") {

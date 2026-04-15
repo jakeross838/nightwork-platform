@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
+import { checkPlanLimit, planDisplayName } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,20 @@ export const POST = withApiError(async (request: NextRequest) => {
   }
   if (body.status && !["active", "complete", "warranty", "cancelled"].includes(body.status)) {
     throw new ApiError("Invalid status", 400);
+  }
+
+  // Only active jobs count toward the plan limit — completed/warranty/cancelled
+  // don't consume a slot. We only need to guard creation when the new job will
+  // actually be active; completed-at-creation is a rare import path.
+  const incomingStatus = body.status ?? "active";
+  if (incomingStatus === "active") {
+    const jobsCheck = await checkPlanLimit(membership.org_id, "active_jobs");
+    if (!jobsCheck.allowed) {
+      throw new ApiError(
+        `You've reached your active job limit (${jobsCheck.current} of ${jobsCheck.limit}) on ${planDisplayName(jobsCheck.plan)}. Upgrade your plan or complete an existing job to start a new one.`,
+        402
+      );
+    }
   }
 
   const original = Math.max(0, Math.round(body.original_contract_amount ?? 0));

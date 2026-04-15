@@ -6,6 +6,7 @@ import {
  ACCEPTED_MIME_TYPES,
  parseInvoiceFile,
 } from "@/lib/invoices/parse-file";
+import { PlanLimitError } from "@/lib/claude";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120; // Allow up to 2 minutes for retries
@@ -38,6 +39,9 @@ export async function POST(request: NextRequest) {
  // Upload to Supabase Storage (org-scoped path: {org_id}/uploads/…)
  const supabase = createServerClient();
  const orgId = await requireOrgId();
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
  const timestamp = Date.now();
  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
  const storagePath = `${orgId}/uploads/${timestamp}_${safeName}`;
@@ -64,6 +68,11 @@ export async function POST(request: NextRequest) {
  fileName: file.name,
  // Shared helper works with both SSR and supabase-js clients.
  supabase: supabase as unknown as Parameters<typeof parseInvoiceFile>[0]["supabase"],
+ meta: {
+ org_id: orgId,
+ user_id: user?.id ?? null,
+ metadata: { source: "invoice_upload" },
+ },
  });
 
  // Attempt to match job from parsed job_reference (for the UI suggestion chip)
@@ -106,6 +115,19 @@ export async function POST(request: NextRequest) {
  docx_html: docxHtml,
  });
  } catch (err) {
+ // Plan-limit hits are expected, not failures — surface them as 429
+ // with the structured fields the UI uses to show an upgrade prompt.
+ if (err instanceof PlanLimitError) {
+ return NextResponse.json(
+ {
+ error: "AI call limit reached",
+ current: err.current,
+ limit: err.limit,
+ plan: err.plan,
+ },
+ { status: 429 }
+ );
+ }
  console.error("Invoice parse error:", err);
  const message = err instanceof Error ? err.message : "Unknown error";
  return NextResponse.json(

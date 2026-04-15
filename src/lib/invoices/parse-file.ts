@@ -4,6 +4,7 @@ import type { ParsedInvoice } from "@/lib/types/invoice";
 import {
   parseInvoiceWithVision,
   parseInvoiceFromText,
+  type ParseMeta,
 } from "@/lib/claude/parse-invoice";
 
 export type FileKind = "pdf" | "image" | "docx" | "xlsx";
@@ -43,11 +44,12 @@ export async function parseInvoiceFile(args: {
   fileKind: FileKind;
   fileName: string;
   supabase: SupabaseClient;
+  meta: ParseMeta;
 }): Promise<ParsedInvoice> {
-  const { buffer, mediaType, fileKind, fileName, supabase } = args;
+  const { buffer, mediaType, fileKind, fileName, supabase, meta } = args;
 
   if (fileKind === "pdf" || fileKind === "image") {
-    return parseInvoiceWithVision(buffer, mediaType, fileName, supabase);
+    return parseInvoiceWithVision(buffer, mediaType, fileName, supabase, meta);
   }
 
   if (fileKind === "docx") {
@@ -55,7 +57,7 @@ export async function parseInvoiceFile(args: {
     if (!result.value.trim()) {
       throw new Error("Could not extract text from DOCX file");
     }
-    return parseInvoiceFromText(result.value, fileName, supabase);
+    return parseInvoiceFromText(result.value, fileName, supabase, meta);
   }
 
   throw new Error(`Unsupported file kind: ${fileKind}`);

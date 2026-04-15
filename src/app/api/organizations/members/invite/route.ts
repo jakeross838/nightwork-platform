@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { ADMIN_OR_OWNER, requireRole } from "@/lib/org/require";
+import { checkPlanLimit, planDisplayName } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,17 @@ export const POST = withApiError(async (request: NextRequest) => {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
+
+  // Enforce seat limit before we write anything. Pending invites don't count
+  // yet — only accepted members do — which mirrors Stripe-style metered
+  // billing: the invite is free, the seat is charged on accept.
+  const limitCheck = await checkPlanLimit(membership.org_id, "users");
+  if (!limitCheck.allowed) {
+    throw new ApiError(
+      `You've reached your user limit (${limitCheck.current} of ${limitCheck.limit}) on ${planDisplayName(limitCheck.plan)}. Upgrade your plan to invite more teammates.`,
+      402
+    );
+  }
 
   const body = (await request.json()) as { email?: string; role?: string };
   const email = body.email?.trim().toLowerCase();
