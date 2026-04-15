@@ -51,3 +51,23 @@ export function priceIdToPlanSlug(priceId: string | null | undefined): PaidPlanS
 export function isPaidPlan(slug: string): slug is PaidPlanSlug {
   return slug === "starter" || slug === "professional" || slug === "enterprise";
 }
+
+/**
+ * Whether billing is fully wired up for real checkout. All three bits must be
+ * present to take a payment: the secret key (server-side Stripe client), the
+ * publishable key (future client-side use), and at least one configured Price
+ * ID. When this is false the UI should show "coming soon" rather than pushing
+ * the user into a broken checkout flow.
+ */
+export function isStripeConfigured(): boolean {
+  const secret = (process.env.STRIPE_SECRET_KEY ?? "").trim();
+  const pub = (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "").trim();
+  const hasAnyPrice =
+    !!(process.env.STRIPE_PRICE_STARTER ?? "").trim() ||
+    !!(process.env.STRIPE_PRICE_PROFESSIONAL ?? "").trim() ||
+    !!(process.env.STRIPE_PRICE_ENTERPRISE ?? "").trim();
+  if (!secret || secret.startsWith("sk_placeholder")) return false;
+  if (!pub || pub.startsWith("pk_placeholder")) return false;
+  if (!hasAnyPrice) return false;
+  return true;
+}

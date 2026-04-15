@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
+import { formatCents, formatDollars, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 import InvoiceFilePreview from "@/components/invoice-file-preview";
 import InvoiceStatusTimeline from "@/components/invoice-status-timeline";
@@ -395,6 +395,30 @@ function statusDotColor(newStatus: string): string {
  return "bg-teal"; // forward progress: pm_review, qa_review, ai_processed
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Renders a status_history `who` value for display. Newer entries store the
+ * acting user's UUID so we can resolve to their real name; legacy entries
+ * held a role string ("pm" / "accounting" / "system") and fall back to a
+ * Title-Cased label.
+ */
+const LEGACY_ROLE_LABEL: Record<string, string> = {
+ pm: "PM",
+ accounting: "Accounting",
+ owner: "Owner",
+ admin: "Admin",
+ system: "System",
+};
+
+function formatWho(who: string, names: Map<string, string>): string {
+ if (!who) return "";
+ if (UUID_RE.test(who)) {
+ return names.get(who) ?? "User";
+ }
+ return LEGACY_ROLE_LABEL[who] ?? (who.charAt(0).toUpperCase() + who.slice(1));
+}
+
 // ── Main Page ───────────────────────────────────────────
 export default function InvoiceReviewPage() {
  const params = useParams();
@@ -431,7 +455,13 @@ export default function InvoiceReviewPage() {
  const [showMissingFieldsBlock, setShowMissingFieldsBlock] = useState(false);
  const [showOverBudgetModal, setShowOverBudgetModal] = useState(false);
  const [overBudgetNote, setOverBudgetNote] = useState("");
- const [showDocPreview, setShowDocPreview] = useState(false);
+ // Default the PDF pane to open on desktop and closed on small screens so
+ // we can always offer a toggle without pushing a tall preview onto mobile
+ // users by default.
+ const [showDocPreview, setShowDocPreview] = useState(() => {
+ if (typeof window === "undefined") return true;
+ return window.matchMedia("(min-width: 1280px)").matches;
+ });
  const [pmUsers, setPmUsers] = useState<{ id: string; full_name: string }[]>([]);
  const [reassigning, setReassigning] = useState(false);
  const [showRequestInfoModal, setShowRequestInfoModal] = useState(false);
@@ -446,6 +476,10 @@ export default function InvoiceReviewPage() {
 
  // Cross-link to the "other side" of a partial split
  const [siblingInvoice, setSiblingInvoice] = useState<{ id: string; status: string; total_amount: number } | null>(null);
+
+ // Map of user_id → full_name for resolving status_history `who` UUIDs into
+ // real names (so the sidebar shows "Bob Mozine" instead of "pm").
+ const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
 
  // Workflow settings (Phase 8e) — controls which gates are active.
  const [workflowSettings, setWorkflowSettings] = useState<{
@@ -540,6 +574,36 @@ export default function InvoiceReviewPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [invoiceId]);
 
+ // Resolve any UUID `who` values in status_history to real names. Legacy
+ // entries with "pm" / "accounting" / "system" remain untouched and render
+ // via formatWho below.
+ useEffect(() => {
+ const history = invoice?.status_history;
+ if (!history || history.length === 0) return;
+ const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+ const ids = new Set<string>();
+ for (const entry of history) {
+ const who = String((entry as { who?: unknown }).who ?? "");
+ if (uuidRe.test(who) && !userNames.has(who)) ids.add(who);
+ }
+ if (ids.size === 0) return;
+ (async () => {
+ const { data } = await supabase
+ .from("profiles")
+ .select("id, full_name")
+ .in("id", Array.from(ids));
+ if (!data) return;
+ setUserNames((prev) => {
+ const next = new Map(prev);
+ for (const row of data as Array<{ id: string; full_name: string | null }>) {
+ if (row.full_name) next.set(row.id, row.full_name);
+ }
+ return next;
+ });
+ })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [invoice?.status_history]);
+
  const refreshInvoice = () => fetchInvoice();
 
  // Fetch lookups (cost codes with category + is_change_order)
@@ -600,7 +664,7 @@ export default function InvoiceReviewPage() {
  useEffect(() => {
  async function fetchBudget() {
  if (!jobId || !costCodeId) { setBudgetInfo(null); return; }
- const { data: bl } = await supabase.from("budget_lines").select("original_estimate, revised_estimate, is_allowance").eq("job_id", jobId).eq("cost_code_id", costCodeId).is("deleted_at", null).single();
+ const { data: bl } = await supabase.from("budget_lines").select("original_estimate, revised_estimate, is_allowance").eq("job_id", jobId).eq("cost_code_id", costCodeId).is("deleted_at", null).maybeSingle();
  if (!bl) { setBudgetInfo(null); return; }
  const { data: spent } = await supabase.from("invoices").select("total_amount").eq("job_id", jobId).eq("cost_code_id", costCodeId).in("status", ["pm_approved","qa_review","qa_approved","pushed_to_qb","in_draw","paid"]).is("deleted_at", null);
  const totalSpent = spent?.reduce((s, i) => s + i.total_amount, 0) ?? 0;
@@ -1203,6 +1267,7 @@ export default function InvoiceReviewPage() {
  <InvoiceStatusTimeline
  currentStatus={invoice.status}
  history={invoice.status_history ?? []}
+ userNames={userNames}
  />
  </div>
 
@@ -1243,17 +1308,20 @@ export default function InvoiceReviewPage() {
  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
  {/* ── Left: Document Preview ── */}
  <div className="xl:col-span-1">
- {/* Mobile: collapsible toggle */}
+ {/* Toggle button — visible at every viewport width so desktop users can
+     collapse the PDF pane too, not just mobile. */}
  <button
  onClick={() => setShowDocPreview(!showDocPreview)}
- className="xl:hidden w-full flex items-center justify-between px-4 py-3 bg-brand-card border border-brand-border mb-4"
+ className="w-full flex items-center justify-between px-4 py-3 bg-brand-card border border-brand-border mb-4"
  >
- <span className="text-sm font-medium text-cream">View Original Document</span>
+ <span className="text-sm font-medium text-cream">
+ {showDocPreview ? "Hide Original Document" : "View Original Document"}
+ </span>
  <svg className={`w-4 h-4 text-cream-dim transition-transform ${showDocPreview ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
  </svg>
  </button>
- <div className={`${showDocPreview ? "block" : "hidden"} xl:block`}>
+ <div className={showDocPreview ? "block" : "hidden"}>
  <div className="xl:sticky xl:top-24">
  <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline hidden xl:block">Original Document</p>
  <div className="xl:mt-5">
@@ -1498,7 +1566,7 @@ export default function InvoiceReviewPage() {
  <div className="text-[10px] text-cream-dim mt-0.5">
  {li.qty != null && <span>{li.qty}{li.unit ? ` ${li.unit}` : ""}</span>}
  {li.qty != null && li.rate != null && <span> × </span>}
- {li.rate != null && <span>${li.rate}</span>}
+ {li.rate != null && <span>{formatDollars(li.rate)}</span>}
  </div>
  )}
  </td>
@@ -1608,7 +1676,7 @@ export default function InvoiceReviewPage() {
  <span className="text-cream-dim">—</span>
  )}
  </td>
- <td className="py-2 px-3 text-right text-cream font-medium">${(li.amount_cents / 100).toFixed(2)}</td>
+ <td className="py-2 px-3 text-right text-cream font-medium">{formatCents(li.amount_cents)}</td>
  </tr>
  );
  })}
@@ -1830,7 +1898,7 @@ export default function InvoiceReviewPage() {
  {formatStatus(String(entry.old_status))} &rarr; {formatStatus(newStatus)}
  </p>
  <p className="text-cream-dim mt-0.5">
- {String(entry.who)} &mdash; {formatDateTime(String(entry.when))}
+ {formatWho(String(entry.who), userNames)} &mdash; {formatDateTime(String(entry.when))}
  </p>
  {entry.note ? <p className="text-cream-dim/80 mt-1 italic text-[11px] leading-relaxed">{String(entry.note)}</p> : null}
  </div>
@@ -2491,7 +2559,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 function formatOverrideValue(value: unknown): string {
  if (value === null || value === undefined || value === "") return "(empty)";
- if (typeof value === "number") return `$${value.toFixed(2)}`;
+ if (typeof value === "number") return formatDollars(value);
  return String(value);
 }
 

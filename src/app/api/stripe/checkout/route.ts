@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { ADMIN_OR_OWNER, requireRole } from "@/lib/org/require";
 import { getStripe } from "@/lib/stripe";
-import { getPriceId, isPaidPlan } from "@/lib/stripe-config";
+import { getPriceId, isPaidPlan, isStripeConfigured } from "@/lib/stripe-config";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,12 @@ function appUrl(path: string): string {
 export const POST = withApiError(async (req: NextRequest) => {
   const membership = await requireRole(ADMIN_OR_OWNER);
 
+  // Short-circuit with a friendly message when billing isn't wired up yet.
+  // Avoids a 500 crash on orgs hitting upgrade before we've configured Stripe.
+  if (!isStripeConfigured()) {
+    throw new ApiError("Billing isn't configured yet — please check back soon.", 503);
+  }
+
   const body = (await req.json().catch(() => ({}))) as { plan?: string };
   const plan = String(body.plan ?? "");
   if (!isPaidPlan(plan)) {
@@ -34,8 +40,8 @@ export const POST = withApiError(async (req: NextRequest) => {
   const priceId = getPriceId(plan);
   if (!priceId) {
     throw new ApiError(
-      `Price ID for plan "${plan}" is not configured. Set STRIPE_PRICE_${plan.toUpperCase()} in .env.local.`,
-      500
+      `The ${plan} plan isn't available for checkout yet — please check back soon.`,
+      503
     );
   }
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PublicHeader from "@/components/public-header";
 import PublicFooter from "@/components/public-footer";
+import NavBar from "@/components/nav-bar";
 import { createServerClient } from "@/lib/supabase/server";
 import PricingCheckoutButton from "./PricingCheckoutButton";
 
@@ -127,7 +128,7 @@ export default async function PricingPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <PublicHeader />
+      {isAuthed ? <NavBar /> : <PublicHeader />}
 
       <section className="px-6 pt-16 pb-8">
         <div className="max-w-[1200px] mx-auto text-center">
@@ -163,7 +164,7 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <PublicFooter />
+      {!isAuthed && <PublicFooter />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import NavBar from "@/components/nav-bar";
 interface Invoice {
  id: string;
  vendor_name_raw: string | null;
+ vendor_id: string | null;
  invoice_number: string | null;
  invoice_date: string | null;
  total_amount: number;
@@ -28,6 +29,12 @@ interface Invoice {
  assigned_pm: { id: string; full_name: string } | null;
  /** Set by client after fetching per-invoice line-item splits. */
  line_item_cost_codes?: string[];
+}
+
+function isUnknownVendor(inv: Pick<Invoice, "vendor_id" | "vendor_name_raw">): boolean {
+ if (!inv.vendor_id) return true;
+ const name = (inv.vendor_name_raw ?? "").trim().toLowerCase();
+ return name === "unknown" || name === "";
 }
 
 interface PmUser { id: string; full_name: string; }
@@ -158,8 +165,8 @@ export default function AllInvoicesPage() {
  async function fetchData() {
  // Try with partial-approval columns first (migration 00015). Fall back if
  // the columns don't exist yet so the page still renders.
- const INVOICES_FULL = "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
- const INVOICES_MINIMAL = "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
+ const INVOICES_FULL = "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
+ const INVOICES_MINIMAL = "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
  const [invResult, pmResult, lineItemResult] = await Promise.all([
  supabase
  .from("invoices")
@@ -557,9 +564,32 @@ export default function AllInvoicesPage() {
  const reviewable = ["pm_review", "ai_processed"].includes(inv.status);
  window.location.href = reviewable ? `/invoices/${inv.id}` : `/invoices/${inv.id}`;
  }}>
- <td className="py-3 px-4 text-cream font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
- <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? <span className="text-cream-dim">—</span>}</td>
- <td className="py-3 px-4 text-cream-muted">{formatDate(inv.invoice_date)}</td>
+ <td className="py-3 px-4 text-cream font-medium">
+ <span className="inline-flex items-center gap-2">
+ {inv.vendor_name_raw ?? "Unknown"}
+ {isUnknownVendor(inv) && (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
+ Unknown Vendor
+ </span>
+ )}
+ </span>
+ </td>
+ <td className="py-3 px-4 text-cream-muted font-mono text-xs">
+ {inv.invoice_number ?? (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-brass border border-brass uppercase tracking-wide">
+ No Invoice #
+ </span>
+ )}
+ </td>
+ <td className="py-3 px-4 text-cream-muted">
+ {inv.invoice_date ? (
+ formatDate(inv.invoice_date)
+ ) : (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
+ No Date
+ </span>
+ )}
+ </td>
  <td className="py-3 px-4">
  {inv.jobs?.name ? (
  <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">{inv.jobs.name}</span>

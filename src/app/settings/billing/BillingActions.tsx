@@ -9,6 +9,7 @@ type Props =
       hasCustomer: boolean;
       hasActiveSub: boolean;
       onTrial: boolean;
+      billingConfigured: boolean;
       inline?: false;
       inlineLabel?: undefined;
       inlineClassName?: undefined;
@@ -21,6 +22,7 @@ type Props =
       hasCustomer?: boolean;
       hasActiveSub?: boolean;
       onTrial?: boolean;
+      billingConfigured?: boolean;
     };
 
 /**
@@ -65,7 +67,8 @@ export default function BillingActions(props: Props) {
     );
   }
 
-  const { hasCustomer, hasActiveSub, onTrial } = props;
+  const { hasCustomer, hasActiveSub, onTrial, billingConfigured } = props;
+  const [comingSoon, setComingSoon] = useState<string | null>(null);
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
@@ -88,13 +91,29 @@ export default function BillingActions(props: Props) {
             Cancel Subscription
           </button>
         </>
-      ) : (
+      ) : billingConfigured ? (
         <Link
           href="/pricing"
           className="px-4 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase hover:bg-teal-hover"
         >
           {onTrial ? "Upgrade Now" : "Pick a Plan"}
         </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setComingSoon("Billing integration coming soon")}
+          className="px-4 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase hover:bg-teal-hover"
+        >
+          {onTrial ? "Upgrade Now" : "Pick a Plan"}
+        </button>
+      )}
+      {comingSoon && (
+        <span
+          role="status"
+          className="text-xs text-cream-muted border border-brand-border bg-brand-surface px-2 py-1"
+        >
+          {comingSoon}
+        </span>
       )}
       {err && (
         <span className="text-xs text-status-danger">{err}</span>

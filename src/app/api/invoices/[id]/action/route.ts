@@ -188,7 +188,12 @@ export async function POST(
  const newStatus = ACTION_STATUS_MAP[action];
  const finalStatus = NEXT_STATUS_MAP[newStatus] ?? newStatus;
 
- const who = ["qa_approve", "kick_back"].includes(action) ? "accounting" : "pm";
+ // Prefer the acting user's UUID in `who` so the UI can resolve to their
+ // real name. Fallback to a role string keeps legacy behaviour if auth is
+ // somehow missing.
+ const { data: { user: actor } } = await supabase.auth.getUser();
+ const roleLabel = ["qa_approve", "kick_back"].includes(action) ? "accounting" : "pm";
+ const who = actor?.id ?? roleLabel;
 
  const existingHistory = Array.isArray(invoice.status_history) ? invoice.status_history : [];
 
@@ -199,7 +204,7 @@ export async function POST(
  when: new Date().toISOString(),
  old_status: invoice.status,
  new_status: newStatus,
- note: note ?? `${who} ${action.replace(/_/g, " ")}`,
+ note: note ?? `${roleLabel} ${action.replace(/_/g, " ")}`,
  },
  ];
 
@@ -274,10 +279,9 @@ export async function POST(
  }
 
  // Activity log — one row per user-visible status transition.
- const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
  await logStatusChange({
  org_id: (invoice.org_id as string | null) ?? "00000000-0000-0000-0000-000000000001",
- user_id: userId,
+ user_id: actor?.id ?? null,
  entity_type: "invoice",
  entity_id: params.id,
  from: invoice.status,

@@ -116,7 +116,7 @@ export const POST = withApiError(
       status: "pm_approved",
       status_history: [
         {
-          who: "pm",
+          who: user.id,
           when: nowIso,
           old_status: null,
           new_status: "pm_approved",
@@ -178,7 +178,7 @@ export const POST = withApiError(
         status_history: [
           ...parentHistory,
           {
-            who: "pm",
+            who: user.id,
             when: nowIso,
             old_status: parent.status,
             new_status: "pm_held",

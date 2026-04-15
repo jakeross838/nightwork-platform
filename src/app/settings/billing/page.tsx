@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getCurrentOrg } from "@/lib/org/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
-import { PLAN_DISPLAY_NAMES, PLAN_MONTHLY_PRICE, type PlanSlug } from "@/lib/stripe-config";
+import { PLAN_DISPLAY_NAMES, PLAN_MONTHLY_PRICE, isStripeConfigured, type PlanSlug } from "@/lib/stripe-config";
 import BillingActions from "./BillingActions";
 import Stripe from "stripe";
 
@@ -170,6 +170,7 @@ export default async function BillingSettingsPage({
             hasCustomer={Boolean(org.stripe_customer_id)}
             hasActiveSub={Boolean(currentSub)}
             onTrial={Boolean(onTrial)}
+            billingConfigured={isStripeConfigured()}
           />
         </div>
       </section>

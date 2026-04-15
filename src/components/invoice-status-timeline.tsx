@@ -13,7 +13,29 @@ type StatusEntry = {
 type Props = {
   currentStatus: string;
   history: Array<Record<string, unknown>>;
+  /**
+   * Resolves status_history `who` UUIDs to real names. Legacy entries whose
+   * `who` is a role string ("pm" / "accounting" / "system") render via a
+   * Title-Cased fallback instead.
+   */
+  userNames?: Map<string, string>;
 };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const LEGACY_ROLE_LABEL: Record<string, string> = {
+  pm: "PM",
+  accounting: "Accounting",
+  owner: "Owner",
+  admin: "Admin",
+  system: "System",
+};
+
+function formatWho(who: string, names?: Map<string, string>): string {
+  if (!who) return "";
+  if (UUID_RE.test(who)) return names?.get(who) ?? "User";
+  return LEGACY_ROLE_LABEL[who] ?? (who.charAt(0).toUpperCase() + who.slice(1));
+}
 
 const STANDARD_FLOW: Array<{ key: string; label: string }> = [
   { key: "received", label: "Received" },
@@ -59,7 +81,7 @@ function formatDateTime(iso: string | null): string {
   });
 }
 
-export default function InvoiceStatusTimeline({ currentStatus, history }: Props) {
+export default function InvoiceStatusTimeline({ currentStatus, history, userNames }: Props) {
   const stages = useMemo(() => {
     // Resolve canonical status key (apply alias).
     const canonicalCurrent = ALIAS[currentStatus] ?? currentStatus;
@@ -209,7 +231,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history }: Props)
                 {stage.entry?.when ? (
                   <p className="text-cream-dim text-[10px] mt-0.5">
                     {formatDateTime(String(stage.entry.when))}
-                    {stage.entry.who ? ` — ${String(stage.entry.who)}` : ""}
+                    {stage.entry.who ? ` — ${formatWho(String(stage.entry.who), userNames)}` : ""}
                   </p>
                 ) : null}
                 {stage.entry?.note ? (

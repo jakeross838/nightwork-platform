@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
-import { formatCents, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
+import { formatCents, formatDollars, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
 
 interface QaLineItem {
  id: string;
@@ -266,7 +266,7 @@ export default function QaReviewPage() {
  {invoice.line_items.map((item, i) => (
  <tr key={i} className="border-t border-brand-row-border">
  <td className="py-2 px-3 text-cream">{item.description}</td>
- <td className="py-2 px-3 text-right text-cream font-medium">{item.amount ? `$${item.amount.toFixed(2)}` : "—"}</td>
+ <td className="py-2 px-3 text-right text-cream font-medium">{item.amount ? formatDollars(item.amount) : "—"}</td>
  </tr>
  ))}
  </tbody>

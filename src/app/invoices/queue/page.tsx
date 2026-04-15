@@ -8,6 +8,7 @@ import NavBar from "@/components/nav-bar";
 interface QueueInvoice {
  id: string;
  vendor_name_raw: string | null;
+ vendor_id: string | null;
  invoice_number: string | null;
  invoice_date: string | null;
  total_amount: number;
@@ -22,6 +23,48 @@ interface QueueInvoice {
  duplicate_dismissed_at: string | null;
  jobs: { name: string } | null;
  assigned_pm: { id: string; full_name: string } | null;
+}
+
+/**
+ * Per-card pill set flagging missing required fields. Any of these means the
+ * invoice is stuck in PM Queue until a human fills in the blank, so we surface
+ * them loudly on the card.
+ */
+function MissingDataBadges({ inv }: { inv: QueueInvoice }) {
+ const unknownVendor =
+ !inv.vendor_id ||
+ (inv.vendor_name_raw ?? "").trim().toLowerCase() === "unknown" ||
+ !inv.vendor_name_raw?.trim();
+ const missingNumber = !inv.invoice_number?.trim();
+ const missingDate = !inv.invoice_date;
+ if (!unknownVendor && !missingNumber && !missingDate) return null;
+ return (
+ <div className="mt-2 flex flex-wrap gap-1.5">
+ {missingNumber && (
+ <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-transparent text-brass border border-brass uppercase tracking-wide">
+ No Invoice #
+ </span>
+ )}
+ {missingDate && (
+ <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
+ No Date
+ </span>
+ )}
+ {unknownVendor && (
+ <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
+ Unknown Vendor
+ </span>
+ )}
+ </div>
+ );
+}
+
+function hasMissingData(inv: QueueInvoice): boolean {
+ const unknownVendor =
+ !inv.vendor_id ||
+ (inv.vendor_name_raw ?? "").trim().toLowerCase() === "unknown" ||
+ !inv.vendor_name_raw?.trim();
+ return unknownVendor || !inv.invoice_number?.trim() || !inv.invoice_date;
 }
 
 interface PmUser {
@@ -43,7 +86,7 @@ interface WorkflowSettingsClient {
 type SortKey = "vendor" | "date" | "amount" | "confidence" | "waiting" | "pm";
 type SortDir = "asc" | "desc";
 type ConfidenceFilter = "all" | "high" | "medium" | "low";
-type StatusFilter = "pending" | "held" | "denied" | "kicked_back" | "info_requested" | "all";
+type StatusFilter = "pending" | "held" | "denied" | "kicked_back" | "info_requested" | "needs_attention" | "all";
 type AmountRange = "all" | "0-5k" | "5k-25k" | "25k-100k" | "100k+";
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -153,7 +196,7 @@ export default function QueuePage() {
  supabase
  .from("invoices")
  .select(
- "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, document_category, po_id, is_potential_duplicate, duplicate_dismissed_at, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
+ "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, document_category, po_id, is_potential_duplicate, duplicate_dismissed_at, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
  )
  .in("status", ["pm_review", "ai_processed", "pm_held", "pm_denied", "info_requested"])
  .is("deleted_at", null)
@@ -393,6 +436,8 @@ export default function QueuePage() {
  result = result.filter((inv) => inv.status === "pm_review");
  } else if (statusFilter === "info_requested") {
  result = result.filter((inv) => inv.status === "info_requested");
+ } else if (statusFilter === "needs_attention") {
+ result = result.filter(hasMissingData);
  }
  }
 
@@ -835,6 +880,7 @@ export default function QueuePage() {
  className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-44"
  >
  <option value="pending">Pending Review</option>
+ <option value="needs_attention">Needs Attention</option>
  <option value="held">Held</option>
  <option value="denied">Denied</option>
  <option value="kicked_back">Kicked Back</option>
@@ -995,6 +1041,7 @@ export default function QueuePage() {
  </>
  )}
  </div>
+ <MissingDataBadges inv={inv} />
  {inv.status === "pm_held" && (
  <div className="mt-2">
  <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
@@ -1209,14 +1256,19 @@ export default function QueuePage() {
  Duplicate?
  </span>
  )}
+ <MissingDataBadges inv={inv} />
  </td>
  <td className="py-4 px-5 text-cream-muted font-mono text-xs">
  {inv.invoice_number ?? (
- <span className="text-cream-dim">&mdash;</span>
+ <span className="text-status-danger">No #</span>
  )}
  </td>
  <td className="py-4 px-5 text-cream-muted">
- {formatDate(inv.invoice_date)}
+ {inv.invoice_date ? (
+ formatDate(inv.invoice_date)
+ ) : (
+ <span className="text-status-danger">No Date</span>
+ )}
  </td>
  <td className="py-4 px-5">
  {inv.jobs?.name ? (

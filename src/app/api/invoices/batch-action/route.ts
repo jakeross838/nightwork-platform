@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
     const body: BatchActionRequest = await request.json();
     const { action, invoice_ids, note } = body;
 
+    // Resolve the acting user once — we use their UUID in each status_history
+    // entry so the UI can render "Bob Mozine" instead of "pm".
+    const { data: { user: actor } } = await supabase.auth.getUser();
+    const actorWho = actor?.id ?? "pm";
+
     if (!action || !["approve", "hold", "deny"].includes(action)) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
@@ -186,7 +191,7 @@ export async function POST(request: NextRequest) {
       if (action === "approve") {
         const statusEntries = [
           {
-            who: "pm",
+            who: actorWho,
             when: now,
             old_status: invoice.status,
             new_status: "pm_approved",
@@ -216,7 +221,7 @@ export async function POST(request: NextRequest) {
         }
       } else if (action === "hold") {
         const statusEntry = {
-          who: "pm",
+          who: actorWho,
           when: now,
           old_status: invoice.status,
           new_status: "pm_held",
@@ -234,7 +239,7 @@ export async function POST(request: NextRequest) {
       } else {
         // deny
         const statusEntry = {
-          who: "pm",
+          who: actorWho,
           when: now,
           old_status: invoice.status,
           new_status: "pm_denied",
@@ -253,9 +258,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (success.length > 0) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = actor;
       try {
         const { data: lines } = await supabase
           .from("invoice_line_items")
