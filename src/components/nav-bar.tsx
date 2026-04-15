@@ -22,24 +22,29 @@ type NavItemKey =
   | "dashboard"
   | "invoices"
   | "jobs"
-  | "draws"
-  | "vendors"
+  | "financials"
   | "settings";
 
 // Who can see what. "invoices" covers the whole dropdown — individual
-// child items check their own ACCESS list.
+// child items check their own ACCESS list. Financials contains Draws,
+// Aging Report, and Vendors — any role that sees any of them sees the
+// dropdown trigger.
 const ACCESS: Record<NavItemKey, UserRole[]> = {
   dashboard: ["owner", "admin", "pm", "accounting"],
   invoices: ["owner", "admin", "pm", "accounting"],
   jobs: ["owner", "admin"],
-  draws: ["owner", "admin", "pm"],
-  vendors: ["owner", "admin", "accounting"],
+  financials: ["owner", "admin", "pm", "accounting"],
   settings: ["owner", "admin"],
 };
 
-type SubItemKey = "upload" | "all" | "pmQueue" | "qaQueue" | "payments";
+type InvoiceSubKey = "upload" | "all" | "pmQueue" | "qaQueue" | "payments";
+type FinancialsSubKey =
+  | "overview"
+  | "draws"
+  | "agingReport"
+  | "vendors";
 
-const SUB_ACCESS: Record<SubItemKey, UserRole[]> = {
+const INVOICE_SUB_ACCESS: Record<InvoiceSubKey, UserRole[]> = {
   upload: ["owner", "admin", "accounting"],
   all: ["owner", "admin", "pm", "accounting"],
   pmQueue: ["owner", "admin", "pm"],
@@ -47,11 +52,21 @@ const SUB_ACCESS: Record<SubItemKey, UserRole[]> = {
   payments: ["owner", "admin", "accounting"],
 };
 
+const FINANCIALS_SUB_ACCESS: Record<FinancialsSubKey, UserRole[]> = {
+  overview: ["owner", "admin", "pm", "accounting"],
+  draws: ["owner", "admin", "pm"],
+  agingReport: ["owner", "admin", "accounting"],
+  vendors: ["owner", "admin", "accounting"],
+};
+
 function can(role: UserRole | null, key: NavItemKey) {
   return role != null && ACCESS[key].includes(role);
 }
-function canSub(role: UserRole | null, key: SubItemKey) {
-  return role != null && SUB_ACCESS[key].includes(role);
+function canInvoiceSub(role: UserRole | null, key: InvoiceSubKey) {
+  return role != null && INVOICE_SUB_ACCESS[key].includes(role);
+}
+function canFinSub(role: UserRole | null, key: FinancialsSubKey) {
+  return role != null && FINANCIALS_SUB_ACCESS[key].includes(role);
 }
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -118,9 +133,12 @@ export default function NavBar() {
   const [qaCount, setQaCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [invoicesOpen, setInvoicesOpen] = useState(false);
+  const [financialsOpen, setFinancialsOpen] = useState(false);
   const [mobileInvoicesOpen, setMobileInvoicesOpen] = useState(false);
+  const [mobileFinancialsOpen, setMobileFinancialsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const invoicesMenuRef = useRef<HTMLDivElement>(null);
+  const financialsMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -149,8 +167,8 @@ export default function NavBar() {
 
   useEffect(() => {
     if (!profile) return;
-    const showPm = canSub(profile.role, "pmQueue");
-    const showQa = canSub(profile.role, "qaQueue");
+    const showPm = canInvoiceSub(profile.role, "pmQueue");
+    const showQa = canInvoiceSub(profile.role, "qaQueue");
     if (!showPm && !showQa) return;
 
     async function fetchCounts() {
@@ -194,18 +212,29 @@ export default function NavBar() {
     fetchCounts();
   }, [pathname, profile]);
 
-  useEffect(() => { setMobileOpen(false); setInvoicesOpen(false); setMobileInvoicesOpen(false); }, [pathname]);
+  useEffect(() => {
+    setMobileOpen(false);
+    setInvoicesOpen(false);
+    setFinancialsOpen(false);
+    setMobileInvoicesOpen(false);
+    setMobileFinancialsOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMobileOpen(false);
       if (invoicesMenuRef.current && !invoicesMenuRef.current.contains(e.target as Node)) setInvoicesOpen(false);
+      if (financialsMenuRef.current && !financialsMenuRef.current.contains(e.target as Node)) setFinancialsOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const closeMobile = () => { setMobileOpen(false); setMobileInvoicesOpen(false); };
+  const closeMobile = () => {
+    setMobileOpen(false);
+    setMobileInvoicesOpen(false);
+    setMobileFinancialsOpen(false);
+  };
 
   const isDashboardActive = pathname === "/";
   const isUploadActive = pathname === "/invoices/upload";
@@ -213,13 +242,20 @@ export default function NavBar() {
   const isPmQueueActive =
     pathname === "/invoices/queue" ||
     (pathname.startsWith("/invoices/") && pathname !== "/invoices" &&
-      !pathname.endsWith("/qa") && !pathname.includes("/upload") && !pathname.includes("/qa/"));
+      !pathname.endsWith("/qa") && !pathname.includes("/upload") && !pathname.includes("/qa/") &&
+      !pathname.startsWith("/invoices/payments"));
   const isQaActive = pathname === "/invoices/qa" || pathname.endsWith("/qa");
+  const isPaymentsActive = pathname?.startsWith("/invoices/payments") ?? false;
   const isInvoicesSectionActive =
-    isUploadActive || isAllInvoicesActive || isPmQueueActive || isQaActive;
+    isUploadActive || isAllInvoicesActive || isPmQueueActive || isQaActive || isPaymentsActive;
+
   const isJobsActive = pathname.startsWith("/jobs");
+  const isFinancialsOverviewActive = pathname === "/financials";
   const isDrawsActive = pathname.startsWith("/draws");
+  const isAgingActive = pathname.startsWith("/financials/aging-report");
   const isVendorsActive = pathname.startsWith("/vendors");
+  const isFinancialsSectionActive =
+    isFinancialsOverviewActive || isDrawsActive || isAgingActive || isVendorsActive;
 
   const role = profile?.role ?? null;
   const isSettingsActive = pathname.startsWith("/settings");
@@ -227,8 +263,7 @@ export default function NavBar() {
     dashboard: can(role, "dashboard"),
     invoices: can(role, "invoices"),
     jobs: can(role, "jobs"),
-    draws: can(role, "draws"),
-    vendors: can(role, "vendors"),
+    financials: can(role, "financials"),
     settings: can(role, "settings"),
   };
 
@@ -264,12 +299,15 @@ export default function NavBar() {
           {show.dashboard && (
             <NavLink href="/" label="Dashboard" active={isDashboardActive} />
           )}
+          {show.jobs && (
+            <NavLink href="/jobs" label="Jobs" active={isJobsActive} />
+          )}
           {show.invoices && (
             <div ref={invoicesMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setInvoicesOpen((o) => !o)}
-                onMouseEnter={() => setInvoicesOpen(true)}
+                onMouseEnter={() => { setInvoicesOpen(true); setFinancialsOpen(false); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-[14px] font-medium transition-colors nav-underline ${
                   isInvoicesSectionActive ? "text-white active" : "text-white/70 hover:text-white"
                 }`}
@@ -294,33 +332,65 @@ export default function NavBar() {
                   onMouseLeave={() => setInvoicesOpen(false)}
                   className="absolute left-0 top-full mt-1 min-w-[220px] bg-brand-card border border-brand-border shadow-2xl z-50"
                 >
-                  {canSub(role, "upload") && (
-                    <DropdownItem href="/invoices/upload" label="Upload" active={isUploadActive} onClick={() => setInvoicesOpen(false)} />
-                  )}
-                  {canSub(role, "all") && (
+                  {canInvoiceSub(role, "all") && (
                     <DropdownItem href="/invoices" label="All Invoices" active={isAllInvoicesActive} onClick={() => setInvoicesOpen(false)} />
                   )}
-                  {canSub(role, "pmQueue") && (
+                  {canInvoiceSub(role, "pmQueue") && (
                     <DropdownItem href="/invoices/queue" label="PM Queue" count={pmCount} active={isPmQueueActive} onClick={() => setInvoicesOpen(false)} />
                   )}
-                  {canSub(role, "qaQueue") && (
+                  {canInvoiceSub(role, "qaQueue") && (
                     <DropdownItem href="/invoices/qa" label="Accounting QA" count={qaCount} active={isQaActive} onClick={() => setInvoicesOpen(false)} />
                   )}
-                  {canSub(role, "payments") && (
-                    <DropdownItem href="/invoices/payments" label="Payment Tracking" active={pathname?.startsWith("/invoices/payments") ?? false} onClick={() => setInvoicesOpen(false)} />
+                  {canInvoiceSub(role, "upload") && (
+                    <DropdownItem href="/invoices/upload" label="Upload Invoice" active={isUploadActive} onClick={() => setInvoicesOpen(false)} />
+                  )}
+                  {canInvoiceSub(role, "payments") && (
+                    <DropdownItem href="/invoices/payments" label="Payment Tracking" active={isPaymentsActive} onClick={() => setInvoicesOpen(false)} />
                   )}
                 </div>
               )}
             </div>
           )}
-          {show.jobs && (
-            <NavLink href="/jobs" label="Jobs" active={isJobsActive} />
-          )}
-          {show.draws && (
-            <NavLink href="/draws" label="Draws" active={isDrawsActive} />
-          )}
-          {show.vendors && (
-            <NavLink href="/vendors" label="Vendors" active={isVendorsActive} />
+          {show.financials && (
+            <div ref={financialsMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setFinancialsOpen((o) => !o)}
+                onMouseEnter={() => { setFinancialsOpen(true); setInvoicesOpen(false); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[14px] font-medium transition-colors nav-underline ${
+                  isFinancialsSectionActive ? "text-white active" : "text-white/70 hover:text-white"
+                }`}
+                aria-haspopup="menu"
+                aria-expanded={financialsOpen}
+              >
+                Financials
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform ${financialsOpen ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {financialsOpen && (
+                <div
+                  onMouseLeave={() => setFinancialsOpen(false)}
+                  className="absolute left-0 top-full mt-1 min-w-[220px] bg-brand-card border border-brand-border shadow-2xl z-50"
+                >
+                  {canFinSub(role, "overview") && (
+                    <DropdownItem href="/financials" label="Overview" active={isFinancialsOverviewActive} onClick={() => setFinancialsOpen(false)} />
+                  )}
+                  {canFinSub(role, "draws") && (
+                    <DropdownItem href="/draws" label="Draws" active={isDrawsActive} onClick={() => setFinancialsOpen(false)} />
+                  )}
+                  {canFinSub(role, "agingReport") && (
+                    <DropdownItem href="/financials/aging-report" label="Aging Report" active={isAgingActive} onClick={() => setFinancialsOpen(false)} />
+                  )}
+                  {canFinSub(role, "vendors") && (
+                    <DropdownItem href="/vendors" label="Vendors" active={isVendorsActive} onClick={() => setFinancialsOpen(false)} />
+                  )}
+                </div>
+              )}
+            </div>
           )}
           {show.settings && (
             <NavLink href="/settings/company" label="Settings" active={isSettingsActive} />
@@ -385,6 +455,7 @@ export default function NavBar() {
             </div>
           )}
           {show.dashboard && <NavLink href="/" label="Dashboard" active={isDashboardActive} mobile onClick={closeMobile} />}
+          {show.jobs && <NavLink href="/jobs" label="Jobs" active={isJobsActive} mobile onClick={closeMobile} />}
           {show.invoices && (
             <>
               <button
@@ -393,6 +464,7 @@ export default function NavBar() {
                 className={`flex items-center justify-between py-3 px-4 w-full text-[14px] font-medium transition-colors ${
                   isInvoicesSectionActive ? "text-white" : "text-white/70"
                 }`}
+                aria-expanded={mobileInvoicesOpen}
               >
                 <span className="flex items-center gap-2">
                   Invoices
@@ -408,18 +480,40 @@ export default function NavBar() {
               </button>
               {mobileInvoicesOpen && (
                 <div className="pl-4">
-                  {canSub(role, "upload") && <NavLink href="/invoices/upload" label="Upload" active={isUploadActive} mobile onClick={closeMobile} />}
-                  {canSub(role, "all") && <NavLink href="/invoices" label="All Invoices" active={isAllInvoicesActive} mobile onClick={closeMobile} />}
-                  {canSub(role, "pmQueue") && <NavLink href="/invoices/queue" label="PM Queue" count={pmCount} active={isPmQueueActive} mobile onClick={closeMobile} />}
-                  {canSub(role, "qaQueue") && <NavLink href="/invoices/qa" label="Accounting QA" count={qaCount} active={isQaActive} mobile onClick={closeMobile} />}
-                  {canSub(role, "payments") && <NavLink href="/invoices/payments" label="Payment Tracking" active={pathname?.startsWith("/invoices/payments") ?? false} mobile onClick={closeMobile} />}
+                  {canInvoiceSub(role, "all") && <NavLink href="/invoices" label="All Invoices" active={isAllInvoicesActive} mobile onClick={closeMobile} />}
+                  {canInvoiceSub(role, "pmQueue") && <NavLink href="/invoices/queue" label="PM Queue" count={pmCount} active={isPmQueueActive} mobile onClick={closeMobile} />}
+                  {canInvoiceSub(role, "qaQueue") && <NavLink href="/invoices/qa" label="Accounting QA" count={qaCount} active={isQaActive} mobile onClick={closeMobile} />}
+                  {canInvoiceSub(role, "upload") && <NavLink href="/invoices/upload" label="Upload Invoice" active={isUploadActive} mobile onClick={closeMobile} />}
+                  {canInvoiceSub(role, "payments") && <NavLink href="/invoices/payments" label="Payment Tracking" active={isPaymentsActive} mobile onClick={closeMobile} />}
                 </div>
               )}
             </>
           )}
-          {show.jobs && <NavLink href="/jobs" label="Jobs" active={isJobsActive} mobile onClick={closeMobile} />}
-          {show.draws && <NavLink href="/draws" label="Draws" active={isDrawsActive} mobile onClick={closeMobile} />}
-          {show.vendors && <NavLink href="/vendors" label="Vendors" active={isVendorsActive} mobile onClick={closeMobile} />}
+          {show.financials && (
+            <>
+              <button
+                type="button"
+                onClick={() => setMobileFinancialsOpen((o) => !o)}
+                className={`flex items-center justify-between py-3 px-4 w-full text-[14px] font-medium transition-colors ${
+                  isFinancialsSectionActive ? "text-white" : "text-white/70"
+                }`}
+                aria-expanded={mobileFinancialsOpen}
+              >
+                <span>Financials</span>
+                <svg className={`w-3.5 h-3.5 transition-transform ${mobileFinancialsOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {mobileFinancialsOpen && (
+                <div className="pl-4">
+                  {canFinSub(role, "overview") && <NavLink href="/financials" label="Overview" active={isFinancialsOverviewActive} mobile onClick={closeMobile} />}
+                  {canFinSub(role, "draws") && <NavLink href="/draws" label="Draws" active={isDrawsActive} mobile onClick={closeMobile} />}
+                  {canFinSub(role, "agingReport") && <NavLink href="/financials/aging-report" label="Aging Report" active={isAgingActive} mobile onClick={closeMobile} />}
+                  {canFinSub(role, "vendors") && <NavLink href="/vendors" label="Vendors" active={isVendorsActive} mobile onClick={closeMobile} />}
+                </div>
+              )}
+            </>
+          )}
           {show.settings && <NavLink href="/settings/company" label="Settings" active={isSettingsActive} mobile onClick={closeMobile} />}
           <form action={logoutAction} className="mt-1">
             <button type="submit" className="w-full text-left py-3 px-4 text-[14px] transition-colors hover:underline underline-offset-4"

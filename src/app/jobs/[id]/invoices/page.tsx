@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
+import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate, formatStatus, statusBadgeOutline } from "@/lib/utils/format";
@@ -153,6 +154,7 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
           <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
         </div>
         <JobTabs jobId={job.id} active="invoices" />
+        <JobFinancialBar jobId={job.id} />
 
         <div className="flex items-center gap-3 mb-4 flex-wrap">
           <input

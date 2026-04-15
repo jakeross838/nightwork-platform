@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
+import JobFinancialBar from "@/components/job-financial-bar";
+import JobOverviewCards from "@/components/job-overview-cards";
 import Breadcrumbs from "@/components/breadcrumbs";
 
 interface PmUser {
@@ -24,6 +26,7 @@ interface Job {
   contract_type: "cost_plus" | "fixed";
   original_contract_amount: number;
   current_contract_amount: number;
+  approved_cos_total: number | null;
   deposit_percentage: number;
   gc_fee_percentage: number;
   retainage_percent: number;
@@ -198,21 +201,36 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
           )}
         </div>
         <JobTabs jobId={job.id} active="overview" />
+        <JobFinancialBar jobId={job.id} />
 
         {!editing ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 bg-brand-card border border-brand-border p-6 mb-6">
-            <Detail label="Client Name" value={job.client_name} />
-            <Detail label="Client Email" value={job.client_email} />
-            <Detail label="Client Phone" value={job.client_phone} />
-            <Detail label="Contract Date" value={formatDate(job.contract_date)} />
-            <Detail label="Original Contract" value={formatCents(job.original_contract_amount)} />
-            <Detail label="Current Contract" value={formatCents(job.current_contract_amount)} />
-            <Detail label="Deposit %" value={`${(job.deposit_percentage * 100).toFixed(1)}%`} />
-            <Detail label="GC Fee %" value={`${(job.gc_fee_percentage * 100).toFixed(1)}%`} />
-            <Detail label="Retainage %" value={`${Number(job.retainage_percent ?? 0).toFixed(1)}%`} />
-            <Detail label="Assigned PM" value={pms.find((p) => p.id === job.pm_id)?.full_name ?? "Unassigned"} />
-            <Detail label="Status" value={job.status} />
-          </div>
+          <>
+            <JobOverviewCards
+              jobId={job.id}
+              originalContract={job.original_contract_amount}
+              revisedContract={job.current_contract_amount}
+              approvedCosTotal={job.approved_cos_total ?? 0}
+            />
+
+            <section className="bg-brand-card border border-brand-border p-6 mt-4">
+              <h3 className="font-display text-base text-cream mb-3">Job Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                <Detail label="Client Name" value={job.client_name} />
+                <Detail label="Client Email" value={job.client_email} />
+                <Detail label="Client Phone" value={job.client_phone} />
+                <Detail label="Contract Date" value={formatDate(job.contract_date)} />
+                <Detail label="Contract Type" value={job.contract_type === "cost_plus" ? "Cost Plus" : "Fixed Price"} />
+                <Detail label="Deposit %" value={`${(job.deposit_percentage * 100).toFixed(1)}%`} />
+                <Detail label="GC Fee %" value={`${(job.gc_fee_percentage * 100).toFixed(1)}%`} />
+                <Detail
+                  label="Retainage %"
+                  value={`${Number(job.retainage_percent ?? 0).toFixed(1)}%`}
+                />
+                <Detail label="Assigned PM" value={pms.find((p) => p.id === job.pm_id)?.full_name ?? "Unassigned"} />
+                <Detail label="Status" value={job.status} />
+              </div>
+            </section>
+          </>
         ) : (
           <form onSubmit={handleSave} className="bg-brand-card border border-brand-border p-6 mb-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

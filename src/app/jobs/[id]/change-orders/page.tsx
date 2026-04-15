@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
+import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
@@ -173,6 +174,7 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
           </Link>
         </div>
         <JobTabs jobId={job.id} active="change-orders" />
+        <JobFinancialBar jobId={job.id} />
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Stat label="Original Contract" value={formatCents(job.original_contract_amount)} />

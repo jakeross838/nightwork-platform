@@ -392,5 +392,117 @@ export function defaultPeriodEndFromToday(): string {
   return `${lastDay.getFullYear()}-${String(lastDay.getMonth() + 1).padStart(2, "0")}-${String(lastDay.getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * Recompute stored G702 totals for every DRAFT draw on a job.
+ *
+ * Called from the jobs PATCH endpoint when retainage_percent changes. Draft
+ * draws are the only ones that should silently re-stamp retainage —
+ * submitted/approved/locked/paid draws keep their captured values because
+ * retroactive retainage changes on those would be a revision event.
+ *
+ * Idempotent: running this twice writes the same values.
+ */
+export async function recalcDraftDrawsForJob(jobId: string): Promise<number> {
+  if (!jobId) return 0;
+  const supabase = createServiceRoleClient();
+
+  const [{ data: job }, { data: draws }] = await Promise.all([
+    supabase
+      .from("jobs")
+      .select(
+        "original_contract_amount, current_contract_amount, deposit_percentage, approved_cos_total, retainage_percent"
+      )
+      .eq("id", jobId)
+      .maybeSingle(),
+    supabase
+      .from("draws")
+      .select("id, draw_number, period_start, period_end, is_final")
+      .eq("job_id", jobId)
+      .eq("status", "draft")
+      .is("deleted_at", null),
+  ]);
+
+  if (!job || !draws || draws.length === 0) return 0;
+
+  const retainagePct =
+    (job as { retainage_percent?: number }).retainage_percent ?? 10;
+  const depositPct =
+    (job as { deposit_percentage?: number }).deposit_percentage ?? 0.1;
+  const originalContractSum =
+    (job as { original_contract_amount?: number }).original_contract_amount ?? 0;
+  const netChangeOrders =
+    (job as { approved_cos_total?: number }).approved_cos_total ?? 0;
+
+  let recomputed = 0;
+
+  for (const d of draws) {
+    const draw = d as {
+      id: string;
+      draw_number: number;
+      period_start: string | null;
+      period_end: string | null;
+      is_final: boolean;
+    };
+
+    const { data: invRows } = await supabase
+      .from("invoices")
+      .select("id")
+      .eq("draw_id", draw.id)
+      .is("deleted_at", null);
+    const invoiceIds = (invRows ?? []).map((i) => (i as { id: string }).id);
+
+    const { lines } = await computeDrawLines({
+      jobId,
+      drawNumber: draw.draw_number,
+      excludeDrawId: draw.id,
+      periodStart: draw.period_start,
+      periodEnd: draw.period_end,
+      drawInvoiceIds: invoiceIds,
+      retainagePercent: retainagePct,
+      isFinalDraw: !!draw.is_final,
+    });
+
+    const lessPrevCerts = await lessPreviousCertificatesForJob(
+      jobId,
+      draw.draw_number,
+      draw.id
+    );
+
+    const totals = rollupDrawTotals({
+      originalContractSum,
+      netChangeOrders,
+      depositPercentage: depositPct,
+      retainagePercent: retainagePct,
+      lines,
+      lessPreviousCertificates: lessPrevCerts,
+      isFinalDraw: !!draw.is_final,
+    });
+
+    await supabase
+      .from("draws")
+      .update({
+        original_contract_sum: totals.original_contract_sum,
+        net_change_orders: totals.net_change_orders,
+        contract_sum_to_date: totals.contract_sum_to_date,
+        total_completed_to_date: totals.total_completed_to_date,
+        retainage_on_completed: totals.retainage_on_completed,
+        retainage_on_stored: totals.retainage_on_stored,
+        total_retainage: totals.total_retainage,
+        total_earned_less_retainage: totals.total_earned_less_retainage,
+        less_previous_certificates: totals.less_previous_certificates,
+        less_previous_payments: totals.less_previous_payments,
+        current_payment_due: totals.current_payment_due,
+        balance_to_finish: totals.balance_to_finish,
+        deposit_amount: totals.deposit_amount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", draw.id);
+
+    recomputed += 1;
+  }
+
+  return recomputed;
+}
+
 export const DRAW_STATUSES_APPROVED_INVOICES = APPROVED_INVOICE_STATUSES;
 export const DRAW_LOCKED_STATUSES = PRIOR_DRAW_STATUSES;

@@ -3,6 +3,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
 import { checkPlanLimit, planDisplayName } from "@/lib/plan-limits";
+import { recalcDraftDrawsForJob } from "@/lib/draw-calc";
+import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +66,22 @@ export const POST = withApiError(async (request: NextRequest) => {
 
   const original = Math.max(0, Math.round(body.original_contract_amount ?? 0));
 
+  // Inherit org's default retainage when caller doesn't override it. Ross
+  // Built's org default is 0; new orgs default to 10.
+  let retainageToUse: number | undefined;
+  if (body.retainage_percent !== undefined) {
+    retainageToUse = Number(body.retainage_percent);
+  } else {
+    const { data: orgRow } = await supabase
+      .from("organizations")
+      .select("default_retainage_percent")
+      .eq("id", membership.org_id)
+      .maybeSingle();
+    const dflt =
+      (orgRow as { default_retainage_percent?: number } | null)?.default_retainage_percent;
+    if (dflt !== undefined && dflt !== null) retainageToUse = Number(dflt);
+  }
+
   const { data, error } = await supabase
     .from("jobs")
     .insert({
@@ -77,9 +95,7 @@ export const POST = withApiError(async (request: NextRequest) => {
       current_contract_amount: original, // start equal; COs adjust later
       deposit_percentage: body.deposit_percentage ?? 0.1,
       gc_fee_percentage: body.gc_fee_percentage ?? 0.2,
-      ...(body.retainage_percent !== undefined
-        ? { retainage_percent: Number(body.retainage_percent) }
-        : {}),
+      ...(retainageToUse !== undefined ? { retainage_percent: retainageToUse } : {}),
       pm_id: body.pm_id ?? null,
       contract_date: body.contract_date ?? null,
       status: body.status ?? "active",
@@ -110,6 +126,19 @@ export const PATCH = withApiError(async (request: NextRequest) => {
   const body: JobBody & { id: string } = await request.json();
   if (!body.id) throw new ApiError("Missing job id", 400);
 
+  // Read current value so we can detect an actual retainage change and
+  // cascade it to draft draws. Also used for activity-log deltas.
+  const { data: existing } = await supabase
+    .from("jobs")
+    .select("retainage_percent, org_id")
+    .eq("id", body.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!existing) throw new ApiError("Job not found", 404);
+  const previousRetainage = Number(
+    (existing as { retainage_percent?: number }).retainage_percent ?? 0
+  );
+
   const patch: Record<string, unknown> = {};
   if (body.name !== undefined) patch.name = body.name;
   if (body.address !== undefined) patch.address = body.address;
@@ -120,12 +149,17 @@ export const PATCH = withApiError(async (request: NextRequest) => {
   if (body.original_contract_amount !== undefined) patch.original_contract_amount = body.original_contract_amount;
   if (body.deposit_percentage !== undefined) patch.deposit_percentage = body.deposit_percentage;
   if (body.gc_fee_percentage !== undefined) patch.gc_fee_percentage = body.gc_fee_percentage;
+
+  let retainageChanged = false;
+  let newRetainage = previousRetainage;
   if (body.retainage_percent !== undefined) {
     const pct = Number(body.retainage_percent);
     if (Number.isNaN(pct) || pct < 0 || pct > 100) {
       throw new ApiError("retainage_percent must be between 0 and 100", 400);
     }
     patch.retainage_percent = pct;
+    newRetainage = pct;
+    retainageChanged = pct !== previousRetainage;
   }
   if (body.pm_id !== undefined) patch.pm_id = body.pm_id;
   if (body.contract_date !== undefined) patch.contract_date = body.contract_date;
@@ -138,5 +172,27 @@ export const PATCH = withApiError(async (request: NextRequest) => {
     .is("deleted_at", null);
 
   if (error) throw new ApiError(error.message, 500);
+
+  // Cascade: when retainage changes, recompute draft draws so the stored
+  // 5a/5b/5c/6/8/9 numbers stay in sync. Submitted/approved/locked/paid
+  // draws keep their captured values — retroactive changes there would be
+  // a revision event, not a silent edit.
+  if (retainageChanged) {
+    const recomputed = await recalcDraftDrawsForJob(body.id);
+    await logActivity({
+      org_id: (existing as { org_id: string }).org_id,
+      user_id: user.id,
+      entity_type: "job",
+      entity_id: body.id,
+      action: "updated",
+      details: {
+        field: "retainage_percent",
+        from: previousRetainage,
+        to: newRetainage,
+        draft_draws_recomputed: recomputed,
+      },
+    });
+  }
+
   return NextResponse.json({ ok: true });
 });

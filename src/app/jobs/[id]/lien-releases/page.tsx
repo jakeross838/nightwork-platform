@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
+import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 
 interface LienRelease {
@@ -134,6 +135,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
           Track conditional and unconditional waivers for every vendor on every draw.
         </p>
         <JobTabs jobId={params.id} active="lien-releases" />
+        <JobFinancialBar jobId={params.id} />
 
         {loading ? (
           <div className="py-16 text-center">

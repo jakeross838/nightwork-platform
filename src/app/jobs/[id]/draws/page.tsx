@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
+import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
@@ -104,6 +105,7 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
           </Link>
         </div>
         <JobTabs jobId={job.id} active="draws" />
+        <JobFinancialBar jobId={job.id} />
 
         {draws.length === 0 ? (
           <div className="bg-brand-card border border-brand-border p-12 text-center">

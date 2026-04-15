@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
+import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
@@ -165,6 +166,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
           </div>
         </div>
         <JobTabs jobId={job.id} active="purchase-orders" />
+        <JobFinancialBar jobId={job.id} />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Stat label="Total POs" value={String(totals.count)} />
