@@ -632,7 +632,15 @@ function ChoiceCard({
       <h3 className="font-display text-lg text-cream">{title}</h3>
       <p className="mt-2 text-sm text-cream-muted flex-1">{subtitle}</p>
       <span
-        className="mt-4 inline-flex items-center gap-1 text-[12px] tracking-[0.08em] uppercase font-semibold text-teal border-b-2 border-teal pb-0.5 self-start cursor-pointer transition-opacity group-hover:opacity-80 group-hover:underline"
+        style={{
+          color: "#3F5B62",
+          fontWeight: 600,
+          cursor: "pointer",
+          textDecoration: "underline",
+          textDecorationThickness: "2px",
+          textUnderlineOffset: "3px",
+        }}
+        className="mt-4 inline-flex items-center gap-1 text-[12px] tracking-[0.08em] uppercase self-start transition-opacity group-hover:opacity-70"
       >
         {selected ? "✓ " : ""}{cta}
       </span>
