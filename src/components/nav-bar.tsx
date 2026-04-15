@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { logoutAction } from "@/app/login/actions";
+import { useOrgBranding } from "@/components/org-branding-provider";
+import { PUBLIC_APP_NAME } from "@/lib/org/public";
 
-export type UserRole = "admin" | "pm" | "accounting";
+export type UserRole = "admin" | "pm" | "accounting" | "owner";
 
 type Profile = {
   id: string;
@@ -19,25 +21,27 @@ type NavItemKey =
   | "invoices"
   | "jobs"
   | "draws"
-  | "vendors";
+  | "vendors"
+  | "settings";
 
 // Who can see what. "invoices" covers the whole dropdown — individual
 // child items check their own ACCESS list.
 const ACCESS: Record<NavItemKey, UserRole[]> = {
-  dashboard: ["admin", "pm", "accounting"],
-  invoices: ["admin", "pm", "accounting"],
-  jobs: ["admin"],
-  draws: ["admin", "pm"],
-  vendors: ["admin", "accounting"],
+  dashboard: ["owner", "admin", "pm", "accounting"],
+  invoices: ["owner", "admin", "pm", "accounting"],
+  jobs: ["owner", "admin"],
+  draws: ["owner", "admin", "pm"],
+  vendors: ["owner", "admin", "accounting"],
+  settings: ["owner", "admin"],
 };
 
 type SubItemKey = "upload" | "all" | "pmQueue" | "qaQueue";
 
 const SUB_ACCESS: Record<SubItemKey, UserRole[]> = {
-  upload: ["admin", "accounting"],
-  all: ["admin", "pm", "accounting"],
-  pmQueue: ["admin", "pm"],
-  qaQueue: ["admin", "accounting"],
+  upload: ["owner", "admin", "accounting"],
+  all: ["owner", "admin", "pm", "accounting"],
+  pmQueue: ["owner", "admin", "pm"],
+  qaQueue: ["owner", "admin", "accounting"],
 };
 
 function can(role: UserRole | null, key: NavItemKey) {
@@ -48,6 +52,7 @@ function canSub(role: UserRole | null, key: SubItemKey) {
 }
 
 const ROLE_LABEL: Record<UserRole, string> = {
+  owner: "Owner",
   admin: "Admin",
   pm: "PM",
   accounting: "Accounting",
@@ -118,12 +123,23 @@ export default function NavBar() {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, role")
-        .eq("id", user.id)
-        .single();
-      if (data) setProfile(data as Profile);
+      // Full name comes from profiles; canonical role comes from org_members.
+      const [{ data: profileRow }, { data: membership }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name").eq("id", user.id).single(),
+        supabase
+          .from("org_members")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle(),
+      ]);
+      if (profileRow && membership?.role) {
+        setProfile({
+          id: profileRow.id as string,
+          full_name: profileRow.full_name as string,
+          role: membership.role as UserRole,
+        });
+      }
     }
     loadProfile();
   }, []);
@@ -203,15 +219,20 @@ export default function NavBar() {
   const isVendorsActive = pathname.startsWith("/vendors");
 
   const role = profile?.role ?? null;
+  const isSettingsActive = pathname.startsWith("/settings");
   const show = {
     dashboard: can(role, "dashboard"),
     invoices: can(role, "invoices"),
     jobs: can(role, "jobs"),
     draws: can(role, "draws"),
     vendors: can(role, "vendors"),
+    settings: can(role, "settings"),
   };
 
   const totalInvoicesCount = pmCount + qaCount;
+  const branding = useOrgBranding();
+  const brandName = branding?.name ?? PUBLIC_APP_NAME;
+  const logoUrl = branding?.logo_url ?? null;
 
   return (
     <header
@@ -220,9 +241,18 @@ export default function NavBar() {
     >
       <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 group shrink-0">
-          <span className="font-display text-lg text-white uppercase tracking-[0.08em] font-normal group-hover:text-white/80 transition-colors">
-            Ross Command Center
-          </span>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={brandName}
+              className="h-8 w-auto object-contain"
+            />
+          ) : (
+            <span className="font-display text-lg text-white uppercase tracking-[0.08em] font-normal group-hover:text-white/80 transition-colors">
+              {brandName}
+            </span>
+          )}
         </Link>
 
         {/* Desktop nav */}
@@ -284,6 +314,9 @@ export default function NavBar() {
           )}
           {show.vendors && (
             <NavLink href="/vendors" label="Vendors" active={isVendorsActive} />
+          )}
+          {show.settings && (
+            <NavLink href="/settings/company" label="Settings" active={isSettingsActive} />
           )}
         </nav>
 
@@ -376,6 +409,7 @@ export default function NavBar() {
           {show.jobs && <NavLink href="/jobs" label="Jobs" active={isJobsActive} mobile onClick={closeMobile} />}
           {show.draws && <NavLink href="/draws" label="Draws" active={isDrawsActive} mobile onClick={closeMobile} />}
           {show.vendors && <NavLink href="/vendors" label="Vendors" active={isVendorsActive} mobile onClick={closeMobile} />}
+          {show.settings && <NavLink href="/settings/company" label="Settings" active={isSettingsActive} mobile onClick={closeMobile} />}
           <form action={logoutAction} className="mt-1">
             <button type="submit" className="w-full text-left py-3 px-4 text-[14px] transition-colors hover:underline underline-offset-4"
               style={{ color: "var(--text-inverse)", opacity: 0.8 }}>

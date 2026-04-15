@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
+import { PUBLIC_APP_NAME } from "@/lib/org/branding";
 import LoginForm from "./LoginForm";
 
 export const dynamic = "force-dynamic";
@@ -17,20 +18,16 @@ export default async function LoginPage() {
       <div className="relative z-10 w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
           <h1 className="font-display text-3xl text-cream tracking-tight">
-            Ross Command Center
+            {PUBLIC_APP_NAME}
           </h1>
           <p className="mt-2 text-sm text-cream-dim">
-            Ross Built Custom Homes
+            Construction operations, reimagined
           </p>
         </div>
 
         <div className="p-6 border border-brand-border bg-white">
           <LoginForm />
         </div>
-
-        <p className="mt-6 text-center text-[11px] tracking-[0.08em] uppercase text-cream-dim">
-          Est. 2006 &middot; Luxury Coastal Custom Homes
-        </p>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@
     "bulk-import": "npx tsx scripts/bulk-import.ts",
     "rematch-jobs": "npx tsx scripts/rematch-jobs.ts",
     "rename-invoice-files": "npx tsx scripts/rename-invoice-files.ts",
+    "migrate-org-storage": "npx tsx scripts/migrate-org-scoped-storage.ts",
     "reprocess-co-detection": "npx tsx scripts/reprocess-co-detection.ts"
   },
   "dependencies": {

@@ -1,6 +1,9 @@
 /**
- * Ross Command Center — Design Tokens
+ * CommandPost — Design Tokens
  * Swap this file + globals.css variables to change the entire theme.
+ * Brand-specific colors (bgInverse/textPrimary/borderBrand/money) default
+ * to Ross Built's navy, but are overridden at runtime by --org-primary
+ * CSS variable (set per-org in layout.tsx from the organizations table).
  */
 
 export const theme = {

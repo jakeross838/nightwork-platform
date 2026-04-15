@@ -99,9 +99,14 @@ export function buildCleanFilename(inputs: FilenameInputs): string {
   return name;
 }
 
-/** Prefix storage path with the uploads/ folder, matching our bucket convention. */
-export function storagePathFor(cleanName: string): string {
-  return `uploads/${cleanName}`;
+/**
+ * Prefix storage path with the org-scoped uploads folder so every file
+ * lives under `{org_id}/uploads/…`. Keeping the trailing `uploads/` segment
+ * matches our historical convention and lets RLS distinguish invoice files
+ * from any other per-org artifacts we add later.
+ */
+export function storagePathFor(cleanName: string, orgId: string): string {
+  return `${orgId}/uploads/${cleanName}`;
 }
 
 /**

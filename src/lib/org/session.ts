@@ -7,6 +7,7 @@ export type CurrentOrg = {
   id: string;
   name: string;
   slug: string;
+  tagline: string | null;
   logo_url: string | null;
   primary_color: string;
   accent_color: string | null;
@@ -36,7 +37,7 @@ export type CurrentMembership = {
 };
 
 const ORG_COLUMNS =
-  "id, name, slug, logo_url, primary_color, accent_color, " +
+  "id, name, slug, tagline, logo_url, primary_color, accent_color, " +
   "company_address, company_city, company_state, company_zip, " +
   "company_phone, company_email, company_website, " +
   "default_gc_fee_percentage, default_deposit_percentage, " +

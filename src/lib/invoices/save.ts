@@ -289,7 +289,7 @@ export async function saveParsedInvoice(
     invoiceDate: parsed.invoice_date,
     extension: ext,
   });
-  const desiredPath = storagePathFor(cleanName);
+  const desiredPath = storagePathFor(cleanName, ORG_ID);
 
   let finalFileUrl = file_url;
   try {

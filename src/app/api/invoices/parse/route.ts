@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import mammoth from "mammoth";
 import { createServerClient } from "@/lib/supabase/server";
+import { requireOrgId } from "@/lib/org/session";
 import {
  ACCEPTED_MIME_TYPES,
  parseInvoiceFile,
@@ -34,11 +35,12 @@ export async function POST(request: NextRequest) {
 
  const buffer = Buffer.from(await file.arrayBuffer());
 
- // Upload to Supabase Storage
+ // Upload to Supabase Storage (org-scoped path: {org_id}/uploads/…)
  const supabase = createServerClient();
+ const orgId = await requireOrgId();
  const timestamp = Date.now();
  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
- const storagePath = `uploads/${timestamp}_${safeName}`;
+ const storagePath = `${orgId}/uploads/${timestamp}_${safeName}`;
 
  const { error: uploadError } = await supabase.storage
  .from("invoice-files")

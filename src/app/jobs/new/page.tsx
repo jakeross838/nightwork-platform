@@ -305,7 +305,7 @@ export default function NewJobPage() {
         }
         .input:focus {
           outline: none;
-          border-color: var(--color-teal, #3F5862);
+          border-color: var(--org-primary);
         }
       `}</style>
     </div>

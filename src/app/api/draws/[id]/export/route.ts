@@ -1,31 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentOrg } from "@/lib/org/session";
 import ExcelJS from "exceljs";
 
 export const dynamic = "force-dynamic";
 
-const ORG_CONTRACTOR_NAME = "ROSS BUILT, LLC";
-const ORG_CONTRACTOR_ADDR1 = "305 67th Street West";
-const ORG_CONTRACTOR_ADDR2 = "Bradenton, FL 34209";
-const ORG_SIGNATORY = "Jake Ross";
-
-// Colors
-const NAVY = "3F5862";
+// Colors that don't belong to any org brand remain constants.
 const LIGHT_BLUE_BG = "F5F5F5";
 const LIGHT_GRAY_BG = "F2F2F2";
 const WHITE = "FFFFFF";
 const BLACK = "000000";
-const HEADER_GOLD = "3F5862";
 
-// Fonts
-const FONT_TITLE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 14, bold: true, color: { argb: NAVY } };
-const FONT_SUBTITLE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 11, bold: true, color: { argb: NAVY } };
-const FONT_LABEL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10, bold: true };
-const FONT_VALUE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10 };
-const FONT_HEADER: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9, bold: true, color: { argb: WHITE } };
-const FONT_BODY: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9 };
-const FONT_TOTAL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9, bold: true };
-const FONT_GRAND_TOTAL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10, bold: true, color: { argb: NAVY } };
+// Convert "#3F5862" → "3F5862" (ExcelJS wants argb without the #).
+function hexForExcel(hex: string | null | undefined, fallback = "3F5862"): string {
+ if (!hex) return fallback;
+ return hex.replace(/^#/, "").toUpperCase().padStart(6, "0").slice(0, 6);
+}
+
+function formatOrgAddress(org: {
+ company_address: string | null;
+ company_city: string | null;
+ company_state: string | null;
+ company_zip: string | null;
+}): { line1: string; line2: string } {
+ const line1 = org.company_address ?? "";
+ const cityState = [org.company_city, org.company_state].filter(Boolean).join(", ");
+ const line2 = [cityState, org.company_zip].filter(Boolean).join(" ");
+ return { line1, line2 };
+}
 
 const CURRENCY_FMT = '"$"#,##0.00';
 const PERCENT_FMT = "0.0%";
@@ -58,6 +60,36 @@ export async function GET(
 ) {
  try {
  const supabase = createServerClient();
+
+ // ── Fetch org branding + signing contact ──
+ const org = await getCurrentOrg();
+ const ORG_CONTRACTOR_NAME = (org?.name ?? "").toUpperCase();
+ const { line1: ORG_CONTRACTOR_ADDR1, line2: ORG_CONTRACTOR_ADDR2 } =
+ formatOrgAddress(org ?? { company_address: null, company_city: null, company_state: null, company_zip: null });
+
+ const {
+ data: { user },
+ } = await supabase.auth.getUser();
+ const { data: signerProfile } = user
+ ? await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle()
+ : { data: null };
+ const ORG_SIGNATORY = signerProfile?.full_name ?? "";
+
+ // Branded colors (ExcelJS argb without # prefix)
+ const NAVY = hexForExcel(org?.primary_color);
+ const HEADER_GOLD = hexForExcel(org?.accent_color ?? org?.primary_color);
+
+ // Fonts
+ const FONT_TITLE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 14, bold: true, color: { argb: NAVY } };
+ const FONT_SUBTITLE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 11, bold: true, color: { argb: NAVY } };
+ const FONT_LABEL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10, bold: true };
+ const FONT_VALUE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10 };
+ const FONT_HEADER: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9, bold: true, color: { argb: WHITE } };
+ const FONT_BODY: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9 };
+ const FONT_TOTAL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 9, bold: true };
+ const FONT_GRAND_TOTAL: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 10, bold: true, color: { argb: NAVY } };
+
+ const headerText = org?.name ? `&C${org.name}` : "";
 
  // ── Fetch draw ──
  const { data: draw, error } = await supabase
@@ -139,7 +171,7 @@ export async function GET(
 
  // ── Build workbook ──
  const wb = new ExcelJS.Workbook();
- wb.creator = "Ross Command Center";
+ wb.creator = org?.name ?? "CommandPost";
  wb.created = new Date();
 
  const job = draw.jobs;
@@ -152,7 +184,7 @@ export async function GET(
  const ws1 = wb.addWorksheet("Project Summary (G702)", {
  pageSetup: { paperSize: 1 as unknown as ExcelJS.PaperSize, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 1, margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 } },
  headerFooter: {
- oddHeader: "&CRoss Built Construction, LLC",
+ oddHeader: headerText,
  oddFooter: "&RPage &P of &N",
  },
  });
@@ -347,7 +379,7 @@ export async function GET(
  // ── Signature block ──
  r += 4;
  ws1.mergeCells(`B${r}:D${r}`);
- ws1.getCell(`B${r}`).value = "CONTRACTOR: Ross Built Construction Company";
+ ws1.getCell(`B${r}`).value = `CONTRACTOR: ${org?.name ?? ""}`;
  ws1.getCell(`B${r}`).font = FONT_LABEL;
  r += 2;
  ws1.mergeCells(`B${r}:C${r}`);
@@ -363,7 +395,7 @@ export async function GET(
  const ws2 = wb.addWorksheet("Line Item Estimate (G703)", {
  pageSetup: { paperSize: 1 as unknown as ExcelJS.PaperSize, orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 }, printTitlesRow: "7:7" },
  headerFooter: {
- oddHeader: "&CRoss Built Construction, LLC",
+ oddHeader: headerText,
  oddFooter: "&RPage &P of &N",
  },
  });
@@ -410,7 +442,7 @@ export async function GET(
  r = 4;
  ws2.getCell(`A${r}`).value = "FROM:";
  ws2.getCell(`A${r}`).font = FONT_LABEL;
- ws2.getCell(`B${r}`).value = "Ross Built Construction, LLC";
+ ws2.getCell(`B${r}`).value = org?.name ?? "";
  ws2.getCell(`B${r}`).font = FONT_VALUE;
  ws2.getCell(`F${r}`).value = "APPLICATION DATE:";
  ws2.getCell(`F${r}`).font = FONT_LABEL;
@@ -545,7 +577,7 @@ export async function GET(
 
  // Page subtotal every PAGE_SIZE rows (but not at the very end)
  if (rowsOnPage >= PAGE_SIZE && i < g703Lines.length - 1) {
- writeSubtotalRow(ws2, r, `Total Page ${pageNum}`, pageSub);
+ writeSubtotalRow(ws2, r, `Total Page ${pageNum}`, pageSub, FONT_TOTAL, NAVY);
  r += 2; // blank row after subtotal
  pageSub = { original: 0, previous: 0, thisPeriod: 0, toDate: 0, balance: 0, proposal: 0, balContract: 0 };
  rowsOnPage = 0;
@@ -715,38 +747,40 @@ function writeSubtotalRow(
  ws: ExcelJS.Worksheet,
  r: number,
  label: string,
- sums: { original: number; previous: number; thisPeriod: number; toDate: number; balance: number; proposal: number; balContract: number }
+ sums: { original: number; previous: number; thisPeriod: number; toDate: number; balance: number; proposal: number; balContract: number },
+ font: Partial<ExcelJS.Font>,
+ navy: string
 ) {
  ws.mergeCells(`A${r}:B${r}`);
  ws.getCell(`A${r}`).value = label;
- ws.getCell(`A${r}`).font = FONT_TOTAL;
+ ws.getCell(`A${r}`).font = font;
  ws.getCell(`A${r}`).alignment = { horizontal: "right" };
  ws.getCell(`C${r}`).value = centsToExcel(sums.original);
  ws.getCell(`C${r}`).numFmt = CURRENCY_FMT;
- ws.getCell(`C${r}`).font = FONT_TOTAL;
+ ws.getCell(`C${r}`).font = font;
  ws.getCell(`D${r}`).value = sums.previous > 0 ? centsToExcel(sums.previous) : null;
  ws.getCell(`D${r}`).numFmt = CURRENCY_FMT;
- ws.getCell(`D${r}`).font = FONT_TOTAL;
+ ws.getCell(`D${r}`).font = font;
  ws.getCell(`E${r}`).value = sums.thisPeriod > 0 ? centsToExcel(sums.thisPeriod) : null;
  ws.getCell(`E${r}`).numFmt = CURRENCY_FMT;
- ws.getCell(`E${r}`).font = FONT_TOTAL;
+ ws.getCell(`E${r}`).font = font;
  ws.getCell(`F${r}`).value = sums.toDate > 0 ? centsToExcel(sums.toDate) : null;
  ws.getCell(`F${r}`).numFmt = CURRENCY_FMT;
- ws.getCell(`F${r}`).font = FONT_TOTAL;
+ ws.getCell(`F${r}`).font = font;
  ws.getCell(`H${r}`).value = centsToExcel(sums.balance);
  ws.getCell(`H${r}`).numFmt = CURRENCY_FMT;
- ws.getCell(`H${r}`).font = FONT_TOTAL;
+ ws.getCell(`H${r}`).font = font;
  ws.getCell(`I${r}`).value = sums.proposal > 0 ? centsToExcel(sums.proposal) : null;
  ws.getCell(`I${r}`).numFmt = CURRENCY_FMT;
- ws.getCell(`I${r}`).font = FONT_TOTAL;
+ ws.getCell(`I${r}`).font = font;
  ws.getCell(`J${r}`).value = centsToExcel(sums.balContract);
  ws.getCell(`J${r}`).numFmt = CURRENCY_FMT;
- ws.getCell(`J${r}`).font = FONT_TOTAL;
+ ws.getCell(`J${r}`).font = font;
 
  for (let c = 1; c <= 10; c++) {
  ws.getRow(r).getCell(c).border = {
- top: { style: "thin", color: { argb: NAVY } },
- bottom: { style: "thin", color: { argb: NAVY } },
+ top: { style: "thin", color: { argb: navy } },
+ bottom: { style: "thin", color: { argb: navy } },
  };
  ws.getRow(r).getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT_BLUE_BG } };
  }

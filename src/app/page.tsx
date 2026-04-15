@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import NavBar from "@/components/nav-bar";
+import { useOrgBranding } from "@/components/org-branding-provider";
+import { PUBLIC_APP_NAME } from "@/lib/org/public";
 
-type UserRole = "admin" | "pm" | "accounting";
+type UserRole = "owner" | "admin" | "pm" | "accounting";
 
 type NavItem = {
   key: string;
@@ -36,13 +38,17 @@ export default function Home() {
 
         let resolvedRole: UserRole | null = null;
         if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role, full_name")
-            .eq("id", user.id)
-            .single();
-          if (profile?.role) {
-            resolvedRole = profile.role as UserRole;
+          const [{ data: profile }, { data: membership }] = await Promise.all([
+            supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+            supabase
+              .from("org_members")
+              .select("role")
+              .eq("user_id", user.id)
+              .eq("is_active", true)
+              .maybeSingle(),
+          ]);
+          if (membership?.role) {
+            resolvedRole = membership.role as UserRole;
             setRole(resolvedRole);
           }
           if (profile?.full_name) setFirstName(firstNameOf(profile.full_name));
@@ -71,7 +77,7 @@ export default function Home() {
             .is("deleted_at", null)
             .or(orClause);
           pmCountVal = count ?? 0;
-        } else if (resolvedRole === "admin") {
+        } else if (resolvedRole === "admin" || resolvedRole === "owner") {
           const { count } = await supabase
             .from("invoices")
             .select("id", { count: "exact", head: true })
@@ -96,16 +102,19 @@ export default function Home() {
   }, []);
 
   const cards: NavItem[] = [
-    { key: "upload",   href: "/invoices/upload", title: "Upload Invoices", subtitle: "Drag and drop — AI parses instantly", roles: ["admin", "accounting"] },
-    { key: "all",      href: "/invoices",        title: "All Invoices",    subtitle: "Search, filter, track every invoice", roles: ["admin", "pm", "accounting"] },
-    { key: "pmQueue",  href: "/invoices/queue",  title: "PM Queue",        subtitle: pmCount > 0 ? `${pmCount} pending review` : "No invoices waiting", count: pmCount, roles: ["admin", "pm"] },
-    { key: "qaQueue",  href: "/invoices/qa",     title: "Accounting QA",   subtitle: qaCount > 0 ? `${qaCount} ready for QA` : "QA queue clear",        count: qaCount, roles: ["admin", "accounting"] },
-    { key: "draws",    href: "/draws",           title: "Draws",           subtitle: "G702/G703 pay applications", roles: ["admin", "pm"] },
-    { key: "vendors",  href: "/vendors",         title: "Vendors",         subtitle: "Manage vendors and merge duplicates", roles: ["admin", "accounting"] },
-    { key: "jobs",     href: "/jobs",            title: "Jobs",            subtitle: "Create and manage projects", roles: ["admin"] },
+    { key: "upload",   href: "/invoices/upload", title: "Upload Invoices", subtitle: "Drag and drop — AI parses instantly", roles: ["owner", "admin", "accounting"] },
+    { key: "all",      href: "/invoices",        title: "All Invoices",    subtitle: "Search, filter, track every invoice", roles: ["owner", "admin", "pm", "accounting"] },
+    { key: "pmQueue",  href: "/invoices/queue",  title: "PM Queue",        subtitle: pmCount > 0 ? `${pmCount} pending review` : "No invoices waiting", count: pmCount, roles: ["owner", "admin", "pm"] },
+    { key: "qaQueue",  href: "/invoices/qa",     title: "Accounting QA",   subtitle: qaCount > 0 ? `${qaCount} ready for QA` : "QA queue clear",        count: qaCount, roles: ["owner", "admin", "accounting"] },
+    { key: "draws",    href: "/draws",           title: "Draws",           subtitle: "G702/G703 pay applications", roles: ["owner", "admin", "pm"] },
+    { key: "vendors",  href: "/vendors",         title: "Vendors",         subtitle: "Manage vendors and merge duplicates", roles: ["owner", "admin", "accounting"] },
+    { key: "jobs",     href: "/jobs",            title: "Jobs",            subtitle: "Create and manage projects", roles: ["owner", "admin"] },
   ];
 
   const visibleCards = role ? cards.filter((c) => c.roles.includes(role)) : [];
+  const branding = useOrgBranding();
+  const brandName = branding?.name ?? PUBLIC_APP_NAME;
+  const tagline = branding?.tagline ?? null;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -122,12 +131,8 @@ export default function Home() {
           </div>
 
           <h1 className="animate-fade-up stagger-1 font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.1]">
-            Ross Command Center
+            {brandName}
           </h1>
-          <p className="animate-fade-up stagger-2 mt-4 font-body text-cream-muted text-lg">Ross Built Custom Homes</p>
-          <div className="animate-fade-up stagger-3 mt-2 flex items-center justify-center gap-3 text-cream-dim text-sm">
-            <span>Bradenton</span><span className="text-teal">&#x2022;</span><span>Anna Maria Island</span>
-          </div>
 
           {/* Personalized greeting */}
           {firstName && (
@@ -144,9 +149,11 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-12 text-center animate-fade-up stagger-6">
-          <p className="text-[11px] text-cream-dim tracking-[0.08em] uppercase">Est. 2006 &middot; Luxury Coastal Custom Homes</p>
-        </div>
+        {tagline && (
+          <div className="mt-12 text-center animate-fade-up stagger-6">
+            <p className="text-[11px] text-cream-dim tracking-[0.08em] uppercase">{tagline}</p>
+          </div>
+        )}
       </div>
     </div>
   );

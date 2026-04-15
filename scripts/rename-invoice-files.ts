@@ -104,7 +104,7 @@ async function main() {
       invoiceDate: inv.invoice_date,
       extension: ext,
     });
-    const desiredPath = storagePathFor(cleanName);
+    const desiredPath = storagePathFor(cleanName, "00000000-0000-0000-0000-000000000001");
 
     if (desiredPath === currentPath) {
       skipped += 1;

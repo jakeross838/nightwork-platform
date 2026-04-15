@@ -64,10 +64,10 @@ async function getCostCodeList(supabase: Client): Promise<string> {
 
 function buildPrompt(costCodeList: string): string {
  const costCodeSection = costCodeList
- ? `\n\nAlso suggest the most likely Ross Built cost code from the list below. If the invoice references a change order (CO, PCCO, change order, extra work, additional), prefer the C-variant code. Return your suggestion in the cost_code_suggestion field.\n\nFor each line item, ALSO suggest the most appropriate Ross Built cost code based on the line item description. A single invoice often spans multiple cost codes — e.g. a lumber invoice may have framing material AND strapping material on separate lines. A T&M invoice may have labor lines AND materials lines. Return a per-line suggestion in line_items[].cost_code_suggestion when you can identify a likely code.\n\nCOST CODES:\n${costCodeList}`
+ ? `\n\nAlso suggest the most likely cost code from the list below. If the invoice references a change order (CO, PCCO, change order, extra work, additional), prefer the C-variant code. Return your suggestion in the cost_code_suggestion field.\n\nFor each line item, ALSO suggest the most appropriate cost code based on the line item description. A single invoice often spans multiple cost codes — e.g. a lumber invoice may have framing material AND strapping material on separate lines. A T&M invoice may have labor lines AND materials lines. Return a per-line suggestion in line_items[].cost_code_suggestion when you can identify a likely code.\n\nCOST CODES:\n${costCodeList}`
  : "";
 
- return `You are parsing a construction document for Ross Built Custom Homes, a luxury coastal custom home builder in Bradenton/Anna Maria Island, FL. They run cost-plus (open book) projects in the $1.5M–$10M+ range.
+ return `You are parsing a construction document for a luxury custom home builder running cost-plus (open book) projects.
 
 FIRST: Determine the document type. Is this an invoice, a proposal/agreement, a quote/estimate, a credit memo, a statement, or unknown? Set "document_type" accordingly.
 
