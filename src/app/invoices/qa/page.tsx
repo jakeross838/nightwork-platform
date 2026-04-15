@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, daysAgo, formatDateTime } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
+import Breadcrumbs from "@/components/breadcrumbs";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import { SkeletonList } from "@/components/loading-skeleton";
 
 interface QaInvoice {
  id: string;
@@ -49,6 +52,7 @@ export default function QaQueuePage() {
  <div className="min-h-screen">
  <NavBar />
  <main className="max-w-[1600px] mx-auto px-6 py-8">
+ <Breadcrumbs items={[{ label: "Invoices", href: "/invoices" }, { label: "Accounting QA" }]} />
  <div className="flex items-center justify-between mb-6">
  <div>
  <h2 className="font-display text-2xl text-cream">Accounting QA</h2>
@@ -57,19 +61,14 @@ export default function QaQueuePage() {
  </div>
 
  {loading ? (
- <div className="text-center py-20">
- <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
- </div>
+ <SkeletonList rows={5} columns={["w-40", "w-24", "w-32", "w-32", "w-20", "w-32", "w-16"]} />
  ) : invoices.length === 0 ? (
- <div className="text-center py-20 animate-fade-up">
- <div className="inline-flex items-center justify-center w-16 h-16 bg-brand-surface border border-brand-border mb-6">
- <svg className="w-7 h-7 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
- </svg>
- </div>
- <p className="text-cream text-lg font-display">QA queue is clear</p>
- <p className="text-cream-dim text-sm mt-1">No invoices waiting for accounting review</p>
- </div>
+ <EmptyState
+ icon={<EmptyIcons.Check />}
+ variant="success"
+ title="QA queue is clear"
+ message="No invoices waiting for accounting review. PM-approved invoices will appear here."
+ />
  ) : (
  <div className="overflow-x-auto border border-brand-border animate-fade-up">
  <table className="w-full text-sm">

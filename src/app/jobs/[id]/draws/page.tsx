@@ -9,6 +9,7 @@ import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
 
 interface Job { id: string; name: string; address: string | null; }
 
@@ -108,9 +109,12 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
         <JobFinancialBar jobId={job.id} />
 
         {draws.length === 0 ? (
-          <div className="bg-brand-card border border-brand-border p-12 text-center">
-            <p className="text-cream-dim text-sm">No draws yet for this job.</p>
-          </div>
+          <EmptyState
+            icon={<EmptyIcons.Document />}
+            title="No draws created for this job yet"
+            message="Create a draw to compile approved invoices into an AIA G702/G703 pay application."
+            primaryAction={{ label: "+ Create Draw", href: `/draws/new?jobId=${job.id}` }}
+          />
         ) : (
           <div className="bg-brand-card border border-brand-border overflow-x-auto">
             <table className="w-full text-sm">

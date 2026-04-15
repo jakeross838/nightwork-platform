@@ -4,6 +4,9 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatStatus, formatDate, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
+import Breadcrumbs from "@/components/breadcrumbs";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import { SkeletonList, SkeletonStatCard } from "@/components/loading-skeleton";
 
 interface Invoice {
  id: string;
@@ -401,9 +404,14 @@ export default function AllInvoicesPage() {
  </div>
 
  {loading ? (
- <div className="text-center py-20">
- <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
- <p className="mt-4 text-cream-dim text-sm">Loading invoices...</p>
+ <div className="space-y-4">
+ <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+ <SkeletonStatCard />
+ <SkeletonStatCard />
+ <SkeletonStatCard />
+ <SkeletonStatCard />
+ </div>
+ <SkeletonList rows={6} columns={["w-32", "w-20", "w-24", "w-32", "w-32", "w-20", "w-24"]} />
  </div>
  ) : (
  <>
@@ -521,10 +529,12 @@ export default function AllInvoicesPage() {
 
  {/* No results */}
  {filtered.length === 0 && (
- <div className="text-center py-16">
- <p className="text-cream-muted text-sm">No invoices match your filters</p>
- <button onClick={clearAllFilters} className="mt-2 text-sm text-teal hover:text-teal-hover transition-colors">Clear all filters</button>
- </div>
+ <EmptyState
+ icon={<EmptyIcons.Search />}
+ title="No invoices match your filters"
+ message="Try adjusting your filters, or clear them to see every invoice in the system."
+ primaryAction={{ label: "Clear filters", onClick: clearAllFilters }}
+ />
  )}
 
  {filtered.length > 0 && (
@@ -668,9 +678,12 @@ export default function AllInvoicesPage() {
  /* Payment Tracking Tab */
  <>
  {paymentGroups.length === 0 ? (
- <div className="text-center py-16">
- <p className="text-cream-muted text-sm">No invoices ready for payment tracking</p>
- </div>
+ <EmptyState
+ icon={<EmptyIcons.Check />}
+ variant="success"
+ title="No invoices ready for payment"
+ message="Approved invoices will appear here once they're ready to be paid."
+ />
  ) : (
  <div className="space-y-6">
  {paymentGroups.map(([dateKey, group]) => (

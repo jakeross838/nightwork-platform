@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import NavBar from "@/components/nav-bar";
+import Breadcrumbs from "@/components/breadcrumbs";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import { SkeletonList } from "@/components/loading-skeleton";
 import { formatCents, formatDate, formatStatus, statusBadgeOutline } from "@/lib/utils/format";
 
 function drawBadgeOutline(status: string): string {
@@ -54,6 +57,7 @@ export default function DrawsPage() {
  <div className="min-h-screen">
  <NavBar />
  <main className="max-w-[1600px] mx-auto px-6 py-8">
+ <Breadcrumbs items={[{ label: "Draws" }]} />
  <div className="flex items-center justify-between mb-6">
  <div>
  <h2 className="font-display text-2xl text-cream">Draws</h2>
@@ -66,19 +70,14 @@ export default function DrawsPage() {
  </div>
 
  {loading ? (
- <div className="text-center py-20">
- <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
- </div>
+ <SkeletonList rows={5} columns={["w-16", "w-32", "w-32", "w-24", "w-32"]} />
  ) : draws.length === 0 ? (
- <div className="text-center py-20 animate-fade-up">
- <div className="inline-flex items-center justify-center w-16 h-16 bg-brand-surface border border-brand-border mb-6">
- <svg className="w-7 h-7 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
- </svg>
- </div>
- <p className="text-cream text-lg font-display">No draws yet</p>
- <p className="text-cream-dim text-sm mt-1">Create your first draw to generate an AIA pay application</p>
- </div>
+ <EmptyState
+ icon={<EmptyIcons.Document />}
+ title="No draws created for this job yet"
+ message="Create your first draw to generate an AIA G702/G703 pay application from approved invoices."
+ primaryAction={{ label: "+ Create Draw", href: "/draws/new" }}
+ />
  ) : (
  <div className="space-y-8 animate-fade-up">
  {Object.entries(grouped).map(([, { job, draws: jobDraws }]) => (

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { formatCents, formatDate } from "@/lib/utils/format";
+import { toast } from "@/lib/utils/toast";
 
 interface Release {
   id: string;
@@ -45,9 +46,10 @@ export default function DrawLienReleaseUploadList({
       });
       if (res.ok) {
         await onChange();
+        toast.success("Lien release uploaded");
       } else {
         const data = await res.json().catch(() => ({}));
-        alert(data.error ?? "Upload failed");
+        toast.error(data.error ?? "Upload failed");
       }
     } finally {
       setBusyId(null);

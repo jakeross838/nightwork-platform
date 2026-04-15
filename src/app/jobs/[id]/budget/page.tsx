@@ -17,6 +17,8 @@ import {
   downloadBlob,
   type BudgetExportInput,
 } from "@/lib/budget-export";
+import { toast } from "@/lib/utils/toast";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
 
 interface Job {
   id: string;
@@ -657,8 +659,9 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
       const date = new Date().toISOString().slice(0, 10);
       const safeName = job.name.replace(/[^a-z0-9]+/gi, "_");
       downloadBlob(blob, `${safeName}_Budget_${date}.xlsx`);
+      toast.success("Budget exported");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Export failed");
+      toast.error(err instanceof Error ? err.message : "Export failed");
     } finally {
       setExporting(false);
     }
@@ -691,7 +694,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
   return (
     <div className="min-h-screen">
       <NavBar />
-      <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
+      <main className="print-area max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
             { label: "Jobs", href: "/jobs" },
@@ -699,12 +702,23 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
             { label: "Budget" },
           ]}
         />
-        <div className="mb-4">
-          <h2 className="font-display text-2xl text-cream">{job.name}</h2>
-          <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-display text-2xl text-cream">{job.name}</h2>
+            <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
+          </div>
+          <button
+            onClick={() => window.print()}
+            className="px-3 py-1.5 border border-brand-border text-cream hover:bg-brand-elevated text-xs uppercase tracking-[0.06em] transition-colors print:hidden"
+            aria-label="Print this budget"
+          >
+            Print
+          </button>
         </div>
-        <JobTabs jobId={job.id} active="budget" />
-        <JobFinancialBar jobId={job.id} />
+        <div className="print:hidden">
+          <JobTabs jobId={job.id} active="budget" />
+          <JobFinancialBar jobId={job.id} />
+        </div>
 
         {showCompareStats && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
@@ -734,26 +748,13 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         )}
 
         {rows.length === 0 ? (
-          <div className="bg-brand-card border border-brand-border p-12 text-center">
-            <p className="text-cream-dim text-sm">No budget lines yet.</p>
-            <p className="mt-1 text-[11px] text-cream-dim">
-              Start a budget for this job from the overview tab.
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
-              <Link
-                href={`/jobs/${job.id}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
-              >
-                Import CSV / Excel
-              </Link>
-              <button
-                onClick={() => beginAddLine(null)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 border border-brand-border text-cream hover:bg-brand-surface text-sm font-medium transition-colors"
-              >
-                + Add Line
-              </button>
-            </div>
-          </div>
+          <EmptyState
+            icon={<EmptyIcons.Document />}
+            title="No budget lines yet"
+            message="Import a budget CSV/Excel from the overview tab, or add lines manually."
+            primaryAction={{ label: "Import CSV / Excel", href: `/jobs/${job.id}` }}
+            secondaryAction={{ label: "+ Add Line", onClick: () => beginAddLine(null) }}
+          />
         ) : (
           <>
             {/* Toolbar */}

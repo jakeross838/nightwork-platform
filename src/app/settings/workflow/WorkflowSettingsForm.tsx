@@ -6,6 +6,7 @@ import type {
   DuplicateSensitivity,
   WorkflowSettings,
 } from "@/lib/workflow-settings";
+import { toast } from "@/lib/utils/toast";
 
 type Props = { settings: WorkflowSettings };
 
@@ -72,10 +73,13 @@ export default function WorkflowSettingsForm({ settings }: Props) {
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error ?? `Save failed (${res.status})`);
       setMessage({ kind: "ok", text: "Saved." });
+      toast.success("Workflow settings saved");
       setInitial(form);
       router.refresh();
     } catch (e) {
-      setMessage({ kind: "err", text: e instanceof Error ? e.message : "Save failed" });
+      const text = e instanceof Error ? e.message : "Save failed";
+      setMessage({ kind: "err", text });
+      toast.error(text);
     } finally {
       setSaving(false);
     }

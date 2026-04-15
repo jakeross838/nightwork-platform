@@ -5,6 +5,8 @@ import Link from "next/link";
 import NavBar from "@/components/nav-bar";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents } from "@/lib/utils/format";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import { SkeletonList } from "@/components/loading-skeleton";
 
 interface Vendor {
   id: string;
@@ -164,16 +166,22 @@ export default function VendorsPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-20">
-            <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
-          </div>
+          <SkeletonList rows={6} columns={["w-8", "w-40", "w-32", "w-24", "w-24", "w-24"]} />
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 animate-fade-up">
-            <p className="text-cream text-lg font-display">No vendors found</p>
-            <p className="text-cream-dim text-sm mt-1">
-              {search ? "Try a different search term" : "Vendors are created automatically when invoices are processed"}
-            </p>
-          </div>
+          search ? (
+            <EmptyState
+              icon={<EmptyIcons.Search />}
+              title="No vendors match your search"
+              message={`Nothing matched "${search}". Try a different search term.`}
+            />
+          ) : (
+            <EmptyState
+              icon={<EmptyIcons.Users />}
+              title="No vendors yet"
+              message="Vendors are created automatically when invoices are processed. You can also add or import vendors manually."
+              primaryAction={{ label: "Import Vendors", href: "/vendors/import" }}
+            />
+          )
         ) : (
           <div className="overflow-x-auto border border-brand-border animate-fade-up">
             <table className="w-full text-sm">

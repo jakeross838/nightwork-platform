@@ -4,12 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatDate } from "@/lib/utils/format";
+import { formatCents, formatDate, formatPercent, formatRelativeTime } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
+import { SkeletonList } from "@/components/loading-skeleton";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
 
 type JobStatus = "active" | "complete" | "warranty" | "cancelled";
+type Health = "green" | "yellow" | "red";
+type SortKey = "health" | "name" | "activity" | "budget";
 
-interface Job {
+interface JobHealth {
   id: string;
   name: string;
   address: string | null;
@@ -20,10 +24,31 @@ interface Job {
   contract_date: string | null;
   status: JobStatus;
   pm_id: string | null;
-  pm_name?: string | null;
+  pm_name: string | null;
+  health: Health;
+  health_reasons: string[];
+  pct_complete: number;
+  budget_used_pct: number;
+  open_invoices: number;
+  oldest_invoice_days: number;
+  last_activity_at: string | null;
+  budget_total: number;
+  invoiced_total: number;
 }
 
 type StatusFilter = "all" | JobStatus;
+
+const HEALTH_RANK: Record<Health, number> = { red: 0, yellow: 1, green: 2 };
+const HEALTH_DOT: Record<Health, string> = {
+  green: "bg-status-success",
+  yellow: "bg-brass",
+  red: "bg-status-danger",
+};
+const HEALTH_LABEL: Record<Health, string> = {
+  green: "On track",
+  yellow: "Needs attention",
+  red: "Action required",
+};
 
 function StatusBadge({ status }: { status: JobStatus }) {
   const map: Record<JobStatus, string> = {
@@ -39,62 +64,54 @@ function StatusBadge({ status }: { status: JobStatus }) {
   );
 }
 
+function HealthDot({ health, reasons }: { health: Health; reasons: string[] }) {
+  const tooltip = reasons.length > 0 ? reasons.join(" • ") : HEALTH_LABEL[health];
+  return (
+    <span
+      title={tooltip}
+      aria-label={`Health: ${HEALTH_LABEL[health]}${reasons.length ? `. ${reasons.join(". ")}` : ""}`}
+      className={`inline-block w-2.5 h-2.5 rounded-full ${HEALTH_DOT[health]}`}
+    />
+  );
+}
+
 export default function JobsPage() {
   const router = useRouter();
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<JobHealth[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [sortKey, setSortKey] = useState<SortKey>("health");
 
   useEffect(() => {
     async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.replace("/login?redirect=/jobs");
         return;
       }
 
-      const { data: profile } = await supabase
-        .from("profiles")
+      // Resolve role via org_members so it matches the rest of the app.
+      const { data: membership } = await supabase
+        .from("org_members")
         .select("role")
-        .eq("id", user.id)
-        .single();
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      const userRole = (membership?.role as "owner" | "admin" | "pm" | "accounting" | undefined) ?? null;
 
-      const userRole = (profile?.role as "admin" | "pm" | "accounting" | null) ?? null;
-
-      if (userRole !== "admin") {
+      if (userRole !== "admin" && userRole !== "owner") {
         setAuthorized(false);
         setLoading(false);
         return;
       }
       setAuthorized(true);
 
-      const [jobsResult, usersResult] = await Promise.all([
-        supabase
-          .from("jobs")
-          .select(
-            "id, name, address, client_name, contract_type, original_contract_amount, current_contract_amount, contract_date, status, pm_id"
-          )
-          .is("deleted_at", null)
-          .order("name"),
-        supabase
-          .from("users")
-          .select("id, full_name")
-          .is("deleted_at", null),
-      ]);
-
-      if (!jobsResult.error && jobsResult.data) {
-        const pmMap = new Map<string, string>(
-          (usersResult.data ?? []).map((u) => [u.id as string, u.full_name as string])
-        );
-        const enriched = jobsResult.data.map((j) => ({
-          ...j,
-          pm_name: j.pm_id ? pmMap.get(j.pm_id as string) ?? null : null,
-        })) as Job[];
-        setJobs(enriched);
+      const res = await fetch("/api/jobs/health", { cache: "no-store" });
+      if (res.ok) {
+        const json = (await res.json()) as JobHealth[];
+        setJobs(json);
       }
       setLoading(false);
     }
@@ -115,8 +132,27 @@ export default function JobsPage() {
           (j.client_name ?? "").toLowerCase().includes(q)
       );
     }
-    return result;
-  }, [jobs, statusFilter, search]);
+    const sorted = [...result];
+    sorted.sort((a, b) => {
+      switch (sortKey) {
+        case "health":
+          return HEALTH_RANK[a.health] - HEALTH_RANK[b.health] || a.name.localeCompare(b.name);
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "activity": {
+          const at = a.last_activity_at ? new Date(a.last_activity_at).getTime() : 0;
+          const bt = b.last_activity_at ? new Date(b.last_activity_at).getTime() : 0;
+          return bt - at;
+        }
+        case "budget": {
+          const ar = a.budget_total - a.invoiced_total;
+          const br = b.budget_total - b.invoiced_total;
+          return br - ar;
+        }
+      }
+    });
+    return sorted;
+  }, [jobs, statusFilter, search, sortKey]);
 
   if (authorized === false) {
     return (
@@ -182,32 +218,63 @@ export default function JobsPage() {
             <option value="cancelled">Cancelled</option>
             <option value="all">All Statuses</option>
           </select>
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+            className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+            aria-label="Sort jobs"
+          >
+            <option value="health">Sort: Health (worst first)</option>
+            <option value="name">Sort: Name (A→Z)</option>
+            <option value="activity">Sort: Last activity</option>
+            <option value="budget">Sort: Budget remaining</option>
+          </select>
         </div>
 
+        {/* Health legend */}
+        {!loading && jobs.length > 0 && (
+          <div className="flex items-center gap-4 mb-4 text-[11px] text-cream-dim">
+            <span className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${HEALTH_DOT.green}`} /> Green: on track
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${HEALTH_DOT.yellow}`} /> Yellow: needs attention
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${HEALTH_DOT.red}`} /> Red: action required
+            </span>
+          </div>
+        )}
+
         {loading ? (
-          <div className="text-center py-20">
-            <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
-            <p className="mt-4 text-cream-dim text-sm">Loading jobs...</p>
-          </div>
+          <SkeletonList rows={6} columns={["w-24", "w-40", "w-32", "w-32", "w-20", "w-20", "w-20"]} />
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 border border-dashed border-brand-border">
-            <p className="text-cream text-lg font-display">No jobs</p>
-            <p className="text-cream-dim text-sm mt-1">
-              {search || statusFilter !== "all" ? "Try adjusting filters." : "Create your first job to get started."}
-            </p>
-          </div>
+          jobs.length === 0 ? (
+            <EmptyState
+              icon={<EmptyIcons.Building />}
+              title="No jobs yet"
+              message="Create your first job to start tracking budgets, invoices, and draws."
+              primaryAction={{ label: "+ New Job", href: "/jobs/new" }}
+            />
+          ) : (
+            <EmptyState
+              icon={<EmptyIcons.Search />}
+              title="No matching jobs"
+              message="Try adjusting your search or filter to see more results."
+            />
+          )
         ) : (
           <div className="border border-brand-border bg-brand-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
+                  <th className="text-left px-4 py-3 font-medium w-8" aria-label="Health"></th>
                   <th className="text-left px-4 py-3 font-medium">Name</th>
-                  <th className="text-left px-4 py-3 font-medium">Address</th>
-                  <th className="text-left px-4 py-3 font-medium">Client</th>
-                  <th className="text-left px-4 py-3 font-medium">PM</th>
-                  <th className="text-left px-4 py-3 font-medium">Type</th>
-                  <th className="text-right px-4 py-3 font-medium">Original Contract</th>
-                  <th className="text-left px-4 py-3 font-medium">Contract Date</th>
+                  <th className="text-left px-4 py-3 font-medium">Client / PM</th>
+                  <th className="text-right px-4 py-3 font-medium">% Complete</th>
+                  <th className="text-right px-4 py-3 font-medium">Budget Used</th>
+                  <th className="text-center px-4 py-3 font-medium">Open Invoices</th>
+                  <th className="text-left px-4 py-3 font-medium">Last Activity</th>
                   <th className="text-left px-4 py-3 font-medium">Status</th>
                 </tr>
               </thead>
@@ -218,17 +285,42 @@ export default function JobsPage() {
                     className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface cursor-pointer transition-colors"
                     onClick={() => router.push(`/jobs/${j.id}`)}
                   >
-                    <td className="px-4 py-3 text-cream font-medium">{j.name}</td>
-                    <td className="px-4 py-3 text-cream-muted">{j.address ?? "—"}</td>
-                    <td className="px-4 py-3 text-cream-muted">{j.client_name ?? "—"}</td>
-                    <td className="px-4 py-3 text-cream-muted">{j.pm_name ?? "—"}</td>
-                    <td className="px-4 py-3 text-cream-muted uppercase text-[11px] tracking-wider">
-                      {j.contract_type === "cost_plus" ? "Cost Plus" : "Fixed"}
+                    <td className="px-4 py-3">
+                      <HealthDot health={j.health} reasons={j.health_reasons} />
                     </td>
-                    <td className="px-4 py-3 text-right text-cream font-medium tabular-nums">
-                      {formatCents(j.original_contract_amount)}
+                    <td className="px-4 py-3">
+                      <div className="text-cream font-medium">{j.name}</div>
+                      <div className="text-xs text-cream-dim">{j.address ?? "—"}</div>
                     </td>
-                    <td className="px-4 py-3 text-cream-muted">{formatDate(j.contract_date)}</td>
+                    <td className="px-4 py-3 text-cream-muted">
+                      <div>{j.client_name ?? "—"}</div>
+                      <div className="text-xs text-cream-dim">PM: {j.pm_name ?? "—"}</div>
+                    </td>
+                    <td className="px-4 py-3 text-right text-cream tabular-nums">
+                      {formatPercent(j.pct_complete)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      <span className={j.budget_used_pct > 100 ? "text-status-danger" : "text-cream"}>
+                        {formatPercent(j.budget_used_pct)}
+                      </span>
+                      <div className="text-[10px] text-cream-dim">
+                        {formatCents(j.invoiced_total)} / {formatCents(j.budget_total)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {j.open_invoices > 0 ? (
+                        <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium border ${
+                          j.oldest_invoice_days >= 7 ? "border-status-danger text-status-danger" : "border-brass text-brass"
+                        }`}>
+                          {j.open_invoices}
+                        </span>
+                      ) : (
+                        <span className="text-cream-dim text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-cream-muted text-xs">
+                      {j.last_activity_at ? formatRelativeTime(j.last_activity_at) : formatDate(j.contract_date)}
+                    </td>
                     <td className="px-4 py-3"><StatusBadge status={j.status} /></td>
                   </tr>
                 ))}

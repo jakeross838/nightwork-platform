@@ -9,6 +9,7 @@ import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
 
 interface Job {
   id: string;
@@ -182,15 +183,12 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
         )}
 
         {pos.length === 0 ? (
-          <div className="bg-brand-card border border-brand-border p-12 text-center">
-            <p className="text-cream-dim text-sm">No purchase orders yet.</p>
-            <Link
-              href={`/jobs/${job.id}/purchase-orders/new`}
-              className="inline-block mt-3 text-sm text-teal hover:underline"
-            >
-              Create the first one
-            </Link>
-          </div>
+          <EmptyState
+            icon={<EmptyIcons.Cart />}
+            title="No purchase orders yet"
+            message="Create a PO to lock in vendor pricing and track committed spend against this job's budget."
+            primaryAction={{ label: "+ Create PO", href: `/jobs/${job.id}/purchase-orders/new` }}
+          />
         ) : (
           <div className="bg-brand-card border border-brand-border overflow-x-auto">
             <table className="w-full text-sm">

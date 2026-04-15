@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatCents, formatDate } from "@/lib/utils/format";
+import { toast } from "@/lib/utils/toast";
 
 interface PaymentInvoice {
   id: string;
@@ -124,9 +125,12 @@ export default function PaymentBatchByVendorPanel({
         setShowConfirm(false);
         setSelected(new Set());
         await onRefresh();
+        const n = data.receipts?.length ?? 0;
+        toast.success(`Processed payment for ${n} vendor${n === 1 ? "" : "s"}`);
       } else {
         const data = await res.json().catch(() => ({}));
         setError(data.error ?? "Batch failed");
+        toast.error(data.error ?? "Payment batch failed");
       }
     } finally {
       setSubmitting(false);
@@ -374,8 +378,16 @@ function ConfirmModal({
 function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () => void }) {
   const total = receipts.reduce((s, r) => s + r.total, 0);
   return (
-    <div className="space-y-4 animate-fade-up">
-      <div className="bg-status-success/10 border border-status-success/40 p-4 flex items-center justify-between gap-3 flex-wrap">
+    <div className="print-area space-y-4 animate-fade-up">
+      {/* Print-only header */}
+      <div className="hidden print:block">
+        <h1 className="text-xl font-semibold">Payment Batch Receipt</h1>
+        <p className="text-sm">
+          {receipts.length} vendor{receipts.length === 1 ? "" : "s"} ·{" "}
+          {receipts.reduce((s, r) => s + r.invoice_count, 0)} invoices · {formatCents(total)}
+        </p>
+      </div>
+      <div className="bg-status-success/10 border border-status-success/40 p-4 flex items-center justify-between gap-3 flex-wrap print:hidden">
         <div>
           <p className="text-status-success font-display text-lg">Batch payment complete</p>
           <p className="text-xs text-cream-dim mt-0.5">

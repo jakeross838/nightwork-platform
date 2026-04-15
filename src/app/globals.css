@@ -145,3 +145,43 @@
 @layer utilities {
   .text-balance { text-wrap: balance; }
 }
+
+/* Phase 8g — print stylesheets. Hide nav, sidebar, and interactive controls
+   when the user prints. Only the .print-area content remains. Per-page
+   layouts may add additional `print:hidden` class hints. */
+@media print {
+  /* Force light print background */
+  html, body { background: #ffffff !important; color: #000000 !important; }
+
+  /* Default: hide chrome that's not part of the printed content. Pages opt
+     content INTO the print view by wrapping it in `.print-area`. */
+  nav, header, footer, aside,
+  .nav-bar, .nav-area, .sidebar,
+  button, [role="button"],
+  input, select, textarea,
+  .no-print { display: none !important; }
+
+  /* Tight, readable type for printed pages */
+  body { font-size: 11pt; line-height: 1.4; }
+
+  /* Tables: visible borders, no row hover */
+  table { border-collapse: collapse !important; width: 100% !important; }
+  table th, table td {
+    border: 1px solid #999 !important;
+    padding: 4px 6px !important;
+    color: #000 !important;
+  }
+  table th { background: #f0f0f0 !important; font-weight: 600 !important; }
+
+  /* Avoid awkward page splits inside common layout blocks */
+  .print-area { max-width: 100% !important; padding: 0 !important; }
+  .print-page-break { page-break-after: always; }
+  .print-avoid-break { page-break-inside: avoid; }
+
+  /* Make links print as plain text (no underlines from theming) */
+  a, a:visited { color: #000 !important; text-decoration: none !important; }
+
+  /* Hide animated background grain */
+  .grain::after { display: none !important; }
+}
+

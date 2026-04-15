@@ -9,6 +9,7 @@ import DrawCompareView from "@/components/draw-compare-view";
 import DrawCoverLetterEditor from "@/components/draw-cover-letter-editor";
 import DrawLienReleaseUploadList from "@/components/draw-lien-release-upload-list";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
+import { toast } from "@/lib/utils/toast";
 
 interface LienReleaseRow {
   id: string;
@@ -119,9 +120,18 @@ export default function DrawDetailPage() {
     });
     if (res.ok) {
       await fetchDraw();
+      const ACTION_LABEL: Record<string, string> = {
+        submit: "Draw submitted",
+        approve: "Draw approved",
+        lock: "Draw locked",
+        mark_paid: "Draw marked paid",
+        void: "Draw voided",
+      };
+      toast.success(ACTION_LABEL[action] ?? "Draw updated");
     } else {
       const data = await res.json().catch(() => ({ error: "Action failed" }));
       setActionError(data.error ?? "Action failed");
+      toast.error(data.error ?? "Action failed");
     }
     setActing(false);
   };
@@ -228,7 +238,7 @@ export default function DrawDetailPage() {
       <NavBar />
 
       {/* Sub-header */}
-      <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-5">
+      <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-5 print:hidden">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4 flex-wrap">
             <button
@@ -252,7 +262,14 @@ export default function DrawDetailPage() {
               {formatStatus(draw.status)}
             </span>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap print:hidden">
+            <button
+              onClick={() => window.print()}
+              className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
+              aria-label="Print this draw"
+            >
+              Print
+            </button>
             {!isLocked && (
               <button
                 onClick={() => {
@@ -390,7 +407,7 @@ export default function DrawDetailPage() {
         </div>
       )}
 
-      <main className="max-w-[1600px] mx-auto px-6 py-6">
+      <main className="print-area max-w-[1600px] mx-auto px-6 py-6">
         <Breadcrumbs
           items={[
             { label: "Draws", href: "/draws" },
@@ -401,7 +418,19 @@ export default function DrawDetailPage() {
           ]}
         />
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-up">
+        {/* Print-only header — appears at the top of the printed pay app. */}
+        <div className="hidden print:block mb-4">
+          <h1 className="text-xl font-semibold">
+            {draw.jobs?.name} — Draw #{draw.draw_number}
+            {draw.revision_number > 0 && ` (Rev ${draw.revision_number})`}
+          </h1>
+          <p className="text-sm">
+            Application Date: {draw.application_date ? formatDate(draw.application_date) : "—"} ·
+            Period: {draw.period_start ? formatDate(draw.period_start) : "—"} – {draw.period_end ? formatDate(draw.period_end) : "—"}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-up print:block">
           {/* G702 Summary */}
           <div className="xl:col-span-1">
             <div className="sticky top-24 space-y-5">

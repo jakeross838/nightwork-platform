@@ -9,6 +9,7 @@ import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
+import EmptyState, { EmptyIcons } from "@/components/empty-state";
 
 interface Job {
   id: string;
@@ -190,15 +191,12 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
         )}
 
         {cos.length === 0 ? (
-          <div className="bg-brand-card border border-brand-border p-12 text-center">
-            <p className="text-cream-dim text-sm">No change orders yet.</p>
-            <Link
-              href={`/jobs/${job.id}/change-orders/new`}
-              className="inline-block mt-3 text-sm text-teal hover:underline"
-            >
-              Create the first one
-            </Link>
-          </div>
+          <EmptyState
+            icon={<EmptyIcons.Clipboard />}
+            title="No change orders yet"
+            message="Create a change order to track scope adjustments and contract amount changes for this job."
+            primaryAction={{ label: "+ New Change Order", href: `/jobs/${job.id}/change-orders/new` }}
+          />
         ) : (
           <div className="bg-brand-card border border-brand-border overflow-x-auto">
             <table className="w-full text-sm">

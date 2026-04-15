@@ -1,16 +1,30 @@
+/**
+ * Cents → "$1,234.56" — always 2 decimals, negatives use a minus sign
+ * ("-$1,234.56", not parens). Use this everywhere money is rendered.
+ */
 export function formatCents(cents: number): string {
- return new Intl.NumberFormat("en-US", {
+ if (cents === null || cents === undefined || isNaN(cents)) return "$0.00";
+ const abs = Math.abs(cents) / 100;
+ const formatted = new Intl.NumberFormat("en-US", {
  style: "currency",
  currency: "USD",
- }).format(cents / 100);
+ minimumFractionDigits: 2,
+ maximumFractionDigits: 2,
+ }).format(abs);
+ return cents < 0 ? `-${formatted}` : formatted;
 }
 
+/** Dollars → "$1,234.56", null → "—". Same negative-sign rules as formatCents. */
 export function formatDollars(amount: number | null): string {
- if (amount === null || amount === undefined) return "—";
- return new Intl.NumberFormat("en-US", {
+ if (amount === null || amount === undefined || isNaN(amount)) return "—";
+ const abs = Math.abs(amount);
+ const formatted = new Intl.NumberFormat("en-US", {
  style: "currency",
  currency: "USD",
- }).format(amount);
+ minimumFractionDigits: 2,
+ maximumFractionDigits: 2,
+ }).format(abs);
+ return amount < 0 ? `-${formatted}` : formatted;
 }
 
 export function dollarsToCents(dollars: number): number {
@@ -63,6 +77,55 @@ export function daysAgo(dateStr: string): number {
  const now = new Date();
  const diff = now.getTime() - date.getTime();
  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+/** Days between any timestamp (ISO or Date) and now. Negative if future. */
+export function daysSince(d: string | Date | null | undefined): number {
+ if (!d) return 0;
+ const dt = typeof d === "string" ? new Date(d) : d;
+ if (isNaN(dt.getTime())) return 0;
+ return Math.floor((Date.now() - dt.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+/** Format a timestamp as a relative phrase — "2 hours ago", "Yesterday", "3 days ago". */
+export function formatRelativeTime(d: string | Date | null | undefined): string {
+ if (!d) return "—";
+ const dt = typeof d === "string" ? new Date(d) : d;
+ if (isNaN(dt.getTime())) return "—";
+ const diffMs = Date.now() - dt.getTime();
+ const sec = Math.floor(diffMs / 1000);
+ if (sec < 0) return formatDate(dt);
+ if (sec < 60) return "Just now";
+ const min = Math.floor(sec / 60);
+ if (min < 60) return min === 1 ? "1 minute ago" : `${min} minutes ago`;
+ const hr = Math.floor(min / 60);
+ if (hr < 24) return hr === 1 ? "1 hour ago" : `${hr} hours ago`;
+ const day = Math.floor(hr / 24);
+ if (day === 1) return "Yesterday";
+ if (day < 7) return `${day} days ago`;
+ if (day < 30) {
+   const wk = Math.floor(day / 7);
+   return wk === 1 ? "1 week ago" : `${wk} weeks ago`;
+ }
+ return formatDate(dt);
+}
+
+/** Format a percentage with one decimal, e.g. 66.9% — input is 0..100 already. */
+export function formatPercent(value: number | null | undefined): string {
+ if (value === null || value === undefined || isNaN(value)) return "—";
+ return `${value.toFixed(1)}%`;
+}
+
+/** Format a 0..1 ratio as a percent, e.g. 0.669 → "66.9%". */
+export function formatRatio(value: number | null | undefined): string {
+ if (value === null || value === undefined || isNaN(value)) return "—";
+ return `${(value * 100).toFixed(1)}%`;
+}
+
+/** Alias for formatCents — accepts null/undefined defensively. */
+export function formatMoney(cents: number | null | undefined): string {
+ if (cents === null || cents === undefined) return "$0.00";
+ return formatCents(cents);
 }
 
 /** Format invoice type enum to display string */

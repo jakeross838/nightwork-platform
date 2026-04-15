@@ -11,6 +11,7 @@ import InvoiceStatusTimeline from "@/components/invoice-status-timeline";
 import VendorContactPopover from "@/components/vendor-contact-popover";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { invoiceDisplayName } from "@/lib/invoices/display";
+import { toast } from "@/lib/utils/toast";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -795,7 +796,20 @@ export default function InvoiceReviewPage() {
  body: JSON.stringify({ action, note, pm_overrides: Object.keys(overrides).length > 0 ? overrides : undefined, updates: Object.keys(updates).length > 0 ? updates : undefined }),
  });
  setSaving(false);
- if (res.ok) router.push("/invoices/queue");
+ if (res.ok) {
+ const ACTION_LABEL: Record<string, string> = {
+ approve: "Invoice approved",
+ hold: "Invoice held",
+ deny: "Invoice denied",
+ request_info: "Info request sent",
+ info_received: "Returned to PM review",
+ };
+ toast.success(ACTION_LABEL[action] ?? "Action saved");
+ router.push("/invoices/queue");
+ } else {
+ const data = await res.json().catch(() => ({}));
+ toast.error(data.error ?? "Action failed");
+ }
  };
 
  if (loading) return (
@@ -920,7 +934,7 @@ export default function InvoiceReviewPage() {
  if (missingCoReference) { setShowMissingCoBlock(true); return; }
  // Phase 8e: org-configured invoice-date gate.
  if (workflowSettings?.require_invoice_date && !invoiceDate.trim()) {
- alert("Invoice date is required before approval. Enter a date or toggle the workflow setting off.");
+ toast.error("Invoice date is required before approval. Enter a date or toggle the workflow setting off.");
  return;
  }
  // Phase 8e: duplicate flag blocks approval until dismissed.
@@ -929,7 +943,7 @@ export default function InvoiceReviewPage() {
  !invoice?.duplicate_dismissed_at &&
  workflowSettings?.duplicate_detection_enabled !== false
  ) {
- alert("This invoice is flagged as a potential duplicate. Dismiss the flag (Not a duplicate) or deny the invoice before approving.");
+ toast.warning("This invoice is flagged as a potential duplicate. Dismiss the flag (Not a duplicate) or deny the invoice before approving.");
  return;
  }
  // Orange (10-25%) requires a note via the over-budget modal.
@@ -1043,6 +1057,10 @@ export default function InvoiceReviewPage() {
  });
  if (res.ok && invoice) {
  setInvoice({ ...invoice, check_number: updates.check_number as string | null, picked_up: updates.picked_up as boolean, mailed_date: updates.mailed_date as string | null });
+ toast.success("Payment tracking saved");
+ } else if (!res.ok) {
+ const data = await res.json().catch(() => ({}));
+ toast.error(data.error ?? "Failed to save payment tracking");
  }
  setSavingPayment(false);
  };
@@ -1052,7 +1070,7 @@ export default function InvoiceReviewPage() {
  <NavBar />
 
  {/* Sub-header */}
- <div className="border-b border-brand-border bg-brand-surface/50 px-4 md:px-6 py-3">
+ <div className="border-b border-brand-border bg-brand-surface/50 px-4 md:px-6 py-3 print:hidden">
  <div className="max-w-[1600px] mx-auto flex items-center gap-3 md:gap-4 flex-wrap">
  <Link href="/invoices/queue" className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Queue</Link>
  <h1 className="font-display text-base md:text-xl text-cream flex items-center gap-2 min-w-0">
@@ -1096,6 +1114,13 @@ export default function InvoiceReviewPage() {
  ))}
  </select>
  </span>
+ <button
+ onClick={() => window.print()}
+ className="ml-auto px-3 py-1 border border-brand-border text-cream hover:bg-brand-elevated text-xs uppercase tracking-[0.06em] transition-colors"
+ aria-label="Print this invoice"
+ >
+ Print
+ </button>
  </div>
  </div>
 
@@ -1188,7 +1213,19 @@ export default function InvoiceReviewPage() {
  </div>
  )}
 
- <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 pb-32 md:pb-6">
+ <main className="print-area max-w-[1600px] mx-auto px-4 md:px-6 py-6 pb-32 md:pb-6">
+ {/* Print-only header */}
+ <div className="hidden print:block mb-4">
+ <h1 className="text-xl font-semibold">
+ {invoice.vendor_name_raw ?? "Invoice"}
+ {invoice.invoice_number ? ` — #${invoice.invoice_number}` : ""}
+ </h1>
+ <p className="text-sm">
+ Amount: {formatCents(invoice.total_amount)} ·
+ Date: {invoice.invoice_date ? formatDate(invoice.invoice_date) : "—"} ·
+ Status: {formatStatus(invoice.status)}
+ </p>
+ </div>
  <Breadcrumbs
  items={[
  { label: "Invoices", href: "/invoices" },
