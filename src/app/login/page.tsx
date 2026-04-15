@@ -21,13 +21,20 @@ export default async function LoginPage() {
             {PUBLIC_APP_NAME}
           </h1>
           <p className="mt-2 text-sm text-cream-dim">
-            Construction operations, reimagined
+            Construction management, powered by AI
           </p>
         </div>
 
         <div className="p-6 border border-brand-border bg-white">
           <LoginForm />
         </div>
+
+        <p className="mt-6 text-center text-sm text-cream-muted">
+          New to {PUBLIC_APP_NAME}?{" "}
+          <a href="/signup" className="text-teal hover:underline underline-offset-4">
+            Start a free trial
+          </a>
+        </p>
       </div>
     </div>
   );

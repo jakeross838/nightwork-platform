@@ -1,0 +1,158 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase/client";
+
+type Checks = {
+  companySetUp: boolean;
+  costCodesLoaded: boolean;
+  teamInvited: boolean;
+  firstJobCreated: boolean;
+  firstInvoiceUploaded: boolean;
+  firstDrawGenerated: boolean;
+};
+
+const DISMISS_KEY = "commandpost:getting-started-dismissed";
+
+export default function GettingStartedChecklist() {
+  const [checks, setChecks] = useState<Checks | null>(null);
+  const [dismissed, setDismissed] = useState(true);
+
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? localStorage.getItem(DISMISS_KEY) : null;
+    setDismissed(stored === "1");
+
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: membership } = await supabase
+        .from("org_members")
+        .select("org_id")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (!membership) return;
+      const orgId = membership.org_id as string;
+
+      const [
+        { data: org },
+        { count: codeCount },
+        { count: memberCount },
+        { count: jobCount },
+        { count: invoiceCount },
+        { count: drawCount },
+      ] = await Promise.all([
+        supabase
+          .from("organizations")
+          .select("company_address, company_city")
+          .eq("id", orgId)
+          .maybeSingle(),
+        supabase
+          .from("cost_codes")
+          .select("id", { count: "exact", head: true })
+          .eq("org_id", orgId)
+          .is("deleted_at", null),
+        supabase
+          .from("org_members")
+          .select("id", { count: "exact", head: true })
+          .eq("org_id", orgId),
+        supabase
+          .from("jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("org_id", orgId)
+          .is("deleted_at", null),
+        supabase
+          .from("invoices")
+          .select("id", { count: "exact", head: true })
+          .eq("org_id", orgId)
+          .is("deleted_at", null),
+        supabase
+          .from("draws")
+          .select("id", { count: "exact", head: true })
+          .eq("org_id", orgId)
+          .is("deleted_at", null),
+      ]);
+
+      setChecks({
+        companySetUp: !!(org?.company_address && org.company_city),
+        costCodesLoaded: (codeCount ?? 0) > 0,
+        teamInvited: (memberCount ?? 0) > 1,
+        firstJobCreated: (jobCount ?? 0) > 0,
+        firstInvoiceUploaded: (invoiceCount ?? 0) > 0,
+        firstDrawGenerated: (drawCount ?? 0) > 0,
+      });
+    })();
+  }, []);
+
+  if (!checks || dismissed) return null;
+
+  const done = Object.values(checks).filter(Boolean).length;
+  const total = 6;
+  if (done === total) return null;
+
+  const items: Array<{ label: string; href: string; done: boolean }> = [
+    { label: "Company set up", href: "/settings/company", done: checks.companySetUp },
+    { label: "Cost codes loaded", href: "/settings/cost-codes", done: checks.costCodesLoaded },
+    { label: "Team invited", href: "/settings/team", done: checks.teamInvited },
+    { label: "First job created", href: "/jobs/new", done: checks.firstJobCreated },
+    { label: "First invoice uploaded", href: "/invoices/upload", done: checks.firstInvoiceUploaded },
+    { label: "First draw generated", href: "/draws", done: checks.firstDrawGenerated },
+  ];
+
+  function dismiss() {
+    localStorage.setItem(DISMISS_KEY, "1");
+    setDismissed(true);
+  }
+
+  return (
+    <aside className="w-full max-w-[420px] mx-auto mt-8 mb-0 text-left border border-brand-border bg-white p-5">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <p className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Getting Started</p>
+          <h2 className="font-display text-lg text-cream mt-0.5">
+            {done} of {total} complete
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={dismiss}
+          className="text-xs text-cream-dim hover:text-cream"
+          title="Hide checklist"
+        >
+          Hide
+        </button>
+      </div>
+      <div className="h-1 w-full bg-brand-surface mb-4">
+        <div
+          className="h-full bg-teal transition-all"
+          style={{ width: `${(done / total) * 100}%` }}
+        />
+      </div>
+      <ul className="space-y-1.5">
+        {items.map((it) => (
+          <li key={it.label}>
+            <Link
+              href={it.href}
+              className={`flex items-center gap-3 px-2 py-1.5 text-sm hover:bg-brand-surface ${
+                it.done ? "text-cream-dim line-through" : "text-cream"
+              }`}
+            >
+              <span
+                className={`w-4 h-4 flex items-center justify-center text-[10px] border ${
+                  it.done ? "bg-teal border-teal text-white" : "border-brand-border"
+                }`}
+              >
+                {it.done ? "✓" : ""}
+              </span>
+              {it.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+}

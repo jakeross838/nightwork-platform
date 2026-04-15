@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
+import { getCurrentMembership } from "@/lib/org/session";
 
 export const dynamic = "force-dynamic";
-
-// Fixed org for single-company deployment (matches migration defaults).
-const DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 type JobBody = {
   name?: string;
@@ -30,12 +28,9 @@ export const POST = withApiError(async (request: NextRequest) => {
   } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") {
+  const membership = await getCurrentMembership();
+  if (!membership) throw new ApiError("No active organization", 403);
+  if (membership.role !== "admin" && membership.role !== "owner") {
     throw new ApiError("Only admins can create jobs", 403);
   }
 
@@ -69,7 +64,7 @@ export const POST = withApiError(async (request: NextRequest) => {
       pm_id: body.pm_id ?? null,
       contract_date: body.contract_date ?? null,
       status: body.status ?? "active",
-      org_id: DEFAULT_ORG_ID,
+      org_id: membership.org_id,
       created_by: user.id,
     })
     .select("id")
@@ -88,12 +83,8 @@ export const PATCH = withApiError(async (request: NextRequest) => {
   } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") {
+  const membership = await getCurrentMembership();
+  if (!membership || (membership.role !== "admin" && membership.role !== "owner")) {
     throw new ApiError("Only admins can edit jobs", 403);
   }
 

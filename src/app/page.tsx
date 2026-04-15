@@ -1,180 +1,167 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
-import NavBar from "@/components/nav-bar";
-import { useOrgBranding } from "@/components/org-branding-provider";
-import { PUBLIC_APP_NAME } from "@/lib/org/public";
+import { redirect } from "next/navigation";
+import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentOrg } from "@/lib/org/session";
+import PublicHeader from "@/components/public-header";
+import PublicFooter from "@/components/public-footer";
 
-type UserRole = "owner" | "admin" | "pm" | "accounting";
+export const dynamic = "force-dynamic";
 
-type NavItem = {
-  key: string;
-  href: string;
-  title: string;
-  subtitle: string;
-  count?: number;
-  roles: UserRole[];
-};
-
-function firstNameOf(fullName: string) {
-  return fullName.trim().split(/\s+/)[0] ?? fullName;
-}
-
-export default function Home() {
-  const [status, setStatus] = useState<"loading" | "connected" | "error">("loading");
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [firstName, setFirstName] = useState<string | null>(null);
-  const [pmCount, setPmCount] = useState(0);
-  const [qaCount, setQaCount] = useState(0);
-
-  useEffect(() => {
-    async function check() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        let resolvedRole: UserRole | null = null;
-        if (user) {
-          const [{ data: profile }, { data: membership }] = await Promise.all([
-            supabase.from("profiles").select("full_name").eq("id", user.id).single(),
-            supabase
-              .from("org_members")
-              .select("role")
-              .eq("user_id", user.id)
-              .eq("is_active", true)
-              .maybeSingle(),
-          ]);
-          if (membership?.role) {
-            resolvedRole = membership.role as UserRole;
-            setRole(resolvedRole);
-          }
-          if (profile?.full_name) setFirstName(firstNameOf(profile.full_name));
-        }
-
-        const { error } = await supabase.from("cost_codes").select("id").limit(1);
-        setStatus(error ? "error" : "connected");
-
-        // PM count scoped to the signed-in PM's jobs; global for admin.
-        let pmCountVal = 0;
-        if (user && resolvedRole === "pm") {
-          const { data: myJobs } = await supabase
-            .from("jobs")
-            .select("id")
-            .eq("pm_id", user.id)
-            .is("deleted_at", null);
-          const jobIds = (myJobs ?? []).map((j) => j.id as string);
-          const orClause =
-            jobIds.length > 0
-              ? `assigned_pm_id.eq.${user.id},job_id.in.(${jobIds.join(",")})`
-              : `assigned_pm_id.eq.${user.id}`;
-          const { count } = await supabase
-            .from("invoices")
-            .select("id", { count: "exact", head: true })
-            .in("status", ["pm_review", "ai_processed"])
-            .is("deleted_at", null)
-            .or(orClause);
-          pmCountVal = count ?? 0;
-        } else if (resolvedRole === "admin" || resolvedRole === "owner") {
-          const { count } = await supabase
-            .from("invoices")
-            .select("id", { count: "exact", head: true })
-            .in("status", ["pm_review", "ai_processed"])
-            .is("deleted_at", null);
-          pmCountVal = count ?? 0;
-        }
-
-        const { count: qaCountVal } = await supabase
-          .from("invoices")
-          .select("id", { count: "exact", head: true })
-          .in("status", ["qa_review", "pm_approved"])
-          .is("deleted_at", null);
-
-        setPmCount(pmCountVal);
-        setQaCount(qaCountVal ?? 0);
-      } catch {
-        setStatus("error");
-      }
-    }
-    check();
-  }, []);
-
-  const cards: NavItem[] = [
-    { key: "upload",   href: "/invoices/upload", title: "Upload Invoices", subtitle: "Drag and drop — AI parses instantly", roles: ["owner", "admin", "accounting"] },
-    { key: "all",      href: "/invoices",        title: "All Invoices",    subtitle: "Search, filter, track every invoice", roles: ["owner", "admin", "pm", "accounting"] },
-    { key: "pmQueue",  href: "/invoices/queue",  title: "PM Queue",        subtitle: pmCount > 0 ? `${pmCount} pending review` : "No invoices waiting", count: pmCount, roles: ["owner", "admin", "pm"] },
-    { key: "qaQueue",  href: "/invoices/qa",     title: "Accounting QA",   subtitle: qaCount > 0 ? `${qaCount} ready for QA` : "QA queue clear",        count: qaCount, roles: ["owner", "admin", "accounting"] },
-    { key: "draws",    href: "/draws",           title: "Draws",           subtitle: "G702/G703 pay applications", roles: ["owner", "admin", "pm"] },
-    { key: "vendors",  href: "/vendors",         title: "Vendors",         subtitle: "Manage vendors and merge duplicates", roles: ["owner", "admin", "accounting"] },
-    { key: "jobs",     href: "/jobs",            title: "Jobs",            subtitle: "Create and manage projects", roles: ["owner", "admin"] },
-  ];
-
-  const visibleCards = role ? cards.filter((c) => c.roles.includes(role)) : [];
-  const branding = useOrgBranding();
-  const brandName = branding?.name ?? PUBLIC_APP_NAME;
-  const tagline = branding?.tagline ?? null;
+export default async function Root() {
+  // Signed-in users skip the marketing page.
+  const supabase = createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const org = await getCurrentOrg();
+    if (org && !org.onboarding_complete) redirect("/onboard");
+    redirect("/dashboard");
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar />
-      <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden px-6 py-12">
-        <div className="relative z-10 text-center max-w-3xl">
-          <div className="animate-fade-up">
-            <div className="inline-flex items-center gap-2 px-3 py-1 border border-brand-border mb-6 rounded-none">
-              <span className={`h-1.5 w-1.5 ${status === "loading" ? "bg-brass animate-pulse" : status === "connected" ? "bg-status-success" : "bg-status-danger"}`} />
-              <span className="text-[10px] text-cream-dim tracking-[0.08em] uppercase">
-                {status === "loading" ? "Connecting..." : status === "connected" ? "Systems Online" : "Connection Failed"}
-              </span>
-            </div>
-          </div>
+      <PublicHeader />
 
-          <h1 className="animate-fade-up stagger-1 font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.1]">
-            {brandName}
+      {/* Hero */}
+      <section className="px-6 pt-20 pb-24 bg-brand-bg">
+        <div className="max-w-[1100px] mx-auto text-center">
+          <span className="inline-block px-3 py-1 border border-brand-border text-[10px] tracking-[0.12em] uppercase text-cream-dim mb-6">
+            Built for Custom Home Builders
+          </span>
+          <h1 className="font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.05] max-w-4xl mx-auto">
+            The AI-powered command center for custom home builders
           </h1>
+          <p className="mt-6 text-lg md:text-xl text-cream-muted max-w-2xl mx-auto">
+            Invoices, budgets, and draws — automated.
+          </p>
+          <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
+            <Link
+              href="/signup"
+              className="px-6 py-3 bg-teal text-white text-[13px] tracking-[0.12em] uppercase font-medium hover:bg-teal-hover transition-colors"
+            >
+              Start Free Trial
+            </Link>
+            <Link
+              href="/pricing"
+              className="px-6 py-3 border border-brand-border text-cream text-[13px] tracking-[0.12em] uppercase font-medium hover:bg-brand-surface transition-colors"
+            >
+              See Pricing
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-cream-dim">No credit card required  14-day free trial</p>
+        </div>
+      </section>
 
-          {/* Personalized greeting */}
-          {firstName && (
-            <p className="animate-fade-up stagger-4 mt-10 font-display text-xl text-cream">
-              Welcome, {firstName}
-            </p>
-          )}
-
-          {/* Navigation cards — filtered by role */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up stagger-4">
-            {visibleCards.map((c) => (
-              <NavCard key={c.key} href={c.href} title={c.title} subtitle={c.subtitle} count={c.count} />
-            ))}
+      {/* Features */}
+      <section className="px-6 py-20 bg-white border-y border-brand-border">
+        <div className="max-w-[1100px] mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Capabilities</span>
+            <h2 className="mt-2 font-display text-3xl md:text-4xl text-cream tracking-tight">
+              Built around how builders actually work
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <FeatureCard
+              title="AI Invoice Parsing"
+              body="Upload any format — PDF, Word, photo, handwritten. Claude extracts vendor, amount, line items, and cost codes with confidence scoring. Low-confidence invoices route to accounting; high-confidence ones go straight to the PM."
+            />
+            <FeatureCard
+              title="Automated Draws"
+              body="AIA G702 and G703 draws generated from approved invoices. Change orders logged with PCCO numbers, running contract totals, and GC fees applied per line. Lock draws to preserve audit history."
+            />
+            <FeatureCard
+              title="Real-Time Budgets"
+              body="Live budget health across every job. Original estimates, revised with change orders, previous applications, this period, balance to finish — all computed on read. Over-budget lines turn red before the draw goes out."
+            />
           </div>
         </div>
+      </section>
 
-        {tagline && (
-          <div className="mt-12 text-center animate-fade-up stagger-6">
-            <p className="text-[11px] text-cream-dim tracking-[0.08em] uppercase">{tagline}</p>
+      {/* How it works */}
+      <section className="px-6 py-20">
+        <div className="max-w-[1100px] mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Workflow</span>
+            <h2 className="mt-2 font-display text-3xl md:text-4xl text-cream tracking-tight">
+              Four steps from invoice to draw
+            </h2>
           </div>
-        )}
-      </div>
+          <ol className="grid md:grid-cols-4 gap-6">
+            <Step n={1} title="Upload" body="Drag any invoice — PDF, Word, photo. Or email it in." />
+            <Step n={2} title="AI Parses" body="Claude extracts every field with a confidence score." />
+            <Step n={3} title="PM Approves" body="One-tap on mobile. Edits log as overrides — the AI learns." />
+            <Step n={4} title="Draw Generated" body="G702 and G703 assembled from approved invoices." />
+          </ol>
+        </div>
+      </section>
+
+      {/* Pricing preview */}
+      <section className="px-6 py-20 bg-brand-surface border-t border-brand-border">
+        <div className="max-w-[1100px] mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Pricing</span>
+            <h2 className="mt-2 font-display text-3xl md:text-4xl text-cream tracking-tight">
+              Priced for every stage
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-4 max-w-[900px] mx-auto">
+            <PricePreview name="Starter" price="$149" tagline="For builders running 1–3 active jobs" />
+            <PricePreview name="Professional" price="$349" tagline="For active contractors, 4–15 jobs" highlight />
+            <PricePreview name="Enterprise" price="$749" tagline="For multi-office builders and up" />
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              href="/pricing"
+              className="text-[13px] tracking-[0.08em] uppercase text-cream hover:text-teal border-b border-cream/40 hover:border-teal pb-0.5"
+            >
+              See all plans &amp; features →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <PublicFooter />
     </div>
   );
 }
 
-function NavCard({ href, title, subtitle, count }: {
-  href: string; title: string; subtitle: string; count?: number;
-}) {
+function FeatureCard({ title, body }: { title: string; body: string }) {
   return (
-    <Link href={href}
-      className="group relative flex flex-col items-start p-5 border border-brand-border bg-white hover:border-teal/40 transition-all duration-300 text-left rounded-none">
-      <div className="flex items-center gap-2">
-        <h2 className="font-display text-[15px] text-cream font-medium">{title}</h2>
-        {count != null && count > 0 && (
-          <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-teal text-teal text-[10px] font-bold rounded-none">{count}</span>
-        )}
+    <div className="p-6 border border-brand-border bg-white">
+      <h3 className="font-display text-lg text-cream">{title}</h3>
+      <p className="mt-3 text-sm text-cream-muted leading-relaxed">{body}</p>
+    </div>
+  );
+}
+
+function Step({ n, title, body }: { n: number; title: string; body: string }) {
+  return (
+    <li className="relative pl-0">
+      <div className="flex items-baseline gap-3 mb-2">
+        <span className="font-display text-3xl text-teal">0{n}</span>
+        <h3 className="font-display text-lg text-cream">{title}</h3>
       </div>
-      <p className="mt-1 text-sm text-cream-dim">{subtitle}</p>
-      <svg className="absolute top-5 right-5 w-4 h-4 text-cream-dim group-hover:text-teal group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-      </svg>
-    </Link>
+      <p className="text-sm text-cream-muted leading-relaxed">{body}</p>
+    </li>
+  );
+}
+
+function PricePreview({ name, price, tagline, highlight }: { name: string; price: string; tagline: string; highlight?: boolean }) {
+  return (
+    <div className={`p-6 border bg-white ${highlight ? "border-teal shadow-[0_8px_24px_-12px_rgba(63,88,98,0.25)]" : "border-brand-border"}`}>
+      {highlight && (
+        <span className="inline-block px-2 py-0.5 bg-teal text-white text-[10px] tracking-[0.12em] uppercase mb-3">
+          Most Popular
+        </span>
+      )}
+      <h3 className="font-display text-xl text-cream">{name}</h3>
+      <p className="mt-4 font-display text-4xl text-cream">
+        {price}
+        <span className="text-sm text-cream-dim font-body">/mo</span>
+      </p>
+      <p className="mt-3 text-sm text-cream-muted">{tagline}</p>
+    </div>
   );
 }
