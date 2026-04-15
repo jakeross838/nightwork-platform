@@ -52,7 +52,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
         let vendorRow:
           | (Vendor & Record<string, unknown>)
           | null = null;
-        let withNotes = await supabase
+        const withNotes = await supabase
           .from("vendors")
           .select("id, name, address, phone, email, default_cost_code_id, notes")
           .eq("id", params.id)
