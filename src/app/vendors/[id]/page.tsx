@@ -35,6 +35,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [costCodes, setCostCodes] = useState<CostCodeOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Vendor>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,19 +43,57 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.replace(`/login?redirect=/vendors/${params.id}`); return; }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.replace(`/login?redirect=/vendors/${params.id}`); return; }
 
-      const [vRes, iRes, ccRes] = await Promise.all([
-        (
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          supabase.from("vendors") as any
-        )
-          .select("id, name, address, phone, email, notes, default_cost_code_id")
+        // Load vendor row — try with `notes` first; fall back without it if the
+        // column doesn't exist yet (migration 00015 not applied).
+        let vendorRow:
+          | (Vendor & Record<string, unknown>)
+          | null = null;
+        let withNotes = await supabase
+          .from("vendors")
+          .select("id, name, address, phone, email, default_cost_code_id, notes")
           .eq("id", params.id)
           .is("deleted_at", null)
-          .single(),
-        supabase
+          .maybeSingle();
+        if (withNotes.error && /notes/i.test(withNotes.error.message)) {
+          const fallback = await supabase
+            .from("vendors")
+            .select("id, name, address, phone, email, default_cost_code_id")
+            .eq("id", params.id)
+            .is("deleted_at", null)
+            .maybeSingle();
+          if (fallback.data) {
+            vendorRow = { ...(fallback.data as Omit<Vendor, "notes">), notes: null };
+          }
+        } else if (withNotes.data) {
+          vendorRow = withNotes.data as Vendor & Record<string, unknown>;
+        }
+
+        if (!vendorRow) {
+          setLoadError(
+            withNotes.error?.message ?? "Vendor not found"
+          );
+          return;
+        }
+
+        const vendorTyped: Vendor = {
+          id: String(vendorRow.id),
+          name: String(vendorRow.name ?? ""),
+          address: (vendorRow.address as string | null) ?? null,
+          phone: (vendorRow.phone as string | null) ?? null,
+          email: (vendorRow.email as string | null) ?? null,
+          notes: (vendorRow.notes as string | null) ?? null,
+          default_cost_code_id: (vendorRow.default_cost_code_id as string | null) ?? null,
+        };
+        setVendor(vendorTyped);
+        setForm(vendorTyped);
+
+        // Invoices — note the join returns an array for the foreign relation.
+        // Normalize to object.
+        const { data: rawInvoices, error: invErr } = await supabase
           .from("invoices")
           .select(`
             id, invoice_number, invoice_date, total_amount, status,
@@ -63,21 +102,38 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
           `)
           .eq("vendor_id", params.id)
           .is("deleted_at", null)
-          .order("invoice_date", { ascending: false }),
-        supabase
+          .order("invoice_date", { ascending: false });
+        if (invErr) {
+          console.warn("invoice fetch failed:", invErr.message);
+        }
+        const normalized: Invoice[] = (rawInvoices ?? []).map((r) => {
+          const row = r as Record<string, unknown>;
+          const jobs = Array.isArray(row.jobs) ? (row.jobs[0] ?? null) : (row.jobs ?? null);
+          const costCodes = Array.isArray(row.cost_codes) ? (row.cost_codes[0] ?? null) : (row.cost_codes ?? null);
+          return {
+            id: String(row.id),
+            invoice_number: (row.invoice_number as string | null) ?? null,
+            invoice_date: (row.invoice_date as string | null) ?? null,
+            total_amount: Number(row.total_amount ?? 0),
+            status: String(row.status ?? ""),
+            jobs: jobs as { id: string; name: string } | null,
+            cost_codes: costCodes as { id: string; code: string; description: string } | null,
+          };
+        });
+        setInvoices(normalized);
+
+        // Cost codes
+        const { data: ccData } = await supabase
           .from("cost_codes")
           .select("id, code, description, category, is_change_order")
           .is("deleted_at", null)
-          .order("sort_order"),
-      ]);
-
-      if (vRes.data) {
-        setVendor(vRes.data as Vendor);
-        setForm(vRes.data as Vendor);
+          .order("sort_order");
+        if (ccData) setCostCodes(ccData as CostCodeOption[]);
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Load failed");
+      } finally {
+        setLoading(false);
       }
-      if (iRes.data) setInvoices(iRes.data as unknown as Invoice[]);
-      if (ccRes.data) setCostCodes(ccRes.data as CostCodeOption[]);
-      setLoading(false);
     }
     load();
   }, [params.id, router]);
@@ -150,7 +206,8 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
         <NavBar />
         <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
           <p className="text-cream">Vendor not found</p>
-          <Link href="/vendors" className="text-teal hover:underline text-sm">Back to vendors</Link>
+          {loadError && <p className="text-status-danger text-xs mt-2">{loadError}</p>}
+          <Link href="/vendors" className="text-teal hover:underline text-sm mt-3 inline-block">Back to vendors</Link>
         </main>
       </div>
     );

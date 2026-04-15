@@ -46,11 +46,47 @@ export default function InvoiceFilePreview({
 
   if (kind === "pdf") {
     return (
-      <iframe
-        src={fileUrl}
-        className="w-full h-[500px] xl:h-[700px] border border-brand-border bg-brand-surface"
-        title={fileName ?? "Invoice PDF"}
-      />
+      <div className="border border-brand-border bg-brand-surface">
+        <div className="flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2">
+          <span className="text-[11px] tracking-[0.08em] uppercase text-cream-dim truncate pr-2">
+            PDF{fileName ? ` · ${fileName}` : ""}
+          </span>
+          <a
+            href={downloadUrl ?? fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-teal text-teal hover:bg-teal hover:text-white transition-colors whitespace-nowrap"
+          >
+            Open in New Tab
+          </a>
+        </div>
+        {/* Use <object> for better cross-browser PDF support; iframe renders
+            via Chrome's PDFium but some sandboxed contexts block it. An
+            <object> falls through to its children if the embed fails. */}
+        <object
+          data={fileUrl}
+          type="application/pdf"
+          className="w-full h-[500px] xl:h-[700px] bg-white"
+          aria-label={fileName ?? "Invoice PDF"}
+        >
+          <iframe
+            src={fileUrl}
+            className="w-full h-[500px] xl:h-[700px] bg-white"
+            title={fileName ?? "Invoice PDF"}
+          />
+          <div className="p-6 text-center text-sm text-cream-dim bg-brand-surface">
+            <p>Your browser can&apos;t display PDFs inline.</p>
+            <a
+              href={downloadUrl ?? fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 px-3 py-1.5 border border-teal text-teal hover:bg-teal hover:text-white text-xs font-medium transition-colors"
+            >
+              Open PDF in new tab
+            </a>
+          </div>
+        </object>
+      </div>
     );
   }
 

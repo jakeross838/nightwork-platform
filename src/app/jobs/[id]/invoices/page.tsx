@@ -41,7 +41,9 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
         .eq("id", params.id).is("deleted_at", null).single();
       if (j) setJob(j as Job);
 
-      const { data: inv } = await supabase
+      // Try with parent_invoice_id first; fall back without it if the column
+      // doesn't exist yet (migration 00015 may not be applied).
+      const withParent = await supabase
         .from("invoices")
         .select(`
           id, invoice_number, invoice_date, total_amount, status, parent_invoice_id,
@@ -52,7 +54,40 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
         .eq("job_id", params.id)
         .is("deleted_at", null)
         .order("invoice_date", { ascending: false });
-      if (inv) setInvoices(inv as unknown as InvoiceRow[]);
+      let invQuery: { data: unknown; error: { message: string } | null } = withParent;
+      if (withParent.error && /parent_invoice_id/i.test(withParent.error.message)) {
+        const fallback = await supabase
+          .from("invoices")
+          .select(`
+            id, invoice_number, invoice_date, total_amount, status,
+            vendor_name_raw,
+            vendors:vendor_id(name),
+            cost_codes:cost_code_id(code, description)
+          `)
+          .eq("job_id", params.id)
+          .is("deleted_at", null)
+          .order("invoice_date", { ascending: false });
+        invQuery = fallback;
+      }
+      if (invQuery.error) console.warn("invoice fetch:", invQuery.error.message);
+      const rows = Array.isArray(invQuery.data) ? invQuery.data : [];
+      const normalized: InvoiceRow[] = rows.map((r) => {
+        const row = r as Record<string, unknown>;
+        const vendors = Array.isArray(row.vendors) ? (row.vendors[0] ?? null) : (row.vendors ?? null);
+        const costCodes = Array.isArray(row.cost_codes) ? (row.cost_codes[0] ?? null) : (row.cost_codes ?? null);
+        return {
+          id: String(row.id),
+          invoice_number: (row.invoice_number as string | null) ?? null,
+          invoice_date: (row.invoice_date as string | null) ?? null,
+          total_amount: Number(row.total_amount ?? 0),
+          status: String(row.status ?? ""),
+          parent_invoice_id: (row.parent_invoice_id as string | null) ?? null,
+          vendor_name_raw: (row.vendor_name_raw as string | null) ?? null,
+          vendors: vendors as { name: string } | null,
+          cost_codes: costCodes as { code: string; description: string } | null,
+        };
+      });
+      setInvoices(normalized);
       setLoading(false);
     }
     load();

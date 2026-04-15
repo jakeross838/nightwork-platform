@@ -91,12 +91,26 @@ export default function AllInvoicesPage() {
 
  useEffect(() => {
  async function fetchData() {
+ // Try with partial-approval columns first (migration 00015). Fall back if
+ // the columns don't exist yet so the page still renders.
+ const INVOICES_FULL = "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
+ const INVOICES_MINIMAL = "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
  const [invResult, pmResult, lineItemResult] = await Promise.all([
  supabase
  .from("invoices")
- .select("id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)")
+ .select(INVOICES_FULL)
  .is("deleted_at", null)
- .order("created_at", { ascending: false }),
+ .order("created_at", { ascending: false })
+ .then(async (r) => {
+ if (r.error && /parent_invoice_id|partial_approval_note/i.test(r.error.message)) {
+ return await supabase
+ .from("invoices")
+ .select(INVOICES_MINIMAL)
+ .is("deleted_at", null)
+ .order("created_at", { ascending: false });
+ }
+ return r;
+ }),
  supabase
  .from("users")
  .select("id, full_name")
