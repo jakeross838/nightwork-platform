@@ -22,6 +22,7 @@ interface Invoice {
  is_change_order: boolean;
  parent_invoice_id: string | null;
  partial_approval_note: string | null;
+ payment_status: string | null;
  jobs: { name: string } | null;
  cost_codes: { code: string; description: string } | null;
  assigned_pm: { id: string; full_name: string } | null;
@@ -31,7 +32,49 @@ interface Invoice {
 
 interface PmUser { id: string; full_name: string; }
 
-type SortKey = "vendor" | "date" | "amount" | "status" | "pm";
+type SortKey = "vendor" | "date" | "amount" | "status" | "pm" | "aging";
+
+/** Days since `received_date` (rounded, non-negative). */
+function daysOutstanding(receivedDate: string | null): number {
+  if (!receivedDate) return 0;
+  const d = new Date(receivedDate);
+  if (isNaN(d.getTime())) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.max(0, diff);
+}
+
+/** Returns { label, color } for aging badge, or null if not overdue enough. */
+function agingBadge(days: number): { label: string; className: string } | null {
+  if (days >= 90) {
+    return {
+      label: "90d+",
+      className: "bg-status-danger text-white border-status-danger",
+    };
+  }
+  if (days >= 61) {
+    return {
+      label: "60d",
+      className: "bg-brass text-white border-brass",
+    };
+  }
+  if (days >= 30) {
+    return {
+      label: "30d",
+      className: "bg-status-warning-muted text-brass border-brass/60",
+    };
+  }
+  return null;
+}
+
+/** True when invoice is unpaid — aging applies only to unpaid invoices. */
+function isUnpaidInvoice(inv: { payment_status: string | null; status: string }): boolean {
+  if (inv.payment_status === "paid") return false;
+  if (inv.status === "paid") return false;
+  if (inv.status === "void") return false;
+  return true;
+}
 type SortDir = "asc" | "desc";
 type ConfidenceFilter = "all" | "high" | "medium" | "low";
 type AmountRange = "all" | "0-5k" | "5k-25k" | "25k-100k" | "100k+";
@@ -93,8 +136,8 @@ export default function AllInvoicesPage() {
  async function fetchData() {
  // Try with partial-approval columns first (migration 00015). Fall back if
  // the columns don't exist yet so the page still renders.
- const INVOICES_FULL = "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
- const INVOICES_MINIMAL = "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
+ const INVOICES_FULL = "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
+ const INVOICES_MINIMAL = "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
  const [invResult, pmResult, lineItemResult] = await Promise.all([
  supabase
  .from("invoices")
@@ -225,6 +268,7 @@ export default function AllInvoicesPage() {
  case "amount": cmp = a.total_amount - b.total_amount; break;
  case "status": cmp = a.status.localeCompare(b.status); break;
  case "pm": cmp = (a.assigned_pm?.full_name ?? "").localeCompare(b.assigned_pm?.full_name ?? ""); break;
+ case "aging": cmp = daysOutstanding(a.received_date) - daysOutstanding(b.received_date); break;
  }
  return sortDir === "asc" ? cmp : -cmp;
  });
@@ -477,6 +521,9 @@ export default function AllInvoicesPage() {
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("pm")}>
  PM<SortArrow active={sortKey === "pm"} dir={sortDir} />
  </th>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("aging")}>
+ Days Out<SortArrow active={sortKey === "aging"} dir={sortDir} />
+ </th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Payment</th>
  </tr>
  </thead>
@@ -533,6 +580,26 @@ export default function AllInvoicesPage() {
  </div>
  </td>
  <td className="py-3 px-4 text-cream-muted text-xs">{inv.assigned_pm?.full_name ?? <span className="text-cream-dim">—</span>}</td>
+ <td className="py-3 px-4 text-right">
+ {(() => {
+ const days = daysOutstanding(inv.received_date);
+ const unpaid = isUnpaidInvoice(inv);
+ const badge = unpaid ? agingBadge(days) : null;
+ return (
+ <div className="flex items-center justify-end gap-1.5">
+ <span className="text-xs text-cream-muted tabular-nums">{days}d</span>
+ {badge && (
+ <span
+ className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold border ${badge.className}`}
+ title={`Outstanding for ${days} days`}
+ >
+ {badge.label}
+ </span>
+ )}
+ </div>
+ );
+ })()}
+ </td>
  <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
  </tr>
  ))}

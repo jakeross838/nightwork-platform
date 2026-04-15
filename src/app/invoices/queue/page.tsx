@@ -17,6 +17,9 @@ interface QueueInvoice {
  job_id: string | null;
  cost_code_id: string | null;
  document_category: string | null;
+ po_id: string | null;
+ is_potential_duplicate: boolean;
+ duplicate_dismissed_at: string | null;
  jobs: { name: string } | null;
  assigned_pm: { id: string; full_name: string } | null;
 }
@@ -24,6 +27,17 @@ interface QueueInvoice {
 interface PmUser {
  id: string;
  full_name: string;
+}
+
+interface WorkflowSettingsClient {
+ batch_approval_enabled: boolean;
+ quick_approve_enabled: boolean;
+ quick_approve_min_confidence: number;
+ require_invoice_date: boolean;
+ require_budget_allocation: boolean;
+ require_po_linkage: boolean;
+ duplicate_detection_enabled: boolean;
+ over_budget_requires_note: boolean;
 }
 
 type SortKey = "vendor" | "date" | "amount" | "confidence" | "waiting" | "pm";
@@ -83,9 +97,28 @@ export default function QueuePage() {
  const [batchProcessing, setBatchProcessing] = useState(false);
  const [showHoldNoteModal, setShowHoldNoteModal] = useState(false);
  const [holdNote, setHoldNote] = useState("");
- const [showMissingModal, setShowMissingModal] = useState(false);
- const [missingInvoices, setMissingInvoices] = useState<QueueInvoice[]>([]);
+ const [showDenyNoteModal, setShowDenyNoteModal] = useState(false);
+ const [denyNote, setDenyNote] = useState("");
+ const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+ const [approvalEligible, setApprovalEligible] = useState<QueueInvoice[]>([]);
+ const [approvalExcluded, setApprovalExcluded] = useState<Array<{ invoice: QueueInvoice; reasons: string[] }>>([]);
  const selectAllRef = useRef<HTMLInputElement>(null);
+
+ // Workflow settings (null while loading — UI gates off this)
+ const [workflowSettings, setWorkflowSettings] = useState<WorkflowSettingsClient | null>(null);
+
+ // Line items allocation map (id -> { hasAnyBudgetLine, hasAllBudgetLines, hasAnyPO, hasAllPOs })
+ const [lineItemSummary, setLineItemSummary] = useState<
+ Map<string, { hasAllBudgetLines: boolean; hasAllPOs: boolean; lineCount: number }>
+ >(new Map());
+
+ // Toast feedback for batch actions
+ const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+ // Quick Approve — inline confirmation state per invoice
+ const [quickApproveConfirmId, setQuickApproveConfirmId] = useState<string | null>(null);
+ const [quickApproveProcessingId, setQuickApproveProcessingId] = useState<string | null>(null);
+ const [animatingOutIds, setAnimatingOutIds] = useState<Set<string>>(new Set());
 
  useEffect(() => {
  async function fetchData() {
@@ -116,11 +149,11 @@ export default function QueuePage() {
  }
  }
 
- const [invoiceResult, pmResult] = await Promise.all([
+ const [invoiceResult, pmResult, settingsResult] = await Promise.all([
  supabase
  .from("invoices")
  .select(
- "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, document_category, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
+ "id, vendor_name_raw, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, document_category, po_id, is_potential_duplicate, duplicate_dismissed_at, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
  )
  .in("status", ["pm_review", "ai_processed", "pm_held", "pm_denied", "info_requested"])
  .is("deleted_at", null)
@@ -131,18 +164,153 @@ export default function QueuePage() {
  .in("role", ["pm", "admin"])
  .is("deleted_at", null)
  .order("full_name"),
+ fetch("/api/workflow-settings").then((r) => (r.ok ? r.json() : null)).catch(() => null),
  ]);
 
  if (!invoiceResult.error && invoiceResult.data) {
- setInvoices(invoiceResult.data as unknown as QueueInvoice[]);
+ const rows = invoiceResult.data as unknown as QueueInvoice[];
+ setInvoices(rows);
+ // Load line item allocation summary for batch workflow checks.
+ const ids = rows.map((r) => r.id);
+ if (ids.length > 0) {
+ const { data: lines } = await supabase
+ .from("invoice_line_items")
+ .select("invoice_id, budget_line_id, po_id")
+ .in("invoice_id", ids)
+ .is("deleted_at", null);
+ const map = new Map<string, { hasAllBudgetLines: boolean; hasAllPOs: boolean; lineCount: number }>();
+ for (const r of rows) {
+ const myLines = (lines ?? []).filter((l) => l.invoice_id === r.id);
+ map.set(r.id, {
+ hasAllBudgetLines: myLines.length > 0 && myLines.every((l) => !!l.budget_line_id),
+ hasAllPOs: myLines.length > 0 && myLines.every((l) => !!l.po_id),
+ lineCount: myLines.length,
+ });
+ }
+ setLineItemSummary(map);
+ }
  }
  if (!pmResult.error && pmResult.data) {
  setPmUsers(pmResult.data as PmUser[]);
+ }
+ if (settingsResult?.settings) {
+ setWorkflowSettings({
+ batch_approval_enabled: settingsResult.settings.batch_approval_enabled,
+ quick_approve_enabled: settingsResult.settings.quick_approve_enabled,
+ quick_approve_min_confidence: settingsResult.settings.quick_approve_min_confidence,
+ require_invoice_date: settingsResult.settings.require_invoice_date,
+ require_budget_allocation: settingsResult.settings.require_budget_allocation,
+ require_po_linkage: settingsResult.settings.require_po_linkage,
+ duplicate_detection_enabled: settingsResult.settings.duplicate_detection_enabled,
+ over_budget_requires_note: settingsResult.settings.over_budget_requires_note,
+ });
+ } else {
+ // Fallback defaults if settings couldn't load.
+ setWorkflowSettings({
+ batch_approval_enabled: true,
+ quick_approve_enabled: true,
+ quick_approve_min_confidence: 95,
+ require_invoice_date: true,
+ require_budget_allocation: false,
+ require_po_linkage: false,
+ duplicate_detection_enabled: true,
+ over_budget_requires_note: true,
+ });
  }
  setLoading(false);
  }
  fetchData();
  }, []);
+
+ const batchEnabled = workflowSettings?.batch_approval_enabled ?? false;
+ const quickApproveEnabled = workflowSettings?.quick_approve_enabled ?? false;
+ const quickApproveThreshold = (workflowSettings?.quick_approve_min_confidence ?? 95) / 100;
+
+ const getApprovalBlockers = useCallback(
+ (inv: QueueInvoice): string[] => {
+ if (!workflowSettings) return [];
+ const reasons: string[] = [];
+ if (!inv.job_id) reasons.push("No job assigned");
+ if (!inv.cost_code_id) reasons.push("No cost code assigned");
+ if (workflowSettings.require_invoice_date && !inv.invoice_date) {
+ reasons.push("Missing invoice date");
+ }
+ if (
+ workflowSettings.duplicate_detection_enabled &&
+ inv.is_potential_duplicate &&
+ !inv.duplicate_dismissed_at
+ ) {
+ reasons.push("Flagged as duplicate — review individually");
+ }
+ if (workflowSettings.require_budget_allocation) {
+ const s = lineItemSummary.get(inv.id);
+ if (!s || s.lineCount === 0 || !s.hasAllBudgetLines) {
+ reasons.push("Not fully allocated to budget lines");
+ }
+ }
+ if (workflowSettings.require_po_linkage) {
+ const s = lineItemSummary.get(inv.id);
+ const headerPO = !!inv.po_id;
+ if (!headerPO && (!s || !s.hasAllPOs)) {
+ reasons.push("No PO linked");
+ }
+ }
+ return reasons;
+ },
+ [workflowSettings, lineItemSummary]
+ );
+
+ // Quick Approve eligibility: requires confidence threshold met, no blockers,
+ // and invoice in a reviewable state.
+ const isQuickApproveEligible = useCallback(
+ (inv: QueueInvoice): boolean => {
+ if (!workflowSettings?.quick_approve_enabled) return false;
+ if (inv.confidence_score < quickApproveThreshold) return false;
+ if (inv.status !== "pm_review" && inv.status !== "ai_processed") return false;
+ const blockers = getApprovalBlockers(inv);
+ if (blockers.length > 0) return false;
+ return true;
+ },
+ [workflowSettings, quickApproveThreshold, getApprovalBlockers]
+ );
+
+ const handleQuickApprove = useCallback(
+ async (inv: QueueInvoice) => {
+ setQuickApproveProcessingId(inv.id);
+ try {
+ const res = await fetch(`/api/invoices/${inv.id}/action`, {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({ action: "approve", note: "Quick approve" }),
+ });
+ if (!res.ok) {
+ const err = await res.json().catch(() => ({}));
+ setToast({ kind: "err", text: err.error ?? "Quick approve failed" });
+ setTimeout(() => setToast(null), 4500);
+ return;
+ }
+ // Animate card out, then remove from list.
+ setAnimatingOutIds((prev) => new Set(prev).add(inv.id));
+ setQuickApproveConfirmId(null);
+ setTimeout(() => {
+ setInvoices((prev) => prev.filter((i) => i.id !== inv.id));
+ setAnimatingOutIds((prev) => {
+ const next = new Set(prev);
+ next.delete(inv.id);
+ return next;
+ });
+ }, 300);
+ setToast({
+ kind: "ok",
+ text: `Approved ${inv.vendor_name_raw ?? "invoice"} · ${formatCents(inv.total_amount)}`,
+ });
+ setTimeout(() => setToast(null), 3500);
+ } finally {
+ setQuickApproveProcessingId(null);
+ }
+ },
+ []
+ );
 
  // Unique job names for dropdown
  const jobNames = useMemo(() => {
@@ -369,33 +537,57 @@ export default function QueuePage() {
  });
  }, []);
 
- const handleBatchApprove = useCallback(async () => {
- // Check for invoices missing job_id or cost_code_id
+ // Step 1 of batch approve: open the confirmation modal with eligibility split.
+ const handleBatchApprove = useCallback(() => {
  const selected = filtered.filter((inv) => selectedIds.has(inv.id));
- const missing = selected.filter((inv) => !inv.job_id || !inv.cost_code_id);
- if (missing.length > 0) {
- setMissingInvoices(missing);
- setShowMissingModal(true);
+ const eligible: QueueInvoice[] = [];
+ const excluded: Array<{ invoice: QueueInvoice; reasons: string[] }> = [];
+ for (const inv of selected) {
+ const reasons = getApprovalBlockers(inv);
+ if (reasons.length === 0) eligible.push(inv);
+ else excluded.push({ invoice: inv, reasons });
+ }
+ setApprovalEligible(eligible);
+ setApprovalExcluded(excluded);
+ setShowApproveConfirm(true);
+ }, [filtered, selectedIds, getApprovalBlockers]);
+
+ // Step 2: commit the approval for the eligible subset.
+ const confirmBatchApprove = useCallback(async () => {
+ if (approvalEligible.length === 0) {
+ setShowApproveConfirm(false);
  return;
  }
-
  setBatchProcessing(true);
  try {
  const res = await fetch("/api/invoices/batch-action", {
  method: "POST",
  headers: { "Content-Type": "application/json" },
- body: JSON.stringify({ action: "approve", invoice_ids: Array.from(selectedIds) }),
+ body: JSON.stringify({
+ action: "approve",
+ invoice_ids: approvalEligible.map((i) => i.id),
+ }),
  });
  if (res.ok) {
  const result = await res.json();
  const successSet = new Set(result.success as string[]);
  setInvoices((prev) => prev.filter((inv) => !successSet.has(inv.id)));
  setSelectedIds(new Set());
+ setToast({
+ kind: "ok",
+ text: `Approved ${result.success.length} invoice${result.success.length !== 1 ? "s" : ""}`,
+ });
+ setTimeout(() => setToast(null), 3500);
+ } else {
+ const err = await res.json().catch(() => ({}));
+ setToast({ kind: "err", text: err.error ?? "Batch approve failed" });
+ setTimeout(() => setToast(null), 4500);
  }
  } finally {
  setBatchProcessing(false);
+ setShowApproveConfirm(false);
  }
- }, [filtered, selectedIds]);
+ }, [approvalEligible]);
 
  const handleBatchHold = useCallback(async () => {
  if (!holdNote.trim()) return;
@@ -413,11 +605,50 @@ export default function QueuePage() {
  setInvoices((prev) => prev.filter((inv) => !successSet.has(inv.id)));
  setSelectedIds(new Set());
  setHoldNote("");
+ setToast({
+ kind: "ok",
+ text: `Held ${result.success.length} invoice${result.success.length !== 1 ? "s" : ""}`,
+ });
+ setTimeout(() => setToast(null), 3500);
  }
  } finally {
  setBatchProcessing(false);
  }
  }, [selectedIds, holdNote]);
+
+ const handleBatchDeny = useCallback(async () => {
+ if (!denyNote.trim()) return;
+ setBatchProcessing(true);
+ setShowDenyNoteModal(false);
+ try {
+ const res = await fetch("/api/invoices/batch-action", {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({ action: "deny", invoice_ids: Array.from(selectedIds), note: denyNote.trim() }),
+ });
+ if (res.ok) {
+ const result = await res.json();
+ const successSet = new Set(result.success as string[]);
+ setInvoices((prev) => prev.filter((inv) => !successSet.has(inv.id)));
+ setSelectedIds(new Set());
+ setDenyNote("");
+ setToast({
+ kind: "ok",
+ text: `Denied ${result.success.length} invoice${result.success.length !== 1 ? "s" : ""}`,
+ });
+ setTimeout(() => setToast(null), 3500);
+ }
+ } finally {
+ setBatchProcessing(false);
+ }
+ }, [selectedIds, denyNote]);
+
+ // Selected total for batch bar.
+ const selectedTotalCents = useMemo(() => {
+ return filtered
+ .filter((inv) => selectedIds.has(inv.id))
+ .reduce((sum, inv) => sum + (inv.total_amount ?? 0), 0);
+ }, [filtered, selectedIds]);
 
  return (
  <div className="min-h-screen">
@@ -677,7 +908,7 @@ export default function QueuePage() {
  {filtered.map((inv, i) => (
  <div
  key={inv.id}
- className={`bg-brand-card border p-4 cursor-pointer active:opacity-80 transition-opacity animate-fade-up ${selectedIds.has(inv.id) ? "border-teal/60 bg-teal/5" : "border-brand-border"}`}
+ className={`bg-brand-card border p-4 cursor-pointer active:opacity-80 transition-all duration-300 animate-fade-up ${selectedIds.has(inv.id) ? "border-teal/60 bg-teal/5" : "border-brand-border"} ${animatingOutIds.has(inv.id) ? "opacity-0 scale-95" : ""}`}
  style={{ animationDelay: `${0.05 + i * 0.03}s` }}
  onClick={() =>
  (window.location.href = `/invoices/${inv.id}`)
@@ -691,13 +922,16 @@ export default function QueuePage() {
  <span className="text-cream font-display font-medium text-lg">
  {formatCents(inv.total_amount)}
  </span>
+ {batchEnabled && (
  <input
  type="checkbox"
  checked={selectedIds.has(inv.id)}
  onChange={() => toggleSelect(inv.id)}
  onClick={(e) => e.stopPropagation()}
  className="w-4 h-4 accent-teal cursor-pointer"
+ aria-label="Select invoice for batch action"
  />
+ )}
  </div>
  </div>
  <div className="flex items-center justify-between mt-2">
@@ -722,12 +956,21 @@ export default function QueuePage() {
  </span>
  {(() => {
  const d = daysAgo(inv.received_date);
+ let badge: { label: string; className: string } | null = null;
+ if (d >= 90) badge = { label: "90d+", className: "bg-status-danger text-white border-status-danger" };
+ else if (d >= 61) badge = { label: "60d", className: "bg-brass text-white border-brass" };
+ else if (d >= 30) badge = { label: "30d", className: "bg-status-warning-muted text-brass border-brass/60" };
  return (
- <span
- className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}
- >
+ <>
+ <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
  {d}d
  </span>
+ {badge && (
+ <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold border ${badge.className}`}>
+ {badge.label}
+ </span>
+ )}
+ </>
  );
  })()}
  </div>
@@ -773,6 +1016,66 @@ export default function QueuePage() {
  </span>
  </div>
  )}
+ {inv.is_potential_duplicate && !inv.duplicate_dismissed_at && (
+ <div className="mt-2">
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
+ Duplicate?
+ </span>
+ </div>
+ )}
+ {/* Quick Approve — mobile card */}
+ {isQuickApproveEligible(inv) && (
+ <div className="mt-3 pt-3 border-t border-brand-border/60">
+ {quickApproveConfirmId === inv.id ? (
+ <div
+ className="flex items-center justify-between gap-2"
+ onClick={(e) => e.stopPropagation()}
+ >
+ <span className="text-xs text-cream-dim truncate">
+ Approve {inv.vendor_name_raw ?? "invoice"} {formatCents(inv.total_amount)}
+ {inv.jobs?.name ? ` to ${inv.jobs.name}` : ""}?
+ </span>
+ <div className="flex gap-2 shrink-0">
+ <button
+ type="button"
+ onClick={(e) => {
+ e.stopPropagation();
+ setQuickApproveConfirmId(null);
+ }}
+ disabled={quickApproveProcessingId === inv.id}
+ aria-label="Cancel quick approve"
+ className="px-2 py-1 text-sm text-cream-dim border border-brand-border"
+ >
+ &#10007;
+ </button>
+ <button
+ type="button"
+ onClick={(e) => {
+ e.stopPropagation();
+ handleQuickApprove(inv);
+ }}
+ disabled={quickApproveProcessingId === inv.id}
+ aria-label="Confirm quick approve"
+ className="px-2 py-1 text-sm font-medium bg-status-success text-white disabled:opacity-50"
+ >
+ {quickApproveProcessingId === inv.id ? "..." : "\u2713 Yes"}
+ </button>
+ </div>
+ </div>
+ ) : (
+ <button
+ type="button"
+ onClick={(e) => {
+ e.stopPropagation();
+ setQuickApproveConfirmId(inv.id);
+ }}
+ className="w-full px-3 py-2 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors"
+ >
+ Quick Approve
+ </button>
+ )}
+ </div>
+ )}
  </div>
  ))}
  </div>
@@ -782,6 +1085,7 @@ export default function QueuePage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
+ {batchEnabled && (
  <th className="py-3 px-3 w-10">
  <input
  ref={selectAllRef}
@@ -789,8 +1093,10 @@ export default function QueuePage() {
  checked={filtered.length > 0 && filtered.every((inv) => selectedIds.has(inv.id))}
  onChange={toggleSelectAll}
  className="w-4 h-4 accent-teal cursor-pointer"
+ aria-label="Select all invoices"
  />
  </th>
+ )}
  <th
  className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("vendor")}
@@ -857,17 +1163,19 @@ export default function QueuePage() {
  dir={sortDir}
  />
  </th>
+ {quickApproveEnabled && <th className="py-3 px-5 w-40" />}
  </tr>
  </thead>
  <tbody>
  {filtered.map((inv) => (
  <tr
  key={inv.id}
- className={`border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors ${selectedIds.has(inv.id) ? "bg-teal/5" : ""}`}
+ className={`border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-all duration-300 ${selectedIds.has(inv.id) ? "bg-teal/5" : ""} ${animatingOutIds.has(inv.id) ? "opacity-0" : ""}`}
  onClick={() =>
  (window.location.href = `/invoices/${inv.id}`)
  }
  >
+ {batchEnabled && (
  <td className="py-4 px-3 w-10">
  <input
  type="checkbox"
@@ -875,8 +1183,10 @@ export default function QueuePage() {
  onChange={() => toggleSelect(inv.id)}
  onClick={(e) => e.stopPropagation()}
  className="w-4 h-4 accent-teal cursor-pointer"
+ aria-label="Select invoice for batch action"
  />
  </td>
+ )}
  <td className="py-4 px-5 text-cream font-medium">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.status === "pm_held" && (
@@ -892,6 +1202,11 @@ export default function QueuePage() {
  {inv.status === "info_requested" && (
  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-brass border border-brass text-[10px] font-medium">
  Info Requested
+ </span>
+ )}
+ {inv.is_potential_duplicate && !inv.duplicate_dismissed_at && (
+ <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-brass border border-brass text-[10px] font-medium">
+ Duplicate?
  </span>
  )}
  </td>
@@ -938,15 +1253,60 @@ export default function QueuePage() {
  <td className="py-4 px-5 text-right">
  {(() => {
  const d = daysAgo(inv.received_date);
+ let badge: { label: string; className: string } | null = null;
+ if (d >= 90) badge = { label: "90d+", className: "bg-status-danger text-white border-status-danger" };
+ else if (d >= 61) badge = { label: "60d", className: "bg-brass text-white border-brass" };
+ else if (d >= 30) badge = { label: "30d", className: "bg-status-warning-muted text-brass border-brass/60" };
  return (
- <span
- className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}
- >
+ <div className="flex items-center justify-end gap-1.5">
+ <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
  {d}d
  </span>
+ {badge && (
+ <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold border ${badge.className}`}>
+ {badge.label}
+ </span>
+ )}
+ </div>
  );
  })()}
  </td>
+ {quickApproveEnabled && (
+ <td className="py-4 px-3 w-40" onClick={(e) => e.stopPropagation()}>
+ {isQuickApproveEligible(inv) ? (
+ quickApproveConfirmId === inv.id ? (
+ <div className="flex gap-1 items-center justify-end">
+ <button
+ type="button"
+ onClick={() => setQuickApproveConfirmId(null)}
+ disabled={quickApproveProcessingId === inv.id}
+ className="px-2 py-1 text-sm text-cream-dim border border-brand-border hover:text-cream"
+ aria-label="Cancel quick approve"
+ >
+ &#10007;
+ </button>
+ <button
+ type="button"
+ onClick={() => handleQuickApprove(inv)}
+ disabled={quickApproveProcessingId === inv.id}
+ className="px-2 py-1 text-sm font-medium bg-status-success text-white disabled:opacity-50"
+ aria-label="Confirm quick approve"
+ >
+ {quickApproveProcessingId === inv.id ? "..." : "\u2713 Yes"}
+ </button>
+ </div>
+ ) : (
+ <button
+ type="button"
+ onClick={() => setQuickApproveConfirmId(inv.id)}
+ className="w-full px-3 py-1.5 text-xs font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors"
+ >
+ Quick Approve
+ </button>
+ )
+ ) : null}
+ </td>
+ )}
  </tr>
  ))}
  </tbody>
@@ -957,34 +1317,55 @@ export default function QueuePage() {
  </>
  )}
  {/* Floating batch action bar */}
- {selectedIds.size > 0 && (
+ {batchEnabled && selectedIds.size > 0 && (
  <div className="fixed bottom-0 left-0 right-0 z-50 bg-brand-surface/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 animate-fade-up">
- <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
+ <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-3 flex-wrap">
+ <div className="flex items-baseline gap-3">
  <span className="text-sm text-cream font-medium">
  {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""} selected
  </span>
+ <span className="text-xs text-cream-dim">
+ · Total: <span className="text-cream font-medium font-display">{formatCents(selectedTotalCents)}</span>
+ </span>
+ </div>
  <div className="flex items-center gap-2">
  <button
  onClick={() => setSelectedIds(new Set())}
  className="px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border hover:border-brand-border-light transition-colors"
  >
- Clear
+ Clear Selection
  </button>
  <button
  onClick={() => { setHoldNote(""); setShowHoldNoteModal(true); }}
  disabled={batchProcessing}
  className="px-4 py-2 text-sm font-medium bg-brass text-brand-bg hover:bg-brass-hover transition-colors disabled:opacity-50"
  >
- Batch Hold
+ Hold All
+ </button>
+ <button
+ onClick={() => { setDenyNote(""); setShowDenyNoteModal(true); }}
+ disabled={batchProcessing}
+ className="px-4 py-2 text-sm font-medium bg-status-danger text-white hover:bg-status-danger/90 transition-colors disabled:opacity-50"
+ >
+ Deny All
  </button>
  <button
  onClick={handleBatchApprove}
  disabled={batchProcessing}
  className="px-4 py-2 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors disabled:opacity-50"
  >
- {batchProcessing ? "Processing..." : "Batch Approve"}
+ {batchProcessing ? "Processing..." : "Approve All"}
  </button>
  </div>
+ </div>
+ </div>
+ )}
+
+ {/* Toast */}
+ {toast && (
+ <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] animate-fade-up">
+ <div className={`px-5 py-3 border shadow-lg text-sm font-medium ${toast.kind === "ok" ? "bg-status-success text-white border-status-success" : "bg-status-danger text-white border-status-danger"}`}>
+ {toast.text}
  </div>
  </div>
  )}
@@ -1023,43 +1404,117 @@ export default function QueuePage() {
  </div>
  )}
 
- {/* Missing Fields Modal */}
- {showMissingModal && (
+ {/* Deny Note Modal */}
+ {showDenyNoteModal && (
  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
- <div className="bg-brand-card border border-brand-border p-6 w-full max-w-lg animate-fade-up">
- <h3 className="font-display text-lg text-cream mb-1">Cannot Batch Approve</h3>
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up">
+ <h3 className="font-display text-lg text-cream mb-1">Batch Deny</h3>
  <p className="text-sm text-cream-dim mb-4">
- The following invoice{missingInvoices.length !== 1 ? "s need" : " needs"} a job and cost code assigned before approval:
+ Deny {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""}. A reason is required and will apply to each.
  </p>
- <div className="max-h-60 overflow-y-auto space-y-2 mb-4">
- {missingInvoices.map((inv) => (
- <div key={inv.id} className="flex items-center justify-between px-3 py-2 bg-brand-surface border border-brand-border">
- <div>
- <span className="text-sm text-cream">{inv.vendor_name_raw ?? "Unknown"}</span>
- {inv.invoice_number && (
- <span className="ml-2 text-xs text-cream-dim font-mono">#{inv.invoice_number}</span>
+ <textarea
+ value={denyNote}
+ onChange={(e) => setDenyNote(e.target.value)}
+ placeholder="Reason for denial (required)..."
+ className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
+ autoFocus
+ />
+ <div className="flex gap-2 mt-4">
+ <button
+ onClick={() => setShowDenyNoteModal(false)}
+ className="flex-1 px-4 py-2.5 text-sm text-cream-dim border border-brand-border hover:text-cream hover:border-brand-border-light transition-colors"
+ >
+ Cancel
+ </button>
+ <button
+ onClick={handleBatchDeny}
+ disabled={!denyNote.trim() || batchProcessing}
+ className="flex-1 px-4 py-2.5 text-sm font-medium bg-status-danger text-white hover:bg-status-danger/90 transition-colors disabled:opacity-50"
+ >
+ Deny
+ </button>
+ </div>
+ </div>
+ </div>
+ )}
+
+ {/* Approve Confirmation Modal */}
+ {showApproveConfirm && (
+ <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-xl animate-fade-up">
+ <h3 className="font-display text-lg text-cream mb-1">
+ {approvalExcluded.length === 0
+ ? `Approve ${approvalEligible.length} invoice${approvalEligible.length !== 1 ? "s" : ""}?`
+ : `${approvalEligible.length} of ${approvalEligible.length + approvalExcluded.length} invoices can be batch approved`}
+ </h3>
+ <p className="text-sm text-cream-dim mb-4">
+ {approvalEligible.length > 0 && (
+ <>Total: <span className="text-cream font-display font-medium">{formatCents(approvalEligible.reduce((s, i) => s + i.total_amount, 0))}</span></>
+ )}
+ </p>
+
+ {approvalEligible.length > 0 && (
+ <div className="mb-4">
+ <div className="text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-2">Will be approved</div>
+ <div className="max-h-48 overflow-y-auto space-y-1.5">
+ {approvalEligible.map((inv) => (
+ <div key={inv.id} className="flex items-center justify-between px-3 py-2 bg-brand-surface border border-brand-border text-sm">
+ <div className="min-w-0 truncate">
+ <span className="text-cream">{inv.vendor_name_raw ?? "Unknown"}</span>
+ {inv.jobs?.name && (
+ <span className="ml-2 text-cream-dim text-xs">{inv.jobs.name}</span>
  )}
  </div>
- <div className="flex items-center gap-1.5 text-[10px]">
- {!inv.job_id && (
- <span className="px-1.5 py-0.5 bg-transparent text-status-danger border border-status-danger">No Job</span>
+ <span className="text-cream font-display ml-2 shrink-0">{formatCents(inv.total_amount)}</span>
+ </div>
+ ))}
+ </div>
+ </div>
  )}
- {!inv.cost_code_id && (
- <span className="px-1.5 py-0.5 bg-transparent text-status-danger border border-status-danger">No Cost Code</span>
- )}
+
+ {approvalExcluded.length > 0 && (
+ <div className="mb-4">
+ <div className="text-[11px] tracking-[0.08em] uppercase text-status-danger mb-2">
+ Excluded from batch ({approvalExcluded.length})
+ </div>
+ <div className="max-h-48 overflow-y-auto space-y-1.5">
+ {approvalExcluded.map(({ invoice, reasons }) => (
+ <div key={invoice.id} className="px-3 py-2 bg-status-danger-muted border border-status-danger/40 text-sm">
+ <div className="flex items-center justify-between gap-2">
+ <span className="text-cream truncate">{invoice.vendor_name_raw ?? "Unknown"}</span>
+ <span className="text-cream-dim font-display text-xs shrink-0">{formatCents(invoice.total_amount)}</span>
+ </div>
+ <div className="text-xs text-status-danger mt-1">
+ {reasons.join(" · ")}
  </div>
  </div>
  ))}
  </div>
- <p className="text-xs text-cream-dim mb-4">
- Open each invoice individually to assign the missing fields, then try batch approve again.
+ <p className="text-xs text-cream-dim mt-2">
+ Open these invoices individually to fix the issues, then try again.
  </p>
+ </div>
+ )}
+
+ <div className="flex gap-2 mt-4">
  <button
- onClick={() => { setShowMissingModal(false); setMissingInvoices([]); }}
- className="w-full px-4 py-2.5 text-sm font-medium text-cream border border-brand-border hover:border-brand-border-light transition-colors"
+ onClick={() => setShowApproveConfirm(false)}
+ className="flex-1 px-4 py-2.5 text-sm text-cream-dim border border-brand-border hover:text-cream hover:border-brand-border-light transition-colors"
  >
- Got it
+ Cancel
  </button>
+ <button
+ onClick={confirmBatchApprove}
+ disabled={approvalEligible.length === 0 || batchProcessing}
+ className="flex-1 px-4 py-2.5 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors disabled:opacity-50"
+ >
+ {batchProcessing
+ ? "Processing..."
+ : approvalEligible.length > 0
+ ? `Approve ${approvalEligible.length} invoice${approvalEligible.length !== 1 ? "s" : ""}`
+ : "Nothing to approve"}
+ </button>
+ </div>
  </div>
  </div>
  )}

@@ -59,11 +59,44 @@ export async function GET(
  .is("deleted_at", null)
  .order("full_name");
 
+ // If flagged as duplicate, resolve the existing invoice it matches so the
+ // warning banner can link to it.
+ let duplicateOf = null as null | {
+ id: string;
+ vendor_name_raw: string | null;
+ total_amount: number;
+ invoice_date: string | null;
+ invoice_number: string | null;
+ job_name: string | null;
+ };
+ const dupId = (invoice as { duplicate_of_id?: string | null }).duplicate_of_id;
+ const dupFlag = (invoice as { is_potential_duplicate?: boolean | null }).is_potential_duplicate;
+ if (dupFlag && dupId) {
+ const { data: dup } = await supabase
+ .from("invoices")
+ .select(
+ "id, vendor_name_raw, total_amount, invoice_date, invoice_number, jobs:job_id(name)"
+ )
+ .eq("id", dupId)
+ .maybeSingle();
+ if (dup) {
+ duplicateOf = {
+ id: dup.id as string,
+ vendor_name_raw: (dup.vendor_name_raw as string | null) ?? null,
+ total_amount: dup.total_amount as number,
+ invoice_date: (dup.invoice_date as string | null) ?? null,
+ invoice_number: (dup.invoice_number as string | null) ?? null,
+ job_name: (dup.jobs as { name?: string | null } | null)?.name ?? null,
+ };
+ }
+ }
+
  return NextResponse.json({
  ...invoice,
  signed_file_url: signedUrl,
  pm_users: pmUsers ?? [],
  invoice_line_items: lineItems ?? [],
+ duplicate_of: duplicateOf,
  });
  } catch (err) {
  const message = err instanceof Error ? err.message : "Unknown error";

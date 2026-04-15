@@ -6,6 +6,7 @@ import {
 } from "@/lib/notifications";
 import { recalcLinesAndPOs } from "@/lib/recalc";
 import { logStatusChange } from "@/lib/activity-log";
+import { getWorkflowSettings } from "@/lib/workflow-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export async function POST(
 
  const { data: invoice, error: fetchError } = await supabase
  .from("invoices")
- .select("status, status_history, pm_overrides, qa_overrides, job_id, cost_code_id, total_amount, ai_parsed_total_amount, org_id, vendor_name_raw, vendors(name), jobs(name, pm_id), created_by, assigned_pm_id")
+ .select("status, status_history, pm_overrides, qa_overrides, job_id, cost_code_id, total_amount, ai_parsed_total_amount, org_id, vendor_name_raw, invoice_date, is_potential_duplicate, duplicate_dismissed_at, po_id, vendors(name), jobs(name, pm_id), created_by, assigned_pm_id")
  .eq("id", params.id)
  .single();
 
@@ -72,6 +73,77 @@ export async function POST(
  return NextResponse.json(
  { error: "Job and Cost Code are required before approving" },
  { status: 422 }
+ );
+ }
+
+ // Phase 8e — org-configured workflow gates
+ try {
+ const orgId = (invoice.org_id as string | null) ?? null;
+ if (orgId) {
+ const settings = await getWorkflowSettings(orgId);
+ const effectiveInvoiceDate =
+ (typeof updates?.invoice_date === "string" ? updates.invoice_date : invoice.invoice_date) as string | null;
+
+ if (settings.require_invoice_date && !effectiveInvoiceDate) {
+ return NextResponse.json(
+ { error: "Invoice date is required before approval" },
+ { status: 422 }
+ );
+ }
+
+ if (
+ settings.duplicate_detection_enabled &&
+ invoice.is_potential_duplicate &&
+ !invoice.duplicate_dismissed_at
+ ) {
+ return NextResponse.json(
+ {
+ error:
+ "Flagged as potential duplicate — dismiss the flag or deny before approving.",
+ },
+ { status: 422 }
+ );
+ }
+
+ if (settings.require_po_linkage) {
+ const effectivePoId = (updates?.po_id ?? invoice.po_id) as string | null;
+ if (!effectivePoId) {
+ const { data: lineCheck } = await supabase
+ .from("invoice_line_items")
+ .select("po_id")
+ .eq("invoice_id", params.id)
+ .is("deleted_at", null);
+ const allLinesPO =
+ (lineCheck?.length ?? 0) > 0 && lineCheck!.every((l) => !!l.po_id);
+ if (!allLinesPO) {
+ return NextResponse.json(
+ { error: "Each line must be linked to a purchase order before approval" },
+ { status: 422 }
+ );
+ }
+ }
+ }
+
+ if (settings.require_budget_allocation) {
+ const { data: lineCheck } = await supabase
+ .from("invoice_line_items")
+ .select("budget_line_id")
+ .eq("invoice_id", params.id)
+ .is("deleted_at", null);
+ const allAllocated =
+ (lineCheck?.length ?? 0) > 0 && lineCheck!.every((l) => !!l.budget_line_id);
+ if (!allAllocated) {
+ return NextResponse.json(
+ { error: "Every invoice line must be allocated to a budget line before approval" },
+ { status: 422 }
+ );
+ }
+ }
+ }
+ } catch (err) {
+ // Don't block on workflow-settings read error — just log.
+ console.warn(
+ `[invoice action workflow] ${err instanceof Error ? err.message : err}`
  );
  }
 

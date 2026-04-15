@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase/client";
 import { formatCents, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 import InvoiceFilePreview from "@/components/invoice-file-preview";
+import InvoiceStatusTimeline from "@/components/invoice-status-timeline";
+import VendorContactPopover from "@/components/vendor-contact-popover";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { invoiceDisplayName } from "@/lib/invoices/display";
 
@@ -67,6 +69,17 @@ interface InvoiceData {
  check_number: string | null; picked_up: boolean; mailed_date: string | null;
  payment_status: string | null; payment_amount: number | null; payment_method: string | null;
  payment_reference: string | null; scheduled_payment_date: string | null;
+ is_potential_duplicate: boolean | null;
+ duplicate_of_id: string | null;
+ duplicate_dismissed_at: string | null;
+ duplicate_of: {
+ id: string;
+ vendor_name_raw: string | null;
+ total_amount: number;
+ invoice_date: string | null;
+ invoice_number: string | null;
+ job_name: string | null;
+ } | null;
  pm_overrides: Record<string, { old: unknown; new: unknown }> | null;
  qa_overrides: Record<string, { old: unknown; new: unknown }> | null;
  signed_file_url: string | null;
@@ -434,6 +447,15 @@ export default function InvoiceReviewPage() {
  // Cross-link to the "other side" of a partial split
  const [siblingInvoice, setSiblingInvoice] = useState<{ id: string; status: string; total_amount: number } | null>(null);
 
+ // Workflow settings (Phase 8e) — controls which gates are active.
+ const [workflowSettings, setWorkflowSettings] = useState<{
+ require_invoice_date: boolean;
+ require_budget_allocation: boolean;
+ require_po_linkage: boolean;
+ duplicate_detection_enabled: boolean;
+ over_budget_requires_note: boolean;
+ } | null>(null);
+
  // Payment tracking
  const [checkNumber, setCheckNumber] = useState("");
  const [pickedUp, setPickedUp] = useState(false);
@@ -531,6 +553,31 @@ export default function InvoiceReviewPage() {
  if (codesRes.data) setCostCodes(codesRes.data as CostCode[]);
  }
  fetchLookups();
+ }, []);
+
+ // Fetch workflow settings (Phase 8e) — drives badge color / approval gates.
+ useEffect(() => {
+ let cancelled = false;
+ (async () => {
+ try {
+ const res = await fetch("/api/workflow-settings");
+ if (!res.ok) return;
+ const json = await res.json();
+ if (cancelled || !json?.settings) return;
+ setWorkflowSettings({
+ require_invoice_date: json.settings.require_invoice_date,
+ require_budget_allocation: json.settings.require_budget_allocation,
+ require_po_linkage: json.settings.require_po_linkage,
+ duplicate_detection_enabled: json.settings.duplicate_detection_enabled,
+ over_budget_requires_note: json.settings.over_budget_requires_note,
+ });
+ } catch {
+ /* fall back to defaults */
+ }
+ })();
+ return () => {
+ cancelled = true;
+ };
  }, []);
 
  // Fetch POs
@@ -829,6 +876,20 @@ export default function InvoiceReviewPage() {
  const openApproveFlow = () => {
  if (!jobId || !costCodeId) { setShowMissingFieldsBlock(true); return; }
  if (missingCoReference) { setShowMissingCoBlock(true); return; }
+ // Phase 8e: org-configured invoice-date gate.
+ if (workflowSettings?.require_invoice_date && !invoiceDate.trim()) {
+ alert("Invoice date is required before approval. Enter a date or toggle the workflow setting off.");
+ return;
+ }
+ // Phase 8e: duplicate flag blocks approval until dismissed.
+ if (
+ invoice?.is_potential_duplicate &&
+ !invoice?.duplicate_dismissed_at &&
+ workflowSettings?.duplicate_detection_enabled !== false
+ ) {
+ alert("This invoice is flagged as a potential duplicate. Dismiss the flag (Not a duplicate) or deny the invoice before approving.");
+ return;
+ }
  // Orange (10-25%) requires a note via the over-budget modal.
  // Red (>25% or no budget) requires the PM to choose: approve as overage OR convert to CO.
  if ((worstSeverity === "orange" || worstSeverity === "red") && !overBudgetNote.trim()) {
@@ -849,6 +910,20 @@ export default function InvoiceReviewPage() {
  // Missing field flags
  const missingInvoiceNumber = !invoiceNumber.trim();
  const missingInvoiceDate = !invoiceDate.trim();
+
+ // Date reasonableness warning (always on, regardless of settings).
+ // Shows when the invoice date is >90 days in the past or in the future.
+ const dateReasonablenessWarning = (() => {
+ if (!invoiceDate.trim()) return null;
+ const ivDate = new Date(invoiceDate);
+ if (isNaN(ivDate.getTime())) return null;
+ const today = new Date();
+ today.setHours(0, 0, 0, 0);
+ const diffDays = Math.round((today.getTime() - ivDate.getTime()) / (1000 * 60 * 60 * 24));
+ if (diffDays > 90) return `Invoice date is ${diffDays} days ago — verify`;
+ if (diffDays < 0) return `Invoice date is in the future — verify`;
+ return null;
+ })();
 
  // Detect if this invoice was kicked back by QA
  const kickBackInfo = (() => {
@@ -923,8 +998,15 @@ export default function InvoiceReviewPage() {
  <div className="border-b border-brand-border bg-brand-surface/50 px-4 md:px-6 py-3">
  <div className="max-w-[1600px] mx-auto flex items-center gap-3 md:gap-4 flex-wrap">
  <Link href="/invoices/queue" className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Queue</Link>
- <h1 className="font-display text-base md:text-xl text-cream truncate">
- {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim hidden md:inline">&mdash;</span><span className="md:hidden"> </span>{invoice.invoice_number ?? "No #"}
+ <h1 className="font-display text-base md:text-xl text-cream truncate flex items-center gap-1.5 min-w-0">
+ <span className="truncate">{invoice.vendor_name_raw ?? "Invoice"}</span>
+ <VendorContactPopover
+ vendorId={invoice.vendor_id}
+ vendorName={invoice.vendor_name_raw ?? invoice.vendors?.name ?? null}
+ />
+ <span className="text-cream-dim hidden md:inline">&mdash;</span>
+ <span className="md:hidden"> </span>
+ <span className="truncate">{invoice.invoice_number ?? "No #"}</span>
  </h1>
  <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium ${confidenceColor(invoice.confidence_score)}`}>
  {Math.round(invoice.confidence_score * 100)}% {confidenceLabel(invoice.confidence_score)}
@@ -1100,6 +1182,48 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  )}
+ {/* Status timeline (Phase 8e) — always shown */}
+ <div className="mb-4 animate-fade-up">
+ <InvoiceStatusTimeline
+ currentStatus={invoice.status}
+ history={invoice.status_history ?? []}
+ />
+ </div>
+
+ {/* Duplicate warning banner (Phase 8e) */}
+ {invoice.is_potential_duplicate && invoice.duplicate_of && (
+ <div className="mb-4 border border-brass/60 bg-brass/10 px-4 py-3 text-sm animate-fade-up">
+ <div className="flex items-start gap-3">
+ <svg className="w-5 h-5 text-brass flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+ </svg>
+ <div className="flex-1 min-w-0">
+ <p className="text-brass font-medium">Possible duplicate detected</p>
+ <p className="text-cream-muted mt-1">
+ Matches {invoice.duplicate_of.vendor_name_raw ?? "existing invoice"}{" "}
+ {formatCents(invoice.duplicate_of.total_amount)}
+ {invoice.duplicate_of.invoice_date ? ` on ${formatDate(invoice.duplicate_of.invoice_date)}` : ""}
+ {invoice.duplicate_of.job_name ? ` (${invoice.duplicate_of.job_name})` : ""}
+ {invoice.duplicate_of.invoice_number ? ` — Invoice #${invoice.duplicate_of.invoice_number}` : ""}
+ .{" "}
+ <Link href={`/invoices/${invoice.duplicate_of.id}`} className="text-teal hover:underline font-medium">
+ View existing &rarr;
+ </Link>
+ </p>
+ </div>
+ <button
+ type="button"
+ onClick={async () => {
+ const res = await fetch(`/api/invoices/${invoice.id}/dismiss-duplicate`, { method: "POST" });
+ if (res.ok) refreshInvoice();
+ }}
+ className="px-3 py-1.5 text-xs font-medium text-cream-dim border border-brand-border hover:text-cream hover:border-brand-border-light transition-colors whitespace-nowrap"
+ >
+ Not a duplicate
+ </button>
+ </div>
+ </div>
+ )}
  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
  {/* ── Left: Document Preview ── */}
  <div className="xl:col-span-1">
@@ -1137,7 +1261,7 @@ export default function InvoiceReviewPage() {
  <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">Invoice Details</p>
 
  {/* Missing field flags */}
- {(missingInvoiceNumber || missingInvoiceDate) && (
+ {(missingInvoiceNumber || missingInvoiceDate || dateReasonablenessWarning) && (
  <div className="mt-4 flex flex-wrap gap-2">
  {missingInvoiceNumber && (
  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
@@ -1146,9 +1270,22 @@ export default function InvoiceReviewPage() {
  </span>
  )}
  {missingInvoiceDate && (
+ workflowSettings?.require_invoice_date ? (
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-danger-muted text-status-danger border border-status-danger/40">
+ <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+ No date detected — required
+ </span>
+ ) : (
  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
  No date detected
+ </span>
+ )
+ )}
+ {dateReasonablenessWarning && (
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
+ <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+ {dateReasonablenessWarning}
  </span>
  )}
  </div>

@@ -1,0 +1,94 @@
+import { NextRequest, NextResponse } from "next/server";
+import { ApiError, withApiError } from "@/lib/api/errors";
+import { ADMIN_OR_OWNER, requireRole } from "@/lib/org/require";
+import {
+  getWorkflowSettings,
+  invalidateWorkflowSettings,
+  type DuplicateSensitivity,
+} from "@/lib/workflow-settings";
+import { createServerClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+const BOOL_COLUMNS = new Set([
+  "batch_approval_enabled",
+  "quick_approve_enabled",
+  "require_invoice_date",
+  "require_budget_allocation",
+  "require_po_linkage",
+  "over_budget_requires_note",
+  "duplicate_detection_enabled",
+  "auto_route_high_confidence",
+  "require_lien_release_for_draw",
+  "co_approval_required",
+  "payment_auto_scheduling",
+]);
+
+const INT_COLUMNS = new Set([
+  "quick_approve_min_confidence",
+  "auto_route_confidence_threshold",
+]);
+
+const VALID_SENSITIVITY: DuplicateSensitivity[] = ["strict", "moderate", "loose"];
+
+// GET is readable by any active org member (PMs need to know which gates apply).
+// PATCH is admin/owner only.
+export const GET = withApiError(async () => {
+  const { getCurrentMembership } = await import("@/lib/org/session");
+  const membership = await getCurrentMembership();
+  if (!membership) throw new ApiError("Not authenticated", 401);
+  const settings = await getWorkflowSettings(membership.org_id);
+  return NextResponse.json({ settings });
+});
+
+export const PATCH = withApiError(async (request: NextRequest) => {
+  const membership = await requireRole(ADMIN_OR_OWNER);
+  const body = (await request.json()) as Record<string, unknown>;
+
+  const update: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(body)) {
+    if (BOOL_COLUMNS.has(k) && typeof v === "boolean") {
+      update[k] = v;
+    } else if (INT_COLUMNS.has(k) && typeof v === "number") {
+      const rounded = Math.max(0, Math.min(100, Math.round(v)));
+      update[k] = rounded;
+    } else if (
+      k === "duplicate_detection_sensitivity" &&
+      typeof v === "string" &&
+      VALID_SENSITIVITY.includes(v as DuplicateSensitivity)
+    ) {
+      update[k] = v;
+    }
+  }
+  if (Object.keys(update).length === 0) {
+    throw new ApiError("No editable fields supplied", 400);
+  }
+
+  const supabase = createServerClient();
+
+  // Upsert by org_id so a missing row is created on first save (defensive —
+  // the trigger should have done this at org creation).
+  const existing = await supabase
+    .from("org_workflow_settings")
+    .select("id")
+    .eq("org_id", membership.org_id)
+    .maybeSingle();
+
+  if (existing.data) {
+    const { error } = await supabase
+      .from("org_workflow_settings")
+      .update(update)
+      .eq("org_id", membership.org_id);
+    if (error) throw new ApiError(error.message, 500);
+  } else {
+    const { error } = await supabase
+      .from("org_workflow_settings")
+      .insert({ org_id: membership.org_id, ...update });
+    if (error) throw new ApiError(error.message, 500);
+  }
+
+  invalidateWorkflowSettings(membership.org_id);
+
+  const settings = await getWorkflowSettings(membership.org_id);
+  return NextResponse.json({ ok: true, settings });
+});

@@ -14,6 +14,8 @@ import {
   storagePathFor,
 } from "@/lib/invoices/file-naming";
 import { notifyPmsForJob } from "@/lib/notifications";
+import { findPotentialDuplicate } from "@/lib/invoices/duplicate-detection";
+import { getWorkflowSettings } from "@/lib/workflow-settings";
 
 const INVOICES_BUCKET = "invoice-files";
 
@@ -384,6 +386,38 @@ export async function saveParsedInvoice(
   }
 
   const invoiceId = data.id as string;
+
+  // ---- Soft duplicate detection (Phase 8e) ----
+  // Runs per org settings. Flags (not blocks) invoices that match an existing
+  // record within the configured sensitivity window. The hard duplicate block
+  // above already caught exact matches before we ever wrote the row.
+  try {
+    const settings = await getWorkflowSettings(ORG_ID);
+    if (settings.duplicate_detection_enabled) {
+      const match = await findPotentialDuplicate(supabase, {
+        org_id: ORG_ID,
+        vendor_name_raw: parsed.vendor_name ?? null,
+        total_amount_cents: totalAmountCents,
+        invoice_date: parsed.invoice_date,
+        invoice_number: parsed.invoice_number,
+        sensitivity: settings.duplicate_detection_sensitivity,
+        exclude_id: invoiceId,
+      });
+      if (match) {
+        await supabase
+          .from("invoices")
+          .update({
+            is_potential_duplicate: true,
+            duplicate_of_id: match.id,
+          })
+          .eq("id", invoiceId);
+      }
+    }
+  } catch (err) {
+    console.warn(
+      `[save dup-detect] ${err instanceof Error ? err.message : err}`
+    );
+  }
 
   // ---- Persist per-line-item rows in invoice_line_items ----
   // Each line gets its own cost code (AI-suggested when available; otherwise
