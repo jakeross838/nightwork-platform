@@ -32,6 +32,12 @@
     --color-warning: #E65100;
     --color-error: #c0392b;
     --color-money: var(--org-primary);
+
+    /* Nightwork brand tokens — additive. Existing components keep their
+       current colors; new chrome work should reach for these instead. */
+    --nightwork-navy: #0F1E36;
+    --nightwork-amber: #E89A2B;
+    --nightwork-cream: #EDE3CE;
   }
 
   body {

@@ -43,10 +43,22 @@ const config: Config = {
           danger: "var(--color-error)",
           "danger-muted": "rgba(192, 57, 43, 0.08)",
         },
+        // Nightwork product-chrome palette — additive; existing tokens
+        // above are unchanged. Use `bg-nightwork-navy`, `text-nightwork-amber`
+        // etc. on NEW chrome work only. Per brand: one amber moment per screen.
+        nightwork: {
+          navy: "#0F1E36",
+          amber: "#E89A2B",
+          cream: "#EDE3CE",
+        },
       },
       fontFamily: {
         display: ["Century Gothic", "CenturyGothic", "AppleGothic", "sans-serif"],
         body: ["Century Gothic", "CenturyGothic", "AppleGothic", "sans-serif"],
+        // Nightwork brand font (wordmark). Available as `font-sans` on
+        // new chrome work; existing components keep their font-display /
+        // font-body Century Gothic styling.
+        sans: ["var(--font-inter)", "Inter", "system-ui", "-apple-system", "sans-serif"],
       },
       borderRadius: {
         none: "0",

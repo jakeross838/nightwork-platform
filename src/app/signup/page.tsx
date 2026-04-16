@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createServerClient } from "@/lib/supabase/server";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
 import SignupForm from "./SignupForm";
@@ -23,11 +24,18 @@ export default async function SignupPage({
     <div className="min-h-screen flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
-          <Link href="/" className="font-display text-lg tracking-[0.12em] uppercase text-cream">
-            {PUBLIC_APP_NAME}
+          <Link href="/" className="inline-block" aria-label={PUBLIC_APP_NAME}>
+            <Image
+              src="/brand/nightwork-logo-light.svg"
+              alt={PUBLIC_APP_NAME}
+              width={200}
+              height={47}
+              priority
+              className="mx-auto h-10 w-auto"
+            />
           </Link>
           <h1 className="mt-6 font-display text-3xl text-cream tracking-tight">
-            Start building with {PUBLIC_APP_NAME}
+            Create your {PUBLIC_APP_NAME} account
           </h1>
           <p className="mt-2 text-sm text-cream-dim">
             14-day free trial. No credit card required.

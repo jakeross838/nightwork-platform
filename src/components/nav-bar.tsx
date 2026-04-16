@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -282,6 +283,7 @@ export default function NavBar() {
       <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 group shrink-0">
           {logoUrl ? (
+            // Tenant has uploaded a custom logo — respect it (paid customization).
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
@@ -289,9 +291,15 @@ export default function NavBar() {
               className="h-8 w-auto object-contain"
             />
           ) : (
-            <span className="font-display text-lg text-white uppercase tracking-[0.08em] font-normal group-hover:text-white/80 transition-colors">
-              {brandName}
-            </span>
+            // Default product chrome — Nightwork logo on dark nav background.
+            <Image
+              src="/brand/nightwork-logo-dark.svg"
+              alt={PUBLIC_APP_NAME}
+              width={150}
+              height={35}
+              priority
+              className="h-7 w-auto group-hover:opacity-80 transition-opacity"
+            />
           )}
         </Link>
 
