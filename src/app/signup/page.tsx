@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { createServerClient } from "@/lib/supabase/server";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
 import SignupForm from "./SignupForm";
@@ -25,12 +24,12 @@ export default async function SignupPage({
       <div className="w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block" aria-label={PUBLIC_APP_NAME}>
-            <Image
+            {/* Plain <img> keeps the SVG geometry from collapsing at small sizes. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/brand/nightwork-logo-light.svg"
               alt={PUBLIC_APP_NAME}
-              width={200}
-              height={47}
-              priority
+              style={{ width: "auto" }}
               className="mx-auto h-10 w-auto"
             />
           </Link>

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -292,13 +291,15 @@ export default function NavBar() {
             />
           ) : (
             // Default product chrome — Nightwork logo on dark nav background.
-            <Image
+            // Plain <img> (not next/image) because the SVG's amber brace +
+            // cream studs collapse at subpixel during Next's rasterization
+            // at ~28px tall. Browser-native SVG render preserves fills.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src="/brand/nightwork-logo-dark.svg"
               alt={PUBLIC_APP_NAME}
-              width={150}
-              height={35}
-              priority
-              className="h-7 w-auto group-hover:opacity-80 transition-opacity"
+              style={{ width: "auto" }}
+              className="h-8 w-auto group-hover:opacity-80 transition-opacity"
             />
           )}
         </Link>

@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import { createServerClient } from "@/lib/supabase/server";
 import { PUBLIC_APP_NAME } from "@/lib/org/branding";
 import LoginForm from "./LoginForm";
@@ -18,12 +17,13 @@ export default async function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
       <div className="relative z-10 w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
-          <Image
+          {/* Plain <img> keeps the SVG's amber brace + navy studs from
+              collapsing at subpixel during rasterization. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src="/brand/nightwork-logo-light.svg"
             alt={PUBLIC_APP_NAME}
-            width={200}
-            height={47}
-            priority
+            style={{ width: "auto" }}
             className="mx-auto h-10 w-auto"
           />
           <p className="mt-4 text-sm text-cream-dim">
