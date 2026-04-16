@@ -238,6 +238,7 @@ export default function NavBar() {
 
   const isDashboardActive = pathname === "/";
   const isUploadActive = pathname === "/invoices/upload";
+  const isImportActive = pathname === "/invoices/import";
   const isAllInvoicesActive = pathname === "/invoices";
   const isPmQueueActive =
     pathname === "/invoices/queue" ||
@@ -247,7 +248,7 @@ export default function NavBar() {
   const isQaActive = pathname === "/invoices/qa" || pathname.endsWith("/qa");
   const isPaymentsActive = pathname?.startsWith("/invoices/payments") ?? false;
   const isInvoicesSectionActive =
-    isUploadActive || isAllInvoicesActive || isPmQueueActive || isQaActive || isPaymentsActive;
+    isUploadActive || isImportActive || isAllInvoicesActive || isPmQueueActive || isQaActive || isPaymentsActive;
 
   const isJobsActive = pathname.startsWith("/jobs");
   const isFinancialsOverviewActive = pathname === "/financials";
@@ -343,6 +344,9 @@ export default function NavBar() {
                   )}
                   {canInvoiceSub(role, "upload") && (
                     <DropdownItem href="/invoices/upload" label="Upload Invoice" active={isUploadActive} onClick={() => setInvoicesOpen(false)} />
+                  )}
+                  {canInvoiceSub(role, "upload") && (
+                    <DropdownItem href="/invoices/import" label="Bulk Import" active={isImportActive} onClick={() => setInvoicesOpen(false)} />
                   )}
                   {canInvoiceSub(role, "payments") && (
                     <DropdownItem href="/invoices/payments" label="Payment Tracking" active={isPaymentsActive} onClick={() => setInvoicesOpen(false)} />

@@ -32,6 +32,11 @@ export type WorkflowSettings = {
   // Phase 8f — draw cover letter (NULL = use built-in default)
   cover_letter_template: string | null;
 
+  // Phase 9 — bulk invoice import
+  import_max_batch_size: number;
+  import_default_pm_id: string | null;
+  import_auto_route_threshold: number;
+
   created_at: string;
   updated_at: string;
 };
@@ -55,6 +60,9 @@ export const DEFAULT_WORKFLOW_SETTINGS: Omit<
   co_approval_required: true,
   payment_auto_scheduling: true,
   cover_letter_template: null,
+  import_max_batch_size: 50,
+  import_default_pm_id: null,
+  import_auto_route_threshold: 85,
 };
 
 const COLUMNS =
@@ -64,6 +72,7 @@ const COLUMNS =
   "auto_route_high_confidence, auto_route_confidence_threshold, " +
   "require_lien_release_for_draw, co_approval_required, payment_auto_scheduling, " +
   "cover_letter_template, " +
+  "import_max_batch_size, import_default_pm_id, import_auto_route_threshold, " +
   "created_at, updated_at";
 
 // In-process cache with 5-minute TTL so hot paths (invoice list, upload, approval)

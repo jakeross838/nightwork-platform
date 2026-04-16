@@ -19,6 +19,7 @@ import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
 
 export type ActivityEntityType =
   | "invoice"
+  | "invoice_import_batch"
   | "purchase_order"
   | "change_order"
   | "budget_line"
@@ -41,7 +42,11 @@ export type ActivityAction =
   | "imported"
   | "recomputed"
   | "approved"
-  | "denied";
+  | "denied"
+  // Bulk import batch actions
+  | "bulk_assigned_job"
+  | "sent_to_queue"
+  | "deleted_errors";
 
 interface LogActivityArgs {
   org_id: string;
