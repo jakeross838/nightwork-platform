@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Load line items in one shot — only needed for approve actions that
     // require budget_allocation or po_linkage checks.
-    let lineItemsByInvoice: Map<
+    const lineItemsByInvoice: Map<
       string,
       Array<{ budget_line_id: string | null; po_id: string | null }>
     > = new Map();

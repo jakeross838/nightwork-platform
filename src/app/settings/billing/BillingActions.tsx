@@ -39,6 +39,7 @@ type Props =
 export default function BillingActions(props: Props) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [comingSoon, setComingSoon] = useState<string | null>(null);
 
   async function openPortal() {
     setBusy(true);
@@ -68,7 +69,6 @@ export default function BillingActions(props: Props) {
   }
 
   const { hasCustomer, hasActiveSub, onTrial, billingConfigured } = props;
-  const [comingSoon, setComingSoon] = useState<string | null>(null);
 
   return (
     <div className="flex items-center gap-3 flex-wrap">

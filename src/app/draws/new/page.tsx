@@ -188,24 +188,25 @@ export default function NewDrawWizardPage() {
       if (!job) return;
       const contractAmount = job.current_contract_amount ?? job.original_contract_amount;
 
-      // Sum approved invoices (qa_approved or beyond) on this job.
-      const { data: billed } = await supabase
-        .from("invoices")
-        .select("total_amount, status")
-        .eq("job_id", jobId)
-        .is("deleted_at", null)
-        .in("status", ["qa_approved", "pushed_to_qb", "in_draw", "paid"]);
+      // Parallel: billed invoices + prior draws (independent queries)
+      const [{ data: billed }, { data: priors }] = await Promise.all([
+        supabase
+          .from("invoices")
+          .select("total_amount, status")
+          .eq("job_id", jobId)
+          .is("deleted_at", null)
+          .in("status", ["qa_approved", "pushed_to_qb", "in_draw", "paid"]),
+        supabase
+          .from("draws")
+          .select("id, draw_number, status, period_end, current_payment_due, revision_number")
+          .eq("job_id", jobId)
+          .is("deleted_at", null)
+          .order("draw_number", { ascending: false }),
+      ]);
       const billedToDate = (billed ?? []).reduce(
         (s, i) => s + ((i as { total_amount?: number }).total_amount ?? 0),
         0
       );
-
-      const { data: priors } = await supabase
-        .from("draws")
-        .select("id, draw_number, status, period_end, current_payment_due, revision_number")
-        .eq("job_id", jobId)
-        .is("deleted_at", null)
-        .order("draw_number", { ascending: false });
       const priorList = (priors ?? []) as PriorDraw[];
       setPriorDraws(priorList);
 
@@ -630,7 +631,7 @@ export default function NewDrawWizardPage() {
                 <DateField label="Period End" value={periodEnd} onChange={setPeriodEnd} />
               </div>
               <div className="text-xs text-cream-dim">
-                Default period start = day after the last locked draw's period end. Default end =
+                Default period start = day after the last locked draw&apos;s period end. Default end =
                 today.
               </div>
               <div className="bg-teal/5 border border-teal/30 px-4 py-3 text-sm text-cream">

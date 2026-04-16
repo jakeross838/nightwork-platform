@@ -17,7 +17,7 @@ interface Release {
 }
 
 export default function DrawLienReleaseUploadList({
-  drawId,
+  drawId: _drawId,
   releases,
   onChange,
 }: {

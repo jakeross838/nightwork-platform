@@ -4,9 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatStatus, formatDate, statusBadgeOutline } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
-import Breadcrumbs from "@/components/breadcrumbs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
-import FirstUseTip from "@/components/first-use-tip";
 import { SkeletonList, SkeletonStatCard } from "@/components/loading-skeleton";
 
 interface Invoice {
@@ -171,19 +169,23 @@ export default function AllInvoicesPage() {
  // the columns don't exist yet so the page still renders.
  const INVOICES_FULL = "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
  const INVOICES_MINIMAL = "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
- const [invResult, pmResult, lineItemResult] = await Promise.all([
+ // Parallel: invoices + PMs. Line items fetched in a second pass with
+ // an IN filter so we don't scan every line item in the org.
+ const [invResult, pmResult] = await Promise.all([
  supabase
  .from("invoices")
  .select(INVOICES_FULL)
  .is("deleted_at", null)
  .order("created_at", { ascending: false })
+ .limit(500)
  .then(async (r) => {
  if (r.error && /parent_invoice_id|partial_approval_note/i.test(r.error.message)) {
  return await supabase
  .from("invoices")
  .select(INVOICES_MINIMAL)
  .is("deleted_at", null)
- .order("created_at", { ascending: false });
+ .order("created_at", { ascending: false })
+ .limit(500);
  }
  return r;
  }),
@@ -193,16 +195,18 @@ export default function AllInvoicesPage() {
  .in("role", ["pm", "admin"])
  .is("deleted_at", null)
  .order("full_name"),
- // Count unique cost codes per invoice (for the "Multiple (N)" indicator)
- supabase
- .from("invoice_line_items")
- .select("invoice_id, cost_code_id, cost_codes:cost_code_id(code)")
- .is("deleted_at", null),
  ]);
 
- // Build invoice_id → list of unique cost code strings
+ // Build invoice_id → list of unique cost code strings — only for visible invoices
  const lineItemCodesByInvoice = new Map<string, Set<string>>();
- for (const li of lineItemResult.data ?? []) {
+ const invoiceIds = (invResult.data as unknown as Array<{ id: string }> | null)?.map((i) => i.id) ?? [];
+ if (invoiceIds.length > 0) {
+ const { data: lineItems } = await supabase
+ .from("invoice_line_items")
+ .select("invoice_id, cost_code_id, cost_codes:cost_code_id(code)")
+ .in("invoice_id", invoiceIds)
+ .is("deleted_at", null);
+ for (const li of lineItems ?? []) {
  // eslint-disable-next-line @typescript-eslint/no-explicit-any
  const cc = (li as any).cost_codes;
  const code = Array.isArray(cc) ? cc[0]?.code : cc?.code;
@@ -211,6 +215,7 @@ export default function AllInvoicesPage() {
  const invId = (li as any).invoice_id as string;
  if (!lineItemCodesByInvoice.has(invId)) lineItemCodesByInvoice.set(invId, new Set());
  lineItemCodesByInvoice.get(invId)!.add(code);
+ }
  }
 
  if (!invResult.error && invResult.data) {

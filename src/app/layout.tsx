@@ -9,8 +9,7 @@ import { getOrgBranding, PUBLIC_APP_NAME } from "@/lib/org/branding";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const branding = await getOrgBranding();
-  const name = branding?.name ?? PUBLIC_APP_NAME;
+  const _branding = await getOrgBranding();
   return {
     title: `${PUBLIC_APP_NAME} — Construction Management, Powered by AI`,
     description: "AI invoice processing, draw generation, and financial management for custom home builders. Built by a builder. No contracts. Cancel anytime.",

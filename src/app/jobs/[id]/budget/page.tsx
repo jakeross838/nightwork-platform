@@ -12,11 +12,7 @@ import BudgetDrillDown from "@/components/budget-drill-down";
 import EditableCell from "@/components/editable-cell";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents } from "@/lib/utils/format";
-import {
-  buildBudgetWorkbook,
-  downloadBlob,
-  type BudgetExportInput,
-} from "@/lib/budget-export";
+import type { BudgetExportInput } from "@/lib/budget-export";
 import { toast } from "@/lib/utils/toast";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 
@@ -65,7 +61,7 @@ const SPENT_STATUSES = [
   "in_draw",
   "paid",
 ];
-const PO_OPEN_STATUSES = ["issued", "partially_invoiced", "fully_invoiced"];
+const _PO_OPEN_STATUSES = ["issued", "partially_invoiced", "fully_invoiced"];
 
 const ACTIVE_ONLY_KEY = "rbc.budget.showActiveOnly";
 const COLLAPSED_CATS_KEY = "rbc.budget.collapsedCategories";
@@ -655,6 +651,8 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         invoices,
         summary,
       };
+      // Dynamic import: ExcelJS is heavy (~280KB) — load only on export
+      const { buildBudgetWorkbook, downloadBlob } = await import("@/lib/budget-export");
       const blob = await buildBudgetWorkbook(input);
       const date = new Date().toISOString().slice(0, 10);
       const safeName = job.name.replace(/[^a-z0-9]+/gi, "_");

@@ -158,7 +158,7 @@ export async function buildBudgetWorkbook(input: BudgetExportInput): Promise<Blo
     byCat.set(l.category, arr);
   }
   const categories = Array.from(byCat.keys()).sort((a, b) => a.localeCompare(b));
-  const moneyCols = [
+  const _moneyCols = [
     "original",
     "approved_cos",
     "revised",
@@ -205,7 +205,7 @@ export async function buildBudgetWorkbook(input: BudgetExportInput): Promise<Blo
     }
 
     // Category subtotal
-    const subtotal: Record<(typeof moneyCols)[number], number> = {
+    const subtotal: Record<(typeof _moneyCols)[number], number> = {
       original: 0,
       approved_cos: 0,
       revised: 0,
@@ -253,7 +253,7 @@ export async function buildBudgetWorkbook(input: BudgetExportInput): Promise<Blo
   }
 
   // Grand totals
-  const grand: Record<(typeof moneyCols)[number], number> = {
+  const grand: Record<(typeof _moneyCols)[number], number> = {
     original: 0,
     approved_cos: 0,
     revised: 0,

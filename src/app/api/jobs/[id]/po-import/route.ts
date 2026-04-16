@@ -55,7 +55,7 @@ export const POST = withApiError(async (request: NextRequest, { params }: { para
   }
 
   let inserts = 0;
-  let skipped: Array<{ row: number; reason: string }> = [];
+  const skipped: Array<{ row: number; reason: string }> = [];
   let newVendors = 0;
 
   for (let i = 0; i < body.rows.length; i++) {

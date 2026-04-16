@@ -227,7 +227,7 @@ export default function DrawDetailPage() {
 
   const showApprove = draw.status === "submitted";
   const showSubmit = draw.status === "draft";
-  const showSendBack = draw.status === "submitted";
+  const _showSendBack = draw.status === "submitted";
   const showLock = draw.status === "approved";
   const showMarkPaid = ["approved", "locked"].includes(draw.status);
   const showVoid = ["draft", "submitted", "approved"].includes(draw.status);

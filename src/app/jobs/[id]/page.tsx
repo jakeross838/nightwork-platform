@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatDate } from "@/lib/utils/format";
+import { formatDate } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";

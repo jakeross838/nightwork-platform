@@ -643,9 +643,12 @@ export default function InvoiceReviewPage() {
  useEffect(() => {
  async function fetchBudget() {
  if (!jobId || !costCodeId) { setBudgetInfo(null); return; }
- const { data: bl } = await supabase.from("budget_lines").select("original_estimate, revised_estimate, is_allowance").eq("job_id", jobId).eq("cost_code_id", costCodeId).is("deleted_at", null).maybeSingle();
+ // Parallel: budget line + spent invoices
+ const [{ data: bl }, { data: spent }] = await Promise.all([
+ supabase.from("budget_lines").select("original_estimate, revised_estimate, is_allowance").eq("job_id", jobId).eq("cost_code_id", costCodeId).is("deleted_at", null).maybeSingle(),
+ supabase.from("invoices").select("total_amount").eq("job_id", jobId).eq("cost_code_id", costCodeId).in("status", ["pm_approved","qa_review","qa_approved","pushed_to_qb","in_draw","paid"]).is("deleted_at", null),
+ ]);
  if (!bl) { setBudgetInfo(null); return; }
- const { data: spent } = await supabase.from("invoices").select("total_amount").eq("job_id", jobId).eq("cost_code_id", costCodeId).in("status", ["pm_approved","qa_review","qa_approved","pushed_to_qb","in_draw","paid"]).is("deleted_at", null);
  const totalSpent = spent?.reduce((s, i) => s + i.total_amount, 0) ?? 0;
  setBudgetInfo({ original_estimate: bl.original_estimate, revised_estimate: bl.revised_estimate, total_spent: totalSpent, remaining: bl.revised_estimate - totalSpent, is_allowance: !!bl.is_allowance });
  }
@@ -671,19 +674,22 @@ export default function InvoiceReviewPage() {
  setBudgetByCostCode(new Map());
  return;
  }
- const { data: blData } = await supabase
+ // Parallel: budget lines + spent invoices (independent queries)
+ const [{ data: blData }, { data: spentData }] = await Promise.all([
+ supabase
  .from("budget_lines")
  .select("cost_code_id, original_estimate, revised_estimate, is_allowance")
  .eq("job_id", jobId)
  .in("cost_code_id", uniqueLineCostCodeIds)
- .is("deleted_at", null);
- const { data: spentData } = await supabase
+ .is("deleted_at", null),
+ supabase
  .from("invoices")
  .select("cost_code_id, total_amount")
  .eq("job_id", jobId)
  .in("cost_code_id", uniqueLineCostCodeIds)
  .in("status", ["pm_approved", "qa_review", "qa_approved", "pushed_to_qb", "in_draw", "paid"])
- .is("deleted_at", null);
+ .is("deleted_at", null),
+ ]);
  const spentByCode = new Map<string, number>();
  for (const row of spentData ?? []) {
  spentByCode.set(row.cost_code_id, (spentByCode.get(row.cost_code_id) ?? 0) + row.total_amount);

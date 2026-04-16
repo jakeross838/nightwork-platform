@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
+import { createServerClient } from "@/lib/supabase/server";
 import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
 
 /**
@@ -9,25 +10,14 @@ import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
  * Phase 8g — returns every job in the org enriched with health stats so the
  * job list can render colored health dots and quick stats without N+1 queries.
  *
- * Health rules:
- *   green  — variance < 5%, no overdue invoices, no attention items
- *   yellow — variance 5..15%, OR invoices pending 7+ days, OR 1-2 attention items
- *   red    — variance > 15%, OR invoices pending 14+ days, OR submitted draw 10+ days
- *            old, OR 3+ attention items
+ * Perf: all subsidiary queries run in parallel. Activity log resolution
+ * uses type-scoped IN queries instead of broadcasting all IDs to all tables.
  */
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 const PM_REVIEW_STATUSES = ["pm_review", "ai_processed"];
-const COUNTING_INVOICE_STATUSES = [
-  "pm_approved",
-  "qa_review",
-  "qa_approved",
-  "pushed_to_qb",
-  "in_draw",
-  "paid",
-];
 
 export interface JobHealth {
   id: string;
@@ -58,8 +48,9 @@ export const GET = withApiError(async (_req: NextRequest) => {
   const membership = await getCurrentMembership();
   if (!membership) throw new ApiError("Not authenticated", 401);
 
-  const supabase = tryCreateServiceRoleClient();
-  if (!supabase) throw new ApiError("Service unavailable", 503);
+  // Prefer service-role for aggregate efficiency; fall back to the user's
+  // RLS-scoped session client when the service key isn't configured.
+  const supabase = tryCreateServiceRoleClient() ?? createServerClient();
 
   const orgId = membership.org_id;
 
@@ -77,28 +68,85 @@ export const GET = withApiError(async (_req: NextRequest) => {
   if (jobList.length === 0) return NextResponse.json([]);
 
   const jobIds = jobList.map((j) => j.id);
-
-  // 2. PM names
   const pmIds = Array.from(new Set(jobList.map((j) => j.pm_id).filter(Boolean) as string[]));
+
+  // 2-6: ALL subsidiary queries in parallel
+  const [
+    pmProfilesRes,
+    budgetLinesRes,
+    openInvoicesRes,
+    pendingDrawsRes,
+    // Activity: fetch recent per-job activity directly — no cross-table resolution
+    jobActivityRes,
+    invoiceActivityRes,
+    drawActivityRes,
+  ] = await Promise.all([
+    // PM names
+    pmIds.length > 0
+      ? supabase.from("profiles").select("id, full_name").in("id", pmIds)
+      : Promise.resolve({ data: [] }),
+
+    // Budget aggregates per job
+    supabase
+      .from("budget_lines")
+      .select("job_id, revised_estimate, invoiced")
+      .in("job_id", jobIds)
+      .is("deleted_at", null),
+
+    // Invoice queue stats per job
+    supabase
+      .from("invoices")
+      .select("job_id, received_date")
+      .in("job_id", jobIds)
+      .in("status", PM_REVIEW_STATUSES)
+      .is("deleted_at", null),
+
+    // Submitted draws per job
+    supabase
+      .from("draws")
+      .select("job_id, submitted_at, updated_at")
+      .in("job_id", jobIds)
+      .eq("status", "submitted")
+      .is("deleted_at", null),
+
+    // Last activity: direct job entity type
+    supabase
+      .from("activity_log")
+      .select("entity_id, created_at")
+      .eq("org_id", orgId)
+      .eq("entity_type", "job")
+      .in("entity_id", jobIds)
+      .order("created_at", { ascending: false })
+      .limit(100),
+
+    // Last activity: invoices (we get job_id from the invoice)
+    supabase
+      .from("invoices")
+      .select("id, job_id, updated_at")
+      .in("job_id", jobIds)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(50),
+
+    // Last activity: draws
+    supabase
+      .from("draws")
+      .select("id, job_id, updated_at")
+      .in("job_id", jobIds)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(50),
+  ]);
+
+  // PM name map
   const pmNameMap = new Map<string, string>();
-  if (pmIds.length > 0) {
-    const { data: profileRows } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", pmIds);
-    for (const p of (profileRows ?? []) as Array<{ id: string; full_name: string | null }>) {
-      if (p.full_name) pmNameMap.set(p.id, p.full_name);
-    }
+  for (const p of (pmProfilesRes.data ?? []) as Array<{ id: string; full_name: string | null }>) {
+    if (p.full_name) pmNameMap.set(p.id, p.full_name);
   }
 
-  // 3. Budget aggregates per job
-  const { data: budgetLines } = await supabase
-    .from("budget_lines")
-    .select("job_id, revised_estimate, invoiced")
-    .in("job_id", jobIds)
-    .is("deleted_at", null);
+  // Budget map
   const budgetMap = new Map<string, { revised: number; invoiced: number }>();
-  for (const line of (budgetLines ?? []) as Array<{
+  for (const line of (budgetLinesRes.data ?? []) as Array<{
     job_id: string;
     revised_estimate: number | null;
     invoiced: number | null;
@@ -109,15 +157,9 @@ export const GET = withApiError(async (_req: NextRequest) => {
     budgetMap.set(line.job_id, cur);
   }
 
-  // 4. Invoice queue stats per job — open count + oldest age
-  const { data: openInvoices } = await supabase
-    .from("invoices")
-    .select("job_id, received_date, status")
-    .in("job_id", jobIds)
-    .in("status", PM_REVIEW_STATUSES)
-    .is("deleted_at", null);
+  // Open invoice map
   const openInvoiceMap = new Map<string, { count: number; oldestDays: number }>();
-  for (const inv of (openInvoices ?? []) as Array<{
+  for (const inv of (openInvoicesRes.data ?? []) as Array<{
     job_id: string;
     received_date: string | null;
   }>) {
@@ -127,15 +169,9 @@ export const GET = withApiError(async (_req: NextRequest) => {
     openInvoiceMap.set(inv.job_id, cur);
   }
 
-  // 5. Submitted draws older than threshold per job
-  const { data: pendingDraws } = await supabase
-    .from("draws")
-    .select("job_id, submitted_at, updated_at, status")
-    .in("job_id", jobIds)
-    .eq("status", "submitted")
-    .is("deleted_at", null);
+  // Pending draw age map
   const pendingDrawAge = new Map<string, number>();
-  for (const d of (pendingDraws ?? []) as Array<{
+  for (const d of (pendingDrawsRes.data ?? []) as Array<{
     job_id: string;
     submitted_at: string | null;
     updated_at: string | null;
@@ -145,52 +181,22 @@ export const GET = withApiError(async (_req: NextRequest) => {
     if (age > cur) pendingDrawAge.set(d.job_id, age);
   }
 
-  // 6. Last activity per job — fetch from activity_log; we filter by entities
-  // tied to the job (invoices, draws, POs, COs, budget_lines for the job).
-  // To keep this fast, just look at the activity_log filtered by org and pull
-  // the latest 200 entries; mapping requires join lookups.
-  const { data: recentActivity } = await supabase
-    .from("activity_log")
-    .select("entity_type, entity_id, created_at")
-    .eq("org_id", orgId)
-    .order("created_at", { ascending: false })
-    .limit(500);
-
+  // Last activity map — combine job-direct, invoice, and draw timestamps
   const lastActivityByJob = new Map<string, string>();
-  if (recentActivity && recentActivity.length > 0) {
-    // Resolve entity_id → job_id for invoices, draws, POs, COs, budget_lines.
-    const allEntityIds = new Set<string>();
-    for (const r of recentActivity as Array<{ entity_id: string | null }>) {
-      if (r.entity_id) allEntityIds.add(r.entity_id);
-    }
-    if (allEntityIds.size > 0) {
-      // Resolve in parallel for each entity type
-      const lookups = await Promise.all([
-        supabase.from("invoices").select("id, job_id").in("id", Array.from(allEntityIds)),
-        supabase.from("draws").select("id, job_id").in("id", Array.from(allEntityIds)),
-        supabase.from("purchase_orders").select("id, job_id").in("id", Array.from(allEntityIds)),
-        supabase.from("change_orders").select("id, job_id").in("id", Array.from(allEntityIds)),
-        supabase.from("budget_lines").select("id, job_id").in("id", Array.from(allEntityIds)),
-      ]);
-      const entityToJob = new Map<string, string>();
-      for (const lk of lookups) {
-        for (const row of (lk.data ?? []) as Array<{ id: string; job_id: string | null }>) {
-          if (row.job_id) entityToJob.set(row.id, row.job_id);
-        }
-      }
-      for (const r of recentActivity as Array<{
-        entity_type: string;
-        entity_id: string | null;
-        created_at: string;
-      }>) {
-        if (r.entity_type === "job" && r.entity_id) {
-          if (!lastActivityByJob.has(r.entity_id)) lastActivityByJob.set(r.entity_id, r.created_at);
-        } else if (r.entity_id) {
-          const jid = entityToJob.get(r.entity_id);
-          if (jid && !lastActivityByJob.has(jid)) lastActivityByJob.set(jid, r.created_at);
-        }
-      }
-    }
+
+  const setIfNewer = (jobId: string, ts: string) => {
+    const existing = lastActivityByJob.get(jobId);
+    if (!existing || ts > existing) lastActivityByJob.set(jobId, ts);
+  };
+
+  for (const r of (jobActivityRes.data ?? []) as Array<{ entity_id: string | null; created_at: string }>) {
+    if (r.entity_id) setIfNewer(r.entity_id, r.created_at);
+  }
+  for (const r of (invoiceActivityRes.data ?? []) as Array<{ job_id: string | null; updated_at: string | null }>) {
+    if (r.job_id && r.updated_at) setIfNewer(r.job_id, r.updated_at);
+  }
+  for (const r of (drawActivityRes.data ?? []) as Array<{ job_id: string | null; updated_at: string | null }>) {
+    if (r.job_id && r.updated_at) setIfNewer(r.job_id, r.updated_at);
   }
 
   // Compute health
@@ -199,7 +205,6 @@ export const GET = withApiError(async (_req: NextRequest) => {
     const inv = openInvoiceMap.get(j.id) ?? { count: 0, oldestDays: 0 };
     const drawAge = pendingDrawAge.get(j.id) ?? 0;
 
-    // Variance: if invoiced > revised → over budget (positive overrun pct)
     const variancePct = budget.revised > 0
       ? ((budget.invoiced - budget.revised) / budget.revised) * 100
       : 0;
@@ -252,7 +257,9 @@ export const GET = withApiError(async (_req: NextRequest) => {
     };
   });
 
-  return NextResponse.json(enriched);
+  const res = NextResponse.json(enriched);
+  res.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+  return res;
 });
 
 function daysSince(d: string | null | undefined): number {
