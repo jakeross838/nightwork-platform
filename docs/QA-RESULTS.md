@@ -26,19 +26,19 @@ One defect found and fixed: onboarding Step 3 CTA underline rendering as default
 - `START FREE TRIAL` → `/signup`. `SEE PRICING` → `/pricing`.
 - Features section: 3 cards (AI Invoice Parsing, Automated Draws, Real-Time Budgets).
 - Workflow section: "Four steps from invoice to draw".
-- Footer: `COMMANDPOST` branding.
+- Footer: `NIGHTWORK` branding.
 
 ### 1.2 Pricing (`/pricing`) — PASS
 - All 4 plan cards render: Free Trial, Starter ($149), Professional ($349), Enterprise ($749).
 - `Free Trial → START FREE TRIAL` → `/signup`.
 - `Starter → GET STARTED` → `/signup?plan=starter`.
 - `Professional → GET STARTED` → `/signup?plan=professional`.
-- `Enterprise → CONTACT US` → `mailto:hello@commandpost.app?subject=Enterprise%20Plan%20Inquiry`.
+- `Enterprise → CONTACT US` → `mailto:hello@nightwork.build?subject=Enterprise%20Plan%20Inquiry`.
 - FAQ section renders with 4 Q&A.
 - Professional card has `MOST POPULAR` badge.
 
 ### 1.3 Login (`/login`) — PASS
-- CommandPost branding, Email + Password fields.
+- Nightwork branding, Email + Password fields.
 - `Start a free trial` link → `/signup`.
 - Invalid credentials → inline "Invalid login credentials" message (no crash).
 
@@ -49,7 +49,7 @@ One defect found and fixed: onboarding Step 3 CTA underline rendering as default
 
 ---
 
-## TG2 — Signup + Onboarding Flow (fresh `qatest-1776266518@test.commandpost.app` / "QA Test Company")
+## TG2 — Signup + Onboarding Flow (fresh `qatest-1776266518@test.nightwork.build` / "QA Test Company")
 
 ### 2.1 Create account — PASS
 - All fields submit cleanly; account creates; redirect to `/onboard`.

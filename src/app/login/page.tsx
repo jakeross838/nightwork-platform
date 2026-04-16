@@ -21,7 +21,7 @@ export default async function LoginPage() {
             {PUBLIC_APP_NAME}
           </h1>
           <p className="mt-2 text-sm text-cream-dim">
-            Construction management, powered by AI
+            Nightwork makes building lightwork.
           </p>
         </div>
 

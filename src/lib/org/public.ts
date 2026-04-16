@@ -3,7 +3,7 @@
  * pulling the server-side Supabase helpers into the client bundle.
  */
 
-export const PUBLIC_APP_NAME = "CommandPost";
+export const PUBLIC_APP_NAME = "Nightwork";
 
 export type OrgBrandingPublic = {
   id: string;

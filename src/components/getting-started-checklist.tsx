@@ -14,7 +14,7 @@ type Checks = {
   firstDrawGenerated: boolean;
 };
 
-const DISMISS_KEY = "commandpost:getting-started-dismissed";
+const DISMISS_KEY = "nightwork:getting-started-dismissed";
 
 export default function GettingStartedChecklist() {
   const router = useRouter();

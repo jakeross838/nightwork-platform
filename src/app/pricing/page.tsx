@@ -44,7 +44,7 @@ const PLANS: Plan[] = [
   {
     key: "starter",
     name: "Starter",
-    price: "$149",
+    price: "$249",
     blurb: "For single-office builders running a handful of jobs.",
     users: "Up to 5",
     aiCalls: "500 / month",
@@ -61,8 +61,8 @@ const PLANS: Plan[] = [
   },
   {
     key: "professional",
-    name: "Professional",
-    price: "$349",
+    name: "Pro",
+    price: "$499",
     blurb: "For active custom home builders with multiple PMs.",
     users: "Up to 15",
     aiCalls: "2,500 / month",
@@ -82,21 +82,21 @@ const PLANS: Plan[] = [
   {
     key: "enterprise",
     name: "Enterprise",
-    price: "$749",
+    price: "$799",
     blurb: "Multi-office, high-volume, or custom integrations.",
     users: "Unlimited",
     aiCalls: "Unlimited",
     storage: "500 GB",
     jobs: "Unlimited",
     features: [
-      "Everything in Professional",
+      "Everything in Pro",
       "QuickBooks two-way sync",
       "Buildertrend integration",
       "Custom cost code consulting",
       "Dedicated account manager",
     ],
     cta: "Contact Us",
-    ctaHref: "mailto:hello@commandpost.app?subject=Enterprise%20Plan%20Inquiry",
+    ctaHref: "mailto:jake@nightwork.build?subject=Enterprise%20Plan%20Inquiry",
   },
 ];
 

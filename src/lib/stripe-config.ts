@@ -13,15 +13,15 @@ export type PlanSlug = "free_trial" | PaidPlanSlug;
 export const PLAN_DISPLAY_NAMES: Record<PlanSlug, string> = {
   free_trial: "Free Trial",
   starter: "Starter",
-  professional: "Professional",
+  professional: "Pro",
   enterprise: "Enterprise",
 };
 
 export const PLAN_MONTHLY_PRICE: Record<PlanSlug, string> = {
   free_trial: "$0",
-  starter: "$149",
-  professional: "$349",
-  enterprise: "$749",
+  starter: "$249",
+  professional: "$499",
+  enterprise: "$799",
 };
 
 export function getPriceId(slug: PaidPlanSlug): string | null {

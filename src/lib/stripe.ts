@@ -20,7 +20,7 @@ export function getStripe(): Stripe {
     apiVersion: "2026-03-25.dahlia",
     typescript: true,
     appInfo: {
-      name: "CommandPost",
+      name: "Nightwork",
       version: "0.1.0",
     },
   });

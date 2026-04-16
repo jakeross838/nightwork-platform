@@ -10,7 +10,10 @@ export default function PublicFooter() {
             {PUBLIC_APP_NAME}
           </p>
           <p className="mt-1 text-xs text-cream-dim">
-            Construction management, powered by AI.
+            Nightwork makes building lightwork.
+          </p>
+          <p className="mt-1 text-xs text-cream-dim">
+            jake@nightwork.build
           </p>
         </div>
         <nav className="flex items-center gap-4 text-[13px] text-cream-muted">

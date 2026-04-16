@@ -253,7 +253,7 @@ export default function JobsPage() {
           jobs.length === 0 ? (
             <>
               <FirstUseTip id="jobs-empty">
-                Jobs are the foundation of everything in CommandPost. Create a job for each project you&apos;re managing — budgets, invoices, and draws all connect here.
+                Jobs are the foundation of everything in Nightwork. Create a job for each project you&apos;re managing — budgets, invoices, and draws all connect here.
               </FirstUseTip>
               <EmptyState
                 icon={<EmptyIcons.Building />}

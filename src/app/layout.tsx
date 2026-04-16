@@ -12,8 +12,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const branding = await getOrgBranding();
   const name = branding?.name ?? PUBLIC_APP_NAME;
   return {
-    title: name,
-    description: `Invoice processing and draw generation for ${name}`,
+    title: `${PUBLIC_APP_NAME} — Construction Management, Powered by AI`,
+    description: "AI invoice processing, draw generation, and financial management for custom home builders. Built by a builder. No contracts. Cancel anytime.",
+    metadataBase: new URL("https://nightwork.build"),
+    alternates: { canonical: "https://nightwork.build" },
   };
 }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const LS_PREFIX = "commandpost:tip-dismissed:";
+const LS_PREFIX = "nightwork:tip-dismissed:";
 
 export default function FirstUseTip({
   id,

@@ -49,7 +49,7 @@ export interface SendNotificationArgs {
 const RESEND_API_URL = "https://api.resend.com/emails";
 
 function defaultHtmlBody(subject: string, body: string, action_url?: string): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://commandpost.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://nightwork.build";
   const link = action_url
     ? `${appUrl.replace(/\/$/, "")}${action_url.startsWith("/") ? action_url : `/${action_url}`}`
     : appUrl;
@@ -59,8 +59,8 @@ function defaultHtmlBody(subject: string, body: string, action_url?: string): st
     <div style="max-width: 560px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E8E0D0; padding: 32px;">
       <h1 style="font-size: 20px; color: #2B3A42; margin: 0 0 12px;">${escapeHtml(subject)}</h1>
       <p style="font-size: 15px; color: #4A5560; line-height: 1.6; margin: 0 0 24px;">${escapeHtml(body)}</p>
-      <a href="${link}" style="display: inline-block; background: #3F5862; color: #FFFFFF; padding: 10px 20px; text-decoration: none; font-size: 14px; letter-spacing: 0.04em;">Open in CommandPost</a>
-      <p style="font-size: 12px; color: #8A8778; margin: 32px 0 0;">You're receiving this because you're on this invoice or draw. Adjust notifications in your CommandPost settings.</p>
+      <a href="${link}" style="display: inline-block; background: #3F5862; color: #FFFFFF; padding: 10px 20px; text-decoration: none; font-size: 14px; letter-spacing: 0.04em;">Open in Nightwork</a>
+      <p style="font-size: 12px; color: #8A8778; margin: 32px 0 0;">You're receiving this because you're on this invoice or draw. Adjust notifications in your Nightwork settings.</p>
     </div>
   </body>
 </html>`;
@@ -111,7 +111,7 @@ export async function sendNotification(args: SendNotificationArgs): Promise<void
   if (!to_email) return;
 
   const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.NOTIFICATION_FROM_EMAIL ?? "notifications@commandpost.app";
+  const fromEmail = process.env.NOTIFICATION_FROM_EMAIL ?? "notifications@nightwork.build";
 
   // If the key isn't configured (dev env), skip the network call.
   if (!apiKey || apiKey === "re_placeholder" || apiKey.length < 10) {
@@ -131,7 +131,7 @@ export async function sendNotification(args: SendNotificationArgs): Promise<void
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `CommandPost <${fromEmail}>`,
+        from: `Nightwork <${fromEmail}>`,
         to: [to_email],
         subject,
         html: html_body ?? defaultHtmlBody(subject, body, action_url),

@@ -187,7 +187,7 @@ export function planDisplayName(plan: PlanSlug): string {
     case "starter":
       return "Starter";
     case "professional":
-      return "Professional";
+      return "Pro";
     case "enterprise":
       return "Enterprise";
   }

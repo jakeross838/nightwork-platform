@@ -23,7 +23,7 @@ Jake works across multiple PCs. If you don't pull first, you'll be working on st
 - This folder is in .gitignore — screenshots never get committed
 
 ## Project Identity Guard
-**This project is Ross-Built-Command (Ross Command Center / CommandPost).**
+**This project is Ross-Built-Command (Ross Command Center / Nightwork).**
 - GitHub repo: github.com/jakeross838/Ross-Built-Command
 - Local path: C:\Users\jaker\Ross-Built-Command
 - Screenshots path: C:\Users\jaker\Ross-Built-Command\screenshots\ (clear between prompts)

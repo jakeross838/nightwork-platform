@@ -30,10 +30,10 @@ export default async function Root() {
             Built for Custom Home Builders
           </span>
           <h1 className="font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.05] max-w-4xl mx-auto">
-            The AI-powered command center for custom home builders
+            You build homes. Nightwork runs your business.
           </h1>
           <p className="mt-6 text-lg md:text-xl text-cream-muted max-w-2xl mx-auto">
-            Invoices, budgets, and draws — automated.
+            Nightwork makes building lightwork.
           </p>
           <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
             <Link
@@ -107,9 +107,9 @@ export default async function Root() {
             </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-4 max-w-[900px] mx-auto">
-            <PricePreview name="Starter" price="$149" tagline="For builders running 1–3 active jobs" />
-            <PricePreview name="Professional" price="$349" tagline="For active contractors, 4–15 jobs" highlight />
-            <PricePreview name="Enterprise" price="$749" tagline="For multi-office builders and up" />
+            <PricePreview name="Starter" price="$249" tagline="For builders running 1–5 active jobs" />
+            <PricePreview name="Pro" price="$499" tagline="For active contractors, 6–15 jobs" highlight />
+            <PricePreview name="Enterprise" price="$799" tagline="For multi-office builders and up" />
           </div>
           <div className="mt-10 text-center">
             <Link

@@ -1,5 +1,5 @@
 /**
- * CommandPost — Design Tokens
+ * Nightwork — Design Tokens
  * Swap this file + globals.css variables to change the entire theme.
  * Brand-specific colors (bgInverse/textPrimary/borderBrand/money) default
  * to Ross Built's navy, but are overridden at runtime by --org-primary

@@ -173,7 +173,7 @@ export async function GET(
 
  // ── Build workbook ──
  const wb = new ExcelJS.Workbook();
- wb.creator = org?.name ?? "CommandPost";
+ wb.creator = org?.name ?? "Nightwork";
  wb.created = new Date();
 
  const job = draw.jobs;
