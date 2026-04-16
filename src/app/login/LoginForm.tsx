@@ -57,6 +57,12 @@ export default function LoginForm() {
         />
       </div>
 
+      <div className="text-right -mt-2">
+        <a href="/forgot-password" className="text-[12px] text-teal hover:underline underline-offset-4">
+          Forgot password?
+        </a>
+      </div>
+
       {state?.error && (
         <p className="text-[13px] text-status-danger border border-status-danger/40 bg-status-danger/5 px-3 py-2">
           {state.error}

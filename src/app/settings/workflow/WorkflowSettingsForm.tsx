@@ -7,6 +7,7 @@ import type {
   WorkflowSettings,
 } from "@/lib/workflow-settings";
 import { toast } from "@/lib/utils/toast";
+import FirstUseTip from "@/components/first-use-tip";
 
 type Props = { settings: WorkflowSettings };
 
@@ -87,6 +88,9 @@ export default function WorkflowSettingsForm({ settings }: Props) {
 
   return (
     <div className="max-w-3xl space-y-6 pb-24">
+      <FirstUseTip id="workflow-settings">
+        Configure how your team processes invoices, approvals, and draws. These settings apply to everyone in your organization.
+      </FirstUseTip>
       <Section
         title="Invoice Approvals"
         subtitle="Control how PMs review, approve, and code invoices."

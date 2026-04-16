@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 type Checks = {
@@ -16,8 +17,12 @@ type Checks = {
 const DISMISS_KEY = "commandpost:getting-started-dismissed";
 
 export default function GettingStartedChecklist() {
+  const router = useRouter();
   const [checks, setChecks] = useState<Checks | null>(null);
   const [dismissed, setDismissed] = useState(true);
+  const [loadingSample, setLoadingSample] = useState(false);
+  const [sampleLoaded, setSampleLoaded] = useState(false);
+  const [sampleError, setSampleError] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? localStorage.getItem(DISMISS_KEY) : null;
@@ -108,6 +113,22 @@ export default function GettingStartedChecklist() {
     setDismissed(true);
   }
 
+  async function loadSampleData() {
+    setLoadingSample(true);
+    setSampleError(null);
+    try {
+      const res = await fetch("/api/sample-data", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setSampleLoaded(true);
+      router.refresh();
+    } catch (err) {
+      setSampleError(err instanceof Error ? err.message : "Failed to load sample data");
+    } finally {
+      setLoadingSample(false);
+    }
+  }
+
   return (
     <aside className="w-full max-w-[420px] mx-auto mt-8 mb-0 text-left border border-brand-border bg-white p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -132,6 +153,31 @@ export default function GettingStartedChecklist() {
           style={{ width: `${(done / total) * 100}%` }}
         />
       </div>
+      {done === 0 && !sampleLoaded && (
+        <div className="mb-4 pb-4 border-b border-brand-border">
+          <p className="text-xs text-cream-muted mb-2">
+            Want to see how it works? Load a demo project with realistic data.
+          </p>
+          <button
+            type="button"
+            onClick={loadSampleData}
+            disabled={loadingSample}
+            className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-xs tracking-[0.06em] uppercase disabled:opacity-50 transition-colors"
+          >
+            {loadingSample ? "Loading…" : "Load Sample Project"}
+          </button>
+          {sampleError && (
+            <p className="mt-2 text-xs text-status-danger">{sampleError}</p>
+          )}
+        </div>
+      )}
+      {sampleLoaded && (
+        <div className="mb-4 pb-4 border-b border-brand-border">
+          <p className="text-xs text-status-success">
+            Sample project loaded! Refresh the page to see it in your dashboard.
+          </p>
+        </div>
+      )}
       <ul className="space-y-1.5">
         {items.map((it) => (
           <li key={it.label}>

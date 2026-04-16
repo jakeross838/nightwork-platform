@@ -6,6 +6,7 @@ import { formatCents, formatStatus, formatDate, statusBadgeOutline } from "@/lib
 import NavBar from "@/components/nav-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import FirstUseTip from "@/components/first-use-tip";
 import { SkeletonList, SkeletonStatCard } from "@/components/loading-skeleton";
 
 interface Invoice {

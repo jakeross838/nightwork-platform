@@ -196,6 +196,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
                 <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
                   <th className="text-left px-4 py-3 font-medium">PO #</th>
                   <th className="text-left px-4 py-3 font-medium">Vendor</th>
+                  <th className="text-left px-4 py-3 font-medium">Cost Code</th>
                   <th className="text-left px-4 py-3 font-medium">Description</th>
                   <th className="text-right px-4 py-3 font-medium">Amount</th>
                   <th className="text-right px-4 py-3 font-medium">Invoiced</th>
@@ -216,6 +217,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-cream">{po.vendors?.name ?? <span className="text-cream-dim">—</span>}</td>
+                      <td className="px-4 py-3 text-cream-muted font-mono text-xs">{po.budget_lines?.cost_codes?.code ?? "—"}</td>
                       <td className="px-4 py-3 text-cream-muted max-w-md truncate">{po.description ?? "—"}</td>
                       <td className="px-4 py-3 text-right text-cream tabular-nums">{formatCents(po.amount)}</td>
                       <td className="px-4 py-3 text-right text-cream-muted tabular-nums">{formatCents(po.invoiced_total)}</td>
@@ -226,8 +228,12 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
                         <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${STATUS_STYLES[po.status] ?? ""}`}>
                           {STATUS_LABELS[po.status] ?? po.status}
                         </span>
+                        <StaleBadge status={po.status} issuedDate={po.issued_date} invoicedTotal={po.invoiced_total} />
                         {po.issued_date && (
                           <p className="text-[10px] text-cream-dim mt-0.5">Issued {formatDate(po.issued_date)}</p>
+                        )}
+                        {po.amount > 0 && remaining >= 0 && remaining / po.amount < 0.10 && po.status !== "void" && po.status !== "closed" && (
+                          <p className="text-[10px] text-status-warning mt-0.5">90%+ consumed</p>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -303,4 +309,27 @@ function PoActions({
       </button>
     </div>
   );
+}
+
+function StaleBadge({ status, issuedDate, invoicedTotal }: { status: string; issuedDate: string | null; invoicedTotal: number }) {
+  if (status === "void" || status === "closed" || status === "fully_invoiced") return null;
+  const now = Date.now();
+  if (status === "draft") {
+    const created = issuedDate ? new Date(issuedDate).getTime() : 0;
+    if (created > 0 && now - created > 14 * 24 * 60 * 60 * 1000) {
+      return <span className="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-cream-dim/40 text-cream-dim">Draft 14d+</span>;
+    }
+    return null;
+  }
+  if (status === "issued" && invoicedTotal === 0 && issuedDate) {
+    const issued = new Date(issuedDate).getTime();
+    const days = Math.floor((now - issued) / (24 * 60 * 60 * 1000));
+    if (days >= 60) {
+      return <span className="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-status-warning text-status-warning bg-status-warning/10">Stale 60d</span>;
+    }
+    if (days >= 30) {
+      return <span className="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-brass/40 text-brass">Stale</span>;
+    }
+  }
+  return null;
 }

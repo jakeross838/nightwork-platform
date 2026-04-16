@@ -42,6 +42,8 @@ export default function AdminDashboard() {
   const [running, setRunning] = useState(false);
   const [fixing, setFixing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [removingSample, setRemovingSample] = useState(false);
+  const [sampleMsg, setSampleMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -233,6 +235,43 @@ export default function AdminDashboard() {
             )}
           </section>
         </div>
+
+        <section className="bg-brand-card border border-brand-border p-6 mt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-cream uppercase tracking-wider">Sample Data</h3>
+              <p className="text-[11px] text-cream-dim mt-1">
+                Remove the demo project and all associated records (invoices, budget lines, POs, draws).
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                if (!confirm("Remove all sample data? This soft-deletes the Sample Residence job and all linked records.")) return;
+                setRemovingSample(true);
+                setSampleMsg(null);
+                try {
+                  const res = await fetch("/api/sample-data", { method: "DELETE" });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+                  setSampleMsg("Sample data removed.");
+                } catch (err) {
+                  setSampleMsg(err instanceof Error ? err.message : "Failed");
+                } finally {
+                  setRemovingSample(false);
+                }
+              }}
+              disabled={removingSample || (role !== "owner" && role !== "admin")}
+              className="px-4 py-2 border border-status-danger text-status-danger hover:bg-status-danger hover:text-white text-sm disabled:opacity-50 transition-colors"
+            >
+              {removingSample ? "Removing…" : "Remove Sample Data"}
+            </button>
+          </div>
+          {sampleMsg && (
+            <p className={`mt-3 text-xs ${sampleMsg.includes("removed") ? "text-status-success" : "text-status-danger"}`}>
+              {sampleMsg}
+            </p>
+          )}
+        </section>
       </div>
     </div>
   );

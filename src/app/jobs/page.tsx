@@ -8,6 +8,7 @@ import { formatCents, formatDate, formatPercent, formatRelativeTime } from "@/li
 import NavBar from "@/components/nav-bar";
 import { SkeletonList } from "@/components/loading-skeleton";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import FirstUseTip from "@/components/first-use-tip";
 
 type JobStatus = "active" | "complete" | "warranty" | "cancelled";
 type Health = "green" | "yellow" | "red";
@@ -250,12 +251,17 @@ export default function JobsPage() {
           <SkeletonList rows={6} columns={["w-24", "w-40", "w-32", "w-32", "w-20", "w-20", "w-20"]} />
         ) : filtered.length === 0 ? (
           jobs.length === 0 ? (
-            <EmptyState
-              icon={<EmptyIcons.Building />}
-              title="No jobs yet"
-              message="Create your first job to start tracking budgets, invoices, and draws."
-              primaryAction={{ label: "+ New Job", href: "/jobs/new" }}
-            />
+            <>
+              <FirstUseTip id="jobs-empty">
+                Jobs are the foundation of everything in CommandPost. Create a job for each project you&apos;re managing — budgets, invoices, and draws all connect here.
+              </FirstUseTip>
+              <EmptyState
+                icon={<EmptyIcons.Building />}
+                title="No jobs yet"
+                message="Create your first job to start tracking budgets, invoices, and draws."
+                primaryAction={{ label: "+ New Job", href: "/jobs/new" }}
+              />
+            </>
           ) : (
             <EmptyState
               icon={<EmptyIcons.Search />}

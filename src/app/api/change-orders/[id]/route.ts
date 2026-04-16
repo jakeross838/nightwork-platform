@@ -145,6 +145,29 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     ];
     if (body.status === "pending") {
       patch.submitted_date = new Date().toISOString().slice(0, 10);
+      // Notify owner/admin users about the submission
+      const { data: admins } = await supabase
+        .from("org_members")
+        .select("user_id")
+        .eq("org_id", membership.org_id)
+        .in("role", ["owner", "admin"])
+        .eq("is_active", true);
+      if (admins && admins.length > 0) {
+        const notifs = admins
+          .filter((a) => a.user_id !== user.id)
+          .map((a) => ({
+            org_id: membership.org_id,
+            user_id: a.user_id,
+            type: "co_submitted",
+            title: `Change Order submitted for approval`,
+            body: `PCCO on ${co.job_id} — ${body.note ?? ""}`,
+            entity_type: "change_order",
+            entity_id: params.id,
+          }));
+        if (notifs.length > 0) {
+          await supabase.from("notifications").insert(notifs);
+        }
+      }
     }
     if (body.status === "approved") {
       patch.approved_date = new Date().toISOString().slice(0, 10);

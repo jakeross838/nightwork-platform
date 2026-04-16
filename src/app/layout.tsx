@@ -3,6 +3,7 @@ import "./globals.css";
 import ConnectionBanner from "@/components/connection-banner";
 import { OrgBrandingProvider } from "@/components/org-branding-provider";
 import { ToastProvider } from "@/components/toast-provider";
+import KeyboardShortcutsProvider from "@/components/keyboard-shortcuts-provider";
 import { getOrgBranding, PUBLIC_APP_NAME } from "@/lib/org/branding";
 
 export const dynamic = "force-dynamic";
@@ -39,8 +40,10 @@ export default async function RootLayout({
       <body className="grain antialiased">
         <OrgBrandingProvider branding={branding}>
           <ToastProvider>
-            <ConnectionBanner />
-            {children}
+            <KeyboardShortcutsProvider>
+              <ConnectionBanner />
+              {children}
+            </KeyboardShortcutsProvider>
           </ToastProvider>
         </OrgBrandingProvider>
       </body>

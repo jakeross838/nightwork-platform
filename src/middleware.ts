@@ -4,7 +4,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 // Anything a signed-out visitor can reach (marketing + auth pages).
 // "/" is the marketing landing; the root page redirects authed users
 // to /dashboard itself, so we leave that branching to the page.
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/pricing"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/pricing", "/forgot-password"];
 
 // Pages that remain reachable even when the billing gate is "expired".
 // Users need to be able to open the billing page to resubscribe, hit the
