@@ -14,7 +14,10 @@ import { supabase } from "@/lib/supabase/client";
  */
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ACCEPTED_EXT = [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".docx"];
+// Per spec: bulk import accepts PDFs and images only. DOCX stays on the
+// single-upload /invoices/upload page (Ross Built still gets occasional
+// DOCX invoices from Doug Naeher Drywall).
+const ACCEPTED_EXT = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
 
 type ImportStatus =
   | "import_queued"
@@ -284,6 +287,14 @@ export default function ImportPage() {
     await refreshBatch();
   };
 
+  // Rows still being processed in THIS view — the moment a row gets promoted
+  // to pm_review / qa_review via Send-to-Queue, it belongs to the approval
+  // queue, not here. Batch-level counters above preserve the history.
+  const visibleRows = useMemo(
+    () => rows.filter((r) => r.status.startsWith("import_")),
+    [rows]
+  );
+
   const counts = useMemo(() => {
     const c = {
       total: rows.length,
@@ -318,7 +329,7 @@ export default function ImportPage() {
             </div>
             <h1 className="font-display text-3xl text-cream mt-1">Bulk Import</h1>
             <p className="text-sm text-cream-dim mt-1">
-              Drop PDFs, DOCX, or images. Up to 50 files, 10MB each. Parsing is sequential to respect AI rate limits.
+              Drop PDFs or images. Up to 50 files, 10MB each. Parsing is sequential to respect AI rate limits.
             </p>
           </div>
           <Link
@@ -435,7 +446,9 @@ export default function ImportPage() {
               )}
             </div>
 
-            {/* Rows table */}
+            {/* Rows table — rows already promoted to pm_review/qa_review drop
+                out of the live view (their batch history is preserved in the
+                sent_to_queue_count counter above). */}
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-[0.1em] text-cream-dim border-b border-brand-border">
@@ -445,7 +458,7 @@ export default function ImportPage() {
                       checked={
                         selected.size > 0 &&
                         selected.size ===
-                          rows.filter(
+                          visibleRows.filter(
                             (r) => r.status === "import_parsed" || r.status === "import_duplicate"
                           ).length
                       }
@@ -461,7 +474,15 @@ export default function ImportPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {visibleRows.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-cream-dim text-sm">
+                      All processed rows have been sent to the approval queue.
+                      Batch history kept in <span className="font-mono text-xs">sent_to_queue_count</span> above.
+                    </td>
+                  </tr>
+                )}
+                {visibleRows.map((r) => (
                   <RowView
                     key={r.id}
                     row={r}
@@ -525,7 +546,7 @@ function DropZone({
         {disabled ? "Processing…" : "Drop invoices here or click to browse"}
       </div>
       <div className="text-xs text-cream-dim mt-1">
-        PDF, DOCX, or image · up to 50 files · 10MB each
+        PDF or image · up to 50 files · 10MB each
       </div>
     </div>
   );

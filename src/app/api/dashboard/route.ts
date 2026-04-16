@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
-import { getCurrentMembership } from "@/lib/org/session";
+import {
+  getCurrentMembership,
+  getMembershipFromRequest,
+} from "@/lib/org/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
+import { timed } from "@/lib/perf-log";
 
 /**
  * GET /api/dashboard
@@ -53,9 +57,20 @@ interface ActivityEntry {
   link_href?: string;
 }
 
-export const GET = withApiError(async (_req: NextRequest) => {
-  const membership = await getCurrentMembership();
+export const GET = withApiError(async (req: NextRequest) => {
+  const Tauth = Date.now();
+  // Fast path — middleware already resolved the membership and stashed it on
+  // the request headers. Falls back to the slow path only if middleware
+  // didn't run (shouldn't happen for /api/ routes, but keep the fallback).
+  const fromHeaders = getMembershipFromRequest(req);
+  if (process.env.PERF_LOG === "1") {
+    console.log(`[perf] dashboard fromHeaders: ${fromHeaders ? "HIT" : "MISS"} (x-org-id=${req.headers.get("x-org-id") ?? "null"})`);
+  }
+  const membership = fromHeaders ?? (await getCurrentMembership());
   if (!membership) throw new ApiError("Not authenticated", 401);
+  if (process.env.PERF_LOG === "1") {
+    console.log(`[perf] dashboard auth+membership: ${Date.now() - Tauth}ms`);
+  }
 
   // Prefer service-role for aggregate efficiency; fall back to the user's
   // RLS-scoped session client when the service key isn't configured (local
@@ -66,138 +81,95 @@ export const GET = withApiError(async (_req: NextRequest) => {
   const orgId = membership.org_id;
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const T0 = Date.now();
 
   // ===== ALL QUERIES IN PARALLEL =====
-  // Metrics (5) + Attention (4) + Activity (1) + Cash Flow (3) = 13 parallel queries
   const [
-    // --- Metrics ---
     activeJobsRes,
     pmQueueRes,
     draftDrawsRes,
     submittedDrawsRes,
     paymentsDueRes,
-    // --- Attention: duplicates, over-budget, POs, submitted draws w/ lien counts ---
     duplicateRes,
     overBudgetRes,
     posRes,
-    submittedDrawsLienRes,
     lienCountsRes,
-    // --- Activity ---
     activityRes,
-    // --- Cash Flow ---
     monthInvoicedRes,
     monthPaidRes,
-    openPosRes,
+    // Pre-load for activity feed name resolution — eliminates wave 2 entirely.
+    orgProfilesRes,
+    recentInvoicesWithJobRes,
+    recentDrawsWithJobRes,
   ] = await Promise.all([
-    // Metrics
-    supabase
-      .from("jobs")
-      .select("id", { count: "exact", head: true })
-      .eq("org_id", orgId)
-      .eq("status", "active")
-      .is("deleted_at", null),
-    supabase
-      .from("invoices")
-      .select("id, received_date, vendor_id, vendor_name_raw, invoice_number", { count: "exact" })
-      .eq("org_id", orgId)
-      .in("status", PM_REVIEW_STATUSES)
-      .is("deleted_at", null),
-    supabase
-      .from("draws")
-      .select("id, status, created_at, updated_at", { count: "exact" })
-      .eq("org_id", orgId)
-      .eq("status", "draft")
-      .is("deleted_at", null),
-    supabase
-      .from("draws")
-      .select("id, status, submitted_at, updated_at, draw_number, jobs(name)", { count: "exact" })
-      .eq("org_id", orgId)
-      .eq("status", "submitted")
-      .is("deleted_at", null),
-    supabase
-      .from("invoices")
-      .select("id, total_amount, received_date, payment_status, vendor_id, vendor_name_raw, invoice_number, job_id")
-      .eq("org_id", orgId)
-      .in("status", APPROVED_NOT_PAID)
-      .is("deleted_at", null),
-
-    // Attention: duplicates
-    supabase
-      .from("invoices")
-      .select("id, vendor_name_raw, invoice_number, total_amount, received_date")
-      .eq("org_id", orgId)
-      .eq("is_potential_duplicate", true)
-      .is("duplicate_dismissed_at", null)
-      .is("deleted_at", null)
-      .limit(20),
-
-    // Attention: over-budget lines
-    supabase
-      .from("budget_lines")
-      .select("id, job_id, revised_estimate, invoiced, cost_codes(code, description), jobs(name)")
-      .eq("org_id", orgId)
-      .is("deleted_at", null)
-      .limit(500),
-
-    // Attention: POs nearly exhausted
-    supabase
-      .from("purchase_orders")
-      .select("id, job_id, po_number, amount, invoiced_total, status, vendors(name)")
-      .eq("org_id", orgId)
-      .in("status", ["issued", "partially_invoiced"])
-      .is("deleted_at", null)
-      .limit(100),
-
-    // Attention: submitted draws (for lien release check) — reuse submittedDrawsRes data
-    // but we also need draw IDs for the lien count batch. We already fetch submitted draws
-    // above, so this slot fetches ALL lien releases grouped by draw for the org.
-    // Placeholder — we'll use submittedDrawsRes data instead.
-    Promise.resolve(null),
-
-    // Batch lien counts: one query for all submitted draws' lien releases
-    supabase
-      .from("lien_releases")
-      .select("draw_id")
-      .eq("org_id", orgId)
-      .is("deleted_at", null),
-
-    // Activity feed
-    supabase
-      .from("activity_log")
-      .select("id, entity_type, entity_id, action, details, created_at, user_id")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(20),
-
-    // Cash flow: month invoiced
-    supabase
-      .from("invoices")
-      .select("total_amount")
-      .eq("org_id", orgId)
-      .gte("created_at", monthStart)
-      .in("status", COUNTING_INVOICE_STATUSES)
-      .is("deleted_at", null),
-
-    // Cash flow: month paid
-    supabase
-      .from("invoices")
-      .select("total_amount, payment_amount")
-      .eq("org_id", orgId)
-      .eq("payment_status", "paid")
-      .gte("updated_at", monthStart)
-      .is("deleted_at", null),
-
-    // Cash flow: open POs
-    supabase
-      .from("purchase_orders")
-      .select("amount, invoiced_total")
-      .eq("org_id", orgId)
-      .in("status", ["issued", "partially_invoiced"])
-      .is("deleted_at", null),
+    timed("dashboard", "jobs.count(status=active)", false,
+      supabase.from("jobs").select("id", { count: "exact", head: true })
+        .eq("org_id", orgId).eq("status", "active").is("deleted_at", null)),
+    timed("dashboard", "invoices.pm_queue", false,
+      supabase.from("invoices")
+        .select("id, received_date, vendor_id, vendor_name_raw, invoice_number", { count: "exact" })
+        .eq("org_id", orgId).in("status", PM_REVIEW_STATUSES).is("deleted_at", null)),
+    timed("dashboard", "draws.count(status=draft)", false,
+      supabase.from("draws").select("id, status, created_at, updated_at", { count: "exact" })
+        .eq("org_id", orgId).eq("status", "draft").is("deleted_at", null)),
+    timed("dashboard", "draws.submitted+jobname", false,
+      supabase.from("draws")
+        .select("id, status, submitted_at, updated_at, draw_number, jobs(name)", { count: "exact" })
+        .eq("org_id", orgId).eq("status", "submitted").is("deleted_at", null)),
+    timed("dashboard", "invoices.approved_not_paid", false,
+      supabase.from("invoices")
+        .select("id, total_amount, received_date, payment_status, vendor_id, vendor_name_raw, invoice_number, job_id")
+        .eq("org_id", orgId).in("status", APPROVED_NOT_PAID).is("deleted_at", null)),
+    timed("dashboard", "invoices.duplicates", false,
+      supabase.from("invoices")
+        .select("id, vendor_name_raw, invoice_number, total_amount, received_date")
+        .eq("org_id", orgId).eq("is_potential_duplicate", true)
+        .is("duplicate_dismissed_at", null).is("deleted_at", null).limit(20)),
+    timed("dashboard", "budget_lines.over_budget", false,
+      supabase.from("budget_lines")
+        .select("id, job_id, revised_estimate, invoiced, cost_codes(code, description), jobs(name)")
+        .eq("org_id", orgId).is("deleted_at", null).limit(500)),
+    timed("dashboard", "purchase_orders.open+vendor", false,
+      supabase.from("purchase_orders")
+        .select("id, job_id, po_number, amount, invoiced_total, status, vendors(name)")
+        .eq("org_id", orgId).in("status", ["issued", "partially_invoiced"])
+        .is("deleted_at", null).limit(100)),
+    timed("dashboard", "lien_releases.all_draw_ids", false,
+      supabase.from("lien_releases").select("draw_id")
+        .eq("org_id", orgId).is("deleted_at", null)),
+    timed("dashboard", "activity_log.recent_20", false,
+      supabase.from("activity_log")
+        .select("id, entity_type, entity_id, action, details, created_at, user_id")
+        .eq("org_id", orgId).order("created_at", { ascending: false }).limit(20)),
+    timed("dashboard", "invoices.month_invoiced", false,
+      supabase.from("invoices").select("total_amount")
+        .eq("org_id", orgId).gte("created_at", monthStart)
+        .in("status", COUNTING_INVOICE_STATUSES).is("deleted_at", null)),
+    timed("dashboard", "invoices.month_paid", false,
+      supabase.from("invoices").select("total_amount, payment_amount")
+        .eq("org_id", orgId).eq("payment_status", "paid")
+        .gte("updated_at", monthStart).is("deleted_at", null)),
+    // Activity-feed resolution prefetch — pre-load org profiles + recent
+    // invoices/draws so wave 2 isn't needed. Covers ~99% of activity entries
+    // (the feed only shows the last 20, all recent).
+    timed("dashboard", "profiles.org_members", false,
+      supabase.from("org_members")
+        .select("user_id, profiles:user_id (id, full_name)")
+        .eq("org_id", orgId).eq("is_active", true)),
+    timed("dashboard", "invoices.recent_for_activity", false,
+      supabase.from("invoices")
+        .select("id, job_id, jobs:job_id (id, name)")
+        .eq("org_id", orgId).is("deleted_at", null)
+        .order("updated_at", { ascending: false }).limit(100)),
+    timed("dashboard", "draws.recent_for_activity", false,
+      supabase.from("draws")
+        .select("id, job_id, jobs:job_id (id, name)")
+        .eq("org_id", orgId).is("deleted_at", null)
+        .order("updated_at", { ascending: false }).limit(50)),
   ]);
-
-  // Suppress unused variable warning for the placeholder
-  void submittedDrawsLienRes;
+  if (process.env.PERF_LOG === "1") {
+    console.log(`[perf] dashboard wave1 total: ${Date.now() - T0}ms`);
+  }
 
   // ---------- METRICS ----------
   const pmQueueData = (pmQueueRes.data ?? []) as Array<{
@@ -439,29 +411,24 @@ export const GET = withApiError(async (_req: NextRequest) => {
     .map((r) => r.entity_id as string);
 
   // Parallel: resolve user names + job names for invoices + job names for draws
-  const [profilesRes, invJobsRes, drawJobsRes] = await Promise.all([
-    userIds.length > 0
-      ? supabase.from("profiles").select("id, full_name").in("id", userIds)
-      : Promise.resolve({ data: [] }),
-    invoiceIds.length > 0
-      ? supabase.from("invoices").select("id, job_id, jobs(id, name)").in("id", invoiceIds)
-      : Promise.resolve({ data: [] }),
-    drawIds.length > 0
-      ? supabase.from("draws").select("id, job_id, jobs(id, name)").in("id", drawIds)
-      : Promise.resolve({ data: [] }),
-  ]);
-
+  // In-memory resolution from wave 1 prefetch — no round-trip.
+  if (process.env.PERF_LOG === "1") {
+    console.log(`[perf] dashboard GRAND TOTAL: ${Date.now() - T0}ms`);
+  }
+  // Suppress unused IDs since we no longer dispatch wave 2 queries.
+  void userIds; void invoiceIds; void drawIds;
   const userNameMap = new Map<string, string>();
-  for (const p of (profilesRes.data ?? []) as Array<{ id: string; full_name: string | null }>) {
-    if (p.full_name) userNameMap.set(p.id, p.full_name);
+  for (const raw of (orgProfilesRes.data ?? []) as unknown as Array<Record<string, unknown>>) {
+    const p = pickFirst(raw.profiles) as { id: string; full_name: string | null } | null;
+    if (p?.id && p.full_name) userNameMap.set(p.id, p.full_name);
   }
 
   const jobMap = new Map<string, { id: string; name: string }>();
-  for (const raw of (invJobsRes.data ?? []) as unknown as Array<Record<string, unknown>>) {
+  for (const raw of (recentInvoicesWithJobRes.data ?? []) as unknown as Array<Record<string, unknown>>) {
     const job = pickFirst(raw.jobs) as { id: string; name: string } | null;
     if (job) jobMap.set(`invoice:${String(raw.id)}`, job);
   }
-  for (const raw of (drawJobsRes.data ?? []) as unknown as Array<Record<string, unknown>>) {
+  for (const raw of (recentDrawsWithJobRes.data ?? []) as unknown as Array<Record<string, unknown>>) {
     const job = pickFirst(raw.jobs) as { id: string; name: string } | null;
     if (job) jobMap.set(`draw:${String(raw.id)}`, job);
   }
@@ -510,7 +477,9 @@ export const GET = withApiError(async (_req: NextRequest) => {
     else aging.d90 += cents;
   }
 
-  const upcomingCommitted = ((openPosRes.data ?? []) as Array<{ amount: number | null; invoiced_total: number | null }>)
+  // Reuse posRes from wave 1 — it already selected amount + invoiced_total.
+  // Saves a full round-trip vs the prior separate openPosRes query.
+  const upcomingCommitted = ((posRes.data ?? []) as Array<{ amount: number | null; invoiced_total: number | null }>)
     .reduce((sum, r) => sum + Math.max(0, (r.amount ?? 0) - (r.invoiced_total ?? 0)), 0);
 
   const body = {

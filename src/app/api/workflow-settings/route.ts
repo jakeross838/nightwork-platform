@@ -27,7 +27,12 @@ const BOOL_COLUMNS = new Set([
 const INT_COLUMNS = new Set([
   "quick_approve_min_confidence",
   "auto_route_confidence_threshold",
+  "import_max_batch_size",
+  "import_auto_route_threshold",
 ]);
+
+// UUID columns that accept a UUID string or null (for "unset")
+const UUID_COLUMNS = new Set(["import_default_pm_id"]);
 
 const VALID_SENSITIVITY: DuplicateSensitivity[] = ["strict", "moderate", "loose"];
 
@@ -50,8 +55,18 @@ export const PATCH = withApiError(async (request: NextRequest) => {
     if (BOOL_COLUMNS.has(k) && typeof v === "boolean") {
       update[k] = v;
     } else if (INT_COLUMNS.has(k) && typeof v === "number") {
-      const rounded = Math.max(0, Math.min(100, Math.round(v)));
-      update[k] = rounded;
+      // max_batch_size has a different range (1–200) than confidence %s (0–100).
+      const bounds = k === "import_max_batch_size"
+        ? { min: 1, max: 200 }
+        : { min: 0, max: 100 };
+      update[k] = Math.max(bounds.min, Math.min(bounds.max, Math.round(v)));
+    } else if (UUID_COLUMNS.has(k) && (typeof v === "string" || v === null)) {
+      // null / empty string = unset. Otherwise must look like a UUID.
+      const s = typeof v === "string" ? v.trim() : "";
+      if (!s) update[k] = null;
+      else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) {
+        update[k] = s;
+      }
     } else if (
       k === "duplicate_detection_sensitivity" &&
       typeof v === "string" &&

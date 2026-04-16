@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
-import { getCurrentMembership } from "@/lib/org/session";
+import {
+  getCurrentMembership,
+  getMembershipFromRequest,
+} from "@/lib/org/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
+import { timed } from "@/lib/perf-log";
 
 /**
  * GET /api/jobs/health
@@ -44,104 +48,83 @@ export interface JobHealth {
   invoiced_total: number; // cents
 }
 
-export const GET = withApiError(async (_req: NextRequest) => {
-  const membership = await getCurrentMembership();
+export const GET = withApiError(async (req: NextRequest) => {
+  const Tauth = Date.now();
+  // Fast path — membership already resolved by middleware.
+  const membership = getMembershipFromRequest(req) ?? (await getCurrentMembership());
   if (!membership) throw new ApiError("Not authenticated", 401);
+  if (process.env.PERF_LOG === "1") {
+    console.log(`[perf] jobs-health auth+membership: ${Date.now() - Tauth}ms`);
+  }
 
   // Prefer service-role for aggregate efficiency; fall back to the user's
   // RLS-scoped session client when the service key isn't configured.
   const supabase = tryCreateServiceRoleClient() ?? createServerClient();
 
   const orgId = membership.org_id;
+  const T0 = Date.now();
 
-  // 1. Jobs (all non-deleted)
-  const { data: jobs, error: jobsErr } = await supabase
-    .from("jobs")
-    .select(
-      "id, name, address, client_name, contract_type, original_contract_amount, current_contract_amount, contract_date, status, pm_id"
-    )
-    .eq("org_id", orgId)
-    .is("deleted_at", null)
-    .order("name");
-  if (jobsErr) throw new ApiError(jobsErr.message, 500);
-  const jobList = (jobs ?? []) as Array<JobHealth>;
-  if (jobList.length === 0) return NextResponse.json([]);
-
-  const jobIds = jobList.map((j) => j.id);
-  const pmIds = Array.from(new Set(jobList.map((j) => j.pm_id).filter(Boolean) as string[]));
-
-  // 2-6: ALL subsidiary queries in parallel
+  // All subsidiary queries in a SINGLE wave, filtering by org_id instead of
+  // waiting for jobs.by_org to return job_ids. Each row already carries
+  // job_id so we can group client-side after the fact. Profile names for PMs
+  // we fetch via a nested join on jobs (one extra relationship, still one
+  // round-trip).
   const [
-    pmProfilesRes,
+    jobsRes,
     budgetLinesRes,
     openInvoicesRes,
     pendingDrawsRes,
-    // Activity: fetch recent per-job activity directly — no cross-table resolution
     jobActivityRes,
     invoiceActivityRes,
     drawActivityRes,
+    orgProfilesRes,
   ] = await Promise.all([
-    // PM names
-    pmIds.length > 0
-      ? supabase.from("profiles").select("id, full_name").in("id", pmIds)
-      : Promise.resolve({ data: [] }),
-
-    // Budget aggregates per job
-    supabase
-      .from("budget_lines")
-      .select("job_id, revised_estimate, invoiced")
-      .in("job_id", jobIds)
-      .is("deleted_at", null),
-
-    // Invoice queue stats per job
-    supabase
-      .from("invoices")
-      .select("job_id, received_date")
-      .in("job_id", jobIds)
-      .in("status", PM_REVIEW_STATUSES)
-      .is("deleted_at", null),
-
-    // Submitted draws per job
-    supabase
-      .from("draws")
-      .select("job_id, submitted_at, updated_at")
-      .in("job_id", jobIds)
-      .eq("status", "submitted")
-      .is("deleted_at", null),
-
-    // Last activity: direct job entity type
-    supabase
-      .from("activity_log")
-      .select("entity_id, created_at")
-      .eq("org_id", orgId)
-      .eq("entity_type", "job")
-      .in("entity_id", jobIds)
-      .order("created_at", { ascending: false })
-      .limit(100),
-
-    // Last activity: invoices (we get job_id from the invoice)
-    supabase
-      .from("invoices")
-      .select("id, job_id, updated_at")
-      .in("job_id", jobIds)
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false })
-      .limit(50),
-
-    // Last activity: draws
-    supabase
-      .from("draws")
-      .select("id, job_id, updated_at")
-      .in("job_id", jobIds)
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false })
-      .limit(50),
+    timed("jobs-health", "jobs.by_org", false,
+      supabase.from("jobs")
+        .select("id, name, address, client_name, contract_type, original_contract_amount, current_contract_amount, contract_date, status, pm_id")
+        .eq("org_id", orgId).is("deleted_at", null).order("name")),
+    timed("jobs-health", "budget_lines.by_org", false,
+      supabase.from("budget_lines").select("job_id, revised_estimate, invoiced")
+        .eq("org_id", orgId).is("deleted_at", null)),
+    timed("jobs-health", "invoices.pm_queue_by_org", false,
+      supabase.from("invoices").select("job_id, received_date")
+        .eq("org_id", orgId).in("status", PM_REVIEW_STATUSES).is("deleted_at", null)),
+    timed("jobs-health", "draws.submitted_by_org", false,
+      supabase.from("draws").select("job_id, submitted_at, updated_at")
+        .eq("org_id", orgId).eq("status", "submitted").is("deleted_at", null)),
+    timed("jobs-health", "activity_log.job_entity_by_org", false,
+      supabase.from("activity_log").select("entity_id, created_at")
+        .eq("org_id", orgId).eq("entity_type", "job")
+        .order("created_at", { ascending: false }).limit(100)),
+    timed("jobs-health", "invoices.last_updated_by_org", false,
+      supabase.from("invoices").select("id, job_id, updated_at")
+        .eq("org_id", orgId).is("deleted_at", null)
+        .order("updated_at", { ascending: false }).limit(50)),
+    timed("jobs-health", "draws.last_updated_by_org", false,
+      supabase.from("draws").select("id, job_id, updated_at")
+        .eq("org_id", orgId).is("deleted_at", null)
+        .order("updated_at", { ascending: false }).limit(50)),
+    // Pre-fetch all org PM names via org_members join — covers any PM on any job.
+    timed("jobs-health", "profiles.org_members", false,
+      supabase.from("org_members")
+        .select("user_id, profiles:user_id (id, full_name)")
+        .eq("org_id", orgId).eq("is_active", true)),
   ]);
 
-  // PM name map
+  if (jobsRes.error) throw new ApiError(jobsRes.error.message, 500);
+  const jobList = (jobsRes.data ?? []) as Array<JobHealth>;
+  if (jobList.length === 0) return NextResponse.json([]);
+
+  if (process.env.PERF_LOG === "1") {
+    console.log(`[perf] jobs-health GRAND TOTAL: ${Date.now() - T0}ms`);
+  }
+
+  // PM name map — orgProfilesRes is org_members with joined profiles.
   const pmNameMap = new Map<string, string>();
-  for (const p of (pmProfilesRes.data ?? []) as Array<{ id: string; full_name: string | null }>) {
-    if (p.full_name) pmNameMap.set(p.id, p.full_name);
+  for (const raw of (orgProfilesRes.data ?? []) as unknown as Array<Record<string, unknown>>) {
+    const profile = Array.isArray(raw.profiles) ? raw.profiles[0] : raw.profiles;
+    const p = profile as { id?: string; full_name?: string | null } | null;
+    if (p?.id && p.full_name) pmNameMap.set(p.id, p.full_name);
   }
 
   // Budget map

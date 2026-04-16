@@ -30,8 +30,12 @@ function canEscapeBillingGate(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  const T0 = Date.now();
   const { response, user, gate } = await updateSession(request);
   const { pathname } = request.nextUrl;
+  if (process.env.PERF_LOG === "1" && pathname.startsWith("/api/")) {
+    console.log(`[perf] middleware ${pathname}: ${Date.now() - T0}ms`);
+  }
 
   // Bounce signed-in users away from auth-only pages.
   if (user && (pathname === "/login" || pathname === "/signup")) {

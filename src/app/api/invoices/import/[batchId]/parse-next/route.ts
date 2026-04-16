@@ -120,10 +120,21 @@ export const POST = withApiError(async (
   }
 
   // Parse with one retry on failure (per task spec).
+  // Forced-failure mode: FORCE_PARSE_FAIL env var either "always" (every
+  // file fails both attempts) or "first" (each file fails its first attempt
+  // then succeeds). Used for manual retry-logic verification; harmless in
+  // prod because it's only honored when the env var is set.
+  const forceFailMode = process.env.FORCE_PARSE_FAIL ?? "";
   let parsedResult;
   let lastErr: Error | null = null;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
+      if (
+        forceFailMode === "always" ||
+        (forceFailMode === "first" && attempt === 0)
+      ) {
+        throw new Error(`Simulated parse failure (FORCE_PARSE_FAIL=${forceFailMode})`);
+      }
       parsedResult = await parseInvoiceFile({
         buffer,
         mediaType,
@@ -136,11 +147,25 @@ export const POST = withApiError(async (
           metadata: { source: "bulk_invoice_import", batch_id: batchId },
         },
       });
+      if (attempt > 0) {
+        console.log(
+          `[import-retry] invoice=${invoiceId} file="${filename}" attempt=${attempt + 1}/${MAX_RETRIES + 1} SUCCEEDED after previous failure: ${lastErr?.message ?? "?"}`
+        );
+      }
       break;
     } catch (err) {
       lastErr = err instanceof Error ? err : new Error(String(err));
+      console.log(
+        `[import-retry] invoice=${invoiceId} file="${filename}" attempt=${attempt + 1}/${MAX_RETRIES + 1} FAILED: ${lastErr.message}`
+      );
       // PlanLimitError is not retriable — surface immediately
       if (err instanceof PlanLimitError) break;
+      // If we exhausted retries, log the final decision
+      if (attempt === MAX_RETRIES) {
+        console.log(
+          `[import-retry] invoice=${invoiceId} file="${filename}" giving up after ${MAX_RETRIES + 1} attempts — marking import_error`
+        );
+      }
     }
   }
 

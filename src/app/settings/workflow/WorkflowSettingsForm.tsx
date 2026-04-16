@@ -9,7 +9,8 @@ import type {
 import { toast } from "@/lib/utils/toast";
 import FirstUseTip from "@/components/first-use-tip";
 
-type Props = { settings: WorkflowSettings };
+type Pm = { id: string; name: string };
+type Props = { settings: WorkflowSettings; pms: Pm[] };
 
 type FormState = {
   batch_approval_enabled: boolean;
@@ -27,6 +28,10 @@ type FormState = {
   co_approval_required: boolean;
   payment_auto_scheduling: boolean;
   cover_letter_template: string;
+  // Phase 9 — bulk invoice import
+  import_max_batch_size: number;
+  import_default_pm_id: string;
+  import_auto_route_threshold: number;
 };
 
 function toFormState(s: WorkflowSettings): FormState {
@@ -46,10 +51,13 @@ function toFormState(s: WorkflowSettings): FormState {
     co_approval_required: s.co_approval_required,
     payment_auto_scheduling: s.payment_auto_scheduling,
     cover_letter_template: s.cover_letter_template ?? "",
+    import_max_batch_size: s.import_max_batch_size ?? 50,
+    import_default_pm_id: s.import_default_pm_id ?? "",
+    import_auto_route_threshold: s.import_auto_route_threshold ?? 85,
   };
 }
 
-export default function WorkflowSettingsForm({ settings }: Props) {
+export default function WorkflowSettingsForm({ settings, pms }: Props) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(toFormState(settings));
   const [initial, setInitial] = useState<FormState>(toFormState(settings));
@@ -264,6 +272,66 @@ export default function WorkflowSettingsForm({ settings }: Props) {
             placeholder="Leave blank to use the built-in default template."
             className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream font-mono focus:border-teal focus:outline-none"
           />
+        </div>
+      </Section>
+
+      <Section
+        title="Bulk Import"
+        subtitle="Controls the drag-drop bulk invoice importer at /invoices/import."
+      >
+        <div className="py-3 space-y-4">
+          <label className="block">
+            <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+              Max batch size
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={200}
+              value={form.import_max_batch_size}
+              onChange={(e) => patch("import_max_batch_size", Math.max(1, Math.min(200, Number(e.target.value) || 50)))}
+              className="w-32 px-3 py-2 border border-brand-border bg-white text-sm"
+            />
+            <p className="text-xs text-cream-dim mt-1">
+              Largest number of files a single upload can contain (1–200). Default 50.
+            </p>
+          </label>
+
+          <label className="block">
+            <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+              Default PM for unmatched jobs
+            </span>
+            <select
+              value={form.import_default_pm_id}
+              onChange={(e) => patch("import_default_pm_id", e.target.value)}
+              className="w-full max-w-sm px-3 py-2 border border-brand-border bg-white text-sm"
+            >
+              <option value="">— None (leave unassigned) —</option>
+              {pms.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <p className="text-xs text-cream-dim mt-1">
+              When bulk import can&apos;t match an invoice to a job, assign this PM so they can review. Nullable — leave blank to require explicit assignment.
+            </p>
+          </label>
+
+          <label className="block">
+            <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+              Auto-route confidence threshold (%)
+            </span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={form.import_auto_route_threshold}
+              onChange={(e) => patch("import_auto_route_threshold", Math.max(0, Math.min(100, Number(e.target.value) || 85)))}
+              className="w-32 px-3 py-2 border border-brand-border bg-white text-sm"
+            />
+            <p className="text-xs text-cream-dim mt-1">
+              Confidence above this routes to <strong>PM Review</strong>; below routes to <strong>Accounting QA</strong>. <strong>Never auto-approves</strong> — every invoice is reviewed by a human before it enters a draw.
+            </p>
+          </label>
         </div>
       </Section>
 
