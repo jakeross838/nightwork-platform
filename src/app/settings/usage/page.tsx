@@ -56,10 +56,8 @@ function formatFunctionType(type: string): string {
 export default async function UsageDashboardPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
-  // The settings layout already blocks pm/accounting — this is belt-and-suspenders
-  // for the day we expose settings sub-pages to more roles.
   if (membership.role !== "admin" && membership.role !== "owner") {
-    redirect("/");
+    redirect("/settings/company");
   }
 
   const supabase = createServerClient();

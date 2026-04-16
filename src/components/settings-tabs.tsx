@@ -3,25 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS: Array<{ href: string; label: string }> = [
-  { href: "/settings/company", label: "Company" },
-  { href: "/settings/team", label: "Team" },
-  { href: "/settings/financial", label: "Financial" },
-  { href: "/settings/workflow", label: "Workflow" },
-  { href: "/settings/cost-codes", label: "Cost Codes" },
-  { href: "/settings/usage", label: "Usage" },
-  { href: "/settings/admin", label: "Admin" },
-  { href: "/settings/billing", label: "Billing" },
+type Role = "owner" | "admin" | "pm" | "accounting";
+
+const TABS: Array<{ href: string; label: string; roles: Role[] }> = [
+  { href: "/settings/company", label: "Company", roles: ["owner", "admin", "pm", "accounting"] },
+  { href: "/settings/team", label: "Team", roles: ["owner", "admin"] },
+  { href: "/settings/financial", label: "Financial", roles: ["owner", "admin", "pm", "accounting"] },
+  { href: "/settings/workflow", label: "Workflow", roles: ["owner", "admin", "accounting"] },
+  { href: "/settings/cost-codes", label: "Cost Codes", roles: ["owner", "admin", "pm", "accounting"] },
+  { href: "/settings/usage", label: "Usage", roles: ["owner", "admin"] },
+  { href: "/settings/admin", label: "Admin", roles: ["owner", "admin"] },
+  { href: "/settings/billing", label: "Billing", roles: ["owner", "admin"] },
 ];
 
-export default function SettingsTabs() {
+export default function SettingsTabs({ role }: { role: Role }) {
   const pathname = usePathname();
+  const visible = TABS.filter((t) => t.roles.includes(role));
   return (
     <nav
       className="flex gap-1 border-b border-brand-border overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 whitespace-nowrap"
       aria-label="Settings sections"
     >
-      {TABS.map((t) => {
+      {visible.map((t) => {
         const active = pathname.startsWith(t.href);
         return (
           <Link

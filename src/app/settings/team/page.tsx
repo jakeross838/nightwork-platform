@@ -30,6 +30,9 @@ export type PendingInvite = {
 export default async function TeamPage() {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
+  if (membership.role !== "admin" && membership.role !== "owner") {
+    redirect("/settings/company");
+  }
 
   const supabase = createServerClient();
   const {

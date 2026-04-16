@@ -13,9 +13,6 @@ export default async function SettingsLayout({
 }) {
   const membership = await getCurrentMembership();
   if (!membership) redirect("/login");
-  if (membership.role !== "admin" && membership.role !== "owner") {
-    redirect("/");
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -29,7 +26,7 @@ export default async function SettingsLayout({
               Manage your organization, team, financial defaults, and cost codes.
             </p>
           </header>
-          <SettingsTabs />
+          <SettingsTabs role={membership.role} />
           <div className="mt-6">{children}</div>
         </div>
       </main>

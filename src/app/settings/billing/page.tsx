@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentOrg } from "@/lib/org/session";
+import { getCurrentOrg, getCurrentMembership } from "@/lib/org/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 import { PLAN_DISPLAY_NAMES, PLAN_MONTHLY_PRICE, isStripeConfigured, type PlanSlug } from "@/lib/stripe-config";
@@ -77,6 +77,12 @@ export default async function BillingSettingsPage({
 }) {
   if (searchParams.session_id) {
     await verifyCheckoutSession(searchParams.session_id);
+  }
+
+  const membership = await getCurrentMembership();
+  if (!membership) redirect("/login");
+  if (membership.role !== "admin" && membership.role !== "owner") {
+    redirect("/settings/company");
   }
 
   const org = await getCurrentOrg();
