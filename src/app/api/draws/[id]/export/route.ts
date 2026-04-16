@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
 import { getCurrentOrg } from "@/lib/org/session";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
 import { renderCoverLetter, type CoverLetterContext } from "@/lib/cover-letter";
 import ExcelJS from "exceljs";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 // Colors that don't belong to any org brand remain constants.
 const LIGHT_BLUE_BG = "F5F5F5";
@@ -61,7 +64,10 @@ export async function GET(
  { params }: { params: { id: string } }
 ) {
  try {
- const supabase = createServerClient();
+ const userSb = createServerClient();
+ const { data: { user } } = await userSb.auth.getUser();
+ if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+ const supabase = tryCreateServiceRoleClient() ?? userSb;
 
  // ── Fetch org branding + signing contact ──
  const org = await getCurrentOrg();
@@ -69,9 +75,6 @@ export async function GET(
  const { line1: ORG_CONTRACTOR_ADDR1, line2: ORG_CONTRACTOR_ADDR2 } =
  formatOrgAddress(org ?? { company_address: null, company_city: null, company_state: null, company_zip: null });
 
- const {
- data: { user },
- } = await supabase.auth.getUser();
  const { data: signerProfile } = user
  ? await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle()
  : { data: null };

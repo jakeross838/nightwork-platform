@@ -45,35 +45,54 @@ function normalizeVendorName(name: string): string {
   return name.replace(VENDOR_SUFFIXES, "").replace(/[.,]+/g, "").trim().toLowerCase();
 }
 
-function getFirstSignificantWord(name: string): string | null {
-  const normalized = normalizeVendorName(name);
-  const words = normalized.split(/\s+/).filter((w) => w.length > 2);
-  return words[0] ?? null;
-}
-
+/**
+ * Match by strong evidence only: either full-substring containment (in
+ * either direction after normalization) or a ≥2-word token overlap.
+ * A single first-word match is NOT enough — e.g. "Florida Sunshine
+ * Carpentry" should never bind to "M & J Florida Enterprises, LLC".
+ */
 async function matchVendor(supabase: SupabaseClient, vendorName: string) {
-  const normalized = normalizeVendorName(vendorName);
-  if (normalized) {
-    const { data } = await supabase
-      .from("vendors")
-      .select("id, name")
-      .ilike("name", `%${normalized}%`)
-      .is("deleted_at", null)
-      .limit(1);
-    if (data && data.length > 0) return data[0];
-  }
+  const normalizedNew = normalizeVendorName(vendorName);
+  if (!normalizedNew) return null;
 
-  const firstWord = getFirstSignificantWord(vendorName);
-  if (firstWord && firstWord.length >= 3) {
-    const { data } = await supabase
-      .from("vendors")
-      .select("id, name")
-      .ilike("name", `%${firstWord}%`)
-      .is("deleted_at", null)
-      .limit(1);
-    if (data && data.length > 0) return data[0];
-  }
+  // Pull candidates whose normalized form shares any non-trivial word with
+  // the incoming name. We filter precisely in-process.
+  const newTokens = new Set(
+    normalizedNew.split(/\s+/).filter((w) => w.length >= 3)
+  );
+  if (newTokens.size === 0) return null;
 
+  const firstToken = Array.from(newTokens)[0];
+  const { data } = await supabase
+    .from("vendors")
+    .select("id, name")
+    .ilike("name", `%${firstToken}%`)
+    .is("deleted_at", null)
+    .limit(25);
+
+  const candidates = (data ?? []) as Array<{ id: string; name: string }>;
+  if (candidates.length === 0) return null;
+
+  for (const c of candidates) {
+    const normalizedExisting = normalizeVendorName(c.name);
+    if (!normalizedExisting) continue;
+
+    // Substring containment in either direction is strong evidence.
+    if (
+      normalizedExisting.includes(normalizedNew) ||
+      normalizedNew.includes(normalizedExisting)
+    ) {
+      return c;
+    }
+
+    // ≥2 shared significant-word tokens is also strong evidence.
+    const existingTokens = new Set(
+      normalizedExisting.split(/\s+/).filter((w) => w.length >= 3)
+    );
+    let overlap = 0;
+    newTokens.forEach((t) => { if (existingTokens.has(t)) overlap++; });
+    if (overlap >= 2) return c;
+  }
   return null;
 }
 
@@ -211,7 +230,12 @@ export async function saveParsedInvoice(
   if (parsed.vendor_name) {
     try {
       matchedVendor = await findOrCreateVendor(supabase, parsed.vendor_name);
-    } catch {
+    } catch (err) {
+      // Log so we can track why vendor linkage fails; don't fail the save —
+      // invoice still enters the review queue, just without a vendor_id.
+      console.warn(
+        `[save] findOrCreateVendor failed for "${parsed.vendor_name}": ${err instanceof Error ? err.message : err}`
+      );
       matchedVendor = null;
     }
   }

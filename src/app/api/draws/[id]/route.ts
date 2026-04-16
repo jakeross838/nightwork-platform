@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
 import {
   computeDrawLines,
   lessPreviousCertificatesForJob,
@@ -7,6 +8,8 @@ import {
 } from "@/lib/draw-calc";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -15,7 +18,15 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createServerClient();
+    // Service-role bypasses RLS so embeds like `cost_codes:cost_code_id (...)`
+    // return actual rows instead of null when user-session RLS evaluation
+    // is ambiguous. Auth gate still runs on the user-session client.
+    const userSb = createServerClient();
+    const { data: { user } } = await userSb.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const supabase = tryCreateServiceRoleClient() ?? userSb;
 
     const { data: draw, error } = await supabase
       .from("draws")

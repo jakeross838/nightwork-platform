@@ -22,6 +22,8 @@ import { timed } from "@/lib/perf-log";
  */
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 export const maxDuration = 30;
 
 const PM_REVIEW_STATUSES = ["pm_review", "ai_processed"];

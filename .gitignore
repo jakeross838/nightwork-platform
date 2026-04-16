@@ -43,3 +43,14 @@ skills-lock.json
 
 # screenshots (local only, never committed)
 /screenshots/
+
+# test invoices (local only — real client PDFs, never committed)
+/test-invoices/
+
+# smoke + E2E runtime logs (ephemeral, regenerated each run)
+/e2e-state.json
+/e2e-*.log
+/e2e-*-log.json
+/e2e-findings-running.md
+/smoke-test-probe*.json
+/smoke-test-results.json

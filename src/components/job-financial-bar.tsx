@@ -32,10 +32,20 @@ const SPENT_STATUSES = [
  * scrolling. Height is compact (roughly 60px) so it does not dominate the
  * tab content.
  */
-export default function JobFinancialBar({ jobId }: { jobId: string }) {
-  const [data, setData] = useState<JobFinancials | null>(null);
+export default function JobFinancialBar({
+  jobId,
+  preloaded,
+}: {
+  jobId: string;
+  preloaded?: JobFinancials | null;
+}) {
+  const [data, setData] = useState<JobFinancials | null>(preloaded ?? null);
 
   useEffect(() => {
+    if (preloaded) {
+      setData(preloaded);
+      return;
+    }
     let cancelled = false;
     async function load() {
       const [{ data: job }, { data: invRows }] = await Promise.all([
@@ -81,7 +91,7 @@ export default function JobFinancialBar({ jobId }: { jobId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [jobId]);
+  }, [jobId, preloaded]);
 
   return (
     <div

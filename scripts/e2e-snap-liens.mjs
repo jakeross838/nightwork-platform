@@ -1,0 +1,15 @@
+import { chromium } from 'playwright';
+import path from 'node:path';
+const BASE = 'http://localhost:3000';
+const OUT = path.resolve('screenshots');
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const page = await ctx.newPage();
+await page.goto(BASE + '/login', { waitUntil: 'networkidle' });
+await page.fill('input[type=email]', 'jake@rossbuilt.com');
+await page.fill('input[type=password]', 'RossBuilt2026!');
+await Promise.all([page.waitForURL('**/dashboard', { timeout: 15000 }).catch(()=>null), page.click('button[type=submit]')]);
+await page.goto(BASE + '/invoices/liens', { waitUntil: 'networkidle' });
+await page.waitForTimeout(3500);
+await page.screenshot({ path: path.join(OUT, 'e2e-10-lien-pending.png'), fullPage: true });
+await browser.close();

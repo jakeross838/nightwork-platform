@@ -60,6 +60,34 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
+  const [financialBarPreloaded, setFinancialBarPreloaded] = useState<{
+    original_contract: number;
+    approved_cos: number;
+    revised_contract: number;
+    billed_to_date: number;
+    percent_complete: number;
+    remaining: number;
+  } | null>(null);
+  const [overviewPreloaded, setOverviewPreloaded] = useState<{
+    budget_health: { total_lines: number; over_budget: number; under_committed: number };
+    open_items: {
+      pending_invoices_count: number;
+      pending_invoices_total: number;
+      draft_pos: number;
+      pending_cos: number;
+      pending_liens: number;
+    };
+    activity: Array<{
+      id: string; created_at: string; entity_type: string; action: string;
+      user_name: string | null; details: Record<string, unknown> | null;
+    }>;
+    payments: Array<{
+      id: string; vendor_id: string | null; vendor_name: string | null;
+      vendor_name_raw: string | null; total_amount: number; scheduled_payment_date: string | null;
+    }>;
+    billed_to_date: number;
+  } | null>(null);
+
   const refreshBudgetCount = useCallback(async (jobId: string) => {
     const { count } = await supabase
       .from("budget_lines")
@@ -71,35 +99,67 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.replace(`/login?redirect=/jobs/${params.id}`); return; }
+      // Single batched endpoint replaces the previous auth+profile+job+users+
+      // budget-count waterfall. Financial bar and overview cards now rehydrate
+      // from the same response instead of each firing their own queries.
+      const res = await fetch(`/api/jobs/${params.id}/overview`, { cache: "no-store" });
+      if (res.status === 401) {
+        router.replace(`/login?redirect=/jobs/${params.id}`);
+        return;
+      }
+      if (res.status === 404) {
+        setLoading(false);
+        return;
+      }
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
+      const data = await res.json() as {
+        membership_role: string;
+        job: Job;
+        pms: PmUser[];
+        financial_bar: NonNullable<typeof financialBarPreloaded>;
+        overview_cards: {
+          budget_health: { total_lines: number; over_budget: number; under_committed: number };
+          open_items: {
+            pending_invoices_count: number;
+            pending_invoices_total: number;
+            draft_pos: number;
+            pending_cos: number;
+            pending_liens: number;
+          };
+          activity: Array<{
+            id: string; created_at: string; entity_type: string; action: string;
+            user_name: string | null; details: Record<string, unknown> | null;
+          }>;
+          payments: Array<{
+            id: string; vendor_id: string | null; vendor_name: string | null;
+            vendor_name_raw: string | null; total_amount: number; scheduled_payment_date: string | null;
+          }>;
+        };
+        budget_count: number;
+      };
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      if (profile?.role !== "admin") {
+      if (data.membership_role !== "admin" && data.membership_role !== "owner") {
         setAuthorized(false);
         setLoading(false);
         return;
       }
       setAuthorized(true);
-
-      const [jobResult, pmResult] = await Promise.all([
-        supabase.from("jobs").select("*").eq("id", params.id).is("deleted_at", null).single(),
-        supabase.from("users").select("id, full_name").in("role", ["pm", "admin"]).is("deleted_at", null).order("full_name"),
-      ]);
-
-      if (jobResult.error || !jobResult.data) { setLoading(false); return; }
-      setJob(jobResult.data as Job);
-      setForm(jobResult.data as Job);
-      if (pmResult.data) setPms(pmResult.data as PmUser[]);
-      await refreshBudgetCount(params.id);
+      setJob(data.job);
+      setForm(data.job);
+      setPms(data.pms);
+      setBudgetCount(data.budget_count);
+      setFinancialBarPreloaded(data.financial_bar);
+      setOverviewPreloaded({
+        ...data.overview_cards,
+        billed_to_date: data.financial_bar.billed_to_date,
+      });
       setLoading(false);
     }
     load();
-  }, [params.id, router, refreshBudgetCount]);
+  }, [params.id, router]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -201,7 +261,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
           )}
         </div>
         <JobTabs jobId={job.id} active="overview" />
-        <JobFinancialBar jobId={job.id} />
+        <JobFinancialBar jobId={job.id} preloaded={financialBarPreloaded} />
 
         {!editing ? (
           <>
@@ -210,6 +270,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               originalContract={job.original_contract_amount}
               revisedContract={job.current_contract_amount}
               approvedCosTotal={job.approved_cos_total ?? 0}
+              preloaded={overviewPreloaded}
             />
 
             <section className="bg-brand-card border border-brand-border p-6 mt-4">

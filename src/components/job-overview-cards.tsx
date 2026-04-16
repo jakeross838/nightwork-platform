@@ -52,24 +52,42 @@ interface PaymentRow {
  * (last 10), and Upcoming Payments (next 30 days). Each derived value comes
  * from a single query — no N+1 reads.
  */
+export interface JobOverviewPreloaded {
+  budget_health: BudgetHealth;
+  open_items: OpenItems;
+  activity: ActivityRow[];
+  payments: PaymentRow[];
+  billed_to_date: number;
+}
+
 export default function JobOverviewCards({
   jobId,
   originalContract,
   revisedContract,
   approvedCosTotal,
+  preloaded,
 }: {
   jobId: string;
   originalContract: number;
   revisedContract: number;
   approvedCosTotal: number;
+  preloaded?: JobOverviewPreloaded | null;
 }) {
-  const [budgetHealth, setBudgetHealth] = useState<BudgetHealth | null>(null);
-  const [openItems, setOpenItems] = useState<OpenItems | null>(null);
-  const [activity, setActivity] = useState<ActivityRow[] | null>(null);
-  const [payments, setPayments] = useState<PaymentRow[] | null>(null);
-  const [billedToDate, setBilledToDate] = useState(0);
+  const [budgetHealth, setBudgetHealth] = useState<BudgetHealth | null>(preloaded?.budget_health ?? null);
+  const [openItems, setOpenItems] = useState<OpenItems | null>(preloaded?.open_items ?? null);
+  const [activity, setActivity] = useState<ActivityRow[] | null>(preloaded?.activity ?? null);
+  const [payments, setPayments] = useState<PaymentRow[] | null>(preloaded?.payments ?? null);
+  const [billedToDate, setBilledToDate] = useState(preloaded?.billed_to_date ?? 0);
 
   useEffect(() => {
+    if (preloaded) {
+      setBudgetHealth(preloaded.budget_health);
+      setOpenItems(preloaded.open_items);
+      setActivity(preloaded.activity);
+      setPayments(preloaded.payments);
+      setBilledToDate(preloaded.billed_to_date);
+      return;
+    }
     let cancelled = false;
     async function load() {
       // Budget health — revised, committed, invoiced per line.
@@ -239,7 +257,7 @@ export default function JobOverviewCards({
     return () => {
       cancelled = true;
     };
-  }, [jobId]);
+  }, [jobId, preloaded]);
 
   const percentComplete =
     revisedContract > 0
