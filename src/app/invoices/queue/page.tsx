@@ -956,14 +956,18 @@ export default function QueuePage() {
  {formatCents(inv.total_amount)}
  </span>
  {batchEnabled && (
+ <label
+ onClick={(e) => e.stopPropagation()}
+ className="flex items-center justify-center w-11 h-11 -mr-2 -my-2 cursor-pointer"
+ aria-label="Select invoice for batch action"
+ >
  <input
  type="checkbox"
  checked={selectedIds.has(inv.id)}
  onChange={() => toggleSelect(inv.id)}
- onClick={(e) => e.stopPropagation()}
- className="w-4 h-4 accent-teal cursor-pointer"
- aria-label="Select invoice for batch action"
+ className="w-5 h-5 accent-teal cursor-pointer"
  />
+ </label>
  )}
  </div>
  </div>
@@ -1358,42 +1362,50 @@ export default function QueuePage() {
  {/* Floating batch action bar */}
  {batchEnabled && selectedIds.size > 0 && (
  <div className="fixed bottom-0 left-0 right-0 z-50 bg-brand-surface/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 animate-fade-up">
- <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-3 flex-wrap">
- <div className="flex items-baseline gap-3">
+ <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+ <div className="flex items-baseline justify-between sm:justify-start gap-3">
  <span className="text-sm text-cream font-medium">
- {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""} selected
+ {selectedIds.size} selected
  </span>
  <span className="text-xs text-cream-dim">
- · Total: <span className="text-cream font-medium font-display">{formatCents(selectedTotalCents)}</span>
+ Total: <span className="text-cream font-medium font-display">{formatCents(selectedTotalCents)}</span>
  </span>
- </div>
- <div className="flex items-center gap-2">
  <button
  onClick={() => setSelectedIds(new Set())}
- className="px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border hover:border-brand-border-light transition-colors"
+ className="sm:hidden text-xs text-cream-dim hover:text-cream underline underline-offset-2"
+ >
+ Clear
+ </button>
+ </div>
+ <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-2">
+ <button
+ onClick={() => setSelectedIds(new Set())}
+ className="hidden sm:inline-flex px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border hover:border-brand-border-light transition-colors items-center justify-center"
  >
  Clear Selection
  </button>
  <button
  onClick={() => { setHoldNote(""); setShowHoldNoteModal(true); }}
  disabled={batchProcessing}
- className="px-4 py-2 text-sm font-medium bg-brass text-brand-bg hover:bg-brass-hover transition-colors disabled:opacity-50"
+ className="px-3 py-2.5 text-sm font-medium bg-brass text-brand-bg hover:bg-brass-hover transition-colors disabled:opacity-50"
  >
- Hold All
+ <span className="sm:hidden">Hold</span>
+ <span className="hidden sm:inline">Hold All</span>
  </button>
  <button
  onClick={() => { setDenyNote(""); setShowDenyNoteModal(true); }}
  disabled={batchProcessing}
- className="px-4 py-2 text-sm font-medium bg-status-danger text-white hover:bg-status-danger/90 transition-colors disabled:opacity-50"
+ className="px-3 py-2.5 text-sm font-medium bg-status-danger text-white hover:bg-status-danger/90 transition-colors disabled:opacity-50"
  >
- Deny All
+ <span className="sm:hidden">Deny</span>
+ <span className="hidden sm:inline">Deny All</span>
  </button>
  <button
  onClick={handleBatchApprove}
  disabled={batchProcessing}
- className="px-4 py-2 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors disabled:opacity-50"
+ className="px-3 py-2.5 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors disabled:opacity-50"
  >
- {batchProcessing ? "Processing..." : "Approve All"}
+ {batchProcessing ? "..." : <><span className="sm:hidden">Approve</span><span className="hidden sm:inline">Approve All</span></>}
  </button>
  </div>
  </div>

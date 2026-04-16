@@ -407,7 +407,7 @@ export default function DrawDetailPage() {
         </div>
       )}
 
-      <main className="print-area max-w-[1600px] mx-auto px-6 py-6">
+      <main className="print-area max-w-[1600px] mx-auto px-4 md:px-6 py-6">
         <Breadcrumbs
           items={[
             { label: "Draws", href: "/draws" },
@@ -498,28 +498,30 @@ export default function DrawDetailPage() {
           </div>
 
           {/* Right column with tabs */}
-          <div className="xl:col-span-3">
-            <div className="flex gap-1 mb-4 bg-brand-surface border border-brand-border p-1 w-fit">
-              <TabButton active={activeTab === "detail"} onClick={() => setActiveTab("detail")}>
-                Detail
-              </TabButton>
-              <TabButton active={activeTab === "compare"} onClick={() => setActiveTab("compare")}>
-                Compare
-              </TabButton>
-              <TabButton active={activeTab === "cover"} onClick={() => setActiveTab("cover")}>
-                Cover Letter
-              </TabButton>
-              <TabButton
-                active={activeTab === "lien-uploads"}
-                onClick={() => setActiveTab("lien-uploads")}
-              >
-                Lien Releases
-                {missingDocCount > 0 && (
-                  <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-status-danger text-white">
-                    {missingDocCount}
-                  </span>
-                )}
-              </TabButton>
+          <div className="xl:col-span-3 min-w-0">
+            <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 mb-4">
+              <div className="flex gap-1 bg-brand-surface border border-brand-border p-1 w-fit whitespace-nowrap">
+                <TabButton active={activeTab === "detail"} onClick={() => setActiveTab("detail")}>
+                  Detail
+                </TabButton>
+                <TabButton active={activeTab === "compare"} onClick={() => setActiveTab("compare")}>
+                  Compare
+                </TabButton>
+                <TabButton active={activeTab === "cover"} onClick={() => setActiveTab("cover")}>
+                  Cover Letter
+                </TabButton>
+                <TabButton
+                  active={activeTab === "lien-uploads"}
+                  onClick={() => setActiveTab("lien-uploads")}
+                >
+                  Lien Releases
+                  {missingDocCount > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-status-danger text-white">
+                      {missingDocCount}
+                    </span>
+                  )}
+                </TabButton>
+              </div>
             </div>
 
             {activeTab === "compare" && <DrawCompareView drawId={drawId} />}
@@ -556,7 +558,7 @@ export default function DrawDetailPage() {
               </div>
             )}
             <div className="mt-5 overflow-x-auto border border-brand-border">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[1100px] text-sm">
                 <thead>
                   <tr className="bg-brand-surface text-left">
                     <Th sticky>A — Item</Th>
@@ -644,7 +646,7 @@ export default function DrawDetailPage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto border border-brand-border">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[700px] text-sm">
                     <thead>
                       <tr className="bg-brand-surface text-left">
                         <Th>Vendor</Th>
@@ -693,7 +695,7 @@ export default function DrawDetailPage() {
               <div className="mt-8">
                 <p className="section-label">Included Invoices</p>
                 <div className="mt-3 overflow-x-auto border border-brand-border">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[500px] text-sm">
                     <thead>
                       <tr className="bg-brand-surface text-left">
                         <Th>Vendor</Th>

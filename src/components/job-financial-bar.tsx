@@ -88,7 +88,7 @@ export default function JobFinancialBar({ jobId }: { jobId: string }) {
       className="sticky top-[56px] z-30 -mx-4 md:-mx-6 px-4 md:px-6 py-2.5 bg-brand-card border-b border-brand-border mb-4"
       aria-label="Job financial summary"
     >
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4 text-[11px]">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 md:gap-4 text-[11px]">
         <Cell label="Original Contract" value={data ? formatCents(data.original_contract) : "—"} />
         <Cell
           label="Approved COs"

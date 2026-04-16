@@ -159,7 +159,7 @@ export default function DrawLienReleaseUploadList({
         </div>
       ) : (
         <div className="overflow-x-auto border border-brand-border">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[800px] text-sm">
             <thead>
               <tr className="bg-brand-surface text-left">
                 <Th>Vendor</Th>

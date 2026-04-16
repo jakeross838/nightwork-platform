@@ -264,7 +264,7 @@ export default function WorkflowSettingsForm({ settings }: Props) {
       </Section>
 
       <div
-        className={`sticky bottom-0 -mx-6 px-6 py-4 bg-brand-bg/95 backdrop-blur border-t border-brand-border flex items-center gap-3 transition-opacity ${
+        className={`sticky bottom-0 -mx-4 px-4 md:-mx-6 md:px-6 py-4 bg-brand-bg/95 backdrop-blur border-t border-brand-border flex items-center gap-3 transition-opacity ${
           dirty || message ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
@@ -333,20 +333,23 @@ function Toggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
-      <div className="flex-1 min-w-0">
-        <div className="text-sm text-cream font-medium">{label}</div>
-        <div className="text-xs text-cream-dim mt-0.5 leading-relaxed">
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-start justify-between gap-4 py-4 sm:py-3 first:pt-0 last:pb-0 text-left"
+    >
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm text-cream font-medium">{label}</span>
+        <span className="block text-xs text-cream-dim mt-0.5 leading-relaxed">
           {description}
-        </div>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors border ${
+        </span>
+      </span>
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors border mt-0.5 ${
           checked
             ? "bg-[var(--org-primary)] border-[var(--org-primary)]"
             : "bg-brand-border/40 border-brand-border"
@@ -357,8 +360,8 @@ function Toggle({
             checked ? "translate-x-6" : "translate-x-1"
           }`}
         />
-      </button>
-    </div>
+      </span>
+    </button>
   );
 }
 

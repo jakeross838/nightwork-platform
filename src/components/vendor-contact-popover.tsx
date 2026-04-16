@@ -83,7 +83,7 @@ export default function VendorContactPopover({
         <div
           role="dialog"
           aria-label="Vendor contact info"
-          className="absolute left-0 top-full mt-2 z-[90] w-72 bg-brand-card border border-brand-border shadow-xl p-3 text-sm animate-fade-up"
+          className="fixed left-3 right-3 top-1/2 -translate-y-1/2 z-[90] bg-brand-card border border-brand-border shadow-xl p-3 text-sm animate-fade-up sm:absolute sm:left-0 sm:right-auto sm:top-full sm:translate-y-0 sm:mt-2 sm:w-72"
           onClick={(e) => e.stopPropagation()}
         >
           <p className="font-medium text-cream truncate">

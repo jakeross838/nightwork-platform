@@ -157,14 +157,14 @@ export default function PaymentBatchByVendorPanel({
             Pay every unpaid invoice for one or more vendors at once. Reference is per-vendor.
           </p>
         </div>
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-sm">
           <label className="flex items-center gap-2 text-cream-dim">
             Payment date
             <input
               type="date"
               value={paymentDate}
               onChange={(e) => setPaymentDate(e.target.value)}
-              className="px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
+              className="flex-1 sm:flex-none px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
             />
           </label>
           <label className="flex items-center gap-2 text-cream-dim">
@@ -172,7 +172,7 @@ export default function PaymentBatchByVendorPanel({
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as Method)}
-              className="px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
+              className="flex-1 sm:flex-none px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
             >
               <option value="check">Check</option>
               <option value="ach">ACH</option>
@@ -189,7 +189,7 @@ export default function PaymentBatchByVendorPanel({
         </div>
       ) : (
         <div className="overflow-x-auto border border-brand-border">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="bg-brand-surface text-left">
                 <th className="py-3 px-4 w-10">
@@ -197,6 +197,7 @@ export default function PaymentBatchByVendorPanel({
                     type="checkbox"
                     checked={selected.size === groups.length}
                     onChange={toggleAll}
+                    className="w-5 h-5 accent-teal"
                   />
                 </th>
                 <Th>Vendor</Th>
@@ -267,7 +268,7 @@ export default function PaymentBatchByVendorPanel({
       )}
 
       {selected.size > 0 && (
-        <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-brand-bg/95 backdrop-blur border-t border-teal/40 flex items-center justify-between gap-3">
+        <div className="sticky bottom-0 -mx-4 px-4 sm:-mx-6 sm:px-6 py-4 bg-brand-bg/95 backdrop-blur border-t border-teal/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-sm text-cream">
             <span className="font-medium">Pay {selected.size} vendors</span> ·{" "}
             <span className="text-cream-dim">{selectedInvoiceCount} invoices</span> · Total{" "}
@@ -275,7 +276,7 @@ export default function PaymentBatchByVendorPanel({
           </p>
           <button
             onClick={() => setShowConfirm(true)}
-            className="px-5 py-2 bg-teal hover:bg-teal-hover text-white text-sm font-medium uppercase tracking-wider"
+            className="w-full sm:w-auto px-5 py-2.5 bg-teal hover:bg-teal-hover text-white text-sm font-medium uppercase tracking-wider"
           >
             Process Batch
           </button>
@@ -329,8 +330,8 @@ function ConfirmModal({
           Payment date: <span className="text-cream">{formatDate(paymentDate)}</span> · {groups.length}{" "}
           vendors · {formatCents(total)}
         </p>
-        <div className="border border-brand-border max-h-72 overflow-y-auto">
-          <table className="w-full text-sm">
+        <div className="border border-brand-border max-h-72 overflow-auto">
+          <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="bg-brand-surface text-left sticky top-0">
                 <Th>Vendor</Th>

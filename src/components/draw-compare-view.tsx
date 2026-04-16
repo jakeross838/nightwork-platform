@@ -130,7 +130,7 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
 
       {/* Per-line comparison */}
       <div className="overflow-x-auto border border-brand-border">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="bg-brand-surface text-left">
               <Th>Code</Th>

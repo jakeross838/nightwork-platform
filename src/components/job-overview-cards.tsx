@@ -252,7 +252,7 @@ export default function JobOverviewCards({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Contract Summary */}
         <Card title="Contract Summary">
-          <div className="grid grid-cols-3 gap-3 text-[11px]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
             <MiniStat label="Original" value={formatCents(originalContract)} />
             <MiniStat
               label="Approved COs"
@@ -346,11 +346,14 @@ export default function JobOverviewCards({
         ) : (
           <ul className="divide-y divide-brand-row-border">
             {activity.map((a) => (
-              <li key={a.id} className="py-2 flex items-start gap-3 text-[12px]">
-                <span className="text-cream-dim tabular-nums shrink-0 w-32">
+              <li
+                key={a.id}
+                className="py-2 flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 text-[12px]"
+              >
+                <span className="text-cream-dim tabular-nums shrink-0 sm:w-32">
                   {formatActivityTs(a.created_at)}
                 </span>
-                <span className="text-cream flex-1">
+                <span className="text-cream flex-1 break-words">
                   <span className="font-medium">{formatEntityAction(a.entity_type, a.action)}</span>
                   {summarizeDetails(a.details) && (
                     <span className="text-cream-dim"> · {summarizeDetails(a.details)}</span>
@@ -372,15 +375,20 @@ export default function JobOverviewCards({
         ) : (
           <ul className="divide-y divide-brand-row-border">
             {payments.map((p) => (
-              <li key={p.id} className="py-2 flex items-center gap-3 text-[12px]">
-                <span className="text-cream flex-1">
+              <li
+                key={p.id}
+                className="py-2 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-[12px]"
+              >
+                <span className="text-cream sm:flex-1 truncate">
                   {p.vendor_name ?? p.vendor_name_raw ?? "—"}
                 </span>
-                <span className="text-cream-dim tabular-nums w-24 text-right">
-                  {formatCents(p.total_amount)}
-                </span>
-                <span className="text-cream-dim tabular-nums w-28 text-right">
-                  {formatDate(p.scheduled_payment_date)}
+                <span className="flex items-center justify-between gap-3 sm:gap-3">
+                  <span className="text-cream-dim tabular-nums sm:w-24 sm:text-right">
+                    {formatCents(p.total_amount)}
+                  </span>
+                  <span className="text-cream-dim tabular-nums sm:w-28 sm:text-right">
+                    {formatDate(p.scheduled_payment_date)}
+                  </span>
                 </span>
               </li>
             ))}

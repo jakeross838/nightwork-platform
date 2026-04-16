@@ -83,15 +83,16 @@ export default function EditableCell({
     return (
       <button
         type="button"
+        onClick={() => setEditing(true)}
         onDoubleClick={() => setEditing(true)}
         className={`group relative w-full ${
           alignRight ? "text-right" : "text-left"
-        } hover:bg-teal/5 px-1 rounded-sm transition-colors cursor-text`}
-        aria-label={ariaLabel ?? "Editable cell — double-click to edit"}
-        title="Double-click to edit"
+        } hover:bg-teal/5 px-1 py-1 sm:py-0 rounded-sm transition-colors cursor-text`}
+        aria-label={ariaLabel ?? "Editable cell — tap to edit"}
+        title="Tap to edit (or double-click)"
       >
-        <span className="tabular-nums">{format(value)}</span>
-        <span className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-cream-dim pointer-events-none">
+        <span className="tabular-nums pr-4">{format(value)}</span>
+        <span className="absolute right-1 top-1/2 -translate-y-1/2 opacity-100 md:opacity-0 md:group-hover:opacity-100 text-cream-dim pointer-events-none">
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 013.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>

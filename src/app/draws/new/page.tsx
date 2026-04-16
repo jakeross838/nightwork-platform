@@ -495,7 +495,7 @@ export default function NewDrawWizardPage() {
         onClick={() => {
           if (n <= step || (jobId && n <= 4)) setStep(n);
         }}
-        className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-colors ${
+        className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors ${
           active
             ? "bg-teal text-white"
             : done
@@ -503,7 +503,10 @@ export default function NewDrawWizardPage() {
               : "bg-brand-surface text-cream-muted"
         }`}
       >
-        <span className="font-mono">Step {n} of 4</span>
+        <span className="font-mono">
+          <span className="sm:hidden">{n}/4</span>
+          <span className="hidden sm:inline">Step {n} of 4</span>
+        </span>
         <span className="hidden md:inline">·</span>
         <span className="hidden md:inline">{label}</span>
       </button>
@@ -513,8 +516,8 @@ export default function NewDrawWizardPage() {
   return (
     <div className="min-h-screen">
       <NavBar />
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-2">
+      <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
           <h2 className="font-display text-2xl text-cream">Create New Draw</h2>
           {jobId && draftId && (
             <span className="text-xs text-cream-dim">Draft auto-save enabled</span>
@@ -621,7 +624,7 @@ export default function NewDrawWizardPage() {
         {step === 2 && (
           <div className="space-y-6 animate-fade-up">
             <div className="bg-brand-card border border-brand-border p-6 space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <DateField label="Application Date" value={appDate} onChange={setAppDate} />
                 <DateField label="Period Start" value={periodStart} onChange={setPeriodStart} />
                 <DateField label="Period End" value={periodEnd} onChange={setPeriodEnd} />
@@ -636,25 +639,25 @@ export default function NewDrawWizardPage() {
               </div>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(1)}
-                className="px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
               >
                 Back
               </button>
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
                 >
                   Save Draft
                 </button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={!periodStart || !periodEnd}
-                  className="px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
                 >
                   Next: Review Line Items
                 </button>
@@ -676,7 +679,7 @@ export default function NewDrawWizardPage() {
                   {selected.size} of {periodInvoices.length} invoice(s) selected
                 </p>
                 <div className="overflow-x-auto border border-brand-border max-h-72">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[520px] text-sm">
                     <thead>
                       <tr className="bg-brand-surface text-left sticky top-0">
                         <th className="py-2 px-3 w-8">
@@ -743,7 +746,7 @@ export default function NewDrawWizardPage() {
                 )}
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[900px] text-sm">
                   <thead>
                     <tr className="bg-brand-surface text-left">
                       <Th>Code</Th>
@@ -812,25 +815,25 @@ export default function NewDrawWizardPage() {
               </div>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(2)}
-                className="px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
               >
                 Back
               </button>
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
                 >
                   Save Draft
                 </button>
                 <button
                   onClick={() => setStep(4)}
                   disabled={selected.size === 0}
-                  className="px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
                 >
                   Next: Summary
                 </button>
@@ -889,7 +892,7 @@ export default function NewDrawWizardPage() {
               <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3">
                 Draw Details
               </p>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                 <div>
                   <div className="text-cream-dim">Job</div>
                   <div className="text-cream">{preview.job.name}</div>
@@ -907,25 +910,25 @@ export default function NewDrawWizardPage() {
               </div>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(3)}
-                className="px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
               >
                 Back
               </button>
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
                 >
                   Save Draft
                 </button>
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="px-8 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-8 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
                 >
                   {submitting ? "Creating…" : "Create Draw"}
                 </button>

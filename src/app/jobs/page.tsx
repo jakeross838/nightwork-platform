@@ -264,69 +264,129 @@ export default function JobsPage() {
             />
           )
         ) : (
-          <div className="border border-brand-border bg-brand-card overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
-                  <th className="text-left px-4 py-3 font-medium w-8" aria-label="Health"></th>
-                  <th className="text-left px-4 py-3 font-medium">Name</th>
-                  <th className="text-left px-4 py-3 font-medium">Client / PM</th>
-                  <th className="text-right px-4 py-3 font-medium">% Complete</th>
-                  <th className="text-right px-4 py-3 font-medium">Budget Used</th>
-                  <th className="text-center px-4 py-3 font-medium">Open Invoices</th>
-                  <th className="text-left px-4 py-3 font-medium">Last Activity</th>
-                  <th className="text-left px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((j) => (
-                  <tr
-                    key={j.id}
-                    className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface cursor-pointer transition-colors"
-                    onClick={() => router.push(`/jobs/${j.id}`)}
-                  >
-                    <td className="px-4 py-3">
+          <>
+            {/* Mobile card view (< md) */}
+            <div className="md:hidden space-y-3">
+              {filtered.map((j) => (
+                <Link
+                  key={j.id}
+                  href={`/jobs/${j.id}`}
+                  className="block border border-brand-border bg-brand-card p-4 active:bg-brand-surface transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1.5">
                       <HealthDot health={j.health} reasons={j.health_reasons} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-cream font-medium">{j.name}</div>
-                      <div className="text-xs text-cream-dim">{j.address ?? "—"}</div>
-                    </td>
-                    <td className="px-4 py-3 text-cream-muted">
-                      <div>{j.client_name ?? "—"}</div>
-                      <div className="text-xs text-cream-dim">PM: {j.pm_name ?? "—"}</div>
-                    </td>
-                    <td className="px-4 py-3 text-right text-cream tabular-nums">
-                      {formatPercent(j.pct_complete)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      <span className={j.budget_used_pct > 100 ? "text-status-danger" : "text-cream"}>
-                        {formatPercent(j.budget_used_pct)}
-                      </span>
-                      <div className="text-[10px] text-cream-dim">
-                        {formatCents(j.invoiced_total)} / {formatCents(j.budget_total)}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-cream font-medium truncate">{j.name}</div>
+                          <div className="text-xs text-cream-dim truncate">{j.address ?? "—"}</div>
+                        </div>
+                        <StatusBadge status={j.status} />
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {j.open_invoices > 0 ? (
-                        <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium border ${
-                          j.oldest_invoice_days >= 7 ? "border-status-danger text-status-danger" : "border-brass text-brass"
-                        }`}>
-                          {j.open_invoices}
-                        </span>
-                      ) : (
-                        <span className="text-cream-dim text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-cream-muted text-xs">
-                      {j.last_activity_at ? formatRelativeTime(j.last_activity_at) : formatDate(j.contract_date)}
-                    </td>
-                    <td className="px-4 py-3"><StatusBadge status={j.status} /></td>
+                      <div className="mt-2 text-xs text-cream-muted">
+                        <span>{j.client_name ?? "—"}</span>
+                        <span className="text-cream-dim"> · PM: {j.pm_name ?? "—"}</span>
+                      </div>
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Complete</div>
+                          <div className="text-cream tabular-nums">{formatPercent(j.pct_complete)}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Budget Used</div>
+                          <div className={`tabular-nums ${j.budget_used_pct > 100 ? "text-status-danger" : "text-cream"}`}>
+                            {formatPercent(j.budget_used_pct)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Open Invoices</div>
+                          <div className="text-cream tabular-nums">
+                            {j.open_invoices > 0 ? (
+                              <span className={j.oldest_invoice_days >= 7 ? "text-status-danger" : "text-brass"}>
+                                {j.open_invoices}
+                              </span>
+                            ) : (
+                              <span className="text-cream-dim">—</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-[10px] text-cream-dim">
+                        {j.last_activity_at ? `Active ${formatRelativeTime(j.last_activity_at)}` : `Contract ${formatDate(j.contract_date)}`}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Desktop table view (>= md) */}
+            <div className="hidden md:block border border-brand-border bg-brand-card overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
+                    <th className="text-left px-4 py-3 font-medium w-8" aria-label="Health"></th>
+                    <th className="text-left px-4 py-3 font-medium">Name</th>
+                    <th className="text-left px-4 py-3 font-medium">Client / PM</th>
+                    <th className="text-right px-4 py-3 font-medium">% Complete</th>
+                    <th className="text-right px-4 py-3 font-medium">Budget Used</th>
+                    <th className="text-center px-4 py-3 font-medium">Open Invoices</th>
+                    <th className="text-left px-4 py-3 font-medium">Last Activity</th>
+                    <th className="text-left px-4 py-3 font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map((j) => (
+                    <tr
+                      key={j.id}
+                      className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface cursor-pointer transition-colors"
+                      onClick={() => router.push(`/jobs/${j.id}`)}
+                    >
+                      <td className="px-4 py-3">
+                        <HealthDot health={j.health} reasons={j.health_reasons} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-cream font-medium">{j.name}</div>
+                        <div className="text-xs text-cream-dim">{j.address ?? "—"}</div>
+                      </td>
+                      <td className="px-4 py-3 text-cream-muted">
+                        <div>{j.client_name ?? "—"}</div>
+                        <div className="text-xs text-cream-dim">PM: {j.pm_name ?? "—"}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right text-cream tabular-nums">
+                        {formatPercent(j.pct_complete)}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        <span className={j.budget_used_pct > 100 ? "text-status-danger" : "text-cream"}>
+                          {formatPercent(j.budget_used_pct)}
+                        </span>
+                        <div className="text-[10px] text-cream-dim">
+                          {formatCents(j.invoiced_total)} / {formatCents(j.budget_total)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {j.open_invoices > 0 ? (
+                          <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium border ${
+                            j.oldest_invoice_days >= 7 ? "border-status-danger text-status-danger" : "border-brass text-brass"
+                          }`}>
+                            {j.open_invoices}
+                          </span>
+                        ) : (
+                          <span className="text-cream-dim text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-cream-muted text-xs">
+                        {j.last_activity_at ? formatRelativeTime(j.last_activity_at) : formatDate(j.contract_date)}
+                      </td>
+                      <td className="px-4 py-3"><StatusBadge status={j.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </main>
     </div>

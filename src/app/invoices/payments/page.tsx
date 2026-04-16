@@ -343,7 +343,7 @@ export default function PaymentsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto border border-brand-border">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[1100px] text-sm">
                   <thead>
                     <tr className="bg-brand-surface text-left">
                       <th className="py-3 px-4 w-10">
@@ -351,7 +351,7 @@ export default function PaymentsPage() {
                           type="checkbox"
                           checked={selected.size === filtered.length}
                           onChange={toggleAll}
-                          className="rounded"
+                          className="rounded w-5 h-5 accent-teal"
                         />
                       </th>
                       <Th>Vendor</Th>
@@ -423,7 +423,7 @@ export default function PaymentsPage() {
                 </p>
                 {aging[b].rows.length > 0 && (
                   <div className="overflow-x-auto border border-brand-border">
-                    <table className="w-full text-sm">
+                    <table className="w-full min-w-[700px] text-sm">
                       <thead>
                         <tr className="bg-brand-surface text-left">
                           <Th>Vendor</Th>

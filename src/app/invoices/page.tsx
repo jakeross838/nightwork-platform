@@ -539,10 +539,10 @@ export default function AllInvoicesPage() {
 
  {filtered.length > 0 && (
  <div className="overflow-x-auto border border-brand-border animate-fade-up">
- <table className="w-full text-sm">
+ <table className="w-full min-w-[1100px] text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("vendor")}>
+ <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors sticky left-0 bg-brand-surface z-10" onClick={() => toggleSort("vendor")}>
  Vendor<SortArrow active={sortKey === "vendor"} dir={sortDir} />
  </th>
  <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Inv #</th>
@@ -569,12 +569,12 @@ export default function AllInvoicesPage() {
  <tbody>
  {filtered.map((inv) => (
  <tr key={inv.id}
- className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+ className="group border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
  onClick={() => {
  const reviewable = ["pm_review", "ai_processed"].includes(inv.status);
  window.location.href = reviewable ? `/invoices/${inv.id}` : `/invoices/${inv.id}`;
  }}>
- <td className="py-3 px-4 text-cream font-medium">
+ <td className="py-3 px-4 text-cream font-medium sticky left-0 bg-brand-card group-hover:bg-brand-elevated/50 z-[1]">
  <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {isUnknownVendor(inv) && (

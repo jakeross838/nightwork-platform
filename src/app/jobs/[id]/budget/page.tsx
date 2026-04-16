@@ -758,14 +758,14 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         ) : (
           <>
             {/* Toolbar */}
-            <div className="mb-3 flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <div className="mb-3 space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+              <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs">
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search code, description, category…"
-                  className="w-full pl-8 pr-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream placeholder:text-cream-dim focus:outline-none focus:border-teal"
+                  className="w-full pl-8 pr-2 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder:text-cream-dim focus:outline-none focus:border-teal"
                 />
                 <svg
                   className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-cream-dim"
@@ -782,60 +782,62 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   />
                 </svg>
               </div>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
-                aria-label="Filter by category"
-              >
-                <option value="">All categories</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
-                aria-label="Filter by status"
-              >
-                {(Object.keys(STATUS_FILTER_LABELS) as StatusFilter[]).map((k) => (
-                  <option key={k} value={k}>
-                    {STATUS_FILTER_LABELS[k]}
-                  </option>
-                ))}
-              </select>
-              <label className="flex items-center gap-2 text-[13px] text-cream cursor-pointer select-none">
+              <div className="grid grid-cols-2 gap-2 sm:contents">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="px-2 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  aria-label="Filter by category"
+                >
+                  <option value="">All categories</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                  className="px-2 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  aria-label="Filter by status"
+                >
+                  {(Object.keys(STATUS_FILTER_LABELS) as StatusFilter[]).map((k) => (
+                    <option key={k} value={k}>
+                      {STATUS_FILTER_LABELS[k]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-[13px] text-cream cursor-pointer select-none min-h-[44px] sm:min-h-0">
                 <input
                   type="checkbox"
                   checked={activeOnly}
                   onChange={(e) => setActiveOnly(e.target.checked)}
-                  className="accent-teal"
+                  className="accent-teal w-4 h-4"
                 />
                 Active only
               </label>
 
-              <span className="text-[12px] text-cream-dim tabular-nums">
+              <span className="block text-[12px] text-cream-dim tabular-nums">
                 Showing {filteredRows.length} of {rows.length} line
                 {rows.length === 1 ? "" : "s"}
+                {filtersActive && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="ml-3 text-[12px] text-cream-dim hover:text-cream underline underline-offset-2"
+                  >
+                    Clear all filters
+                  </button>
+                )}
               </span>
-              {filtersActive && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="text-[12px] text-cream-dim hover:text-cream underline underline-offset-2"
-                >
-                  Clear all filters
-                </button>
-              )}
 
-              <div className="ml-auto flex items-center gap-2 flex-wrap">
+              <div className="sm:ml-auto flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setViewMode(viewMode === "detail" ? "compare" : "detail")}
-                  className={`text-[12px] px-2 py-1 border transition-colors ${
+                  className={`text-[12px] px-3 py-2 border transition-colors ${
                     viewMode === "compare"
                       ? "bg-teal text-white border-teal"
                       : "border-brand-border text-cream hover:bg-brand-surface"
@@ -849,7 +851,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   type="button"
                   onClick={handleExport}
                   disabled={exporting}
-                  className="text-[12px] px-2 py-1 border border-brand-border text-cream hover:bg-brand-surface disabled:opacity-60 transition-colors"
+                  className="text-[12px] px-3 py-2 border border-brand-border text-cream hover:bg-brand-surface disabled:opacity-60 transition-colors"
                   title="Download budget as Excel (.xlsx)"
                 >
                   {exporting ? "Exporting…" : "Export Excel"}
@@ -859,14 +861,14 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                     <button
                       type="button"
                       onClick={collapseAll}
-                      className="text-[12px] px-2 py-1 border border-brand-border text-cream hover:bg-brand-surface transition-colors"
+                      className="text-[12px] px-3 py-2 border border-brand-border text-cream hover:bg-brand-surface transition-colors"
                     >
                       Collapse All
                     </button>
                     <button
                       type="button"
                       onClick={expandAll}
-                      className="text-[12px] px-2 py-1 border border-brand-border text-cream hover:bg-brand-surface transition-colors"
+                      className="text-[12px] px-3 py-2 border border-brand-border text-cream hover:bg-brand-surface transition-colors"
                     >
                       Expand All
                     </button>
@@ -885,7 +887,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
               <CompareTable rows={filteredRows} />
             ) : (
               <div className="bg-brand-card border border-brand-border overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[1100px] text-sm">
                   <thead>
                     <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
                       <th className="text-left px-3 py-3 font-medium sticky left-0 bg-brand-surface/90 z-10">Code</th>
@@ -1435,7 +1437,7 @@ function CompareTable({ rows }: { rows: BudgetRow[] }) {
   // background color based on variance band.
   return (
     <div className="bg-brand-card border border-brand-border overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full min-w-[700px] text-sm">
         <thead>
           <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
             <th className="text-left px-3 py-3 font-medium sticky left-0 bg-brand-surface/90 z-10">Code</th>
