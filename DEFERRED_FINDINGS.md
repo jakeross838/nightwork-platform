@@ -42,3 +42,20 @@ needs the same workaround.
 budget_lines, cost_codes, draws. Likely missing policies for
 embedded-read scenarios. Fix policies, then remove service-role
 fallback across the 6 routes.
+
+## F-002a: "Owner" role missing from RLS SELECT policies
+**Discovered:** Phase C screenshot blocker
+**Tables affected:** draws (confirmed). Likely also: jobs, invoices,
+budget_lines, change_orders — needs full audit.
+**Issue:** RLS SELECT policies grant access to "admin" and "pm on
+own jobs" but not "owner" role. In dev this is masked by service-role
+fallback. In production, owner-role users would hit 500s on any
+route that doesn't use service-role.
+**Impact:** Production-blocking for any deploy where owner-role
+users need to view draws/jobs/invoices.
+**Severity:** HIGH for production.
+**Recommended fix:** Audit all RLS policies on multi-tenant tables.
+Add "owner" role to SELECT policies wherever "admin" appears.
+Should be a single migration: 00039_owner_rls_audit.sql.
+**Recommended timing:** Before deploy to nightwork.build. Not
+blocking dev work.
