@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, daysAgo, formatDateTime } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
-import Breadcrumbs from "@/components/breadcrumbs";
+import FinancialViewTabs from "@/components/financial-view-tabs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
 
@@ -52,7 +52,7 @@ export default function QaQueuePage() {
  <div className="min-h-screen">
  <NavBar />
  <main className="max-w-[1600px] mx-auto px-6 py-8">
- <Breadcrumbs items={[{ label: "Invoices", href: "/invoices" }, { label: "Accounting QA" }]} />
+ <FinancialViewTabs active="qa" />
  <div className="flex items-center justify-between mb-6">
  <div>
  <h2 className="font-display text-2xl text-cream">Accounting QA</h2>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import NavBar from "@/components/nav-bar";
-import Breadcrumbs from "@/components/breadcrumbs";
+import FinancialViewTabs from "@/components/financial-view-tabs";
 import PaymentBatchByVendorPanel from "@/components/payment-batch-by-vendor-panel";
 
 interface PaymentInvoice {
@@ -187,7 +187,7 @@ export default function PaymentsPage() {
     <div className="min-h-screen">
       <NavBar />
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
-        <Breadcrumbs items={[{ label: "Invoices", href: "/invoices" }, { label: "Payment Tracking" }]} />
+        <FinancialViewTabs active="payments" />
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
             <h2 className="font-display text-2xl text-cream">Payment Tracking</h2>
