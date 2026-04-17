@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import NavBar from "@/components/nav-bar";
-import SettingsTabs from "@/components/settings-tabs";
-import Breadcrumbs from "@/components/breadcrumbs";
+import AdminSidebar, { AdminMobileNav } from "@/components/admin-sidebar";
 import { getCurrentMembership } from "@/lib/org/session";
 
 export const dynamic = "force-dynamic";
@@ -18,16 +17,18 @@ export default async function SettingsLayout({
     <div className="min-h-screen flex flex-col">
       <NavBar />
       <main className="flex-1">
-        <div className="max-w-[1200px] mx-auto px-6 py-8">
-          <Breadcrumbs items={[{ label: "Settings" }]} />
+        <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
           <header className="mb-6">
-            <h1 className="font-display text-3xl text-cream tracking-tight">Settings</h1>
+            <h1 className="font-display text-3xl text-cream tracking-tight">Admin</h1>
             <p className="mt-1 text-sm text-cream-dim">
-              Manage your organization, team, financial defaults, and cost codes.
+              Settings, reference data, and system tools.
             </p>
           </header>
-          <SettingsTabs role={membership.role} />
-          <div className="mt-6">{children}</div>
+          <AdminMobileNav role={membership.role} />
+          <div className="flex gap-8">
+            <AdminSidebar role={membership.role} />
+            <div className="flex-1 min-w-0">{children}</div>
+          </div>
         </div>
       </main>
     </div>

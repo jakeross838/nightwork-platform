@@ -144,9 +144,11 @@ export default function NavBar() {
   const isFinancialActive =
     pathname.startsWith("/financial") ||
     pathname.startsWith("/invoices") ||
-    pathname.startsWith("/draws") ||
+    pathname.startsWith("/draws");
+  const isAdminActive =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/settings") ||
     pathname.startsWith("/vendors");
-  const isAdminActive = pathname.startsWith("/admin") || pathname.startsWith("/settings");
 
   const role = profile?.role ?? null;
   const show = {

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import NavBar from "@/components/nav-bar";
+import AdminSidebar, { AdminMobileNav } from "@/components/admin-sidebar";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
@@ -25,11 +26,14 @@ interface InvoiceAgg {
   total: number;
 }
 
+type UserRole = "owner" | "admin" | "pm" | "accounting";
+
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [invoiceAgg, setInvoiceAgg] = useState<Record<string, InvoiceAgg>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [userRole, setUserRole] = useState<UserRole>("admin");
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -39,6 +43,12 @@ export default function VendorsPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    // Fetch role for admin sidebar
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: m } = await supabase.from("org_members").select("role").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+      if (m?.role) setUserRole(m.role as UserRole);
+    }
     const [vendorRes, invoiceRes] = await Promise.all([
       supabase
         .from("vendors")
@@ -120,7 +130,15 @@ export default function VendorsPage() {
   return (
     <div className="min-h-screen">
       <NavBar />
-      <main className="max-w-[1600px] mx-auto px-6 py-8">
+      <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
+        <header className="mb-6">
+          <h1 className="font-display text-3xl text-cream tracking-tight">Admin</h1>
+          <p className="mt-1 text-sm text-cream-dim">Settings, reference data, and system tools.</p>
+        </header>
+        <AdminMobileNav role={userRole} />
+        <div className="flex gap-8">
+          <AdminSidebar role={userRole} />
+          <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="font-display text-2xl text-cream">Vendors</h2>
@@ -291,6 +309,8 @@ export default function VendorsPage() {
             </div>
           </div>
         )}
+          </div>
+        </div>
       </main>
     </div>
   );
