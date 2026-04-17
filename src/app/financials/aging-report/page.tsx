@@ -2,19 +2,14 @@
 
 import Link from "next/link";
 import NavBar from "@/components/nav-bar";
-import Breadcrumbs from "@/components/breadcrumbs";
+import FinancialViewTabs from "@/components/financial-view-tabs";
 
 export default function AgingReportPage() {
   return (
     <div className="min-h-screen">
       <NavBar />
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
-        <Breadcrumbs
-          items={[
-            { label: "Financials", href: "/financials" },
-            { label: "Aging Report" },
-          ]}
-        />
+        <FinancialViewTabs active="aging" />
         <div className="mb-6">
           <h1 className="font-display text-2xl text-cream">Aging Report</h1>
           <p className="text-sm text-cream-dim mt-1">
@@ -32,13 +27,7 @@ export default function AgingReportPage() {
               href="/invoices/payments"
               className="inline-flex items-center gap-1.5 px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
             >
-              Payment Tracking →
-            </Link>
-            <Link
-              href="/financials"
-              className="inline-flex items-center gap-1.5 px-4 py-2 border border-brand-border text-cream hover:bg-brand-surface text-sm font-medium transition-colors"
-            >
-              Back to Financials
+              Payment Tracking
             </Link>
           </div>
         </div>
