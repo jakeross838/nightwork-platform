@@ -138,28 +138,93 @@ calculations once baseline is set.
 **Blocks:** Producing a penny-exact G702 matching source pay apps
 for mid-project imported jobs.
 
-## F-007: Budget line import rounding/completeness gap
-**Discovered:** Phase E comparison vs Dewberry Pay App #10
-**Impact:** Dewberry's G703 budget lines sum to $2,137,737.04 in
-Nightwork vs $2,151,041.15 in Diane's G703. Delta = $13,304.11
-across ~142 cost codes. Average ~$94/line, so this is not sub-cent
-rounding — something systematic.
+## F-007: CLOSED — billing gap is multi-source, not a code bug
 
-**Root cause:** Unknown. Candidates:
-- Specific cost code category excluded or misparsed
-- Missing line items (Diane's G703 has rows the importer skipped)
-- Decimal parsing losing precision on specific line values
-- Duplicate or collapsed cost codes
+**Updated:** 2026-04-17
+**Original concern:** $13,304.11 delta between Nightwork
+total_completed_to_date ($2,137,737.04) and Diane's Pay App #10
+total_to_date ($2,151,041.15).
 
-**Recommended next step:** Export Dewberry budget_lines from
-Nightwork and compare row-by-row against Diane's G703 sheet.
-Identify which specific lines are off.
+**Revised root cause (fully reconciled):**
+The $13K was never a budget import or parser bug. Row-by-row
+comparison found 141/142 budget lines match Diane's G703 exactly.
+The gap is entirely in "this_period" billing differences:
 
-**Severity:** Medium. $13K is real money — not cosmetic.
+| Source | Amount | Notes |
+|--------|--------|-------|
+| Internal billings (DRAFT) | -$19,000 | Supervision $4K + Fee $15K billed by Diane, not yet attached to Draw #1 in NW |
+| Roofing invoice mismatch | +$5,757 | NW has $14,345 (Avery), Diane has $8,588 this period |
+| Rounding in previous_apps | ~$61 | Sub-dollar across 142 lines |
+| **Net** | **-$13,304** | Matches the reported delta |
 
-**Mitigation:** For Dewberry, can manually adjust budget_lines to
-match Diane before submitting real draws. Systemic fix needed
-before onboarding more mid-project jobs.
+Budget scheduled values: NW $5,291,168.95 vs Diane $5,293,168.95
+(delta = $2,000 from one missing cost code, now fixed as F-010).
+
+**Outcome:** Not a code bug. Not a parser bug (except F-010).
+- Internal billings get attached during real draw workflows
+- Invoice totals converge as all real invoices are entered
+- F-010 (missing 06108) fixed with manual line addition
+
+**Status: CLOSED — reclassified into F-010 and F-011.**
+
+## F-010: Pay-app import silently skips cost codes not in cost_codes table
+**Discovered:** 2026-04-17 during F-007 reclassification
+**Impact:** The budget import route (`/api/jobs/[id]/budget-import`)
+correctly parses G703 lines but can only create budget_lines for
+cost codes that already exist in the org's cost_codes table. If a
+code is missing, the line is silently added to `unmatched_codes`
+in the response but no budget_line is created.
+
+**Observed:** Dewberry's code 06108 (ROW, $2,000) was parsed by
+pay-app-parser but skipped by the import because 06108 didn't
+exist in cost_codes. The response DID report this in
+`unmatched_codes`, but the user (or automation) didn't act on it.
+
+**Fix applied:** Manually added cost code 06108 and its budget
+line for Dewberry. Budget totals now match Diane's G703 exactly.
+
+**Systemic fix needed:** The pay-app import should either:
+- A: Auto-create missing cost codes during import (with a
+  confirmation step showing what will be created)
+- B: Block import until all codes exist, with a clear list of
+  what's missing and a one-click "create all" button
+- C: Keep current behavior but make the warning more prominent
+  in the UI (currently easy to miss)
+
+**Severity:** Low. The data is reported in the API response.
+The issue is UX — the warning is easy to overlook.
+
+**Status: FIXED for Dewberry. Systemic UX improvement deferred.**
+
+## F-011: No clear workflow for receipts / non-invoice spend
+**Discovered:** 2026-04-17 during F-007 reclassification
+**Impact:** Ross Built has real spend that doesn't arrive as a
+formal vendor invoice: hardware store runs, permits, dump fees,
+petty cash, card charges. Nightwork's invoice upload flow assumes
+a vendor PDF exists. Receipts have no dedicated entry path.
+
+**For Dewberry:** Unknown exact dollar contribution to the Pay
+App #10 gap, but likely non-zero. The reconciliation accounts
+for it implicitly in the "internal billings" and "missing
+invoices" categories.
+
+**Severity:** Medium. Not a blocker for dogfooding — users can
+upload a photo of a receipt as an "invoice" with synthetic
+metadata. But it's a friction point that will surface during
+real use.
+
+**Remediation options:**
+- A: Accept that "invoice" is a broad concept — treat receipt
+  photos as invoices with a document_category = "receipt" flag.
+  Minimal code change, leverages existing upload flow.
+- B: Add a separate receipt/expense entity with simpler metadata
+  (no vendor match, no PO link, just amount + code + photo).
+  Larger feature work.
+
+**Recommended:** A for MVP, revisit B after dogfooding surfaces
+actual pain points.
+
+**Status: DOCUMENTED for post-deploy work.**
 
 ## F-009: Two separate caches for "approved COs total" on a job
 **Discovered:** Visual audit 2026-04-17 (post-Phase-E)
