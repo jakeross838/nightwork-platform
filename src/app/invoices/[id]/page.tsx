@@ -8,6 +8,7 @@ import { formatCents, formatDollars, confidenceColor, confidenceLabel, formatSta
 import NavBar from "@/components/nav-bar";
 import InvoiceFilePreview from "@/components/invoice-file-preview";
 import InvoiceStatusTimeline from "@/components/invoice-status-timeline";
+import InvoiceAllocationsEditor from "@/components/invoice-allocations-editor";
 import VendorContactPopover from "@/components/vendor-contact-popover";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { invoiceDisplayName } from "@/lib/invoices/display";
@@ -1442,6 +1443,17 @@ export default function InvoiceReviewPage() {
  <SearchCombobox label="Cost Code" value={costCodeId} onChange={setCostCodeId}
  options={costCodeOptions} disabled={!isReviewable}
  aiFilled={!!autoFills?.cost_code_id} grouped placeholder="Search cost codes..." />
+
+ {/* Phase D: invoice allocation splitter — persists per-line splits
+     separately from the invoice-level cost_code default. */}
+ {invoice && invoice.total_amount != null && invoice.status !== "received" && (
+   <InvoiceAllocationsEditor
+     invoiceId={invoice.id}
+     invoiceTotalCents={invoice.total_amount}
+     costCodes={costCodes}
+     readOnly={!isReviewable}
+   />
+ )}
 
  {purchaseOrders.length > 0 && (
  <SearchCombobox label="Purchase Order" value={poId} onChange={setPoId}

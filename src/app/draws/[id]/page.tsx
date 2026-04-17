@@ -9,6 +9,7 @@ import DrawCompareView from "@/components/draw-compare-view";
 import DrawCoverLetterEditor from "@/components/draw-cover-letter-editor";
 import DrawLienReleaseUploadList from "@/components/draw-lien-release-upload-list";
 import DrawInternalBillings from "@/components/draw-internal-billings";
+import DrawChangeOrders from "@/components/draw-change-orders";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 import { toast } from "@/lib/utils/toast";
 
@@ -96,7 +97,7 @@ export default function DrawDetailPage() {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"detail" | "compare" | "cover" | "lien-uploads" | "internal-billings">(
+  const [activeTab, setActiveTab] = useState<"detail" | "compare" | "cover" | "lien-uploads" | "internal-billings" | "change-orders">(
     "detail"
   );
 
@@ -528,6 +529,12 @@ export default function DrawDetailPage() {
                 >
                   Internal Billings
                 </TabButton>
+                <TabButton
+                  active={activeTab === "change-orders"}
+                  onClick={() => setActiveTab("change-orders")}
+                >
+                  Change Orders
+                </TabButton>
               </div>
             </div>
 
@@ -542,13 +549,18 @@ export default function DrawDetailPage() {
                 onChange={fetchDraw}
               />
             )}
-
-            {activeTab === "internal-billings" && draw && (
+            {activeTab === "internal-billings" && draw?.jobs && (
               <DrawInternalBillings
                 drawId={drawId}
-                jobId={draw.jobs?.id ?? ""}
-                isDraft={draw.status === "draft"}
-                onChange={fetchDraw}
+                jobId={draw.jobs.id}
+                isDraft={["draft", "pm_review"].includes(draw.status)}
+                onChange={() => fetchDraw()}
+              />
+            )}
+            {activeTab === "change-orders" && draw && (
+              <DrawChangeOrders
+                drawId={drawId}
+                editable={["draft", "pm_review"].includes(draw.status)}
               />
             )}
 
