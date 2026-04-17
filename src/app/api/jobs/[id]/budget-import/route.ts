@@ -396,7 +396,7 @@ async function handlePayAppImport(
   supabase: SupabaseClient,
 ) {
   const payApp: PayAppParseResult = parsePayApp(workbook);
-  const { g702, g703Lines, pccoLog, warnings } = payApp;
+  const { g702, g703Lines, pccoLog, previousCoCompletedAmount, warnings } = payApp;
 
   if (g703Lines.length === 0) {
     throw new ApiError(
@@ -522,6 +522,9 @@ async function handlePayAppImport(
   if (g702.originalContractSum > 0) {
     jobPatch.original_contract_amount = g702.originalContractSum;
     jobPatch.current_contract_amount = g702.contractSumToDate;
+  }
+  if (previousCoCompletedAmount > 0) {
+    jobPatch.previous_co_completed_amount = previousCoCompletedAmount;
   }
 
   if (Object.keys(jobPatch).length > 0) {

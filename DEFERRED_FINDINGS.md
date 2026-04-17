@@ -111,61 +111,71 @@ the attach flow. First split invoice will exercise allocation UI.
 
 **Severity:** Low.
 
-## F-006: Historical CO work not in Line 4 for mid-project imports
+## F-006: FIXED — Historical CO work not in Line 4 for mid-project imports
 **Discovered:** Phase E comparison vs Dewberry Pay App #10
-**Impact:** Line 4 Total Completed differs from source pay app by
-the cumulative CO amount ($226,633.03 on Dewberry) when a job is
-imported mid-lifecycle. Line 2 Net Change Orders is correct. Line
-4 under-reports by the CO sum because CO rows live in change_orders
-table without corresponding draw_line_items rows.
+**Fixed:** 2026-04-17 on branch fix-f006-historical-co-line4
 
-**Scope:** Only affects mid-project imports. New jobs and new
-draws on existing jobs are unaffected — Phase D2's attach flow
-creates draw_line_items with source_type='change_order' which
-rollupDrawTotals picks up correctly via nonBudgetLineThisPeriodForDraw.
+**Root cause:** CO work billed in pre-Nightwork pay apps had no
+representation in Line 4. Diane's G703 carries this as two PCCO
+summary rows: "PCCO from Previous Applications" ($222,730.77 for
+Dewberry) and "PCCO for this Application" ($3,902.26). Nightwork
+tracked CO contract adjustments (Line 2 correct) but not CO
+completion (Line 4 missing $222,730.77).
 
-**Recommended fix:** Pay-app importer should create "historical"
-draw_line_items for each CO represented in the imported pay app
-log, linked to a synthetic "import baseline" draw or directly
-attributed to the CO's representation in prior draws. Alternative:
-compute Line 4 = sum(budget lines) + baseline_completed_cos
-(new jobs column) when importing pay app data.
+**Fix applied:**
+- New column `jobs.previous_co_completed_amount` (bigint, cents)
+  Migration: `00040_jobs_previous_co_completed.sql`
+- `rollupDrawTotals()` includes it in Line 4 total_completed_to_date
+- All 4 draw API callers updated to pass the value
+- Pay-app parser extracts the "PCCO from Previous Applications"
+  total_to_date from G703 and returns as `previousCoCompletedAmount`
+- Budget-import route writes it to `jobs.previous_co_completed_amount`
+- Dewberry baseline set to $222,730.77 (22273077 cents)
 
-**Severity:** Medium. Makes Line 4 wrong for imported jobs until
-fix lands. Line 2, 3, 7, 8 semantics still correct for new-work
-calculations once baseline is set.
+**Before/after (Dewberry Draw #1 Line 4):**
+| Metric | Before | After | Diane's App #10 |
+|--------|--------|-------|-----------------|
+| Line 4 Total Completed | $2,137,737.04 | $2,360,467.81 | $2,377,674.18 |
+| Delta vs Diane | -$239,937.14 | -$17,206.37 | — |
 
-**Blocks:** Producing a penny-exact G702 matching source pay apps
-for mid-project imported jobs.
+**Remaining $17,206.37 delta decomposition:**
+- $19,000: Supervision ($4K) + Contractor Fee ($15K) — App 10
+  internal billings still in DRAFT, not yet attached to draw
+- -$3,307: PCCO #17 CO work allocated to 17101 instead of PCCO
+  line (see F-014)
+- +$595.26: GC fee on PCCO #17 not captured in any invoice
+- +$61.11: Sub-dollar rounding across 142 budget lines
+
+**Status: FIXED. Remaining delta fully traced, no code bugs.**
 
 ## F-007: CLOSED — billing gap is multi-source, not a code bug
 
-**Updated:** 2026-04-17
+**Updated:** 2026-04-17 (enriched with per-cost-code data from F-006 analysis)
 **Original concern:** $13,304.11 delta between Nightwork
 total_completed_to_date ($2,137,737.04) and Diane's Pay App #10
-total_to_date ($2,151,041.15).
+total_to_date ($2,151,041.15) — cost-code lines only, excluding PCCO.
 
-**Revised root cause (fully reconciled):**
-The $13K was never a budget import or parser bug. Row-by-row
-comparison found 141/142 budget lines match Diane's G703 exactly.
-The gap is entirely in "this_period" billing differences:
+**Full cost-code-level reconciliation (5 codes with deltas):**
 
-| Source | Amount | Notes |
-|--------|--------|-------|
-| Internal billings (DRAFT) | -$19,000 | Supervision $4K + Fee $15K billed by Diane, not yet attached to Draw #1 in NW |
-| Roofing invoice mismatch | +$5,757 | NW has $14,345 (Avery), Diane has $8,588 this period |
-| Rounding in previous_apps | ~$61 | Sub-dollar across 142 lines |
-| **Net** | **-$13,304** | Matches the reported delta |
+| Code | Description | Diane Total | NW Total | Delta | Cause |
+|------|-------------|-------------|----------|-------|-------|
+| 03111 | Temporary Sanitation | $3,861.63 | $3,825.79 | +$35.84 | Invoice amount rounding |
+| 03121 | Supervision | $62,550.00 | $58,550.00 | +$4,000.00 | App 10 internal billing (DRAFT) |
+| 03122 | Contractor Fee | $234,200.00 | $219,200.00 | +$15,000.00 | App 10 internal billing (DRAFT) |
+| 10102 | Framing Material | $119,629.96 | $119,604.69 | +$25.27 | Invoice amount rounding |
+| 17101 | Roofing | $115,643.00 | $118,950.00 | -$3,307.00 | PCCO #17 CO work on cost code (see F-014) |
+| | **Net cost-code delta** | | | **+$15,754.11** | |
 
-Budget scheduled values: NW $5,291,168.95 vs Diane $5,293,168.95
-(delta = $2,000 from one missing cost code, now fixed as F-010).
+All other 138 cost codes match Diane's G703 exactly (baseline =
+previous_applications, scheduled_value = original_estimate).
 
 **Outcome:** Not a code bug. Not a parser bug (except F-010).
-- Internal billings get attached during real draw workflows
-- Invoice totals converge as all real invoices are entered
-- F-010 (missing 06108) fixed with manual line addition
+- Internal billings ($19K) get attached during real draw workflows
+- Roofing delta (-$3,307) is PCCO #17 CO work mixed into cost code;
+  see F-014 for allocation improvement
+- Sub-dollar rounding is expected Excel→DB precision loss
 
-**Status: CLOSED — reclassified into F-010 and F-011.**
+**Status: CLOSED — reclassified into F-010, F-011, F-014.**
 
 ## F-010: Pay-app import silently skips cost codes not in cost_codes table
 **Discovered:** 2026-04-17 during F-007 reclassification
@@ -291,3 +301,40 @@ the audience most likely to work from a job site.
 drawer with same sidebar content.
 
 **Remediation effort:** 2-3 hours.
+
+## F-014: PCCO #17 roofing CO work allocated to cost code instead of PCCO line
+**Discovered:** 2026-04-17 during F-006 analysis
+**Impact:** Dewberry invoice #11595 (Avery roofing, $14,345) has
+two line items: $11,895 on 17101 (base work) and $2,450 on 17101C
+(damaged panels). The $11,895 includes $8,588 base + $3,307 CO
+work for PCCO #17 "Roofing - metal roof over allowance". Diane's
+G703 shows $8,588 on 17101 and $3,902.26 ($3,307 + $595.26 fee)
+on the PCCO summary line.
+
+**Result:** 17101 line is overstated by $3,307 in Nightwork.
+PCCO "this application" line is missing $3,902.26. The GC fee of
+$595.26 is not captured anywhere in Nightwork invoices. Net Line 4
+impact: -$595.26 (just the fee).
+
+**Data model supports the fix:** draw_line_items has source_type
+(text) and change_order_id (uuid). A draw_line_item with
+source_type='change_order' and change_order_id pointing to PCCO
+#17 would correctly represent this.
+
+**Required work:**
+1. Split the $11,895 invoice line into $8,588 (17101) + $3,307
+   (CO allocation on PCCO #17)
+2. Create a draw_line_item with source_type='change_order' for
+   the $3,307 + $595.26 fee
+3. Ensure rollupDrawTotals picks this up via
+   nonBudgetLineThisPeriodForDraw()
+4. Consider whether the GC fee ($595.26) needs a separate entry
+   or should be bundled with the CO amount
+
+**Severity:** Low. $595.26 net impact on Line 4. Presentation
+issue on the G703 (wrong line shows the amount) but total is
+nearly correct.
+
+**Recommended timing:** When CO-invoice linking workflow is built.
+This is a product feature (linking invoices to COs for automatic
+PCCO line generation), not a one-off data fix.

@@ -276,6 +276,7 @@ export function rollupDrawTotals(args: {
   lessPreviousCertificates: number;
   isFinalDraw: boolean;
   nonBudgetLineThisPeriod: number;
+  previousCoCompletedAmount?: number;
 }): DrawTotals {
   const {
     originalContractSum,
@@ -286,11 +287,12 @@ export function rollupDrawTotals(args: {
     lessPreviousCertificates,
     isFinalDraw,
     nonBudgetLineThisPeriod,
+    previousCoCompletedAmount = 0,
   } = args;
 
   const contract_sum_to_date = originalContractSum + netChangeOrders;
   const total_completed_to_date =
-    lines.reduce((s, l) => s + l.total_completed, 0) + nonBudgetLineThisPeriod;
+    lines.reduce((s, l) => s + l.total_completed, 0) + nonBudgetLineThisPeriod + previousCoCompletedAmount;
   const pct = Math.max(0, Math.min(100, retainagePercent)) / 100;
   // Line 5a — retainage on completed work. On final draw, we release (0).
   const retainage_on_completed = isFinalDraw ? 0 : Math.round(total_completed_to_date * pct);
@@ -496,7 +498,7 @@ export async function recalcDraftDrawsForJob(jobId: string): Promise<number> {
     supabase
       .from("jobs")
       .select(
-        "original_contract_amount, current_contract_amount, deposit_percentage, retainage_percent"
+        "original_contract_amount, current_contract_amount, deposit_percentage, retainage_percent, previous_co_completed_amount"
       )
       .eq("id", jobId)
       .maybeSingle(),
@@ -516,6 +518,8 @@ export async function recalcDraftDrawsForJob(jobId: string): Promise<number> {
     (job as { deposit_percentage?: number }).deposit_percentage ?? 0.1;
   const originalContractSum =
     (job as { original_contract_amount?: number }).original_contract_amount ?? 0;
+  const previousCoCompleted =
+    (job as { previous_co_completed_amount?: number }).previous_co_completed_amount ?? 0;
   const netChangeOrders = await netChangeOrdersForJob(jobId);
 
   let recomputed = 0;
@@ -563,6 +567,7 @@ export async function recalcDraftDrawsForJob(jobId: string): Promise<number> {
       lessPreviousCertificates: lessPrevCerts,
       isFinalDraw: !!draw.is_final,
       nonBudgetLineThisPeriod,
+      previousCoCompletedAmount: previousCoCompleted,
     });
 
     await supabase

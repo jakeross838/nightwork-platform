@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const { data: job } = await supabase
       .from("jobs")
       .select(
-        "original_contract_amount, current_contract_amount, deposit_percentage, approved_cos_total, retainage_percent"
+        "original_contract_amount, current_contract_amount, deposit_percentage, approved_cos_total, retainage_percent, previous_co_completed_amount"
       )
       .eq("id", job_id)
       .single();
@@ -107,6 +107,8 @@ export async function POST(request: NextRequest) {
       lessPreviousCertificates: lessPrevCerts,
       isFinalDraw: !!is_final,
       nonBudgetLineThisPeriod: 0,
+      previousCoCompletedAmount:
+        (job as { previous_co_completed_amount?: number }).previous_co_completed_amount ?? 0,
     });
 
     const { data: draw, error: drawError } = await supabase

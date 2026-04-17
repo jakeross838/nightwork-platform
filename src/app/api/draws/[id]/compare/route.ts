@@ -67,7 +67,7 @@ export async function GET(
       const invIds = (invs ?? []).map((i) => i.id as string);
       const { data: jobRow } = await supabase
         .from("jobs")
-        .select("retainage_percent, original_contract_amount, deposit_percentage")
+        .select("retainage_percent, original_contract_amount, deposit_percentage, previous_co_completed_amount")
         .eq("id", job_id)
         .single();
       const retPct = (jobRow as { retainage_percent?: number } | null)?.retainage_percent ?? 10;
@@ -114,6 +114,8 @@ export async function GET(
         lessPreviousCertificates: lessPrev,
         isFinalDraw: !!draw.is_final,
         nonBudgetLineThisPeriod,
+        previousCoCompletedAmount:
+          (jobRow as { previous_co_completed_amount?: number } | null)?.previous_co_completed_amount ?? 0,
       });
       return { lines, totals, invoiceCount: (invs ?? []).length };
     };
