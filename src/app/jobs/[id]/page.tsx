@@ -40,6 +40,24 @@ type ImportResult = {
   skipped: { row: number; reason: string; raw_code?: string }[];
   unmatched_codes: string[];
   total_rows: number;
+} | {
+  format: "pay-app";
+  g702_summary: {
+    application_number: number;
+    original_contract: number;
+    net_change_orders: number;
+    contract_to_date: number;
+    total_completed: number;
+    less_previous: number;
+    current_due: number;
+  };
+  budget_lines_imported: number;
+  budget_lines_skipped: number;
+  change_orders_imported: number;
+  unmatched_codes: string[];
+  warnings: string[];
+  total_g703_lines: number;
+  total_pcco_entries: number;
 };
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
@@ -409,7 +427,22 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               <p className="mt-1">{importError}</p>
             </div>
           )}
-          {importResult && (
+          {importResult && "format" in importResult && importResult.format === "pay-app" ? (
+            <div className="mt-3 border border-teal/40 bg-teal/5 px-4 py-3 text-sm text-cream space-y-1">
+              <p className="font-medium text-teal">Pay App #{importResult.g702_summary.application_number} imported</p>
+              <p>Original contract: ${(importResult.g702_summary.original_contract / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <p>Net COs: ${(importResult.g702_summary.net_change_orders / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <p>Contract to date: ${(importResult.g702_summary.contract_to_date / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <p>Total completed: ${(importResult.g702_summary.total_completed / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <p>{importResult.budget_lines_imported} budget lines · {importResult.change_orders_imported} change orders</p>
+              {importResult.unmatched_codes.length > 0 && (
+                <p className="text-amber-400">{importResult.unmatched_codes.length} unmatched cost codes: {importResult.unmatched_codes.join(", ")}</p>
+              )}
+              {importResult.warnings.length > 0 && (
+                <p className="text-amber-400">{importResult.warnings.length} warning(s)</p>
+              )}
+            </div>
+          ) : importResult && !("format" in importResult) ? (
             <div className="mt-3 border border-teal/40 bg-teal/5 px-4 py-3 text-sm text-cream">
               <p className="font-medium text-teal">Import complete</p>
               <p className="mt-1">
@@ -417,7 +450,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 {importResult.unmatched_codes.length > 0 && ` · ${importResult.unmatched_codes.length} unmatched codes`}
               </p>
             </div>
-          )}
+          ) : null}
         </section>
       </main>
 

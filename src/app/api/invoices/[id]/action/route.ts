@@ -9,6 +9,7 @@ import { logStatusChange } from "@/lib/activity-log";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 interface ActionRequest {
  action: "approve" | "hold" | "deny" | "request_info" | "info_received" | "qa_approve" | "kick_back" | "reopen";

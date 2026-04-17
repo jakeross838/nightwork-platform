@@ -4,6 +4,7 @@ import { ApiError, withApiError } from "@/lib/api/errors";
 import { ADMIN_OR_OWNER, requireRole } from "@/lib/org/require";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 // The "standard residential" template today is Ross Built's own 217-code
 // cost structure — a good baseline for custom-home builders. We clone

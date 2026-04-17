@@ -9,6 +9,7 @@ import {
 import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const BOOL_COLUMNS = new Set([
   "batch_approval_enabled",

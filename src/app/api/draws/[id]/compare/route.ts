@@ -7,6 +7,7 @@ import {
 } from "@/lib/draw-calc";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 /**
  * GET /api/draws/[id]/compare

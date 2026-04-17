@@ -6,6 +6,7 @@ import { logActivity } from "@/lib/activity-log";
 import { recalcBudgetLine, recalcPO } from "@/lib/recalc";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 interface CreatePoBody {
   vendor_id?: string | null;

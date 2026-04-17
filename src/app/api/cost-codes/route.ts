@@ -4,6 +4,7 @@ import { ApiError, withApiError } from "@/lib/api/errors";
 import { ADMIN_OR_OWNER, requireRole } from "@/lib/org/require";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const GET = withApiError(async () => {
   const membership = await requireRole(ADMIN_OR_OWNER);

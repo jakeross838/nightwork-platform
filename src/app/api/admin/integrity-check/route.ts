@@ -6,6 +6,7 @@ import { recalcAllForJob } from "@/lib/recalc";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 export const maxDuration = 60;
 
 /**

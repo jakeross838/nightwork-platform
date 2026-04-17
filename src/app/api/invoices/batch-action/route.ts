@@ -6,6 +6,7 @@ import { getWorkflowSettings } from "@/lib/workflow-settings";
 import { getCurrentMembership } from "@/lib/org/session";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 interface BatchActionRequest {
   action: "approve" | "hold" | "deny";

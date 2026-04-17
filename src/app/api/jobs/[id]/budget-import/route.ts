@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
+import { isPayAppWorkbook, parsePayApp } from "@/lib/pay-app-parser";
+import type { PayAppParseResult } from "@/lib/pay-app-parser";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 export const maxDuration = 60;
 
 /**
@@ -210,7 +213,7 @@ export const POST = withApiError(async (
       });
     });
   } else {
-    // Excel branch — existing xlsx parsing path.
+    // Excel branch — detect pay-app vs simple budget sheet.
     const workbook = new ExcelJS.Workbook();
     try {
       await workbook.xlsx.load(arrayBuffer);
@@ -221,6 +224,12 @@ export const POST = withApiError(async (
       );
     }
 
+    if (isPayAppWorkbook(workbook)) {
+      // ── Pay-app path: G702/G703/PCCO workbook ──
+      return handlePayAppImport(workbook, jobId, supabase);
+    }
+
+    // ── Simple budget sheet path (column A = code, column B = amount) ──
     const sheet = workbook.worksheets[0];
     if (!sheet) throw new ApiError("Workbook has no sheets", 400);
 
@@ -371,3 +380,164 @@ export const POST = withApiError(async (
 
   return NextResponse.json(result);
 });
+
+// ---------------------------------------------------------------------------
+// Pay-app import handler
+// ---------------------------------------------------------------------------
+
+type SupabaseClient = ReturnType<typeof createServerClient>;
+
+async function handlePayAppImport(
+  workbook: ExcelJS.Workbook,
+  jobId: string,
+  supabase: SupabaseClient,
+) {
+  const payApp: PayAppParseResult = parsePayApp(workbook);
+  const { g702, g703Lines, pccoLog, warnings } = payApp;
+
+  if (g703Lines.length === 0) {
+    throw new ApiError(
+      "Pay-app detected but no G703 line items found. " +
+        warnings.join("; "),
+      400
+    );
+  }
+
+  // Resolve cost codes
+  const uniqueCodes = Array.from(new Set(g703Lines.map((l) => l.costCode)));
+  const { data: costCodes, error: ccErr } = await supabase
+    .from("cost_codes")
+    .select("id, code")
+    .in("code", uniqueCodes)
+    .is("deleted_at", null);
+  if (ccErr) throw new ApiError(ccErr.message, 500);
+
+  const codeToId = new Map<string, string>(
+    (costCodes ?? []).map((c) => [c.code as string, c.id as string])
+  );
+
+  const unmatchedCodes: string[] = [];
+  let budgetLinesImported = 0;
+  let budgetLinesSkipped = 0;
+
+  // Upsert budget lines from G703
+  for (const line of g703Lines) {
+    const ccId = codeToId.get(line.costCode);
+    if (!ccId) {
+      unmatchedCodes.push(line.costCode);
+      budgetLinesSkipped++;
+      continue;
+    }
+
+    const { data: existing } = await supabase
+      .from("budget_lines")
+      .select("id")
+      .eq("job_id", jobId)
+      .eq("cost_code_id", ccId)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    const row = {
+      job_id: jobId,
+      cost_code_id: ccId,
+      original_estimate: line.scheduledValue,
+      revised_estimate: line.scheduledValue,
+      previous_applications_baseline: line.previousApplications,
+      org_id: DEFAULT_ORG_ID,
+    };
+
+    if (existing?.id) {
+      const { error } = await supabase
+        .from("budget_lines")
+        .update({
+          original_estimate: row.original_estimate,
+          revised_estimate: row.revised_estimate,
+          previous_applications_baseline: row.previous_applications_baseline,
+        })
+        .eq("id", existing.id);
+      if (error) throw new ApiError(`Budget line update failed: ${error.message}`, 500);
+    } else {
+      const { error } = await supabase.from("budget_lines").insert(row);
+      if (error) throw new ApiError(`Budget line insert failed: ${error.message}`, 500);
+    }
+    budgetLinesImported++;
+  }
+
+  // Auto-create change orders from PCCO log
+  let cosImported = 0;
+  for (const co of pccoLog) {
+    // Check if this PCCO # already exists for the job
+    const { data: existingCo } = await supabase
+      .from("change_orders")
+      .select("id")
+      .eq("job_id", jobId)
+      .eq("pcco_number", co.pccoNumber)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (existingCo?.id) continue; // already imported
+
+    const { error } = await supabase.from("change_orders").insert({
+      job_id: jobId,
+      pcco_number: co.pccoNumber,
+      description: co.description,
+      amount: co.addition,
+      gc_fee_rate: co.gcFeeRate,  // fraction convention
+      gc_fee_amount: co.gcFeeAmount,
+      total_with_fee: co.addition + co.gcFeeAmount,
+      estimated_days_added: co.estimatedDaysAdded,
+      status: "executed",
+      draw_number: co.appNumber,
+      org_id: DEFAULT_ORG_ID,
+      status_history: JSON.stringify([
+        {
+          who: "pay-app-import",
+          when: new Date().toISOString(),
+          old_status: null,
+          new_status: "executed",
+          note: `Imported from pay app #${g702.applicationNumber}`,
+        },
+      ]),
+    });
+    if (error) {
+      warnings.push(`CO #${co.pccoNumber} insert failed: ${error.message}`);
+    } else {
+      cosImported++;
+    }
+  }
+
+  // Update job with pay-app metadata
+  const jobPatch: Record<string, unknown> = {};
+  if (g702.originalContractSum > 0) {
+    jobPatch.original_contract_amount = g702.originalContractSum;
+    jobPatch.current_contract_amount = g702.contractSumToDate;
+  }
+
+  if (Object.keys(jobPatch).length > 0) {
+    const { error } = await supabase
+      .from("jobs")
+      .update(jobPatch)
+      .eq("id", jobId);
+    if (error) warnings.push(`Job update failed: ${error.message}`);
+  }
+
+  return NextResponse.json({
+    format: "pay-app",
+    g702_summary: {
+      application_number: g702.applicationNumber,
+      original_contract: g702.originalContractSum,
+      net_change_orders: g702.netChangeOrders,
+      contract_to_date: g702.contractSumToDate,
+      total_completed: g702.totalCompletedStored,
+      less_previous: g702.lessPreviousPayments,
+      current_due: g702.currentPaymentDue,
+    },
+    budget_lines_imported: budgetLinesImported,
+    budget_lines_skipped: budgetLinesSkipped,
+    change_orders_imported: cosImported,
+    unmatched_codes: Array.from(new Set(unmatchedCodes)),
+    warnings,
+    total_g703_lines: g703Lines.length,
+    total_pcco_entries: pccoLog.length,
+  });
+}

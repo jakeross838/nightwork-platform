@@ -7,6 +7,7 @@ import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { canVoidPO, formatBlockers } from "@/lib/deletion-guards";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const GET = withApiError(async (_req: NextRequest, { params }: { params: { id: string } }) => {
   const supabase = createServerClient();

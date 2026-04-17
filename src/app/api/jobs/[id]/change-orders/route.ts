@@ -5,6 +5,7 @@ import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 interface CreateCoBody {
   title?: string;

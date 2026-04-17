@@ -8,6 +8,7 @@ import {
 } from "@/lib/draw-calc";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const ORG_ID = "00000000-0000-0000-0000-000000000001";
 

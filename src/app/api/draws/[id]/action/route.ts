@@ -13,6 +13,7 @@ import { autoScheduleDrawPayments } from "@/lib/payment-schedule";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
