@@ -85,3 +85,28 @@ time instead of accumulating.
 **Recommended fix:** When multi-draw billings are supported, compute
 total_to_date as: SUM(this_period) across all non-deleted draws this
 internal_billing has touched, up to and including current draw.
+
+## F-005: Phase D workflows verified at unit level, some not E2E tested
+**Discovered:** Phase D completion
+**Context:** Phase D screenshots captured the critical G702 correctness
+(Line 7 baseline, Line 8 positive, Application # display, no phantom
+Deposit). Some workflows have code reviewed and build-verified but not
+exercised end-to-end with real UI flow:
+
+- **Invoice allocation splitting** (D1): API + editor component built
+  and committed. Not tested via real UI because no Dewberry invoices
+  have been split yet. Phase E will exercise if/when a split invoice
+  is needed for comparison.
+- **Change order draw attach** (D2): Available-to-attach filter
+  verified (correctly shows 0 for Dewberry because all COs were
+  imported with draw_number already set). The attach/detach mutation
+  path itself is code-reviewed but not clicked through by a user.
+
+**Risk:** Low. The calculation layer (draw-calc.ts) is the high-risk
+code and is verified via Line 8 correctness. The UI layers are thin
+CRUD operations against verified schemas.
+
+**Mitigation:** Dogfooding on next real Ross Built CO will exercise
+the attach flow. First split invoice will exercise allocation UI.
+
+**Severity:** Low.
