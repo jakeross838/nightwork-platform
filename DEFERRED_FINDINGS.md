@@ -77,3 +77,19 @@ becomes common.
 many-to-many via invoice_draw_history table, or (b) make invoices
 immutable once attached to a submitted draw (cleaner — no edit
 UI at all for attached invoices).
+
+## F-004: Internal billings assumed single-draw
+**Discovered:** Phase D recompute helper review
+**File:** src/lib/recompute-percentage-billings.ts (line ~96)
+**Assumption:** total_to_date = this_period for internal billing
+lines. This holds because internal billings are modeled as one-shot
+charges on a specific draw (previous_applications = 0 by construction).
+**Risk:** If the product ever supports multi-draw recurring billings
+(e.g. Supervision that spans 3 draws), this logic will silently write
+wrong cumulative values. The billing would show this_period correctly
+on each draw but total_to_date would be reset to this_period each
+time instead of accumulating.
+**Severity:** Low today. Medium if recurring billing workflow ships.
+**Recommended fix:** When multi-draw billings are supported, compute
+total_to_date as: SUM(this_period) across all non-deleted draws this
+internal_billing has touched, up to and including current draw.
