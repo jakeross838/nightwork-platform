@@ -8,6 +8,7 @@ import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import BudgetCostsSubTabs from "@/components/budget-costs-sub-tabs";
 import { formatCents } from "@/lib/utils/format";
 import { supabase } from "@/lib/supabase/client";
 
@@ -461,8 +462,9 @@ export default function JobInternalBillingsPage({
             + Add Billing
           </button>
         </div>
-        <JobTabs jobId={job.id} active="internal-billings" />
+        <JobTabs jobId={job.id} active="budget" />
         <JobFinancialBar jobId={job.id} />
+        <BudgetCostsSubTabs jobId={job.id} active="internal" />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">

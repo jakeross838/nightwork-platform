@@ -10,6 +10,7 @@ import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import DrawsSubTabs from "@/components/draws-sub-tabs";
 
 interface Job { id: string; name: string; address: string | null; }
 
@@ -107,6 +108,7 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
         </div>
         <JobTabs jobId={job.id} active="draws" />
         <JobFinancialBar jobId={job.id} />
+        <DrawsSubTabs jobId={job.id} active="draws" />
 
         {draws.length === 0 ? (
           <EmptyState
