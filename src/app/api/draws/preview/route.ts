@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
       lines,
       lessPreviousCertificates: lessPrevCerts,
       isFinalDraw: !!is_final,
+      nonBudgetLineThisPeriod: 0,
     });
 
     // Resolve cost-code metadata for each snapshot line so the wizard's G703

@@ -29,6 +29,7 @@ interface LienReleaseRow {
 interface DrawData {
   id: string;
   draw_number: number;
+  application_number: number | null;
   application_date: string;
   period_start: string;
   period_end: string;
@@ -440,7 +441,6 @@ export default function DrawDetailPage() {
                 <p className="section-label">G702 — Application for Payment</p>
                 <div className="mt-5 space-y-2.5">
                   <G702Row num="1" label="Original Contract Sum" value={draw.original_contract_sum} />
-                  <G702Row num="" label="Deposit" value={draw.deposit_amount} sub />
                   <G702Row num="2" label="Net Change Orders" value={draw.net_change_orders} />
                   <G702Row num="3" label="Contract Sum to Date" value={draw.contract_sum_to_date} bold />
                   <div className="border-t border-brand-border my-1" />
@@ -466,7 +466,7 @@ export default function DrawDetailPage() {
                   <div className="flex justify-between">
                     <span className="text-cream-dim">Application #</span>
                     <span className="text-cream">
-                      {draw.draw_number}
+                      {draw.application_number ?? draw.draw_number}
                       {draw.revision_number > 0 ? ` Rev ${draw.revision_number}` : ""}
                     </span>
                   </div>

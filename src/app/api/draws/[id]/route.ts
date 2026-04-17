@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
 import {
+  applicationNumberForDraw,
   computeDrawLines,
   lessPreviousCertificatesForJob,
+  nonBudgetLineThisPeriodForDraw,
   rollupDrawTotals,
 } from "@/lib/draw-calc";
 
@@ -31,7 +33,7 @@ export async function GET(
     const { data: draw, error } = await supabase
       .from("draws")
       .select(
-        `*, jobs:job_id (id, name, address, client_name, deposit_percentage, gc_fee_percentage, retainage_percent, original_contract_amount, current_contract_amount)`
+        `*, jobs:job_id (id, name, address, client_name, deposit_percentage, gc_fee_percentage, retainage_percent, original_contract_amount, current_contract_amount, starting_application_number)`
       )
       .eq("id", params.id)
       .is("deleted_at", null)
@@ -124,6 +126,7 @@ export async function GET(
       (draw as { draw_number: number }).draw_number,
       draw.id as string
     );
+    const nonBudgetLineThisPeriod = await nonBudgetLineThisPeriodForDraw(draw.id as string);
 
     const totals = rollupDrawTotals({
       originalContractSum: (draw as { original_contract_sum?: number }).original_contract_sum ?? 0,
@@ -134,6 +137,7 @@ export async function GET(
       lines: snapshot,
       lessPreviousCertificates: lessPrevCerts,
       isFinalDraw: !!(draw as { is_final?: boolean }).is_final,
+      nonBudgetLineThisPeriod,
     });
 
     // Build G703 rows: merge snapshot by cost_code_id into budget_lines.
@@ -197,6 +201,10 @@ export async function GET(
       current_payment_due: totals.current_payment_due,
       balance_to_finish: totals.balance_to_finish,
       deposit_amount: totals.deposit_amount,
+      application_number: applicationNumberForDraw(
+        { draw_number: (draw as { draw_number: number }).draw_number },
+        { starting_application_number: (draw as { jobs?: { starting_application_number?: number | null } }).jobs?.starting_application_number ?? null }
+      ),
       retainage_percent: retainagePct,
       line_items: g703Rows.sort(
         (a, b) =>

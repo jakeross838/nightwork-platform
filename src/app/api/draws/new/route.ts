@@ -4,6 +4,7 @@ import { logActivity } from "@/lib/activity-log";
 import {
   computeDrawLines,
   lessPreviousCertificatesForJob,
+  netChangeOrdersForJob,
   rollupDrawTotals,
 } from "@/lib/draw-calc";
 
@@ -84,18 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     const originalContractSum = (job as { original_contract_amount: number }).original_contract_amount ?? 0;
-
-    // Net change orders = sum of owner-type approved/executed COs.
-    const { data: changeOrders } = await supabase
-      .from("change_orders")
-      .select("total_with_fee, amount, co_type, status")
-      .eq("job_id", job_id)
-      .in("status", ["approved", "executed"])
-      .is("deleted_at", null);
-    const netChangeOrders =
-      (changeOrders ?? [])
-        .filter((co) => (co as { co_type?: string }).co_type === "owner")
-        .reduce((s, co) => s + ((co as { total_with_fee?: number; amount?: number }).total_with_fee ?? (co as { amount?: number }).amount ?? 0), 0);
+    const netChangeOrders = await netChangeOrdersForJob(job_id);
 
     // Compute line snapshot via the shared engine.
     const { lines } = await computeDrawLines({
@@ -116,6 +106,7 @@ export async function POST(request: NextRequest) {
       lines,
       lessPreviousCertificates: lessPrevCerts,
       isFinalDraw: !!is_final,
+      nonBudgetLineThisPeriod: 0,
     });
 
     const { data: draw, error: drawError } = await supabase
