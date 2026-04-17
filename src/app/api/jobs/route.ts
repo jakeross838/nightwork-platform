@@ -7,6 +7,7 @@ import { recalcDraftDrawsForJob } from "@/lib/draw-calc";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 type JobBody = {
   name?: string;
@@ -16,9 +17,13 @@ type JobBody = {
   client_phone?: string | null;
   contract_type?: "cost_plus" | "fixed";
   original_contract_amount?: number; // cents
-  deposit_percentage?: number;       // 0..1 (e.g. 0.10)
-  gc_fee_percentage?: number;        // 0..1
-  retainage_percent?: number;        // 0..100 (e.g. 10 = 10%)
+  deposit_percentage?: number;       // 0..100 (whole percent, e.g. 10 = 10%)
+  gc_fee_percentage?: number;        // 0..100 (whole percent)
+  retainage_percent?: number;        // 0..100 (whole percent, e.g. 10 = 10%)
+  // Phase D baseline fields — how much of the job's history predates Nightwork.
+  starting_application_number?: number;  // 1-based; default 1 = Nightwork's first draw is App #1
+  previous_certificates_total?: number;  // cents — pre-Nightwork certified payments
+  previous_change_orders_total?: number; // cents — pre-Nightwork net CO total (incl. fees)
   pm_id?: string | null;
   contract_date?: string | null;     // YYYY-MM-DD
   status?: "active" | "complete" | "warranty" | "cancelled";
@@ -93,8 +98,8 @@ export const POST = withApiError(async (request: NextRequest) => {
       contract_type: body.contract_type ?? "cost_plus",
       original_contract_amount: original,
       current_contract_amount: original, // start equal; COs adjust later
-      deposit_percentage: body.deposit_percentage ?? 0.1,
-      gc_fee_percentage: body.gc_fee_percentage ?? 0.2,
+      deposit_percentage: body.deposit_percentage ?? 10,
+      gc_fee_percentage: body.gc_fee_percentage ?? 20,
       ...(retainageToUse !== undefined ? { retainage_percent: retainageToUse } : {}),
       pm_id: body.pm_id ?? null,
       contract_date: body.contract_date ?? null,
@@ -164,6 +169,19 @@ export const PATCH = withApiError(async (request: NextRequest) => {
   if (body.pm_id !== undefined) patch.pm_id = body.pm_id;
   if (body.contract_date !== undefined) patch.contract_date = body.contract_date;
   if (body.status !== undefined) patch.status = body.status;
+  if (body.starting_application_number !== undefined) {
+    const n = Number(body.starting_application_number);
+    if (Number.isNaN(n) || n < 1) {
+      throw new ApiError("starting_application_number must be ≥ 1", 400);
+    }
+    patch.starting_application_number = n;
+  }
+  if (body.previous_certificates_total !== undefined) {
+    patch.previous_certificates_total = Math.max(0, Math.round(body.previous_certificates_total));
+  }
+  if (body.previous_change_orders_total !== undefined) {
+    patch.previous_change_orders_total = Math.round(body.previous_change_orders_total);
+  }
 
   const { error } = await supabase
     .from("jobs")
@@ -173,11 +191,16 @@ export const PATCH = withApiError(async (request: NextRequest) => {
 
   if (error) throw new ApiError(error.message, 500);
 
-  // Cascade: when retainage changes, recompute draft draws so the stored
-  // 5a/5b/5c/6/8/9 numbers stay in sync. Submitted/approved/locked/paid
-  // draws keep their captured values — retroactive changes there would be
-  // a revision event, not a silent edit.
-  if (retainageChanged) {
+  // Cascade: when retainage OR any baseline-history field changes,
+  // recompute draft draws so Line 2/5a-c/6/7/8/9 and Application # stay
+  // in sync. Submitted/approved/locked/paid draws keep their captured
+  // values — retroactive changes there would be a revision event, not a
+  // silent edit.
+  const baselineChanged =
+    body.starting_application_number !== undefined ||
+    body.previous_certificates_total !== undefined ||
+    body.previous_change_orders_total !== undefined;
+  if (retainageChanged || baselineChanged) {
     const recomputed = await recalcDraftDrawsForJob(body.id);
     await logActivity({
       org_id: (existing as { org_id: string }).org_id,

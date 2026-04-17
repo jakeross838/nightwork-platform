@@ -30,34 +30,34 @@ interface Job {
   deposit_percentage: number;
   gc_fee_percentage: number;
   retainage_percent: number;
+  starting_application_number?: number;
+  previous_certificates_total?: number;
+  previous_change_orders_total?: number;
   pm_id: string | null;
   contract_date: string | null;
   status: "active" | "complete" | "warranty" | "cancelled";
 }
 
 type ImportResult = {
-  imported: { cost_code: string; description: string; amount: number }[];
+  imported: {
+    cost_code: string;
+    description: string;
+    amount: number;
+    previous_applications_baseline?: number;
+  }[];
   skipped: { row: number; reason: string; raw_code?: string }[];
   unmatched_codes: string[];
   total_rows: number;
-} | {
-  format: "pay-app";
-  g702_summary: {
-    application_number: number;
-    original_contract: number;
-    net_change_orders: number;
-    contract_to_date: number;
-    total_completed: number;
-    less_previous: number;
-    current_due: number;
+  pay_app?: {
+    detected: boolean;
+    application_number?: number;
+    original_contract_sum?: number;
+    contract_sum_to_date?: number;
+    total_completed_to_date?: number;
+    change_orders_imported: number;
+    change_orders_skipped: number;
+    message: string;
   };
-  budget_lines_imported: number;
-  budget_lines_skipped: number;
-  change_orders_imported: number;
-  unmatched_codes: string[];
-  warnings: string[];
-  total_g703_lines: number;
-  total_pcco_entries: number;
 };
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
@@ -299,8 +299,8 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 <Detail label="Client Phone" value={job.client_phone} />
                 <Detail label="Contract Date" value={formatDate(job.contract_date)} />
                 <Detail label="Contract Type" value={job.contract_type === "cost_plus" ? "Cost Plus" : "Fixed Price"} />
-                <Detail label="Deposit %" value={`${(job.deposit_percentage * 100).toFixed(1)}%`} />
-                <Detail label="GC Fee %" value={`${(job.gc_fee_percentage * 100).toFixed(1)}%`} />
+                <Detail label="Deposit %" value={`${job.deposit_percentage.toFixed(1)}%`} />
+                <Detail label="GC Fee %" value={`${job.gc_fee_percentage.toFixed(1)}%`} />
                 <Detail
                   label="Retainage %"
                   value={`${Number(job.retainage_percent ?? 0).toFixed(1)}%`}
@@ -351,11 +351,11 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               <EditField label="Current Contract (cents)">
                 <input type="number" className="input" value={form.current_contract_amount ?? 0} onChange={(e) => setForm({ ...form, current_contract_amount: Number(e.target.value) })} />
               </EditField>
-              <EditField label="Deposit (0–1)">
-                <input type="number" step="0.01" className="input" value={form.deposit_percentage ?? 0.1} onChange={(e) => setForm({ ...form, deposit_percentage: Number(e.target.value) })} />
+              <EditField label="Deposit % (0–100)">
+                <input type="number" step="0.5" min={0} max={100} className="input" value={form.deposit_percentage ?? 10} onChange={(e) => setForm({ ...form, deposit_percentage: Number(e.target.value) })} />
               </EditField>
-              <EditField label="GC Fee (0–1)">
-                <input type="number" step="0.01" className="input" value={form.gc_fee_percentage ?? 0.2} onChange={(e) => setForm({ ...form, gc_fee_percentage: Number(e.target.value) })} />
+              <EditField label="GC Fee % (0–100)">
+                <input type="number" step="0.5" min={0} max={100} className="input" value={form.gc_fee_percentage ?? 20} onChange={(e) => setForm({ ...form, gc_fee_percentage: Number(e.target.value) })} />
               </EditField>
               <EditField label="Retainage % (0–100)">
                 <input
@@ -367,6 +367,51 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   value={form.retainage_percent ?? 0}
                   onChange={(e) => setForm({ ...form, retainage_percent: Number(e.target.value) })}
                 />
+              </EditField>
+              <EditField label="Starting Application Number">
+                <input
+                  type="number"
+                  step={1}
+                  min={1}
+                  className="input"
+                  value={form.starting_application_number ?? 1}
+                  onChange={(e) =>
+                    setForm({ ...form, starting_application_number: Number(e.target.value) })
+                  }
+                />
+                <p className="text-[11px] text-cream-dim mt-1">
+                  For jobs that started before Nightwork. Set this to the AIA pay app number of
+                  the first draw Nightwork will generate (e.g. 11 if the last manual draw was #10).
+                </p>
+              </EditField>
+              <EditField label="Previous Certificates Total ($)">
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  className="input"
+                  value={((form.previous_certificates_total ?? 0) / 100).toFixed(2)}
+                  onChange={(e) =>
+                    setForm({ ...form, previous_certificates_total: Math.round((parseFloat(e.target.value) || 0) * 100) })
+                  }
+                />
+                <p className="text-[11px] text-cream-dim mt-1">
+                  Total certified payments from draws completed before Nightwork. Feeds G702 Line 6.
+                </p>
+              </EditField>
+              <EditField label="Previous Change Orders Total ($)">
+                <input
+                  type="number"
+                  step="0.01"
+                  className="input"
+                  value={((form.previous_change_orders_total ?? 0) / 100).toFixed(2)}
+                  onChange={(e) =>
+                    setForm({ ...form, previous_change_orders_total: Math.round((parseFloat(e.target.value) || 0) * 100) })
+                  }
+                />
+                <p className="text-[11px] text-cream-dim mt-1">
+                  Net change order total (including GC fees) from before Nightwork. Feeds G702 Line 2.
+                </p>
               </EditField>
               <EditField label="Assigned PM" full>
                 <select className="input" value={form.pm_id ?? ""} onChange={(e) => setForm({ ...form, pm_id: e.target.value || null })}>
@@ -427,30 +472,36 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               <p className="mt-1">{importError}</p>
             </div>
           )}
-          {importResult && "format" in importResult && importResult.format === "pay-app" ? (
-            <div className="mt-3 border border-teal/40 bg-teal/5 px-4 py-3 text-sm text-cream space-y-1">
-              <p className="font-medium text-teal">Pay App #{importResult.g702_summary.application_number} imported</p>
-              <p>Original contract: ${(importResult.g702_summary.original_contract / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-              <p>Net COs: ${(importResult.g702_summary.net_change_orders / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-              <p>Contract to date: ${(importResult.g702_summary.contract_to_date / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-              <p>Total completed: ${(importResult.g702_summary.total_completed / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-              <p>{importResult.budget_lines_imported} budget lines · {importResult.change_orders_imported} change orders</p>
-              {importResult.unmatched_codes.length > 0 && (
-                <p className="text-amber-400">{importResult.unmatched_codes.length} unmatched cost codes: {importResult.unmatched_codes.join(", ")}</p>
-              )}
-              {importResult.warnings.length > 0 && (
-                <p className="text-amber-400">{importResult.warnings.length} warning(s)</p>
-              )}
-            </div>
-          ) : importResult && !("format" in importResult) ? (
+          {importResult && (
             <div className="mt-3 border border-teal/40 bg-teal/5 px-4 py-3 text-sm text-cream">
-              <p className="font-medium text-teal">Import complete</p>
-              <p className="mt-1">
-                {importResult.imported.length} lines imported · {importResult.skipped.length} skipped
-                {importResult.unmatched_codes.length > 0 && ` · ${importResult.unmatched_codes.length} unmatched codes`}
+              <p className="font-medium text-teal">
+                {importResult.pay_app?.detected ? "Pay app import complete" : "Import complete"}
               </p>
+              <p className="mt-1">
+                {importResult.pay_app?.detected
+                  ? importResult.pay_app.message
+                  : `${importResult.imported.length} lines imported · ${importResult.skipped.length} skipped`}
+                {importResult.unmatched_codes.length > 0 &&
+                  ` · ${importResult.unmatched_codes.length} unmatched codes`}
+              </p>
+              {importResult.pay_app?.detected && (
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-cream-dim">
+                  {importResult.pay_app.application_number != null && (
+                    <div>Application #: <span className="text-cream">{importResult.pay_app.application_number}</span></div>
+                  )}
+                  {importResult.pay_app.original_contract_sum != null && (
+                    <div>Original contract: <span className="text-cream">${importResult.pay_app.original_contract_sum.toLocaleString()}</span></div>
+                  )}
+                  {importResult.pay_app.contract_sum_to_date != null && (
+                    <div>Contract sum to date: <span className="text-cream">${importResult.pay_app.contract_sum_to_date.toLocaleString()}</span></div>
+                  )}
+                  {importResult.pay_app.total_completed_to_date != null && (
+                    <div>Total completed: <span className="text-cream">${importResult.pay_app.total_completed_to_date.toLocaleString()}</span></div>
+                  )}
+                </div>
+              )}
             </div>
-          ) : null}
+          )}
         </section>
       </main>
 

@@ -59,8 +59,6 @@ function parseCsv(input: string): string[][] {
   return rows;
 }
 
-const DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001";
-
 type ParsedRow = {
   rowNumber: number;
   codeCell: string;
@@ -288,11 +286,19 @@ export const POST = withApiError(async (
     );
   }
 
-  // Map codes to cost_code ids
+  const { data: jobOrg } = await supabase
+    .from("jobs")
+    .select("org_id")
+    .eq("id", jobId)
+    .single();
+  if (!jobOrg?.org_id) throw new ApiError("Job has no org_id", 400);
+  const orgId = jobOrg.org_id as string;
+
   const uniqueCodes = Array.from(new Set(parsed.map((p) => p.code)));
   const { data: costCodes, error: ccError } = await supabase
     .from("cost_codes")
     .select("id, code")
+    .eq("org_id", orgId)
     .in("code", uniqueCodes)
     .is("deleted_at", null);
   if (ccError) throw new ApiError(ccError.message, 500);
@@ -329,7 +335,7 @@ export const POST = withApiError(async (
       cost_code_id: ccId,
       original_estimate: row.amountCents,
       revised_estimate: row.amountCents,
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
     });
     imported.push({
       cost_code: row.code,
@@ -403,11 +409,19 @@ async function handlePayAppImport(
     );
   }
 
-  // Resolve cost codes
+  const { data: jobOrg } = await supabase
+    .from("jobs")
+    .select("org_id")
+    .eq("id", jobId)
+    .single();
+  if (!jobOrg?.org_id) throw new ApiError("Job has no org_id", 400);
+  const orgId = jobOrg.org_id as string;
+
   const uniqueCodes = Array.from(new Set(g703Lines.map((l) => l.costCode)));
   const { data: costCodes, error: ccErr } = await supabase
     .from("cost_codes")
     .select("id, code")
+    .eq("org_id", orgId)
     .in("code", uniqueCodes)
     .is("deleted_at", null);
   if (ccErr) throw new ApiError(ccErr.message, 500);
@@ -443,7 +457,7 @@ async function handlePayAppImport(
       original_estimate: line.scheduledValue,
       revised_estimate: line.scheduledValue,
       previous_applications_baseline: line.previousApplications,
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
     };
 
     if (existing?.id) {
@@ -488,7 +502,7 @@ async function handlePayAppImport(
       estimated_days_added: co.estimatedDaysAdded,
       status: "executed",
       draw_number: co.appNumber,
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       status_history: JSON.stringify([
         {
           who: "pay-app-import",

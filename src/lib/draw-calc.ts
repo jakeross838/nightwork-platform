@@ -273,9 +273,9 @@ export function rollupDrawTotals(args: {
   depositPercentage: number;
   retainagePercent: number;
   lines: DrawLineSnapshot[];
-  // Previous certificates come from prior draws' current_payment_due sums.
   lessPreviousCertificates: number;
   isFinalDraw: boolean;
+  nonBudgetLineThisPeriod: number;
 }): DrawTotals {
   const {
     originalContractSum,
@@ -285,10 +285,12 @@ export function rollupDrawTotals(args: {
     lines,
     lessPreviousCertificates,
     isFinalDraw,
+    nonBudgetLineThisPeriod,
   } = args;
 
   const contract_sum_to_date = originalContractSum + netChangeOrders;
-  const total_completed_to_date = lines.reduce((s, l) => s + l.total_completed, 0);
+  const total_completed_to_date =
+    lines.reduce((s, l) => s + l.total_completed, 0) + nonBudgetLineThisPeriod;
   const pct = Math.max(0, Math.min(100, retainagePercent)) / 100;
   // Line 5a — retainage on completed work. On final draw, we release (0).
   const retainage_on_completed = isFinalDraw ? 0 : Math.round(total_completed_to_date * pct);
@@ -323,10 +325,15 @@ export function rollupDrawTotals(args: {
 }
 
 /**
- * Sum of current_payment_due across all prior locked/submitted/approved/paid
- * draws for this job. Drives Line 7 ("Less Previous Certificates for
- * Payment") on the G702. Revisions within the same draw_number collapse to
- * the latest revision.
+ * G702 Line 7: sum of current_payment_due across all prior
+ * locked/submitted/approved/paid draws, plus the pre-Nightwork baseline
+ * from jobs.previous_certificates_total. Revisions within the same
+ * draw_number collapse to the latest revision.
+ *
+ * Baseline is for pre-Nightwork certificates NOT represented in the draws
+ * table. If the draws table has no prior submitted draws (e.g. Dewberry
+ * Draw #1 is the first Nightwork draw), the baseline carries the full
+ * historical certified amount.
  */
 export async function lessPreviousCertificatesForJob(
   jobId: string,
@@ -351,7 +358,86 @@ export async function lessPreviousCertificatesForJob(
     const cur = byNumber.get(num);
     if (!cur || rev > cur.revision) byNumber.set(num, { revision: rev, amount: amt });
   }
-  return Array.from(byNumber.values()).reduce((s, v) => s + v.amount, 0);
+  const sumPriorDraws = Array.from(byNumber.values()).reduce((s, v) => s + v.amount, 0);
+
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("previous_certificates_total")
+    .eq("id", jobId)
+    .single();
+  const baseline = (job as { previous_certificates_total?: number } | null)
+    ?.previous_certificates_total ?? 0;
+
+  return sumPriorDraws + baseline;
+}
+
+/**
+ * Sum of this_period from draw_line_items whose source is NOT a budget line
+ * (i.e. internal billings and change orders). These rows are invisible to
+ * computeDrawLines (which iterates budget_lines), so they feed into G702
+ * Line 4 separately via rollupDrawTotals.
+ */
+export async function nonBudgetLineThisPeriodForDraw(drawId: string): Promise<number> {
+  if (!drawId) return 0;
+  const supabase = createServiceRoleClient();
+  const { data } = await supabase
+    .from("draw_line_items")
+    .select("this_period")
+    .eq("draw_id", drawId)
+    .in("source_type", ["internal", "change_order"])
+    .is("deleted_at", null);
+  return (data ?? []).reduce(
+    (s, r) => s + ((r as { this_period: number }).this_period ?? 0),
+    0
+  );
+}
+
+/**
+ * G702 Line 2: cumulative net change orders. Includes the pre-Nightwork
+ * baseline from jobs.previous_change_orders_total plus every approved
+ * owner-type CO created in Nightwork.
+ *
+ * Baseline is for pre-Nightwork COs NOT represented in the change_orders
+ * table. If the pay-app importer already created change_orders rows for
+ * historical COs, the baseline should be $0 to avoid double-counting.
+ */
+export async function netChangeOrdersForJob(jobId: string): Promise<number> {
+  const supabase = createServiceRoleClient();
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("previous_change_orders_total")
+    .eq("id", jobId)
+    .single();
+  const baseline = (job as { previous_change_orders_total?: number } | null)
+    ?.previous_change_orders_total ?? 0;
+
+  const { data: cos } = await supabase
+    .from("change_orders")
+    .select("total_with_fee, amount, gc_fee_amount")
+    .eq("job_id", jobId)
+    .in("status", ["approved", "executed"])
+    .eq("co_type", "owner")
+    .is("deleted_at", null);
+  const nightworkSum = (cos ?? []).reduce((s, co) => {
+    const row = co as { total_with_fee?: number; amount?: number; gc_fee_amount?: number };
+    return s + (row.total_with_fee ?? (row.amount ?? 0) + (row.gc_fee_amount ?? 0));
+  }, 0);
+
+  return baseline + nightworkSum;
+}
+
+/**
+ * Compute the AIA Application # for a draw. Pure function — no DB access.
+ * If the job has starting_application_number set, the formula is:
+ *   starting_application_number + draw_number - 1
+ * Otherwise falls back to draw_number (legacy behavior).
+ */
+export function applicationNumberForDraw(
+  draw: { draw_number: number },
+  job: { starting_application_number: number | null }
+): number {
+  if (job.starting_application_number == null) return draw.draw_number;
+  return job.starting_application_number + draw.draw_number - 1;
 }
 
 /**
@@ -410,7 +496,7 @@ export async function recalcDraftDrawsForJob(jobId: string): Promise<number> {
     supabase
       .from("jobs")
       .select(
-        "original_contract_amount, current_contract_amount, deposit_percentage, approved_cos_total, retainage_percent"
+        "original_contract_amount, current_contract_amount, deposit_percentage, retainage_percent"
       )
       .eq("id", jobId)
       .maybeSingle(),
@@ -430,8 +516,7 @@ export async function recalcDraftDrawsForJob(jobId: string): Promise<number> {
     (job as { deposit_percentage?: number }).deposit_percentage ?? 0.1;
   const originalContractSum =
     (job as { original_contract_amount?: number }).original_contract_amount ?? 0;
-  const netChangeOrders =
-    (job as { approved_cos_total?: number }).approved_cos_total ?? 0;
+  const netChangeOrders = await netChangeOrdersForJob(jobId);
 
   let recomputed = 0;
 
@@ -467,6 +552,7 @@ export async function recalcDraftDrawsForJob(jobId: string): Promise<number> {
       draw.draw_number,
       draw.id
     );
+    const nonBudgetLineThisPeriod = await nonBudgetLineThisPeriodForDraw(draw.id);
 
     const totals = rollupDrawTotals({
       originalContractSum,
@@ -476,6 +562,7 @@ export async function recalcDraftDrawsForJob(jobId: string): Promise<number> {
       lines,
       lessPreviousCertificates: lessPrevCerts,
       isFinalDraw: !!draw.is_final,
+      nonBudgetLineThisPeriod,
     });
 
     await supabase

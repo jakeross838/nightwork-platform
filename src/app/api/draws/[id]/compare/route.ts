@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import {
   computeDrawLines,
   lessPreviousCertificatesForJob,
+  nonBudgetLineThisPeriodForDraw,
   rollupDrawTotals,
 } from "@/lib/draw-calc";
 
@@ -101,6 +102,7 @@ export async function GET(
             0
           );
 
+      const nonBudgetLineThisPeriod = await nonBudgetLineThisPeriodForDraw(draw.id);
       const totals = rollupDrawTotals({
         originalContractSum:
           (jobRow as { original_contract_amount?: number } | null)?.original_contract_amount ?? 0,
@@ -111,6 +113,7 @@ export async function GET(
         lines,
         lessPreviousCertificates: lessPrev,
         isFinalDraw: !!draw.is_final,
+        nonBudgetLineThisPeriod,
       });
       return { lines, totals, invoiceCount: (invs ?? []).length };
     };

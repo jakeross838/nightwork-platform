@@ -4,22 +4,14 @@ Tracking non-blocking issues found during phase work that need
 attention later. Each entry links to the phase where it was
 discovered.
 
-## F-001: DEFAULT_ORG_ID hardcoded in budget-import route
+## F-001: DEFAULT_ORG_ID hardcoded in budget-import route — RESOLVED
 **Discovered:** Phase A (commit pending)
-**File:** src/app/api/jobs/[id]/budget-import/route.ts:62
-**Issue:** Route hardcodes org_id = "00000000-0000-0000-0000-000000000001"
-instead of reading from authenticated user's organization_memberships.
-Budget lines and COs imported via this route all get assigned to
-Ross Built's default org UUID regardless of the uploading user's
-actual org.
-**Impact:** Multi-tenant data leakage. Currently masked because only
-Ross Built uses import. Would misassign data if any other org
-imports.
-**Severity:** High once multi-tenant. Low now.
-**Recommended fix:** Read org_id from
-organization_memberships WHERE user_id = auth.user.id, error if
-no membership. Pattern exists in other routes — grep for
-"organization_memberships" to find reference implementations.
+**Resolved:** Phase D Step 5 adopt
+**Fix:** Removed hardcoded DEFAULT_ORG_ID constant. Both import
+paths (simple budget sheet + pay-app) now resolve org_id from the
+job's own org_id column (NOT NULL in schema, 0 rows violate).
+Cost code lookups scoped by org_id to prevent cross-org resolution.
+If job somehow has no org_id, throws 400 instead of silent fallback.
 
 ## F-002: PostgREST RLS join embedding failures
 **Discovered:** Pre-Phase-A (from commit 79ab01d)
@@ -59,3 +51,62 @@ Add "owner" role to SELECT policies wherever "admin" appears.
 Should be a single migration: 00039_owner_rls_audit.sql.
 **Recommended timing:** Before deploy to nightwork.build. Not
 blocking dev work.
+
+## F-003: invoices.draw_id is 1:1 (no history)
+**Discovered:** Phase D D1 (invoice allocations salvage)
+**File:** src/app/api/invoices/[id]/allocations/route.ts (lock check)
+**Issue:** invoice.draw_id is a single FK. It tracks only the
+invoice's current draw attachment, not historical linkage. If an
+invoice is removed from Draw #1 (paid) and added to Draw #2
+(draft), the lock check only sees Draw #2's status and wouldn't
+block edits that could corrupt Draw #1's historical G702.
+**Impact:** Low for MVP (invoices rarely move between draws).
+Could surface as data integrity issue in production once dogfooding
+reveals the workflow.
+**Severity:** Low now, medium if/when invoice-reassignment workflow
+becomes common.
+**Recommended fix:** Either (a) change invoice.draw_id to a
+many-to-many via invoice_draw_history table, or (b) make invoices
+immutable once attached to a submitted draw (cleaner — no edit
+UI at all for attached invoices).
+
+## F-004: Internal billings assumed single-draw
+**Discovered:** Phase D recompute helper review
+**File:** src/lib/recompute-percentage-billings.ts (line ~96)
+**Assumption:** total_to_date = this_period for internal billing
+lines. This holds because internal billings are modeled as one-shot
+charges on a specific draw (previous_applications = 0 by construction).
+**Risk:** If the product ever supports multi-draw recurring billings
+(e.g. Supervision that spans 3 draws), this logic will silently write
+wrong cumulative values. The billing would show this_period correctly
+on each draw but total_to_date would be reset to this_period each
+time instead of accumulating.
+**Severity:** Low today. Medium if recurring billing workflow ships.
+**Recommended fix:** When multi-draw billings are supported, compute
+total_to_date as: SUM(this_period) across all non-deleted draws this
+internal_billing has touched, up to and including current draw.
+
+## F-005: Phase D workflows verified at unit level, some not E2E tested
+**Discovered:** Phase D completion
+**Context:** Phase D screenshots captured the critical G702 correctness
+(Line 7 baseline, Line 8 positive, Application # display, no phantom
+Deposit). Some workflows have code reviewed and build-verified but not
+exercised end-to-end with real UI flow:
+
+- **Invoice allocation splitting** (D1): API + editor component built
+  and committed. Not tested via real UI because no Dewberry invoices
+  have been split yet. Phase E will exercise if/when a split invoice
+  is needed for comparison.
+- **Change order draw attach** (D2): Available-to-attach filter
+  verified (correctly shows 0 for Dewberry because all COs were
+  imported with draw_number already set). The attach/detach mutation
+  path itself is code-reviewed but not clicked through by a user.
+
+**Risk:** Low. The calculation layer (draw-calc.ts) is the high-risk
+code and is verified via Line 8 correctness. The UI layers are thin
+CRUD operations against verified schemas.
+
+**Mitigation:** Dogfooding on next real Ross Built CO will exercise
+the attach flow. First split invoice will exercise allocation UI.
+
+**Severity:** Low.
