@@ -5,25 +5,18 @@ import Link from "next/link";
 export type JobTabKey =
   | "overview"
   | "budget"
-  | "change-orders"
-  | "purchase-orders"
   | "invoices"
-  | "lien-releases"
   | "draws"
-  | "internal-billings";
+  | "change-orders"
+  | "activity";
 
-// Tab order is workflow-priority: Overview → Budget → Invoices →
-// Purchase Orders → Change Orders → Draws → Lien Releases. Budget and
-// Invoices are the most-touched tabs so they come first after Overview.
 const TABS: { key: JobTabKey; label: string; slug: string }[] = [
   { key: "overview", label: "Overview", slug: "" },
-  { key: "budget", label: "Budget", slug: "/budget" },
+  { key: "budget", label: "Budget & Costs", slug: "/budget" },
   { key: "invoices", label: "Invoices", slug: "/invoices" },
-  { key: "purchase-orders", label: "Purchase Orders", slug: "/purchase-orders" },
-  { key: "change-orders", label: "Change Orders", slug: "/change-orders" },
   { key: "draws", label: "Draws", slug: "/draws" },
-  { key: "lien-releases", label: "Lien Releases", slug: "/lien-releases" },
-  { key: "internal-billings", label: "Internal Billings", slug: "/internal-billings" },
+  { key: "change-orders", label: "Change Orders", slug: "/change-orders" },
+  { key: "activity", label: "Activity", slug: "/activity" },
 ];
 
 export default function JobTabs({

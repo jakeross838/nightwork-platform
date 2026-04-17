@@ -10,6 +10,7 @@ import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import BudgetCostsSubTabs from "@/components/budget-costs-sub-tabs";
 
 interface Job {
   id: string;
@@ -166,8 +167,9 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
             </Link>
           </div>
         </div>
-        <JobTabs jobId={job.id} active="purchase-orders" />
+        <JobTabs jobId={job.id} active="budget" />
         <JobFinancialBar jobId={job.id} />
+        <BudgetCostsSubTabs jobId={job.id} active="pos" />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Stat label="Total POs" value={String(totals.count)} />

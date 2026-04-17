@@ -7,6 +7,7 @@ import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
+import DrawsSubTabs from "@/components/draws-sub-tabs";
 
 interface LienRelease {
   id: string;
@@ -140,8 +141,9 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
         <p className="text-sm text-cream-dim mb-6">
           Track conditional and unconditional waivers for every vendor on every draw.
         </p>
-        <JobTabs jobId={params.id} active="lien-releases" />
+        <JobTabs jobId={params.id} active="draws" />
         <JobFinancialBar jobId={params.id} />
+        <DrawsSubTabs jobId={params.id} active="liens" />
 
         {loading ? (
           <div className="py-16 text-center">

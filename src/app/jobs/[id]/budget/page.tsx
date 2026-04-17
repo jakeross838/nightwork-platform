@@ -15,6 +15,7 @@ import { formatCents } from "@/lib/utils/format";
 import type { BudgetExportInput } from "@/lib/budget-export";
 import { toast } from "@/lib/utils/toast";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import BudgetCostsSubTabs from "@/components/budget-costs-sub-tabs";
 
 interface Job {
   id: string;
@@ -716,6 +717,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         <div className="print:hidden">
           <JobTabs jobId={job.id} active="budget" />
           <JobFinancialBar jobId={job.id} />
+          <BudgetCostsSubTabs jobId={job.id} active="budget" />
         </div>
 
         {showCompareStats && (
