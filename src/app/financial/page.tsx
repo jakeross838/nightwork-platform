@@ -24,8 +24,10 @@ export default function FinancialPage() {
             <PlaceholderLink href="/invoices/queue" label="PM Queue" />
             <PlaceholderLink href="/invoices/qa" label="Accounting QA" />
             <PlaceholderLink href="/invoices/upload" label="Upload Invoice" />
+            <PlaceholderLink href="/invoices/import" label="Bulk Import" />
             <PlaceholderLink href="/invoices/payments" label="Payments" />
             <PlaceholderLink href="/draws" label="Draws" />
+            <PlaceholderLink href="/financials/aging-report" label="Aging Report" />
             <PlaceholderLink href="/vendors" label="Vendors" />
           </div>
         </div>
