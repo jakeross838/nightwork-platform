@@ -33,7 +33,7 @@ export async function GET(
     const { data: draw, error } = await supabase
       .from("draws")
       .select(
-        `*, jobs:job_id (id, name, address, client_name, deposit_percentage, gc_fee_percentage, retainage_percent, original_contract_amount, current_contract_amount, starting_application_number)`
+        `*, jobs:job_id (id, name, address, client_name, deposit_percentage, gc_fee_percentage, retainage_percent, original_contract_amount, current_contract_amount, starting_application_number, previous_co_completed_amount)`
       )
       .eq("id", params.id)
       .is("deleted_at", null)
@@ -138,6 +138,8 @@ export async function GET(
       lessPreviousCertificates: lessPrevCerts,
       isFinalDraw: !!(draw as { is_final?: boolean }).is_final,
       nonBudgetLineThisPeriod,
+      previousCoCompletedAmount:
+        (draw as { jobs?: { previous_co_completed_amount?: number } }).jobs?.previous_co_completed_amount ?? 0,
     });
 
     // Build G703 rows: merge snapshot by cost_code_id into budget_lines.

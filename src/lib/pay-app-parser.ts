@@ -63,6 +63,8 @@ export interface PayAppParseResult {
   g702: PayAppG702;
   g703Lines: PayAppG703Line[];
   pccoLog: PayAppPCCO[];
+  /** Cumulative CO work billed in prior apps — from G703 "PCCO from Previous Applications" row, cents. */
+  previousCoCompletedAmount: number;
   warnings: string[];
 }
 
@@ -242,7 +244,10 @@ function parseG702(sheet: ExcelJS.Worksheet, warnings: string[]): PayAppG702 {
 // G703 parser
 // ---------------------------------------------------------------------------
 
-function parseG703(sheet: ExcelJS.Worksheet, warnings: string[]): PayAppG703Line[] {
+function parseG703(sheet: ExcelJS.Worksheet, warnings: string[]): {
+  lines: PayAppG703Line[];
+  previousCoCompletedAmount: number;
+} {
   // Multi-page layout: data rows have a 5-digit cost code in column A.
   // Page breaks have "Total This Page" in column B, headers repeat after.
   // Column layout: A=code, B=description, C=original estimate,
@@ -251,6 +256,7 @@ function parseG703(sheet: ExcelJS.Worksheet, warnings: string[]): PayAppG703Line
 
   const lines: PayAppG703Line[] = [];
   const seen = new Set<string>();
+  let previousCoCompletedAmount = 0;
 
   sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     const colA = extractText(row.getCell(1).value);
@@ -274,9 +280,27 @@ function parseG703(sheet: ExcelJS.Worksheet, warnings: string[]): PayAppG703Line
       return;
     }
 
-    const colB = extractText(row.getCell(2).value).toLowerCase();
-    if (colB.includes("total this page") || colB.includes("grand total")) {
+    const colB = extractText(row.getCell(2).value);
+    const colBLower = colB.toLowerCase();
+    if (colBLower.includes("total this page") || colBLower.includes("grand total")) {
       return;
+    }
+
+    // Detect PCCO summary rows — column A = "PCCO", column B has description.
+    // "PCCO from Previous Applications" total_to_date = cumulative CO billing
+    // through prior apps. Extract as previousCoCompletedAmount (cents).
+    if (lower === "pcco") {
+      if (colBLower.includes("previous application")) {
+        const ttd = extractNumber(row.getCell(6).value);  // total_to_date column
+        if (ttd != null) {
+          previousCoCompletedAmount = toCents(ttd);
+        } else {
+          // Fall back to previous_applications column (D)
+          const prev = extractNumber(row.getCell(4).value);
+          if (prev != null) previousCoCompletedAmount = toCents(prev);
+        }
+      }
+      return; // Don't add PCCO summary rows as budget lines
     }
 
     const code = normaliseCostCode(colA);
@@ -289,7 +313,7 @@ function parseG703(sheet: ExcelJS.Worksheet, warnings: string[]): PayAppG703Line
     }
     seen.add(code);
 
-    const description = extractText(row.getCell(2).value);
+    const description = colB;
     const scheduledVal = extractNumber(row.getCell(3).value);
     const prevApps = extractNumber(row.getCell(4).value);
     const thisPeriod = extractNumber(row.getCell(5).value);
@@ -314,7 +338,7 @@ function parseG703(sheet: ExcelJS.Worksheet, warnings: string[]): PayAppG703Line
     warnings.push("G703: No line items found");
   }
 
-  return lines;
+  return { lines, previousCoCompletedAmount };
 }
 
 // ---------------------------------------------------------------------------
@@ -448,7 +472,11 @@ export function parsePayApp(wb: ExcelJS.Workbook): PayAppParseResult {
         currentCOsTotal: 0,
       };
 
-  const g703Lines = g703Sheet ? parseG703(g703Sheet, warnings) : [];
+  const g703Result = g703Sheet
+    ? parseG703(g703Sheet, warnings)
+    : { lines: [] as PayAppG703Line[], previousCoCompletedAmount: 0 };
+  const g703Lines = g703Result.lines;
+  const previousCoCompletedAmount = g703Result.previousCoCompletedAmount;
   const pccoLog = pccoSheet ? parsePCCO(pccoSheet, warnings) : [];
 
   // Cross-check: G702 net COs should approximately equal sum of PCCO additions + fees
@@ -467,5 +495,5 @@ export function parsePayApp(wb: ExcelJS.Workbook): PayAppParseResult {
     }
   }
 
-  return { format: "pay-app", g702, g703Lines, pccoLog, warnings };
+  return { format: "pay-app", g702, g703Lines, pccoLog, previousCoCompletedAmount, warnings };
 }
