@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
+import { getCurrentMembership } from "@/lib/org/session";
 import { isPayAppWorkbook, parsePayApp } from "@/lib/pay-app-parser";
 import type { PayAppParseResult } from "@/lib/pay-app-parser";
 
@@ -123,13 +124,9 @@ export const POST = withApiError(async (
   } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") {
-    throw new ApiError("Only admins can import budgets", 403);
+  const membership = await getCurrentMembership();
+  if (!membership || !["admin", "owner"].includes(membership.role)) {
+    throw new ApiError("Only admins/owners can import budgets", 403);
   }
 
   // Verify job exists

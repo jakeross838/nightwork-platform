@@ -54,10 +54,8 @@ export const POST = withApiError(async (request: NextRequest, { params }: { para
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
 
-  const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || !["admin", "pm"].includes(profile.role)) {
-    throw new ApiError("Only admins/PMs can create COs", 403);
+  if (!["admin", "pm", "owner"].includes(membership.role)) {
+    throw new ApiError("Only admins/PMs/owners can create COs", 403);
   }
 
   const body: CreateCoBody = await request.json();

@@ -175,12 +175,13 @@ export default function QueuePage() {
  let role: "admin" | "pm" | "accounting" | null = null;
  if (user) {
  setCurrentUserId(user.id);
- const { data: profile } = await supabase
- .from("profiles")
+ const { data: membership } = await supabase
+ .from("org_members")
  .select("role")
- .eq("id", user.id)
- .single();
- role = (profile?.role as typeof role) ?? null;
+ .eq("user_id", user.id)
+ .eq("is_active", true)
+ .maybeSingle();
+ role = (membership?.role as typeof role) ?? null;
  setCurrentRole(role);
 
  // For PMs, pre-load the set of jobs they own so we can include

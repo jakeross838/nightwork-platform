@@ -67,9 +67,7 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
 
-  const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || !["admin", "pm", "owner"].includes(profile.role)) {
+  if (!["admin", "pm", "owner"].includes(membership.role)) {
     throw new ApiError("Only admins/PMs/owners can edit COs", 403);
   }
 
@@ -112,7 +110,7 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
   // Status transitions
   if (body.status && body.status !== co.status) {
     // Only owner/admin can approve or deny.
-    if (["approved", "denied"].includes(body.status) && !["owner", "admin"].includes(profile.role)) {
+    if (["approved", "denied"].includes(body.status) && !["owner", "admin"].includes(membership.role)) {
       throw new ApiError("Only owners/admins can approve or deny change orders", 403);
     }
 

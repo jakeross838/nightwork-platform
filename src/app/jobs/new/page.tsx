@@ -41,12 +41,13 @@ export default function NewJobPage() {
         router.replace("/login?redirect=/jobs/new");
         return;
       }
-      const { data: profile } = await supabase
-        .from("profiles")
+      const { data: membership } = await supabase
+        .from("org_members")
         .select("role")
-        .eq("id", user.id)
-        .single();
-      if (profile?.role !== "admin") {
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (!membership || !["admin", "owner"].includes(membership.role)) {
         setAuthorized(false);
         return;
       }
