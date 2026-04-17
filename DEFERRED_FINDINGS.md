@@ -160,3 +160,38 @@ Identify which specific lines are off.
 **Mitigation:** For Dewberry, can manually adjust budget_lines to
 match Diane before submitting real draws. Systemic fix needed
 before onboarding more mid-project jobs.
+
+## F-009: Two separate caches for "approved COs total" on a job
+**Discovered:** Visual audit 2026-04-17 (post-Phase-E)
+**Impact:** `jobs.approved_cos_total` cache column is read by the
+job-level UI (financial bar, overview cards, change orders tab
+stat card, budget export, overview API). It is maintained by
+`recalcJobContract()` which fires on PATCH /api/change-orders/[id].
+Any path that modifies change_orders rows OUTSIDE that endpoint
+(seeds, imports, direct SQL, bulk ops) leaves the cache stale.
+
+Separately, draw-calc uses `netChangeOrdersForJob()` (live query)
+which is immune to this staleness.
+
+**Observed:** Phase E's pay-app import populated PCCO #17 without
+firing recalcJobContract. Result: draws showed Net COs correctly
+at $3,902.26 (PCCO #17 total_with_fee) but the job header showed
+$0.00 for approved_cos_total. Manual recalcJobContract call fixed
+the cache.
+
+**Severity:** Low for normal UI flows. Medium for any feature
+that creates/modifies COs outside the PATCH endpoint (imports,
+bulk ops, migrations, future integrations).
+
+**Remediation options:**
+- A: Fire recalcJobContract() at the end of every bulk operation
+  that touches change_orders (cheap, adds discipline).
+- B: Add a DB trigger on change_orders INSERT/UPDATE/DELETE that
+  recomputes the cache automatically (most robust).
+- C: Remove the cache, compute live everywhere via
+  netChangeOrdersForJob() — single source of truth (biggest
+  refactor; affects 6 UI read sites).
+
+**Recommendation:** B for medium-term (safe and automatic). A as
+short-term discipline for imports. C eventually, when consolidating
+the calc layer.
