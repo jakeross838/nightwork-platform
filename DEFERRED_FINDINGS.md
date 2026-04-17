@@ -260,3 +260,34 @@ bulk ops, migrations, future integrations).
 **Recommendation:** B for medium-term (safe and automatic). A as
 short-term discipline for imports. C eventually, when consolidating
 the calc layer.
+
+## F-012: Job sidebar fetches all jobs, filters client-side
+**Discovered:** 2026-04-17 during Phase 4 validation
+**Impact:** JobSidebar component queries all accessible jobs in
+one Supabase query, then filters client-side with useMemo for
+the My Jobs toggle. Works fine for current 15-job scale. At 100+
+jobs per org, this becomes wasteful bandwidth and compute.
+
+**Severity:** Low for MVP. Medium when a single org has 50+
+active jobs.
+
+**Fix:** Move the pm_id filter to the Supabase query when
+filter === 'mine'. Add pagination when filter === 'all' and
+job count exceeds ~30.
+
+**Remediation effort:** 1-2 hours.
+
+## F-013: Job sidebar hidden on mobile, no alternative switcher
+**Discovered:** 2026-04-17 during Phase 4 validation
+**Impact:** The job-scoped sidebar is hidden below md breakpoint.
+Mobile users on job detail pages have no way to switch between
+jobs without navigating back to /jobs list.
+
+**Severity:** Medium. Affects PM workflows on phone — exactly
+the audience most likely to work from a job site.
+
+**Fix:** Implement mobile drawer pattern. Button in top nav
+(hamburger icon when on job-scoped route) opens full-screen
+drawer with same sidebar content.
+
+**Remediation effort:** 2-3 hours.

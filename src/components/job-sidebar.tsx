@@ -205,27 +205,29 @@ export default function JobSidebar() {
           </Link>
         )}
 
-        {/* Filter toggle */}
-        <div className="flex gap-1 bg-brand-surface border border-brand-border p-0.5">
-          <button
-            type="button"
-            onClick={() => setFilter("mine")}
-            className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
-              filter === "mine" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
-            }`}
-          >
-            My Jobs
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("all")}
-            className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
-              filter === "all" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
-            }`}
-          >
-            All Jobs
-          </button>
-        </div>
+        {/* Filter toggle — only shown for PMs who have a meaningful distinction */}
+        {role === "pm" && (
+          <div className="flex gap-1 bg-brand-surface border border-brand-border p-0.5">
+            <button
+              type="button"
+              onClick={() => setFilter("mine")}
+              className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                filter === "mine" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+              }`}
+            >
+              My Jobs
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter("all")}
+              className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                filter === "all" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+              }`}
+            >
+              All Jobs
+            </button>
+          </div>
+        )}
 
         {/* Search */}
         <input
