@@ -110,3 +110,53 @@ CRUD operations against verified schemas.
 the attach flow. First split invoice will exercise allocation UI.
 
 **Severity:** Low.
+
+## F-006: Historical CO work not in Line 4 for mid-project imports
+**Discovered:** Phase E comparison vs Dewberry Pay App #10
+**Impact:** Line 4 Total Completed differs from source pay app by
+the cumulative CO amount ($226,633.03 on Dewberry) when a job is
+imported mid-lifecycle. Line 2 Net Change Orders is correct. Line
+4 under-reports by the CO sum because CO rows live in change_orders
+table without corresponding draw_line_items rows.
+
+**Scope:** Only affects mid-project imports. New jobs and new
+draws on existing jobs are unaffected — Phase D2's attach flow
+creates draw_line_items with source_type='change_order' which
+rollupDrawTotals picks up correctly via nonBudgetLineThisPeriodForDraw.
+
+**Recommended fix:** Pay-app importer should create "historical"
+draw_line_items for each CO represented in the imported pay app
+log, linked to a synthetic "import baseline" draw or directly
+attributed to the CO's representation in prior draws. Alternative:
+compute Line 4 = sum(budget lines) + baseline_completed_cos
+(new jobs column) when importing pay app data.
+
+**Severity:** Medium. Makes Line 4 wrong for imported jobs until
+fix lands. Line 2, 3, 7, 8 semantics still correct for new-work
+calculations once baseline is set.
+
+**Blocks:** Producing a penny-exact G702 matching source pay apps
+for mid-project imported jobs.
+
+## F-007: Budget line import rounding/completeness gap
+**Discovered:** Phase E comparison vs Dewberry Pay App #10
+**Impact:** Dewberry's G703 budget lines sum to $2,137,737.04 in
+Nightwork vs $2,151,041.15 in Diane's G703. Delta = $13,304.11
+across ~142 cost codes. Average ~$94/line, so this is not sub-cent
+rounding — something systematic.
+
+**Root cause:** Unknown. Candidates:
+- Specific cost code category excluded or misparsed
+- Missing line items (Diane's G703 has rows the importer skipped)
+- Decimal parsing losing precision on specific line values
+- Duplicate or collapsed cost codes
+
+**Recommended next step:** Export Dewberry budget_lines from
+Nightwork and compare row-by-row against Diane's G703 sheet.
+Identify which specific lines are off.
+
+**Severity:** Medium. $13K is real money — not cosmetic.
+
+**Mitigation:** For Dewberry, can manually adjust budget_lines to
+match Diane before submitting real draws. Systemic fix needed
+before onboarding more mid-project jobs.
