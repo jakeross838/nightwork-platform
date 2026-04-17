@@ -446,6 +446,7 @@ export default function UploadPage() {
  const [savingAll, setSavingAll] = useState(false);
  const [duplicateModal, setDuplicateModal] = useState<DuplicateInfo | null>(null);
  const [duplicateSaving, setDuplicateSaving] = useState(false);
+ const [documentType, setDocumentType] = useState<"invoice" | "receipt">("invoice");
  const duplicateHitRef = useRef(false);
  const inputRef = useRef<HTMLInputElement>(null);
 
@@ -498,9 +499,11 @@ export default function UploadPage() {
  if (!fs.result || fs.saved) return;
  setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, saving: true } : f)));
  try {
- const payload = forceSave
- ? { ...fs.result, force_save: true }
- : fs.result;
+ const payload = {
+ ...fs.result,
+ ...(forceSave ? { force_save: true } : {}),
+ document_type: documentType,
+ };
  const res = await fetch("/api/invoices/save", {
  method: "POST",
  headers: { "Content-Type": "application/json" },
@@ -570,6 +573,34 @@ export default function UploadPage() {
  )}
 
  <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+ {/* Document type toggle */}
+ <div className="flex items-center gap-3 mb-6">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Document Type</span>
+ <div className="inline-flex border border-brand-border">
+ <button
+  onClick={() => setDocumentType("invoice")}
+  className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+  documentType === "invoice"
+   ? "bg-teal text-brand-bg"
+   : "text-cream-dim hover:text-cream hover:bg-brand-surface"
+  }`}
+ >Invoice</button>
+ <button
+  onClick={() => setDocumentType("receipt")}
+  className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+  documentType === "receipt"
+   ? "bg-teal text-brand-bg"
+   : "text-cream-dim hover:text-cream hover:bg-brand-surface"
+  }`}
+ >Receipt</button>
+ </div>
+ {documentType === "receipt" && (
+ <span className="text-xs text-cream-dim">
+  Hardware runs, permits, dump fees, card charges, petty cash
+ </span>
+ )}
+ </div>
+
  {/* Drop Zone */}
  <div
  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -588,7 +619,7 @@ export default function UploadPage() {
  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
  </svg>
  </div>
- <p className="text-lg text-cream font-display">{isDragging ? "Drop files here" : <><span className="hidden md:inline">Drag & drop invoices</span><span className="md:hidden">Upload Invoices</span></>}</p>
+ <p className="text-lg text-cream font-display">{isDragging ? "Drop files here" : <><span className="hidden md:inline">Drag & drop {documentType === "receipt" ? "receipts" : "invoices"}</span><span className="md:hidden">Upload {documentType === "receipt" ? "Receipts" : "Invoices"}</span></>}</p>
  <p className="mt-1.5 text-sm text-cream-dim hidden md:block">or click to browse &mdash; PDF, DOCX, XLSX, JPG, PNG</p>
  <button className="mt-4 px-6 py-3 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors md:hidden">Browse Files</button>
  </div>

@@ -62,6 +62,7 @@ interface InvoiceData {
  total_amount: number;
  ai_parsed_total_amount: number | null;
  is_change_order: boolean;
+ document_type: string | null;
  invoice_type: string | null; co_reference_raw: string | null;
  confidence_score: number;
  confidence_details: (Record<string, number> & { auto_fills?: Record<string, boolean> }) | null;
@@ -1242,6 +1243,13 @@ export default function InvoiceReviewPage() {
  },
  ]}
  />
+ {/* Receipt document type badge */}
+ {invoice.document_type === "receipt" && (
+ <div className="mb-4 border border-cream-dim/30 bg-cream-dim/5 px-4 py-2.5 text-sm text-cream-dim animate-fade-up inline-flex items-center gap-2">
+ <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-cream-dim/40 text-cream-dim font-medium">Receipt</span>
+ <span>This is a receipt — vendor and invoice number are optional.</span>
+ </div>
+ )}
  {/* Partial approval banner — shown on both halves of a split */}
  {(invoice.parent_invoice_id || invoice.partial_approval_note) && (
  <div className="mb-4 border border-brass/50 bg-brass/5 px-4 py-3 text-sm text-cream animate-fade-up">

@@ -27,6 +27,8 @@ export interface SaveInvoiceRequest {
   file_name: string;
   file_type: string;
   force_save?: boolean;
+  /** User-selected document type: 'invoice' (default) or 'receipt'. */
+  document_type?: "invoice" | "receipt";
 }
 
 export interface SaveInvoiceResult {
@@ -200,7 +202,7 @@ export async function saveParsedInvoice(
   supabase: SupabaseClient,
   req: SaveInvoiceRequest
 ): Promise<SaveInvoiceResult> {
-  const { parsed, file_url, file_name, file_type, force_save } = req;
+  const { parsed, file_url, file_name, file_type, force_save, document_type } = req;
 
   const totalAmountCents = dollarsToCents(parsed.total_amount);
 
@@ -400,6 +402,7 @@ export async function saveParsedInvoice(
       original_filename: file_name,
       original_file_type: mapFileType(file_type),
       document_category: overhead.isOverhead ? "overhead" : "job_cost",
+      document_type: document_type ?? "invoice",
       org_id: ORG_ID,
     })
     .select("id")

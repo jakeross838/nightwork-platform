@@ -21,6 +21,7 @@ interface QueueInvoice {
  job_id: string | null;
  cost_code_id: string | null;
  document_category: string | null;
+ document_type: string | null;
  po_id: string | null;
  is_potential_duplicate: boolean;
  duplicate_dismissed_at: string | null;
@@ -200,7 +201,7 @@ export default function QueuePage() {
  supabase
  .from("invoices")
  .select(
- "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, document_category, po_id, is_potential_duplicate, duplicate_dismissed_at, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
+ "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, status, job_id, cost_code_id, document_category, document_type, po_id, is_potential_duplicate, duplicate_dismissed_at, jobs:job_id (name), assigned_pm:assigned_pm_id (id, full_name)"
  )
  .in("status", ["pm_review", "ai_processed", "pm_held", "pm_denied", "info_requested"])
  .is("deleted_at", null)
@@ -949,8 +950,11 @@ export default function QueuePage() {
  }
  >
  <div className="flex items-start justify-between">
- <span className="text-cream font-medium text-base">
+ <span className="text-cream font-medium text-base inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
+ {inv.document_type === "receipt" && (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-cream-dim border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+ )}
  </span>
  <div className="flex items-center gap-2">
  <span className="text-cream font-display font-medium text-lg">
@@ -1228,6 +1232,9 @@ export default function QueuePage() {
  )}
  <td className="py-4 px-5 text-cream font-medium">
  {inv.vendor_name_raw ?? "Unknown"}
+ {inv.document_type === "receipt" && (
+ <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-cream-dim border border-cream-dim/40 text-[10px] font-medium uppercase tracking-wide">Receipt</span>
+ )}
  {inv.status === "pm_held" && (
  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-brass border border-brass text-[10px] font-medium">
  Held

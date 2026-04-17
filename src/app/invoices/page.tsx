@@ -23,6 +23,7 @@ interface Invoice {
  picked_up: boolean;
  mailed_date: string | null;
  document_category: string | null;
+ document_type: string | null;
  is_change_order: boolean;
  parent_invoice_id: string | null;
  partial_approval_note: string | null;
@@ -168,8 +169,8 @@ export default function AllInvoicesPage() {
  async function fetchData() {
  // Try with partial-approval columns first (migration 00015). Fall back if
  // the columns don't exist yet so the page still renders.
- const INVOICES_FULL = "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, parent_invoice_id, partial_approval_note, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
- const INVOICES_MINIMAL = "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, is_change_order, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
+ const INVOICES_FULL = "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, document_type, is_change_order, parent_invoice_id, partial_approval_note, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
+ const INVOICES_MINIMAL = "id, vendor_name_raw, vendor_id, invoice_number, invoice_date, total_amount, confidence_score, received_date, payment_date, status, check_number, picked_up, mailed_date, document_category, document_type, is_change_order, payment_status, jobs:job_id (name), cost_codes:cost_code_id (code, description), assigned_pm:assigned_pm_id (id, full_name)";
  // Parallel: invoices + PMs. Line items fetched in a second pass with
  // an IN filter so we don't scan every line item in the org.
  const [invResult, pmResult] = await Promise.all([
@@ -585,6 +586,11 @@ export default function AllInvoicesPage() {
  <td className="py-3 px-4 text-cream font-medium sticky left-0 bg-brand-card group-hover:bg-brand-elevated/50 z-[1]">
  <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
+ {inv.document_type === "receipt" && (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-cream-dim border border-cream-dim/40 uppercase tracking-wide">
+ Receipt
+ </span>
+ )}
  {isUnknownVendor(inv) && (
  <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
  Unknown Vendor
@@ -722,7 +728,12 @@ export default function AllInvoicesPage() {
  <tr key={inv.id} className="border-t border-brand-row-border hover:bg-brand-elevated/50 transition-colors">
  <td className="py-3 px-4 text-cream font-medium cursor-pointer hover:text-teal transition-colors"
  onClick={() => window.location.href = `/invoices/${inv.id}`}>
+ <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
+ {inv.document_type === "receipt" && (
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-cream-dim border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+ )}
+ </span>
  </td>
  <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? <span className="text-cream-dim">&mdash;</span>}</td>
  <td className="py-3 px-4 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
