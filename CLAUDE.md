@@ -17,16 +17,12 @@ git push origin main
 Jake works across multiple PCs. If you don't pull first, you'll be working on stale code. If you don't push after, the other PC won't have your changes. Never start coding without pulling. Never end a session without pushing.
 
 **Screenshot protocol:**
-- All screenshots go to C:\Users\jaker\Ross-Built-Command\screenshots\
-- Clear this folder at the START of every prompt that takes screenshots
-- Name files descriptively: 01-page-name.png, 02-feature-name.png, etc.
-- This folder is in .gitignore — screenshots never get committed
+Screenshots are captured via Chrome MCP and returned inline in the conversation. They are not persisted to disk. Jake reviews inline screenshots directly in chat.
 
 ## Project Identity Guard
 **This project is Ross-Built-Command (Ross Command Center / Nightwork).**
 - GitHub repo: github.com/jakeross838/Ross-Built-Command
-- Local path: C:\Users\jaker\Ross-Built-Command
-- Screenshots path: C:\Users\jaker\Ross-Built-Command\screenshots\ (clear between prompts)
+- Local path: C:\Users\Jake\Ross-Built-Command
 - If CLAUDE.md mentions "RossOS", "cms_rebuild", "136 tables", "10,000+ companies", or "Phase 4 modules 20-28" — STOP. You are in the wrong project.
 - If pwd does not show Ross-Built-Command — STOP. Navigate to the correct directory.
 - Never modify files outside of this project directory.
