@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/utils/format";
-import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import JobOverviewCards from "@/components/job-overview-cards";
@@ -226,40 +225,30 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
 
   if (authorized === false) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
-        <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-          <h2 className="font-display text-2xl text-cream">Access denied</h2>
-          <p className="mt-2 text-sm text-cream-dim">Jobs management is restricted to administrators.</p>
-        </main>
-      </div>
+      <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
+        <h2 className="font-display text-2xl text-cream">Access denied</h2>
+        <p className="mt-2 text-sm text-cream-dim">Jobs management is restricted to administrators.</p>
+      </main>
     );
   }
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
-        <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-          <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
-        </main>
-      </div>
+      <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
+        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+      </main>
     );
   }
   if (!job) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
-        <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-          <h2 className="font-display text-2xl text-cream">Job not found</h2>
-          <Link href="/jobs" className="inline-block mt-4 text-sm text-teal hover:underline">Back to jobs</Link>
-        </main>
-      </div>
+      <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
+        <h2 className="font-display text-2xl text-cream">Job not found</h2>
+        <Link href="/jobs" className="inline-block mt-4 text-sm text-teal hover:underline">Back to jobs</Link>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <>
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs items={[{ label: "Jobs", href: "/jobs" }, { label: job.name }]} />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
@@ -516,7 +505,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         }
         .input:focus { outline: none; border-color: var(--org-primary); }
       `}</style>
-    </div>
+    </>
   );
 }
 

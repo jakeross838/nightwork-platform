@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import NavBar from "@/components/nav-bar";
 
 interface PmUser {
   id: string;
@@ -67,15 +66,12 @@ export default function NewJobPage() {
 
   if (authorized === false) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
-        <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-          <h2 className="font-display text-2xl text-cream">Access denied</h2>
-          <p className="mt-2 text-sm text-cream-dim">
-            Jobs management is restricted to administrators.
-          </p>
-        </main>
-      </div>
+      <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
+        <h2 className="font-display text-2xl text-cream">Access denied</h2>
+        <p className="mt-2 text-sm text-cream-dim">
+          Jobs management is restricted to administrators.
+        </p>
+      </main>
     );
   }
 
@@ -127,8 +123,7 @@ export default function NewJobPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <>
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -309,7 +304,7 @@ export default function NewJobPage() {
           border-color: var(--org-primary);
         }
       `}</style>
-    </div>
+    </>
   );
 }
 

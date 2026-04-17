@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
@@ -23,8 +22,6 @@ export default function JobActivityPage({ params }: { params: { id: string } }) 
   }, [params.id, router]);
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
@@ -46,6 +43,5 @@ export default function JobActivityPage({ params }: { params: { id: string } }) 
           </p>
         </div>
       </main>
-    </div>
   );
 }
