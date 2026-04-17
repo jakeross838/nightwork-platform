@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
-import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
@@ -127,8 +126,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
   }
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <>
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
@@ -295,7 +293,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
           saving={saving}
         />
       )}
-    </div>
+    </>
   );
 }
 

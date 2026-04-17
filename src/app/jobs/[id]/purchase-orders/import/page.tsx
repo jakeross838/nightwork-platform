@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NavBar from "@/components/nav-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import CsvImporter from "@/components/csv-importer";
 import { supabase } from "@/lib/supabase/client";
@@ -23,8 +22,6 @@ export default function PurchaseOrderImportPage({ params }: { params: { id: stri
   }, [params.id, router]);
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
@@ -65,6 +62,5 @@ export default function PurchaseOrderImportPage({ params }: { params: { id: stri
           }}
         />
       </main>
-    </div>
   );
 }

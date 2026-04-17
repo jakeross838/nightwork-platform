@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NavBar from "@/components/nav-bar";
 import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
@@ -668,31 +667,24 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
-        <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-          <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
-        </main>
-      </div>
+      <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
+        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+      </main>
     );
   }
   if (!job) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
-        <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-          <p className="text-cream">Job not found</p>
-          <Link href="/jobs" className="text-teal hover:underline text-sm">Back to jobs</Link>
-        </main>
-      </div>
+      <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
+        <p className="text-cream">Job not found</p>
+        <Link href="/jobs" className="text-teal hover:underline text-sm">Back to jobs</Link>
+      </main>
     );
   }
 
   const showCompareStats = viewMode === "compare";
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <>
       <main className="print-area max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
@@ -1036,7 +1028,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
           {readOnlyToast}
         </div>
       )}
-    </div>
+    </>
   );
 }
 

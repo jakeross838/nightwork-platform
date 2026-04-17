@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate, formatPercent, formatRelativeTime } from "@/lib/utils/format";
-import NavBar from "@/components/nav-bar";
 import { SkeletonList } from "@/components/loading-skeleton";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import FirstUseTip from "@/components/first-use-tip";
@@ -157,27 +156,22 @@ export default function JobsPage() {
 
   if (authorized === false) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
-        <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-          <h2 className="font-display text-2xl text-cream">Access denied</h2>
-          <p className="mt-2 text-sm text-cream-dim">
-            Jobs management is restricted to administrators.
-          </p>
-          <Link
-            href="/"
-            className="inline-block mt-6 px-4 py-2 border border-brand-border text-cream hover:border-teal transition-colors"
-          >
-            Return home
-          </Link>
-        </main>
-      </div>
+      <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
+        <h2 className="font-display text-2xl text-cream">Access denied</h2>
+        <p className="mt-2 text-sm text-cream-dim">
+          Jobs management is restricted to administrators.
+        </p>
+        <Link
+          href="/"
+          className="inline-block mt-6 px-4 py-2 border border-brand-border text-cream hover:border-teal transition-colors"
+        >
+          Return home
+        </Link>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
@@ -395,6 +389,5 @@ export default function JobsPage() {
           </>
         )}
       </main>
-    </div>
   );
 }
