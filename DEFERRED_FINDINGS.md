@@ -206,35 +206,32 @@ The issue is UX — the warning is easy to overlook.
 
 **Status: FIXED for Dewberry. Systemic UX improvement deferred.**
 
-## F-011: No clear workflow for receipts / non-invoice spend
+## F-011: FIXED — Receipts-as-invoices (Option A)
 **Discovered:** 2026-04-17 during F-007 reclassification
-**Impact:** Ross Built has real spend that doesn't arrive as a
-formal vendor invoice: hardware store runs, permits, dump fees,
-petty cash, card charges. Nightwork's invoice upload flow assumes
-a vendor PDF exists. Receipts have no dedicated entry path.
+**Fixed:** 2026-04-17
 
-**For Dewberry:** Unknown exact dollar contribution to the Pay
-App #10 gap, but likely non-zero. The reconciliation accounts
-for it implicitly in the "internal billings" and "missing
-invoices" categories.
+**Approach:** Option A per original finding. Added
+`invoices.document_type` column (`'invoice'` | `'receipt'`).
+Vendor and invoice number were already nullable so no constraint
+changes needed. Upload page has Invoice/Receipt toggle with
+contextual helper text. List views show a muted RECEIPT badge
+next to vendor name. Detail page shows a receipt banner.
+Save function passes `document_type` through to insert.
 
-**Severity:** Medium. Not a blocker for dogfooding — users can
-upload a photo of a receipt as an "invoice" with synthetic
-metadata. But it's a friction point that will surface during
-real use.
+**Files changed:**
+- Migration: `00041_invoice_document_type.sql`
+- `src/lib/invoices/save.ts` — accepts + inserts document_type
+- `src/app/invoices/upload/page.tsx` — document type toggle
+- `src/app/invoices/page.tsx` — RECEIPT badge in both list modes
+- `src/app/invoices/queue/page.tsx` — RECEIPT badge in queue
+- `src/app/invoices/[id]/page.tsx` — receipt banner on detail
+- `src/app/jobs/[id]/invoices/page.tsx` — RECEIPT badge
 
-**Remediation options:**
-- A: Accept that "invoice" is a broad concept — treat receipt
-  photos as invoices with a document_category = "receipt" flag.
-  Minimal code change, leverages existing upload flow.
-- B: Add a separate receipt/expense entity with simpler metadata
-  (no vendor match, no PO link, just amount + code + photo).
-  Larger feature work.
+**Follow-up:** Option B (separate expense entity) remains a
+future enhancement if the unified approach creates confusion
+during dogfooding.
 
-**Recommended:** A for MVP, revisit B after dogfooding surfaces
-actual pain points.
-
-**Status: DOCUMENTED for post-deploy work.**
+**Status: FIXED.**
 
 ## F-009: Two separate caches for "approved COs total" on a job
 **Discovered:** Visual audit 2026-04-17 (post-Phase-E)

@@ -18,6 +18,7 @@ interface InvoiceRow {
   total_amount: number;
   status: string;
   parent_invoice_id: string | null;
+  document_type: string | null;
   vendor_name_raw: string | null;
   vendors: { name: string } | null;
   cost_codes: { code: string; description: string } | null;
@@ -46,7 +47,7 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
       const withParent = await supabase
         .from("invoices")
         .select(`
-          id, invoice_number, invoice_date, total_amount, status, parent_invoice_id,
+          id, invoice_number, invoice_date, total_amount, status, parent_invoice_id, document_type,
           vendor_name_raw,
           vendors:vendor_id(name),
           cost_codes:cost_code_id(code, description)
@@ -59,7 +60,7 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
         const fallback = await supabase
           .from("invoices")
           .select(`
-            id, invoice_number, invoice_date, total_amount, status,
+            id, invoice_number, invoice_date, total_amount, status, document_type,
             vendor_name_raw,
             vendors:vendor_id(name),
             cost_codes:cost_code_id(code, description)
@@ -82,6 +83,7 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
           total_amount: Number(row.total_amount ?? 0),
           status: String(row.status ?? ""),
           parent_invoice_id: (row.parent_invoice_id as string | null) ?? null,
+          document_type: (row.document_type as string | null) ?? null,
           vendor_name_raw: (row.vendor_name_raw as string | null) ?? null,
           vendors: vendors as { name: string } | null,
           cost_codes: costCodes as { code: string; description: string } | null,
@@ -197,7 +199,14 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
                       onClick={() => router.push(`/invoices/${inv.id}`)}
                     >
                       <td className="px-3 py-2 text-cream-muted">{formatDate(inv.invoice_date)}</td>
-                      <td className="px-3 py-2 text-cream">{vendor}</td>
+                      <td className="px-3 py-2 text-cream">
+                        <span className="inline-flex items-center gap-1.5">
+                          {vendor}
+                          {inv.document_type === "receipt" && (
+                            <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-medium bg-transparent text-cream-dim border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+                          )}
+                        </span>
+                      </td>
                       <td className="px-3 py-2 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
                       <td className="px-3 py-2 text-cream-muted text-xs">
                         {inv.cost_codes ? `${inv.cost_codes.code} ${inv.cost_codes.description}` : "—"}
