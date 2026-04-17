@@ -328,3 +328,53 @@ Before declaring the reorg complete:
 - Test deep-link destinations still resolve (e.g. email links
   to specific invoices)
 - Test mobile responsiveness of sidebar (collapse behavior)
+
+## Post-Execution Notes (2026-04-17)
+
+All 6 phases shipped in a single session. Implementation decisions
+that diverged from or refined the original plan:
+
+### Phase 1 — Top Nav
+- Shipped as planned. Operations disabled with "SOON" badge.
+
+### Phase 2 — Financial Consolidation
+- /financial?view=X uses server-side redirect to canonical URLs
+  (e.g. /financial?view=draws -> /draws) rather than rendering
+  content inline. Each existing page shows the FinancialViewTabs
+  strip for consistent navigation. Single source of truth per view.
+
+### Phase 3 — Admin Consolidation
+- Settings layout.tsx was the natural place to inject the sidebar
+  (wraps all /settings/* pages). /vendors page wrapped separately
+  since it's outside the /settings tree.
+- AdminMobileNav (horizontal scrollable strip) replaces the
+  sidebar below md breakpoint.
+
+### Phase 4 — Job-Scoped Sidebar
+- All 14 job page files had NavBar removed (moved to jobs/layout.tsx).
+- 14 test jobs seeded to dev DB for representative data.
+- My/All toggle hidden for non-PM roles (owner/admin always see all).
+- Sidebar fetches all jobs client-side, filters in useMemo (see F-012).
+- Mobile: sidebar hidden below md breakpoint (see F-013 for
+  planned drawer).
+
+### Phase 5 — Job Detail Tabs
+- Budget & Costs sub-tabs use separate URLs (/budget, /purchase-orders,
+  /internal-billings) with a BudgetCostsSubTabs component, not
+  ?section= query params. Each page still lives at its original URL
+  but shows the parent "Budget & Costs" main tab as active.
+- Same pattern for Draws + Lien Releases via DrawsSubTabs.
+- Activity tab is a placeholder at /jobs/[id]/activity.
+
+### Phase 6 — Cleanup
+- Deleted: settings-tabs.tsx, /purchase-orders (global orphan route).
+- /change-orders/[id] kept as deep-link destination per resolved decision.
+- All redirect chains verified working end-to-end.
+- F-012 and F-013 filed as deferred findings.
+
+### Route Count (Actual)
+- Before: 49 routes
+- After: ~46 routes (3 deleted: /purchase-orders, /purchase-orders/[id],
+  settings-tabs component). 3 new routes added (/financial, /operations,
+  /admin, /jobs/[id]/activity). Net: slight reduction with much
+  better organization.
