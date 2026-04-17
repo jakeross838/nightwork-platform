@@ -8,6 +8,7 @@ import Breadcrumbs from "@/components/breadcrumbs";
 import DrawCompareView from "@/components/draw-compare-view";
 import DrawCoverLetterEditor from "@/components/draw-cover-letter-editor";
 import DrawLienReleaseUploadList from "@/components/draw-lien-release-upload-list";
+import DrawInternalBillings from "@/components/draw-internal-billings";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 import { toast } from "@/lib/utils/toast";
 
@@ -95,7 +96,7 @@ export default function DrawDetailPage() {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"detail" | "compare" | "cover" | "lien-uploads">(
+  const [activeTab, setActiveTab] = useState<"detail" | "compare" | "cover" | "lien-uploads" | "internal-billings">(
     "detail"
   );
 
@@ -521,6 +522,12 @@ export default function DrawDetailPage() {
                     </span>
                   )}
                 </TabButton>
+                <TabButton
+                  active={activeTab === "internal-billings"}
+                  onClick={() => setActiveTab("internal-billings")}
+                >
+                  Internal Billings
+                </TabButton>
               </div>
             </div>
 
@@ -532,6 +539,15 @@ export default function DrawDetailPage() {
               <DrawLienReleaseUploadList
                 drawId={drawId}
                 releases={draw.lien_releases}
+                onChange={fetchDraw}
+              />
+            )}
+
+            {activeTab === "internal-billings" && draw && (
+              <DrawInternalBillings
+                drawId={drawId}
+                jobId={draw.jobs?.id ?? ""}
+                isDraft={draw.status === "draft"}
                 onChange={fetchDraw}
               />
             )}
