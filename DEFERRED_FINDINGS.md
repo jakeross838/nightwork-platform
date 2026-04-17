@@ -59,3 +59,21 @@ Add "owner" role to SELECT policies wherever "admin" appears.
 Should be a single migration: 00039_owner_rls_audit.sql.
 **Recommended timing:** Before deploy to nightwork.build. Not
 blocking dev work.
+
+## F-003: invoices.draw_id is 1:1 (no history)
+**Discovered:** Phase D D1 (invoice allocations salvage)
+**File:** src/app/api/invoices/[id]/allocations/route.ts (lock check)
+**Issue:** invoice.draw_id is a single FK. It tracks only the
+invoice's current draw attachment, not historical linkage. If an
+invoice is removed from Draw #1 (paid) and added to Draw #2
+(draft), the lock check only sees Draw #2's status and wouldn't
+block edits that could corrupt Draw #1's historical G702.
+**Impact:** Low for MVP (invoices rarely move between draws).
+Could surface as data integrity issue in production once dogfooding
+reveals the workflow.
+**Severity:** Low now, medium if/when invoice-reassignment workflow
+becomes common.
+**Recommended fix:** Either (a) change invoice.draw_id to a
+many-to-many via invoice_draw_history table, or (b) make invoices
+immutable once attached to a submitted draw (cleaner — no edit
+UI at all for attached invoices).
