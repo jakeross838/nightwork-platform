@@ -6,6 +6,7 @@ import {
 } from "@/lib/org/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
+import { captureCorrections } from "@/lib/invoices/corrections";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -120,6 +121,15 @@ export const PATCH = withApiError(async (
 
   const supabase = tryCreateServiceRoleClient() ?? createServerClient();
   const updates = await request.json();
+
+  // Capture parser corrections BEFORE applying the update so we can diff
+  // against the AI original values. Fire-and-forget — never blocks the save.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    captureCorrections(supabase, params.id, updates, user.id).catch((err) => {
+      console.warn("[corrections] capture failed:", err);
+    });
+  }
 
   const { data, error } = await supabase
     .from("invoices")
