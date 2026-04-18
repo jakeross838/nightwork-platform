@@ -51,6 +51,17 @@ const config: Config = {
           amber: "#E89A2B",
           cream: "#EDE3CE",
         },
+        // Slate design-system tokens (additive, nw- prefixed)
+        "nw-slate-tile": "var(--nw-slate-tile)",
+        "nw-slate-deep": "var(--nw-slate-deep)",
+        "nw-slate-deeper": "var(--nw-slate-deeper)",
+        "nw-stone-blue": "var(--nw-stone-blue)",
+        "nw-gulf-blue": "var(--nw-gulf-blue)",
+        "nw-oceanside": "var(--nw-oceanside)",
+        "nw-white-sand": "var(--nw-white-sand)",
+        "nw-warn": "var(--nw-warn)",
+        "nw-success": "var(--nw-success)",
+        "nw-danger": "var(--nw-danger)",
       },
       fontFamily: {
         display: ["Century Gothic", "CenturyGothic", "AppleGothic", "sans-serif"],

@@ -1,0 +1,67 @@
+/* Nightwork Design System — Slate palette tokens (additive only).
+   Full reference: .claude/skills/nightwork-design/colors_and_type.css
+
+   This file adds ONLY new --nw-* brand tokens and design-system variables.
+   It does NOT override any existing semantic tokens (--bg-page, --text-primary,
+   --border-default, etc.) or element defaults. Those overrides happen later
+   when components are restyled to use the Slate palette.
+
+   Fonts loaded via next/font in layout.tsx, not Google Fonts @import. */
+
+:root {
+  /* -- Raw brand tokens (Slate palette) -- */
+  --nw-slate-tile:   #3B5864;
+  --nw-slate-deep:   #1A2830;
+  --nw-slate-deeper: #132028;
+  --nw-stone-blue:   #5B8699;
+  --nw-gulf-blue:    #4E7A8C;
+  --nw-oceanside:    #CBD8DB;
+  --nw-white-sand:   #F7F5EC;
+  --nw-warn:         #C98A3B;
+  --nw-success:      #4A8A6F;
+  --nw-danger:       #B0554E;
+
+  /* -- Font families (available, not applied globally yet) -- */
+  --font-display: var(--font-space-grotesk, "Space Grotesk"), system-ui, sans-serif;
+  --font-body:    var(--font-inter, "Inter"), system-ui, -apple-system, sans-serif;
+  --font-mono:    var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* -- Type scale -- */
+  --fs-label:    10px;
+  --fs-label-sm: 11px;
+  --fs-meta:     12px;
+  --fs-sm:       13px;
+  --fs-body:     14px;
+  --fs-md:       15px;
+  --fs-lg:       17px;
+  --fs-xl:       20px;
+  --fs-h3:       22px;
+  --fs-h2:       30px;
+  --fs-h1:       38px;
+  --fs-display:  48px;
+  --fs-hero:     60px;
+
+  /* -- Tracking -- */
+  --tracking-eyebrow: 0.14em;
+  --tracking-button:  0.12em;
+  --tracking-tight:  -0.02em;
+  --tracking-wordmark: -0.03em;
+
+  /* -- Spacing (4px grid) -- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+
+  /* -- Radii (square is the rule; only avatars + status dots round) -- */
+  --radius-none: 0;
+  --radius-dot:  999px;
+
+  /* -- Shadows (used sparingly) -- */
+  --shadow-hover: 0 4px 6px -1px rgba(26, 40, 48, 0.08);
+  --shadow-panel: 0 8px 24px -12px rgba(26, 40, 48, 0.18);
+
+  /* -- Status dots -- */
+  --dot-active:    var(--nw-success);
+  --dot-warranty:  var(--nw-warn);
+  --dot-complete:  rgba(59, 88, 100, 0.55);
+}
