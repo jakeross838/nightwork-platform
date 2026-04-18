@@ -354,3 +354,31 @@ pass to both JobSidebar instances. Or render a single instance
 that CSS-morphs between sidebar and drawer layouts. Likely ~1 hour.
 
 **Recommended:** Defer until performance is a felt problem.
+
+## F-016: Modal close triggers window.location.reload()
+**Discovered:** 2026-04-18 during action-pages-to-modals phase
+**Impact:** All 5 action modals (invoice upload, invoice import,
+vendor import, cost code import, PO import) use
+`window.location.reload()` on close/success to refresh the
+parent list. Full page refresh loses scroll position and
+re-executes all page-level queries unnecessarily.
+
+**Severity:** Low. Works correctly, just not optimal UX.
+
+**Fix:** Pass onSuccess callback to each modal. Parent list
+page's data hook (SWR, React Query, or manual refetch) handles
+revalidation. Modal closes without reload.
+
+**Effort:** 1-2 hours (one helper, 5 call sites).
+
+## F-017: EmptyState primaryAction type accepts href or onClick
+**Discovered:** 2026-04-18 during Tier 1 action modal work
+**Impact:** EmptyState component's primaryAction prop type
+accepts either href or onClick, but the type definition may
+not reflect both options cleanly. Didn't break the build,
+just untidy.
+
+**Severity:** Trivial.
+
+**Fix:** Clean up the prop type to explicitly union href-action
+vs click-action.

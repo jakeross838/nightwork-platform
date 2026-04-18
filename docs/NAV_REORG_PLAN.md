@@ -374,7 +374,28 @@ that diverged from or refined the original plan:
 
 ### Route Count (Actual)
 - Before: 49 routes
-- After: ~46 routes (3 deleted: /purchase-orders, /purchase-orders/[id],
+- After Phase 6: ~46 routes (3 deleted: /purchase-orders, /purchase-orders/[id],
   settings-tabs component). 3 new routes added (/financial, /operations,
   /admin, /jobs/[id]/activity). Net: slight reduction with much
   better organization.
+- After action-pages-to-modals: 41 routes (5 more deleted).
+
+## Action Pages — Tier 2 Decisions (2026-04-18)
+
+After reviewing form complexity and workflow needs, 1 of 4
+Tier 2 routes was converted to a modal. The other 3 stay as pages:
+
+- **/jobs/[id]/purchase-orders/import** — CONVERTED to modal.
+  CSV import is a discrete action with no budget reference needed.
+- **/jobs/[id]/purchase-orders/new** — KEEP as page. PM references
+  budget table while creating PO; modal hides that context.
+- **/jobs/[id]/change-orders/new** — KEEP as page. Multi-line CO
+  form + deep-linkable for review workflow (PM drafts, owner
+  reviews via URL).
+- **/draws/new** — KEEP as page. Most complex form in Nightwork
+  (4-step wizard). Deep-linkable for draft review.
+
+**Pattern rule:** Action pages become modals when they are
+(a) short forms with no sibling-page context dependency, and
+(b) not frequently deep-linked. Complex multi-step forms or
+forms that benefit from full viewport stay as pages.

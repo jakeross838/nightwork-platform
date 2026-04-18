@@ -8,6 +8,7 @@ const nextConfig = {
       { source: "/invoices/import", destination: "/invoices?action=import", permanent: true },
       { source: "/vendors/import", destination: "/vendors?action=import", permanent: true },
       { source: "/settings/cost-codes/import", destination: "/settings/cost-codes?action=import", permanent: true },
+      { source: "/jobs/:id/purchase-orders/import", destination: "/jobs/:id/purchase-orders?action=import", permanent: true },
     ];
   },
   webpack: (config) => {
