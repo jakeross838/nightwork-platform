@@ -270,21 +270,18 @@ bug where Dewberry showed $3,307 instead of $3,902.26.
 
 **Status: FIXED.**
 
-## F-012: Job sidebar fetches all jobs, filters client-side
+## F-012: FIXED — Sidebar filter now server-side
 **Discovered:** 2026-04-17 during Phase 4 validation
-**Impact:** JobSidebar component queries all accessible jobs in
-one Supabase query, then filters client-side with useMemo for
-the My Jobs toggle. Works fine for current 15-job scale. At 100+
-jobs per org, this becomes wasteful bandwidth and compute.
+**Fixed:** 2026-04-18
 
-**Severity:** Low for MVP. Medium when a single org has 50+
-active jobs.
+**Approach:** When filter='mine' AND user role='pm', pm_id
+filter is applied in the Supabase query rather than client-side.
+Split the single useEffect into two: user info fetch (once) and
+jobs fetch (refetches on filter/role change). Removed the
+client-side `filter === 'mine'` branch from useMemo — search
+and sort still applied client-side (local UX, not data scale).
 
-**Fix:** Move the pm_id filter to the Supabase query when
-filter === 'mine'. Add pagination when filter === 'all' and
-job count exceeds ~30.
-
-**Remediation effort:** 1-2 hours.
+**Status: FIXED.**
 
 ## F-013: Job sidebar hidden on mobile, no alternative switcher
 **Discovered:** 2026-04-17 during Phase 4 validation

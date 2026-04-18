@@ -73,9 +73,9 @@ export default function JobSidebar() {
     });
   }, []);
 
-  // Fetch user info + jobs
+  // Fetch user info (once)
   useEffect(() => {
-    async function load() {
+    async function loadUser() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
@@ -90,25 +90,36 @@ export default function JobSidebar() {
       const userRole = (membership?.role as UserRole) ?? null;
       setRole(userRole);
       if (userRole === "pm") setFilter("mine");
+    }
+    loadUser();
+  }, []);
 
-      const { data: jobsData } = await supabase
+  // Fetch jobs — refetches when filter changes so the server
+  // only sends what the user should see (F-012 fix).
+  useEffect(() => {
+    if (!userId) return;
+    async function loadJobs() {
+      setLoading(true);
+      let query = supabase
         .from("jobs")
         .select("id, name, address, status, client_name, client_email, pm_id, updated_at")
         .is("deleted_at", null)
         .order("name");
 
+      if (filter === "mine" && role === "pm") {
+        query = query.eq("pm_id", userId);
+      }
+
+      const { data: jobsData } = await query;
       setJobs((jobsData ?? []) as SidebarJob[]);
       setLoading(false);
     }
-    load();
-  }, []);
+    loadJobs();
+  }, [userId, filter, role]);
 
-  // Filter + sort
+  // Search + sort (pm_id filter is now server-side)
   const filtered = useMemo(() => {
     let list = jobs;
-    if (filter === "mine" && userId) {
-      list = list.filter((j) => j.pm_id === userId);
-    }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -121,7 +132,7 @@ export default function JobSidebar() {
     else if (sort === "status") list = [...list].sort((a, b) => a.status.localeCompare(b.status) || a.name.localeCompare(b.name));
     else if (sort === "recent") list = [...list].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
     return list;
-  }, [jobs, filter, userId, search, sort]);
+  }, [jobs, search, sort]);
 
   const selectedJob = useMemo(
     () => (currentJobId ? jobs.find((j) => j.id === currentJobId) ?? null : null),
