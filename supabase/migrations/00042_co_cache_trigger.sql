@@ -102,3 +102,14 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- Permissions: service_role must be able to call app_private functions via
+-- the trigger. Without this, CO inserts from the JS client (pay-app imports,
+-- server scripts, admin ops) silently fail the cache update, leaving
+-- approved_cos_total stale. Discovered during Fish Pay App #21 seed.
+GRANT USAGE ON SCHEMA app_private TO service_role;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app_private TO service_role;
+
+-- Future functions added to app_private automatically get the grant.
+ALTER DEFAULT PRIVILEGES IN SCHEMA app_private
+GRANT EXECUTE ON FUNCTIONS TO service_role;
