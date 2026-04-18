@@ -45,8 +45,12 @@ const ROLE_LABEL: Record<UserRole, string> = {
 function RoleBadge({ role }: { role: UserRole }) {
   return (
     <span
-      className="px-1.5 py-0.5 text-[10px] font-bold tracking-[0.08em] uppercase border rounded-none"
-      style={{ color: "var(--text-inverse)", borderColor: "var(--text-inverse)" }}
+      className="px-[6px] py-[2px] text-[9px] font-medium tracking-[0.12em] uppercase border"
+      style={{
+        fontFamily: "var(--font-mono)",
+        color: "#F7F5EC",
+        borderColor: "rgba(247,245,236,0.25)",
+      }}
     >
       {ROLE_LABEL[role]}
     </span>
@@ -72,19 +76,39 @@ function NavLink({
   mobile?: boolean;
   onClick?: () => void;
 }) {
+  if (mobile) {
+    return (
+      <Link
+        href={href}
+        onClick={onClick}
+        className={`py-3 px-4 w-full text-[13px] font-medium font-sans transition-colors ${
+          active ? "text-[#F7F5EC]" : "text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]"
+        }`}
+      >
+        {label}
+      </Link>
+    );
+  }
   return (
     <Link
       href={href}
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 text-[14px] font-medium transition-colors ${
-        mobile ? "py-3 px-4 w-full" : "px-3 py-1.5"
-      } ${
-        active ? "text-white nav-underline active" : "text-white/70 hover:text-white nav-underline"
+      className={`flex items-center gap-1.5 h-full px-[14px] text-[13px] font-medium font-sans transition-colors border-b-2 -mb-px ${
+        active
+          ? "text-[#F7F5EC] border-b-nw-stone-blue"
+          : "text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC] border-transparent"
       }`}
     >
       {label}
       {count != null && count > 0 && (
-        <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-white/50 text-white text-[10px] font-bold bg-transparent">
+        <span
+          className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border text-[10px] font-bold bg-transparent"
+          style={{
+            fontFamily: "var(--font-mono)",
+            color: "#F7F5EC",
+            borderColor: "rgba(247,245,236,0.25)",
+          }}
+        >
           {count}
         </span>
       )}
@@ -162,9 +186,9 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
     <>
     <header
       ref={menuRef}
-      className="border-t-[3px] border-t-teal border-b border-brand-border bg-teal backdrop-blur-sm sticky top-0 z-40"
+      className="bg-nw-slate-deeper border-b border-[rgba(247,245,236,0.08)] sticky top-0 z-40"
     >
-      <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
+      <div className="max-w-[1600px] mx-auto px-8 h-[54px] flex items-center justify-between gap-[22px]">
         <Link href="/" className="flex items-center gap-2 group shrink-0">
           {logoUrl ? (
             // Tenant has uploaded a custom logo — respect it (paid customization).
@@ -190,7 +214,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+        <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center h-full">
           {show.dashboard && (
             <NavLink href="/dashboard" label="Dashboard" active={isDashboardActive} />
           )}
@@ -199,11 +223,14 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           )}
           {show.operations && (
             <span
-              className="relative flex items-center gap-1.5 px-3 py-1.5 text-[14px] font-medium text-white/30 cursor-default select-none"
+              className="flex items-center gap-1.5 h-full px-[14px] text-[13px] font-medium font-sans cursor-default select-none text-[rgba(247,245,236,0.25)]"
               title="Coming soon"
             >
               Operations
-              <span className="px-1 py-0.5 text-[9px] tracking-[0.08em] uppercase border border-white/20 text-white/30">
+              <span
+                className="px-[5px] py-[1px] text-[9px] tracking-[0.12em] uppercase border text-[rgba(247,245,236,0.25)] border-[rgba(247,245,236,0.15)]"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
                 Soon
               </span>
             </span>
@@ -217,18 +244,16 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
         <div className="hidden md:flex items-center gap-3 shrink-0">
           {profile && <NotificationBell userId={profile.id} />}
           {profile && (
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-medium" style={{ color: "var(--text-inverse)" }}>
+            <div className="flex items-center gap-[12px]">
+              <span className="text-[13px] font-medium text-[#F7F5EC]">
                 {firstNameOf(profile.full_name)}
               </span>
-              <span className="text-[13px]" style={{ color: "var(--text-inverse)", opacity: 0.6 }}>&middot;</span>
               <RoleBadge role={profile.role} />
             </div>
           )}
           <form action={logoutAction}>
             <button type="submit"
-              className="text-[13px] px-2 py-1 transition-colors hover:underline underline-offset-4"
-              style={{ color: "var(--text-inverse)", opacity: 0.8 }}>
+              className="text-[13px] font-sans px-2 py-1 transition-colors hover:underline underline-offset-4 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]">
               Sign Out
             </button>
           </form>
@@ -238,7 +263,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
         <div className="flex md:hidden items-center gap-1">
           {onToggleSidebar && (
             <button type="button" onClick={onToggleSidebar}
-              className="flex items-center justify-center w-10 h-10 text-white/80 hover:text-white transition-colors"
+              className="flex items-center justify-center w-10 h-10 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC] transition-colors"
               aria-label="Open job sidebar">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
@@ -247,7 +272,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           )}
           {profile && <NotificationBell userId={profile.id} />}
           <button type="button" onClick={() => setMobileOpen((p) => !p)}
-            className="flex items-center justify-center w-10 h-10 text-white/80 hover:text-white transition-colors relative"
+            className="flex items-center justify-center w-10 h-10 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC] transition-colors relative"
             aria-label="Toggle menu" aria-expanded={mobileOpen}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               {mobileOpen ? (
@@ -262,14 +287,13 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <nav className="md:hidden bg-teal border-b border-white/10 px-4 pb-3 pt-1 flex flex-col gap-1">
+        <nav className="md:hidden bg-nw-slate-deeper border-b border-[rgba(247,245,236,0.08)] px-4 pb-3 pt-1 flex flex-col gap-1">
           {profile && (
-            <div className="flex items-center justify-between py-2 px-4 border-b border-white/10 mb-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[13px] font-medium" style={{ color: "var(--text-inverse)" }}>
+            <div className="flex items-center justify-between py-2 px-4 border-b border-[rgba(247,245,236,0.08)] mb-1">
+              <div className="flex items-center gap-[12px]">
+                <span className="text-[13px] font-medium text-[#F7F5EC]">
                   {firstNameOf(profile.full_name)}
                 </span>
-                <span className="text-[13px]" style={{ color: "var(--text-inverse)", opacity: 0.6 }}>&middot;</span>
                 <RoleBadge role={profile.role} />
               </div>
             </div>
@@ -277,17 +301,19 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           {show.dashboard && <NavLink href="/dashboard" label="Dashboard" active={isDashboardActive} mobile onClick={closeMobile} />}
           {show.financial && <NavLink href="/financial" label="Financial" active={isFinancialActive} mobile onClick={closeMobile} />}
           {show.operations && (
-            <span className="flex items-center gap-2 py-3 px-4 text-[14px] font-medium text-white/30">
+            <span className="flex items-center gap-2 py-3 px-4 text-[13px] font-medium font-sans text-[rgba(247,245,236,0.25)]">
               Operations
-              <span className="px-1 py-0.5 text-[9px] tracking-[0.08em] uppercase border border-white/20 text-white/30">
+              <span
+                className="px-[5px] py-[1px] text-[9px] tracking-[0.12em] uppercase border border-[rgba(247,245,236,0.15)] text-[rgba(247,245,236,0.25)]"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
                 Soon
               </span>
             </span>
           )}
           {show.admin && <NavLink href="/admin" label="Admin" active={isAdminActive} mobile onClick={closeMobile} />}
           <form action={logoutAction} className="mt-1">
-            <button type="submit" className="w-full text-left py-3 px-4 text-[14px] transition-colors hover:underline underline-offset-4"
-              style={{ color: "var(--text-inverse)", opacity: 0.8 }}>
+            <button type="submit" className="w-full text-left py-3 px-4 text-[13px] font-sans transition-colors hover:underline underline-offset-4 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]">
               Sign Out
             </button>
           </form>
@@ -298,4 +324,3 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
     </>
   );
 }
-
