@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
-import { recalcBudgetLine, recalcJobContract } from "@/lib/recalc";
+import { recalcBudgetLine } from "@/lib/recalc";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { canVoidCO, formatBlockers } from "@/lib/deletion-guards";
 
@@ -267,7 +267,8 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     }
 
     for (const bl of Array.from(budgetLineIds)) await recalcBudgetLine(bl);
-    await recalcJobContract(co.job_id);
+    // recalcJobContract() removed — co_cache_trigger on change_orders handles
+    // jobs.approved_cos_total and current_contract_amount automatically.
   } catch (recalcErr) {
     console.warn(
       `[co patch recalc] ${recalcErr instanceof Error ? recalcErr.message : recalcErr}`
