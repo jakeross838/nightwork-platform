@@ -13,7 +13,7 @@ const config: Config = {
         brand: {
           bg: "var(--bg-page)",
           surface: "var(--bg-subtle)",
-          card: "var(--color-white)",
+          card: "var(--bg-card)",
           elevated: "var(--bg-muted)",
           border: "var(--border-default)",
           "border-light": "var(--border-strong)",
@@ -21,47 +21,48 @@ const config: Config = {
         },
         cream: {
           DEFAULT: "var(--text-primary)",
-          muted: "var(--text-body)",
-          dim: "var(--text-secondary)",
+          muted: "var(--text-secondary)",
+          dim: "var(--text-tertiary)",
         },
         teal: {
           DEFAULT: "var(--bg-inverse)",
-          hover: "#2F4850",
-          muted: "rgba(63, 88, 98, 0.08)",
-          glow: "rgba(63, 88, 98, 0.15)",
+          hover: "var(--bg-inverse-hover)",
+          muted: "var(--bg-muted)",
+          glow: "rgba(91, 134, 153, 0.15)",
         },
         brass: {
           DEFAULT: "var(--color-warning)",
-          muted: "rgba(230, 81, 0, 0.08)",
-          glow: "rgba(230, 81, 0, 0.15)",
+          muted: "rgba(201, 138, 59, 0.08)",
+          glow: "rgba(201, 138, 59, 0.15)",
         },
         status: {
           success: "var(--color-success)",
-          "success-muted": "rgba(46, 125, 50, 0.08)",
+          "success-muted": "rgba(74, 138, 111, 0.08)",
           warning: "var(--color-warning)",
-          "warning-muted": "rgba(230, 81, 0, 0.08)",
+          "warning-muted": "rgba(201, 138, 59, 0.08)",
           danger: "var(--color-error)",
-          "danger-muted": "rgba(192, 57, 43, 0.08)",
+          "danger-muted": "rgba(176, 85, 78, 0.08)",
         },
-        // Nightwork product-chrome palette — additive; existing tokens
-        // above are unchanged. Use `bg-nightwork-navy`, `text-nightwork-amber`
-        // etc. on NEW chrome work only. Per brand: one amber moment per screen.
-        nightwork: {
-          navy: "#0F1E36",
-          amber: "#E89A2B",
-          cream: "#EDE3CE",
-        },
+        // Slate design system palette
+        "slate-tile": "#3B5864",
+        "slate-deep": "#1A2830",
+        "slate-deeper": "#132028",
+        "stone-blue": "#5B8699",
+        "gulf-blue": "#4E7A8C",
+        oceanside: "#CBD8DB",
+        "white-sand": "#F7F5EC",
+        "nw-warn": "#C98A3B",
+        "nw-success": "#4A8A6F",
+        "nw-danger": "#B0554E",
       },
       fontFamily: {
-        display: ["Century Gothic", "CenturyGothic", "AppleGothic", "sans-serif"],
-        body: ["Century Gothic", "CenturyGothic", "AppleGothic", "sans-serif"],
-        // Nightwork brand font (wordmark). Available as `font-sans` on
-        // new chrome work; existing components keep their font-display /
-        // font-body Century Gothic styling.
-        sans: ["var(--font-inter)", "Inter", "system-ui", "-apple-system", "sans-serif"],
+        display: ["var(--font-display)", "Space Grotesk", "sans-serif"],
+        sans: ["var(--font-sans)", "Inter", "system-ui", "-apple-system", "sans-serif"],
+        mono: ["var(--font-mono)", "JetBrains Mono", "ui-monospace", "monospace"],
       },
       borderRadius: {
         none: "0",
+        DEFAULT: "0",
       },
       keyframes: {
         "fade-up": {

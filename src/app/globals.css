@@ -6,47 +6,142 @@
   :root {
     /* Per-org brand colors (overridden at runtime by layout.tsx via
        a `<style>:root{--org-primary:…;--org-accent:…;}</style>` tag). */
-    --org-primary: #3F5862;
-    --org-accent: #3F5862;
+    --org-primary: #3B5864;
+    --org-accent: #3B5864;
 
-    /* Backgrounds */
-    --bg-page: #F7F5ED;
-    --bg-subtle: #F5F5F5;
-    --bg-muted: #E8E8E8;
-    --bg-inverse: var(--org-primary);
+    /* ── Raw brand tokens (Slate palette) ── */
+    --nw-slate-tile:   #3B5864;
+    --nw-slate-deep:   #1A2830;
+    --nw-slate-deeper: #132028;
+    --nw-stone-blue:   #5B8699;
+    --nw-gulf-blue:    #4E7A8C;
+    --nw-oceanside:    #CBD8DB;
+    --nw-white-sand:   #F7F5EC;
+    --nw-warn:         #C98A3B;
+    --nw-success:      #4A8A6F;
+    --nw-danger:       #B0554E;
 
-    /* Text */
-    --text-primary: var(--org-primary);
-    --text-body: #3D3D3D;
-    --text-secondary: #878787;
-    --text-inverse: #FFFFFF;
+    /* ── Backgrounds ── */
+    --bg-page:     var(--nw-white-sand);
+    --bg-card:     #FFFFFF;
+    --bg-subtle:   rgba(91, 134, 153, 0.06);
+    --bg-muted:    rgba(59, 88, 100, 0.08);
+    --bg-inverse:  var(--nw-slate-deep);
+    --bg-inverse-hover: var(--nw-slate-deeper);
 
-    /* Borders */
-    --border-default: #E8E8E8;
-    --border-strong: #A0A0A0;
-    --border-brand: var(--org-primary);
+    /* ── Text ── */
+    --text-primary:   var(--nw-slate-tile);
+    --text-secondary: rgba(59, 88, 100, 0.70);
+    --text-tertiary:  rgba(59, 88, 100, 0.55);
+    --text-muted:     rgba(59, 88, 100, 0.40);
+    --text-body:      var(--nw-slate-tile);
+    --text-inverse:   var(--nw-white-sand);
+    --text-accent:    var(--nw-gulf-blue);
 
-    /* Semantic */
-    --color-white: #FFFFFF;
-    --color-success: #2E7D32;
-    --color-warning: #E65100;
-    --color-error: #c0392b;
-    --color-money: var(--org-primary);
+    /* ── Borders ── */
+    --border-default: rgba(59, 88, 100, 0.15);
+    --border-subtle:  rgba(59, 88, 100, 0.08);
+    --border-strong:  rgba(59, 88, 100, 0.30);
+    --border-brand:   var(--nw-stone-blue);
 
-    /* Nightwork brand tokens — additive. Existing components keep their
-       current colors; new chrome work should reach for these instead. */
-    --nightwork-navy: #0F1E36;
-    --nightwork-amber: #E89A2B;
-    --nightwork-cream: #EDE3CE;
+    /* ── Semantic ── */
+    --color-white:   #FFFFFF;
+    --color-success: var(--nw-success);
+    --color-warning: var(--nw-warn);
+    --color-error:   var(--nw-danger);
+    --color-money:   var(--nw-slate-tile);
+
+    /* ── Type families ── */
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body:    "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    /* ── Type scale ── */
+    --fs-label:    10px;
+    --fs-label-sm: 11px;
+    --fs-meta:     12px;
+    --fs-sm:       13px;
+    --fs-body:     14px;
+    --fs-md:       15px;
+    --fs-lg:       17px;
+    --fs-xl:       20px;
+    --fs-h3:       22px;
+    --fs-h2:       30px;
+    --fs-h1:       38px;
+    --fs-display:  48px;
+    --fs-hero:     60px;
+
+    /* ── Tracking ── */
+    --tracking-eyebrow: 0.14em;
+    --tracking-button:  0.12em;
+    --tracking-tight:  -0.02em;
+    --tracking-wordmark: -0.03em;
+
+    /* ── Spacing (4px grid, matches Tailwind) ── */
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+    --space-12: 48px; --space-16: 64px;
+
+    /* ── Radii — SQUARE is the rule. Only avatars + status dots round. ── */
+    --radius-none: 0;
+    --radius-dot:  999px;
+
+    /* ── Shadows — used sparingly. No floating cards. ── */
+    --shadow-hover:   0 4px 6px -1px rgba(26, 40, 48, 0.08);
+    --shadow-panel:   0 8px 24px -12px rgba(26, 40, 48, 0.18);
+
+    /* ── Status dots ── */
+    --dot-active:    var(--nw-success);
+    --dot-warranty:  var(--nw-warn);
+    --dot-complete:  var(--text-tertiary);
   }
 
   body {
     background: var(--bg-page);
-    color: var(--text-body);
-    font-family: "Century Gothic", "CenturyGothic", "AppleGothic", sans-serif;
-    font-size: 15px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    line-height: 1.1;
+    letter-spacing: var(--tracking-tight);
+    color: var(--text-primary);
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    line-height: 1.15;
+    letter-spacing: var(--tracking-tight);
+    color: var(--text-primary);
+    font-weight: 500;
+    margin: 0 0 4px;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    font-weight: 500;
+    margin: 0 0 2px;
+  }
+  h4 {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  p { font-size: var(--fs-body); line-height: 1.5; color: var(--text-primary); }
+  small, .meta { font-size: var(--fs-meta); color: var(--text-secondary); }
+  code, kbd, pre { font-family: var(--font-mono); font-size: 0.9em; }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -54,19 +149,96 @@
   ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
-  ::selection { background: rgba(63, 88, 98, 0.2); color: var(--text-primary); }
+  ::selection { background: rgba(91, 134, 153, 0.2); color: var(--text-primary); }
 }
 
 @layer components {
-  .grain::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.015;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    z-index: 9999;
+  /* ── Signature motif: JetBrains Mono uppercase-tracked eyebrow ── */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 500;
   }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── Money / numeric: JetBrains Mono + tabular-nums ── */
+  .tabular, .money {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Canonical button: square, tracked, tiny uppercase label ── */
+  .btn-nw {
+    padding: 11px 18px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: var(--tracking-button);
+    text-transform: uppercase;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn-nw-primary {
+    background: var(--nw-slate-deep);
+    color: var(--text-inverse);
+  }
+  .btn-nw-primary:hover { background: var(--nw-slate-deeper); }
+  .btn-nw-accent {
+    background: var(--nw-stone-blue);
+    color: var(--text-inverse);
+  }
+  .btn-nw-accent:hover { background: var(--nw-gulf-blue); }
+  .btn-nw-ghost {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+  }
+  .btn-nw-ghost:hover { border-color: var(--nw-stone-blue); color: var(--nw-stone-blue); }
+  .btn-nw-danger {
+    background: transparent;
+    border: 1px solid rgba(176, 85, 78, 0.35);
+    color: var(--nw-danger);
+  }
+  .btn-nw-danger:hover { background: rgba(176, 85, 78, 0.06); }
+
+  /* ── Card — white on sand, thin slate border, no shadow by default ── */
+  .card-nw {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    padding: 24px 26px;
+  }
+
+  /* ── Pill / status chip — square, bordered, mono label ── */
+  .pill {
+    display: inline-block;
+    padding: 3px 8px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+  }
+  .pill-ok      { color: var(--color-success); }
+  .pill-warn    { color: var(--color-warning); }
+  .pill-danger  { color: var(--color-error); }
+  .pill-muted   { color: var(--text-tertiary); }
+  .pill-accent  { color: var(--nw-stone-blue); }
 
   .stagger-1 { animation-delay: 0.05s; }
   .stagger-2 { animation-delay: 0.1s; }
@@ -78,9 +250,10 @@
   .card-hover { @apply transition-all duration-300; }
   .card-hover:hover {
     background: var(--bg-subtle);
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-hover);
   }
 
+  .focus-slate:focus-visible,
   .focus-teal:focus-visible { outline: 2px solid var(--border-brand); outline-offset: 2px; }
 
   .brass-underline { position: relative; }
@@ -92,6 +265,24 @@
     width: 32px;
     height: 1px;
     background: var(--text-secondary);
+  }
+
+  /* Nav link underline animation */
+  .nav-underline { position: relative; }
+  .nav-underline::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--nw-stone-blue);
+    transition: width 0.25s ease, left 0.25s ease;
+  }
+  .nav-underline:hover::after,
+  .nav-underline.active::after {
+    width: 100%;
+    left: 0;
   }
 
   /* DOCX preview — constrain whatever Mammoth generates to our palette */
@@ -116,36 +307,6 @@
   }
   .docx-html th { background: var(--bg-subtle); font-weight: 500; }
   .docx-html strong { font-weight: 600; }
-
-  /* Nav link underline animation */
-  .nav-underline { position: relative; }
-  .nav-underline::after {
-    content: "";
-    position: absolute;
-    bottom: -2px;
-    left: 50%;
-    width: 0;
-    height: 1px;
-    background: white;
-    transition: width 0.25s ease, left 0.25s ease;
-  }
-  .nav-underline:hover::after,
-  .nav-underline.active::after {
-    width: 100%;
-    left: 0;
-  }
-
-  /* Section header with rule */
-  .section-label {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-default);
-    margin-bottom: 16px;
-  }
 }
 
 @layer utilities {
@@ -153,24 +314,18 @@
 }
 
 /* Phase 8g — print stylesheets. Hide nav, sidebar, and interactive controls
-   when the user prints. Only the .print-area content remains. Per-page
-   layouts may add additional `print:hidden` class hints. */
+   when the user prints. Only the .print-area content remains. */
 @media print {
-  /* Force light print background */
   html, body { background: #ffffff !important; color: #000000 !important; }
 
-  /* Default: hide chrome that's not part of the printed content. Pages opt
-     content INTO the print view by wrapping it in `.print-area`. */
   nav, header, footer, aside,
   .nav-bar, .nav-area, .sidebar,
   button, [role="button"],
   input, select, textarea,
   .no-print { display: none !important; }
 
-  /* Tight, readable type for printed pages */
   body { font-size: 11pt; line-height: 1.4; }
 
-  /* Tables: visible borders, no row hover */
   table { border-collapse: collapse !important; width: 100% !important; }
   table th, table td {
     border: 1px solid #999 !important;
@@ -179,15 +334,9 @@
   }
   table th { background: #f0f0f0 !important; font-weight: 600 !important; }
 
-  /* Avoid awkward page splits inside common layout blocks */
   .print-area { max-width: 100% !important; padding: 0 !important; }
   .print-page-break { page-break-after: always; }
   .print-avoid-break { page-break-inside: avoid; }
 
-  /* Make links print as plain text (no underlines from theming) */
   a, a:visited { color: #000 !important; text-decoration: none !important; }
-
-  /* Hide animated background grain */
-  .grain::after { display: none !important; }
 }
-

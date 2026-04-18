@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 70" width="300" height="70">
   <g transform="translate(0, 8)">
-    <rect x="0" y="0" width="8" height="54" fill="#0F1E36"/>
-    <polygon points="0,0 8,0 50,54 42,54" fill="#E89A2B"/>
-    <rect x="42" y="0" width="8" height="54" fill="#0F1E36"/>
+    <rect x="0" y="0" width="8" height="54" fill="#0F1E36"></rect>
+    <polygon points="0,0 8,0 50,54 42,54" fill="#E89A2B"></polygon>
+    <rect x="42" y="0" width="8" height="54" fill="#0F1E36"></rect>
   </g>
-  <text x="72" y="46" font-family="Inter, system-ui, -apple-system, 'Helvetica Neue', sans-serif" font-size="36" font-weight="500" fill="#0F1E36" letter-spacing="-0.02em">nightwork</text>
+  <text x="72" y="46" font-family="Inter, system-ui, -apple-system, &#39;Helvetica Neue&#39;, sans-serif" font-size="36" font-weight="500" fill="#0F1E36" letter-spacing="-0.02em">nightwork</text>
 </svg>

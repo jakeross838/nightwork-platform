@@ -1,5 +1,34 @@
 # CLAUDE.md — Ross Command Center
 
+## Design system rule
+
+All UI work on this codebase MUST invoke the nightwork-design skill
+located at .claude/skills/nightwork-design/ before writing or
+modifying any component, page, or style. This rule is permanent and
+applies to every future prompt, not only the one that installed it.
+
+Required reading on every UI task:
+  - .claude/skills/nightwork-design/SKILL.md
+  - .claude/skills/nightwork-design/README.md
+  - .claude/skills/nightwork-design/colors_and_type.css
+  - The Slate *.html reference screen nearest to the surface being
+    built
+
+Hard rules:
+  - No colors, fonts, spacing, or corner radii outside the skill's
+    token system.
+  - No one-off hex values. No rounded corners (except avatars and
+    status dots). No gradients (except the 1px beam next to the
+    wordmark).
+  - Never invent a new visual pattern if one exists in a reference
+    screen. Match the closest reference.
+  - No emoji in UI. Exceptions: ⚠ and ℹ in inline warning strips
+    only.
+  - No AI-sparkle language (magic, smart, ✨). Name the mechanism:
+    "Claude extracts", "AI parses".
+
+This rule is non-negotiable.
+
 ## Dev Environment Rules
 
 **ALWAYS run these before starting any work session:**

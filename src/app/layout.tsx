@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConnectionBanner from "@/components/connection-banner";
 import { OrgBrandingProvider } from "@/components/org-branding-provider";
@@ -9,12 +9,24 @@ import { getOrgBranding } from "@/lib/org/branding";
 
 export const dynamic = "force-dynamic";
 
-// Inter — Nightwork wordmark font. Loaded with CSS variable binding so
-// Tailwind's font-sans utility can pick it up globally.
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-display",
+  display: "swap",
+});
+
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-  variable: "--font-inter",
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -56,11 +68,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const branding = await getOrgBranding();
-  const primary = branding?.primary_color ?? "#3F5862";
+  const primary = branding?.primary_color ?? "#3B5864";
   const accent = branding?.accent_color ?? primary;
 
   return (
-    <html lang="en" className={inter.variable}>
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         <style
           // Per-org CSS vars override the defaults declared in globals.css.
@@ -70,7 +85,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="grain antialiased">
+      <body className="antialiased">
         <OrgBrandingProvider branding={branding}>
           <ToastProvider>
             <KeyboardShortcutsProvider>

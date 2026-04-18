@@ -111,20 +111,20 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-6 py-8">
+      <main className="flex-1 max-w-[1180px] w-full mx-auto px-4 md:px-8 py-7">
         {/* Header */}
-        <div className="mb-8 animate-fade-up">
-          <h1 className="font-display text-3xl text-cream">
+        <div className="mb-6 animate-fade-up">
+          <h1 className="font-display text-[30px] font-medium tracking-[-0.02em] text-slate-tile">
             {firstName ? `Welcome, ${firstName}` : brandName}
           </h1>
           {tagline && (
-            <p className="mt-1 text-sm text-cream-dim">{tagline}</p>
+            <p className="mt-1 text-[13px] text-[rgba(59,88,100,0.55)]">{tagline}</p>
           )}
         </div>
 
-        {/* Top row — 4 metric cards */}
+        {/* Top row — 4 KPI cells with 1px hairline gaps */}
         <section className="mb-6 animate-fade-up stagger-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[rgba(59,88,100,0.15)] border border-[rgba(59,88,100,0.15)]">
             {loading || !data ? (
               <>
                 <SkeletonStatCard />
@@ -175,15 +175,15 @@ export default function Dashboard() {
               message="Nothing needs your attention right now. New action items will appear here as data flows in."
             />
           ) : (
-            <div className="border border-brand-border bg-white">
+            <div className="border border-[rgba(59,88,100,0.15)] bg-white">
               <ul>
                 {data.attention.items.map((item, i) => (
                   <AttentionRow key={`${item.kind}-${i}`} item={item} />
                 ))}
               </ul>
               {data.attention.total > data.attention.items.length && (
-                <div className="border-t border-brand-border px-4 py-3 text-center">
-                  <Link href="/invoices/queue" className="text-sm text-teal hover:underline">
+                <div className="border-t border-[rgba(59,88,100,0.15)] px-4 py-3 text-center">
+                  <Link href="/invoices/queue" className="font-mono text-[10px] tracking-[0.12em] uppercase text-stone-blue hover:underline">
                     View all {data.attention.total} items
                   </Link>
                 </div>
@@ -206,14 +206,14 @@ export default function Dashboard() {
                 message="Actions will appear here as your team uses the system."
               />
             ) : (
-              <div className="border border-brand-border bg-white">
+              <div className="border border-[rgba(59,88,100,0.15)] bg-white">
                 <ul>
                   {data.activity.map((entry) => (
                     <ActivityRow key={entry.id} entry={entry} />
                   ))}
                 </ul>
-                <div className="border-t border-brand-border px-4 py-3 text-center">
-                  <Link href="/settings/admin" className="text-sm text-teal hover:underline">
+                <div className="border-t border-[rgba(59,88,100,0.15)] px-4 py-3 text-center">
+                  <Link href="/settings/admin" className="font-mono text-[10px] tracking-[0.12em] uppercase text-stone-blue hover:underline">
                     View all activity
                   </Link>
                 </div>
@@ -238,7 +238,7 @@ export default function Dashboard() {
   );
 }
 
-// ---------- Metric Card ----------
+// ---------- Metric Card (KPI cell — 1px hairline gap pattern) ----------
 function MetricCard({
   label,
   value,
@@ -255,18 +255,18 @@ function MetricCard({
   return (
     <Link
       href={href}
-      className="group block p-4 border border-brand-border bg-white hover:border-teal/60 transition-colors"
+      className="group block p-5 bg-white hover:bg-[rgba(91,134,153,0.04)] transition-colors"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim leading-tight">
+        <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)] leading-tight">
           {label}
         </span>
         {badge && (
           <span
-            className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 border ${
+            className={`shrink-0 font-mono text-[9px] tracking-[0.12em] uppercase font-medium px-1.5 py-0.5 border ${
               badge.kind === "danger"
-                ? "text-status-danger border-status-danger"
-                : "text-status-warning border-status-warning"
+                ? "text-nw-danger border-nw-danger"
+                : "text-nw-warn border-nw-warn"
             }`}
           >
             {badge.text}
@@ -274,8 +274,8 @@ function MetricCard({
         )}
       </div>
       <div
-        className={`mt-3 font-display text-3xl tabular-nums ${
-          emphasis === "danger" ? "text-status-danger" : "text-cream"
+        className={`mt-2.5 font-display text-[28px] font-semibold tracking-[-0.02em] tabular-nums ${
+          emphasis === "danger" ? "text-nw-danger" : "text-slate-tile"
         }`}
       >
         {value}
@@ -284,50 +284,50 @@ function MetricCard({
   );
 }
 
-// ---------- Section Header ----------
+// ---------- Section Header (eyebrow pattern) ----------
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="flex items-baseline justify-between mb-3">
-      <h2 className="font-display text-lg text-cream">{title}</h2>
-      {subtitle && <p className="text-xs text-cream-dim">{subtitle}</p>}
+    <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-[rgba(59,88,100,0.15)]">
+      <span className="font-mono text-[11px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)] font-medium">{title}</span>
+      {subtitle && <span className="font-mono text-[10px] tracking-[0.12em] text-[rgba(59,88,100,0.40)]">{subtitle}</span>}
     </div>
   );
 }
 
 // ---------- Attention Row ----------
 const SEV_STYLES: Record<AttentionItem["severity"], { dot: string; label: string }> = {
-  critical: { dot: "bg-status-danger", label: "text-status-danger" },
-  high: { dot: "bg-status-warning", label: "text-status-warning" },
-  medium: { dot: "bg-brass", label: "text-brass" },
-  low: { dot: "bg-cream-dim", label: "text-cream-dim" },
+  critical: { dot: "bg-nw-danger", label: "text-nw-danger" },
+  high: { dot: "bg-nw-warn", label: "text-nw-warn" },
+  medium: { dot: "bg-nw-warn", label: "text-nw-warn" },
+  low: { dot: "bg-[rgba(59,88,100,0.40)]", label: "text-[rgba(59,88,100,0.55)]" },
 };
 
 function AttentionRow({ item }: { item: AttentionItem }) {
   const sev = SEV_STYLES[item.severity];
   return (
-    <li className="border-b border-brand-border last:border-0">
+    <li className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
       <Link
         href={item.href}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-brand-surface transition-colors"
+        className="flex items-center gap-3 px-4 py-3 hover:bg-[rgba(91,134,153,0.04)] transition-colors"
       >
         <span className={`shrink-0 inline-block w-2 h-2 rounded-full ${sev.dot}`} aria-hidden="true" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-cream font-medium truncate">{item.title}</span>
+            <span className="text-[13px] text-slate-tile font-medium truncate">{item.title}</span>
             {item.ageDays !== undefined && item.ageDays > 0 && (
-              <span className={`text-[10px] uppercase tracking-wider ${sev.label}`}>
+              <span className={`font-mono text-[10px] uppercase tracking-[0.12em] ${sev.label}`}>
                 {item.ageDays}d
               </span>
             )}
           </div>
-          <p className="text-xs text-cream-dim mt-0.5 truncate">{item.description}</p>
+          <p className="text-[12px] text-[rgba(59,88,100,0.55)] mt-0.5 truncate">{item.description}</p>
         </div>
         <svg
-          className="shrink-0 w-4 h-4 text-cream-dim group-hover:text-teal"
+          className="shrink-0 w-4 h-4 text-[rgba(59,88,100,0.40)]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={2}
+          strokeWidth={1.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
@@ -342,16 +342,17 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
   const entityLabel = describeEntity(entry.entity_type, entry.details);
   const summary = `${entry.user_name ?? "System"} ${verb} ${entityLabel}${entry.job_name ? ` on ${entry.job_name}` : ""}`;
   const content = (
-    <div className="flex items-start gap-3 px-4 py-3 hover:bg-brand-surface transition-colors">
-      <div className="shrink-0 mt-1 w-2 h-2 rounded-full bg-teal/60" />
+    <div className="flex items-start gap-3 px-4 py-2.5 hover:bg-[rgba(91,134,153,0.04)] transition-colors">
+      <span className="shrink-0 mt-1.5 font-mono text-[10px] text-[rgba(59,88,100,0.40)] min-w-[48px]">
+        {formatRelativeTime(entry.created_at)}
+      </span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-cream truncate">{summary}</p>
-        <p className="text-xs text-cream-dim mt-0.5">{formatRelativeTime(entry.created_at)}</p>
+        <p className="text-[12.5px] text-slate-tile leading-relaxed">{summary}</p>
       </div>
     </div>
   );
   return (
-    <li className="border-b border-brand-border last:border-0">
+    <li className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
       {entry.link_href ? <Link href={entry.link_href}>{content}</Link> : content}
     </li>
   );
@@ -420,10 +421,10 @@ function CashFlowPanel({ cashFlow }: { cashFlow: DashboardData["cashFlow"] }) {
   const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
 
   return (
-    <div className="border border-brand-border bg-white p-5 space-y-5">
+    <div className="border border-[rgba(59,88,100,0.15)] bg-white p-5 space-y-5">
       {/* This month */}
       <div>
-        <h3 className="text-[10px] tracking-[0.12em] uppercase text-cream-dim mb-2">This month</h3>
+        <h3 className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)] mb-2">This month</h3>
         <div className="grid grid-cols-3 gap-3">
           <NumStat label="Invoiced" value={formatMoney(cashFlow.monthInvoiced)} href="/invoices" />
           <NumStat label="Paid" value={formatMoney(cashFlow.monthPaid)} href="/invoices/payments" />
@@ -438,57 +439,57 @@ function CashFlowPanel({ cashFlow }: { cashFlow: DashboardData["cashFlow"] }) {
       {/* Outstanding aging breakdown */}
       <div>
         <div className="flex items-baseline justify-between mb-2">
-          <h3 className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Outstanding</h3>
-          <span className="text-sm text-cream tabular-nums">
+          <h3 className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Outstanding</h3>
+          <span className="font-mono text-[13px] text-slate-tile tabular-nums">
             {formatMoney(cashFlow.outstandingTotal)}
           </span>
         </div>
         {/* Stacked horizontal bar */}
-        <div className="flex h-2.5 w-full overflow-hidden border border-brand-border bg-brand-surface">
+        <div className="flex h-[5px] w-full overflow-hidden bg-[rgba(59,88,100,0.1)]">
           {pct(cashFlow.aging.current) > 0 && (
             <div
-              className="bg-status-success"
+              className="bg-nw-success"
               style={{ width: `${pct(cashFlow.aging.current)}%` }}
               title={`Current: ${formatMoney(cashFlow.aging.current)}`}
             />
           )}
           {pct(cashFlow.aging.d30) > 0 && (
             <div
-              className="bg-brass"
+              className="bg-nw-warn"
               style={{ width: `${pct(cashFlow.aging.d30)}%` }}
               title={`30-59 days: ${formatMoney(cashFlow.aging.d30)}`}
             />
           )}
           {pct(cashFlow.aging.d60) > 0 && (
             <div
-              className="bg-status-warning"
+              className="bg-nw-warn/70"
               style={{ width: `${pct(cashFlow.aging.d60)}%` }}
               title={`60-89 days: ${formatMoney(cashFlow.aging.d60)}`}
             />
           )}
           {pct(cashFlow.aging.d90) > 0 && (
             <div
-              className="bg-status-danger"
+              className="bg-nw-danger"
               style={{ width: `${pct(cashFlow.aging.d90)}%` }}
               title={`90+ days: ${formatMoney(cashFlow.aging.d90)}`}
             />
           )}
         </div>
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <AgeChip color="bg-status-success" label="Current" value={cashFlow.aging.current} />
-          <AgeChip color="bg-brass" label="30-59d" value={cashFlow.aging.d30} />
-          <AgeChip color="bg-status-warning" label="60-89d" value={cashFlow.aging.d60} />
-          <AgeChip color="bg-status-danger" label="90+d" value={cashFlow.aging.d90} />
+          <AgeChip color="bg-nw-success" label="Current" value={cashFlow.aging.current} />
+          <AgeChip color="bg-nw-warn" label="30-59d" value={cashFlow.aging.d30} />
+          <AgeChip color="bg-nw-warn/70" label="60-89d" value={cashFlow.aging.d60} />
+          <AgeChip color="bg-nw-danger" label="90+d" value={cashFlow.aging.d90} />
         </div>
       </div>
 
       {/* Upcoming */}
-      <div className="pt-4 border-t border-brand-border">
+      <div className="pt-4 border-t border-[rgba(59,88,100,0.15)]">
         <div className="flex items-baseline justify-between">
-          <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Upcoming (open POs)</span>
+          <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Upcoming (open POs)</span>
           <Link
             href="/jobs"
-            className="text-sm text-cream tabular-nums hover:text-teal transition-colors"
+            className="font-mono text-[13px] text-slate-tile tabular-nums hover:text-stone-blue transition-colors"
           >
             {formatMoney(cashFlow.upcomingCommitted)}
           </Link>
@@ -511,8 +512,8 @@ function NumStat({
 }) {
   const inner = (
     <>
-      <p className="text-[10px] uppercase tracking-wider text-cream-dim">{label}</p>
-      <p className={`mt-1 text-base tabular-nums ${negative ? "text-status-danger" : "text-cream"}`}>
+      <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">{label}</p>
+      <p className={`mt-1 font-mono text-[15px] tabular-nums ${negative ? "text-nw-danger" : "text-slate-tile"}`}>
         {value}
       </p>
     </>
@@ -532,8 +533,8 @@ function AgeChip({ color, label, value }: { color: string; label: string; value:
     <div className="flex items-center gap-2">
       <span className={`inline-block w-2 h-2 ${color}`} />
       <div>
-        <p className="text-[10px] uppercase tracking-wider text-cream-dim">{label}</p>
-        <p className="text-xs tabular-nums text-cream">{formatMoney(value)}</p>
+        <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">{label}</p>
+        <p className="font-mono text-[12px] tabular-nums text-slate-tile">{formatMoney(value)}</p>
       </div>
     </div>
   );
