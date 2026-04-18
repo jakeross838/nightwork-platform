@@ -1,10 +1,9 @@
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import Breadcrumbs from "@/components/breadcrumbs";
 
 export default function OperationsPage() {
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs items={[{ label: "Operations" }]} />
         <div className="mb-6">
@@ -21,6 +20,6 @@ export default function OperationsPage() {
           </p>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

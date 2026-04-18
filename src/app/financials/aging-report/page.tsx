@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 
 export default function AgingReportPage() {
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <FinancialViewTabs active="aging" />
         <div className="mb-6">
@@ -32,6 +31,6 @@ export default function AgingReportPage() {
           </div>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

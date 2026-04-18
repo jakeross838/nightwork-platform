@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, daysAgo, formatDateTime } from "@/lib/utils/format";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
@@ -49,8 +49,7 @@ export default function QaQueuePage() {
  }
 
  return (
- <div className="min-h-screen">
- <NavBar />
+ <AppShell>
  <main className="max-w-[1600px] mx-auto px-6 py-8">
  <FinancialViewTabs active="qa" />
  <div className="flex items-center justify-between mb-6">
@@ -126,6 +125,6 @@ export default function QaQueuePage() {
  </div>
  )}
  </main>
- </div>
+ </AppShell>
  );
 }

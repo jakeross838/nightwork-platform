@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import AdminSidebar, { AdminMobileNav } from "@/components/admin-sidebar";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents } from "@/lib/utils/format";
@@ -128,8 +128,7 @@ export default function VendorsPage() {
   const selectedVendors = vendors.filter((v) => selected.has(v.id));
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
         <header className="mb-6">
           <h1 className="font-display text-3xl text-cream tracking-tight">Admin</h1>
@@ -312,6 +311,6 @@ export default function VendorsPage() {
           </div>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

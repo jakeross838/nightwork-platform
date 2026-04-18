@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
@@ -54,8 +54,7 @@ export default function DrawsPage() {
  }, {});
 
  return (
- <div className="min-h-screen">
- <NavBar />
+ <AppShell>
  <main className="max-w-[1600px] mx-auto px-6 py-8">
  <FinancialViewTabs active="draws" />
  <div className="flex items-center justify-between mb-6">
@@ -126,6 +125,6 @@ export default function DrawsPage() {
  </div>
  )}
  </main>
- </div>
+ </AppShell>
  );
 }

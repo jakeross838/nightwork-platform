@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 
@@ -515,8 +515,7 @@ export default function NewDrawWizardPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
       <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
         <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
           <h2 className="font-display text-2xl text-cream">Create New Draw</h2>
@@ -938,7 +937,7 @@ export default function NewDrawWizardPage() {
           </div>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }
 

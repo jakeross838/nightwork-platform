@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDollars, formatStatus, formatFlag, formatInvoiceType, confidenceColor, formatDate, formatDateTime, formatWho, statusBadgeOutline } from "@/lib/utils/format";
 
@@ -134,17 +134,16 @@ export default function QaReviewPage() {
  };
 
  if (loading) return (
- <div className="min-h-screen"><NavBar /><div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" /></div></div>
+ <AppShell><div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" /></div></AppShell>
  );
  if (!invoice) return (
- <div className="min-h-screen"><NavBar /><div className="flex items-center justify-center py-32"><p className="text-status-danger font-display text-lg">Invoice not found</p></div></div>
+ <AppShell><div className="flex items-center justify-center py-32"><p className="text-status-danger font-display text-lg">Invoice not found</p></div></AppShell>
  );
 
  const isQaReviewable = ["qa_review", "pm_approved"].includes(invoice.status);
 
  return (
- <div className="min-h-screen">
- <NavBar />
+ <AppShell>
 
  {/* Sub-header */}
  <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
@@ -401,7 +400,7 @@ export default function QaReviewPage() {
  </div>
  </div>
  )}
- </div>
+ </AppShell>
  );
 }
 

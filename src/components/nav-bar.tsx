@@ -20,14 +20,12 @@ type Profile = {
 
 type NavItemKey =
   | "dashboard"
-  | "jobs"
   | "financial"
   | "operations"
   | "admin";
 
 const ACCESS: Record<NavItemKey, UserRole[]> = {
   dashboard: ["owner", "admin", "pm", "accounting"],
-  jobs: ["owner", "admin"],
   financial: ["owner", "admin", "pm", "accounting"],
   operations: ["owner", "admin", "pm"],
   admin: ["owner", "admin"],
@@ -94,7 +92,7 @@ function NavLink({
   );
 }
 
-export default function NavBar() {
+export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => void } = {}) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -140,7 +138,6 @@ export default function NavBar() {
   const closeMobile = () => setMobileOpen(false);
 
   const isDashboardActive = pathname === "/" || pathname === "/dashboard";
-  const isJobsActive = pathname.startsWith("/jobs");
   const isFinancialActive =
     pathname.startsWith("/financial") ||
     pathname.startsWith("/invoices") ||
@@ -153,7 +150,6 @@ export default function NavBar() {
   const role = profile?.role ?? null;
   const show = {
     dashboard: can(role, "dashboard"),
-    jobs: can(role, "jobs"),
     financial: can(role, "financial"),
     operations: can(role, "operations"),
     admin: can(role, "admin"),
@@ -198,9 +194,6 @@ export default function NavBar() {
           {show.dashboard && (
             <NavLink href="/dashboard" label="Dashboard" active={isDashboardActive} />
           )}
-          {show.jobs && (
-            <NavLink href="/jobs" label="Jobs" active={isJobsActive} />
-          )}
           {show.financial && (
             <NavLink href="/financial" label="Financial" active={isFinancialActive} />
           )}
@@ -241,13 +234,22 @@ export default function NavBar() {
           </form>
         </div>
 
-        {/* Mobile notification bell + hamburger */}
+        {/* Mobile: sidebar hamburger + notification bell + nav menu */}
         <div className="flex md:hidden items-center gap-1">
+          {onToggleSidebar && (
+            <button type="button" onClick={onToggleSidebar}
+              className="flex items-center justify-center w-10 h-10 text-white/80 hover:text-white transition-colors"
+              aria-label="Open job sidebar">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+              </svg>
+            </button>
+          )}
           {profile && <NotificationBell userId={profile.id} />}
           <button type="button" onClick={() => setMobileOpen((p) => !p)}
-            className="flex items-center justify-center w-11 h-11 text-white/80 hover:text-white transition-colors relative"
+            className="flex items-center justify-center w-10 h-10 text-white/80 hover:text-white transition-colors relative"
             aria-label="Toggle menu" aria-expanded={mobileOpen}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               {mobileOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               ) : (
@@ -273,7 +275,6 @@ export default function NavBar() {
             </div>
           )}
           {show.dashboard && <NavLink href="/dashboard" label="Dashboard" active={isDashboardActive} mobile onClick={closeMobile} />}
-          {show.jobs && <NavLink href="/jobs" label="Jobs" active={isJobsActive} mobile onClick={closeMobile} />}
           {show.financial && <NavLink href="/financial" label="Financial" active={isFinancialActive} mobile onClick={closeMobile} />}
           {show.operations && (
             <span className="flex items-center gap-2 py-3 px-4 text-[14px] font-medium text-white/30">

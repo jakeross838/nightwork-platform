@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import { toast } from "@/lib/utils/toast";
 import { formatCents, confidenceLabel, confidenceColor } from "@/lib/utils/format";
 import { supabase } from "@/lib/supabase/client";
@@ -319,8 +319,7 @@ export default function ImportPage() {
   const done = !parsing && (batch?.status === "complete" || batch?.status === "partial");
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <NavBar />
+    <AppShell>
       <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 md:px-6 py-8">
         <div className="mb-6 flex items-end justify-between">
           <div>
@@ -495,7 +494,7 @@ export default function ImportPage() {
           </section>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }
 

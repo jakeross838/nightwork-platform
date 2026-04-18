@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
@@ -116,29 +116,26 @@ export default function ChangeOrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
+      <AppShell>
         <main className="max-w-[1200px] mx-auto px-6 py-20 text-center">
           <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
         </main>
-      </div>
+      </AppShell>
     );
   }
 
   if (!co) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
+      <AppShell>
         <main className="max-w-[1200px] mx-auto px-6 py-20 text-center">
           <p className="text-cream">{error ?? "CO not found"}</p>
         </main>
-      </div>
+      </AppShell>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
@@ -372,6 +369,6 @@ export default function ChangeOrderDetailPage() {
           </aside>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }
