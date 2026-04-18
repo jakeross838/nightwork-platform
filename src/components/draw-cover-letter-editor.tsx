@@ -84,17 +84,17 @@ export default function DrawCoverLetterEditor({
   if (loading) {
     return (
       <div className="py-12 text-center">
-        <div className="w-6 h-6 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-6 h-6 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
       </div>
     );
   }
 
   return (
     <div className="space-y-4 animate-fade-up">
-      <div className="bg-brand-card border border-brand-border p-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4 flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="font-display text-cream">Cover Letter</p>
-          <p className="text-xs text-cream-dim mt-0.5">
+          <p className="font-display text-slate-tile">Cover Letter</p>
+          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">
             {generated
               ? "Generated from template — edit below to customize."
               : "Custom edit saved for this draw."}{" "}
@@ -103,19 +103,19 @@ export default function DrawCoverLetterEditor({
         </div>
         <div className="flex items-center gap-2">
           {message && (
-            <span className="text-xs text-status-success">{message}</span>
+            <span className="text-xs text-nw-success">{message}</span>
           )}
           <button
             onClick={regenerate}
             disabled={busy || saving}
-            className="px-3 py-1.5 border border-brand-border text-cream-dim hover:text-cream text-xs"
+            className="px-3 py-1.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)] hover:text-slate-tile text-xs"
           >
             {busy ? "Regenerating…" : "Regenerate from template"}
           </button>
           <button
             onClick={save}
             disabled={!dirty || saving || busy}
-            className="px-4 py-1.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium"
+            className="px-4 py-1.5 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white text-sm font-medium"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -127,11 +127,11 @@ export default function DrawCoverLetterEditor({
         onChange={(e) => setBody(e.target.value)}
         rows={22}
         spellCheck
-        className="w-full px-4 py-3 bg-brand-card border border-brand-border text-sm text-cream font-mono leading-relaxed focus:border-teal focus:outline-none whitespace-pre-wrap"
+        className="w-full px-4 py-3 bg-white border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile font-mono leading-relaxed focus:border-stone-blue focus:outline-none whitespace-pre-wrap"
       />
 
-      <p className="text-xs text-cream-dim">
-        Tip: edit the template at <a href="/settings/workflow" className="text-teal hover:underline">Settings → Workflow</a> to change the default for all future draws.
+      <p className="text-xs text-[rgba(59,88,100,0.55)]">
+        Tip: edit the template at <a href="/settings/workflow" className="text-stone-blue hover:underline">Settings → Workflow</a> to change the default for all future draws.
       </p>
     </div>
   );

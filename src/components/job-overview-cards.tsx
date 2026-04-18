@@ -290,12 +290,12 @@ export default function JobOverviewCards({
             <MiniStat label="Revised" value={formatCents(revisedContract)} strong />
           </div>
           <div className="mt-4">
-            <div className="flex items-center justify-between text-[11px] text-cream-dim">
+            <div className="flex items-center justify-between text-[11px] text-[rgba(59,88,100,0.55)]">
               <span>% Complete</span>
-              <span className="text-cream font-display">{percentComplete.toFixed(1)}%</span>
+              <span className="text-slate-tile font-display">{percentComplete.toFixed(1)}%</span>
             </div>
-            <div className="mt-1.5 h-2 bg-brand-surface overflow-hidden">
-              <div className="h-full bg-teal transition-all" style={{ width: `${percentComplete}%` }} />
+            <div className="mt-1.5 h-2 bg-[rgba(91,134,153,0.06)] overflow-hidden">
+              <div className="h-full bg-slate-deep transition-all" style={{ width: `${percentComplete}%` }} />
             </div>
           </div>
         </Card>
@@ -357,14 +357,14 @@ export default function JobOverviewCards({
 
       {/* Recent Activity */}
       <Card title="Recent Activity" action={
-        <Link href={`/jobs/${jobId}?view=activity`} className="text-[12px] text-teal hover:underline">
+        <Link href={`/jobs/${jobId}?view=activity`} className="text-[12px] text-stone-blue hover:underline">
           View all activity →
         </Link>
       }>
         {activity === null ? (
           <Placeholder />
         ) : activity.length === 0 ? (
-          <p className="text-xs text-cream-dim">No recent activity.</p>
+          <p className="text-xs text-[rgba(59,88,100,0.55)]">No recent activity.</p>
         ) : (
           <ul className="divide-y divide-brand-row-border">
             {activity.map((a) => (
@@ -372,16 +372,16 @@ export default function JobOverviewCards({
                 key={a.id}
                 className="py-2 flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 text-[12px]"
               >
-                <span className="text-cream-dim tabular-nums shrink-0 sm:w-32">
+                <span className="text-[rgba(59,88,100,0.55)] tabular-nums shrink-0 sm:w-32">
                   {formatActivityTs(a.created_at)}
                 </span>
-                <span className="text-cream flex-1 break-words">
+                <span className="text-slate-tile flex-1 break-words">
                   <span className="font-medium">{formatEntityAction(a.entity_type, a.action)}</span>
                   {summarizeDetails(a.details) && (
-                    <span className="text-cream-dim"> · {summarizeDetails(a.details)}</span>
+                    <span className="text-[rgba(59,88,100,0.55)]"> · {summarizeDetails(a.details)}</span>
                   )}
                 </span>
-                <span className="text-cream-dim shrink-0">{a.user_name ?? "—"}</span>
+                <span className="text-[rgba(59,88,100,0.55)] shrink-0">{a.user_name ?? "—"}</span>
               </li>
             ))}
           </ul>
@@ -393,7 +393,7 @@ export default function JobOverviewCards({
         {payments === null ? (
           <Placeholder />
         ) : payments.length === 0 ? (
-          <p className="text-xs text-cream-dim">No scheduled payments in the next 30 days.</p>
+          <p className="text-xs text-[rgba(59,88,100,0.55)]">No scheduled payments in the next 30 days.</p>
         ) : (
           <ul className="divide-y divide-brand-row-border">
             {payments.map((p) => (
@@ -401,14 +401,14 @@ export default function JobOverviewCards({
                 key={p.id}
                 className="py-2 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-[12px]"
               >
-                <span className="text-cream sm:flex-1 truncate">
+                <span className="text-slate-tile sm:flex-1 truncate">
                   {p.vendor_name ?? p.vendor_name_raw ?? "—"}
                 </span>
                 <span className="flex items-center justify-between gap-3 sm:gap-3">
-                  <span className="text-cream-dim tabular-nums sm:w-24 sm:text-right">
+                  <span className="text-[rgba(59,88,100,0.55)] tabular-nums sm:w-24 sm:text-right">
                     {formatCents(p.total_amount)}
                   </span>
-                  <span className="text-cream-dim tabular-nums sm:w-28 sm:text-right">
+                  <span className="text-[rgba(59,88,100,0.55)] tabular-nums sm:w-28 sm:text-right">
                     {formatDate(p.scheduled_payment_date)}
                   </span>
                 </span>
@@ -431,9 +431,9 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-brand-card border border-brand-border p-5">
+    <section className="bg-white border border-[rgba(59,88,100,0.15)] p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-display text-base text-cream">{title}</h3>
+        <h3 className="font-display text-base text-slate-tile">{title}</h3>
         {action}
       </div>
       {children}
@@ -444,7 +444,7 @@ function Card({
 function Placeholder() {
   return (
     <div className="h-16 flex items-center justify-center">
-      <div className="w-4 h-4 border-2 border-teal/30 border-t-teal animate-spin" />
+      <div className="w-4 h-4 border-2 border-stone-blue/30 border-t-teal animate-spin" />
     </div>
   );
 }
@@ -462,13 +462,13 @@ function MiniStat({
 }) {
   const toneClass =
     tone === "positive"
-      ? "text-status-success"
+      ? "text-nw-success"
       : tone === "negative"
-        ? "text-status-danger"
-        : "text-cream";
+        ? "text-nw-danger"
+        : "text-slate-tile";
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
       <p className={`text-[13px] mt-0.5 tabular-nums font-display ${toneClass} ${strong ? "font-semibold" : ""}`}>
         {value}
       </p>
@@ -489,13 +489,13 @@ function HealthStat({
 }) {
   const toneClass =
     tone === "danger"
-      ? "text-status-danger"
+      ? "text-nw-danger"
       : tone === "warning"
-        ? "text-status-warning"
-        : "text-cream";
+        ? "text-nw-warn"
+        : "text-slate-tile";
   const body = (
     <div>
-      <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
       <p className={`text-2xl mt-1 tabular-nums font-display ${toneClass}`}>{value}</p>
     </div>
   );
@@ -521,7 +521,7 @@ function OpenItemRow({
 }) {
   if (count === 0) {
     return (
-      <div className="flex items-center justify-between text-[12px] text-cream-dim py-1">
+      <div className="flex items-center justify-between text-[12px] text-[rgba(59,88,100,0.55)] py-1">
         <span>{label}</span>
         <span className="tabular-nums">0</span>
       </div>
@@ -530,12 +530,12 @@ function OpenItemRow({
   return (
     <Link
       href={href}
-      className="flex items-center justify-between text-[12px] py-1 hover:text-teal transition-colors"
+      className="flex items-center justify-between text-[12px] py-1 hover:text-stone-blue transition-colors"
     >
-      <span className="text-cream">{label}</span>
+      <span className="text-slate-tile">{label}</span>
       <span className="flex items-center gap-3 tabular-nums">
-        {amount && <span className="text-cream-dim">{amount}</span>}
-        <span className="text-cream font-medium">{count}</span>
+        {amount && <span className="text-[rgba(59,88,100,0.55)]">{amount}</span>}
+        <span className="text-slate-tile font-medium">{count}</span>
       </span>
     </Link>
   );

@@ -189,8 +189,8 @@ export default function PaymentsPage() {
         <FinancialViewTabs active="payments" />
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">Payment Tracking</h2>
-            <p className="text-sm text-cream-dim mt-1">
+            <h2 className="font-display text-2xl text-slate-tile">Payment Tracking</h2>
+            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
               Schedule payments, mark invoices paid, and keep the aging report honest.
             </p>
           </div>
@@ -210,11 +210,11 @@ export default function PaymentsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-5 bg-brand-surface border border-brand-border p-1 w-fit">
+        <div className="flex gap-1 mb-5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-1 w-fit">
           <button
             onClick={() => setTab("tracking")}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "tracking" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+              tab === "tracking" ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
             }`}
           >
             Tracking
@@ -222,7 +222,7 @@ export default function PaymentsPage() {
           <button
             onClick={() => setTab("batch")}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "batch" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+              tab === "batch" ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
             }`}
           >
             Batch Payments
@@ -230,7 +230,7 @@ export default function PaymentsPage() {
           <button
             onClick={() => setTab("aging")}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "aging" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+              tab === "aging" ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
             }`}
           >
             Aging Report
@@ -239,7 +239,7 @@ export default function PaymentsPage() {
 
         {loading ? (
           <div className="py-16 text-center">
-            <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+            <div className="w-8 h-8 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
           </div>
         ) : tab === "batch" ? (
           <PaymentBatchByVendorPanel invoices={invoices} onRefresh={refresh} />
@@ -250,7 +250,7 @@ export default function PaymentsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="all">All Payment Status</option>
                 <option value="unpaid">Unpaid</option>
@@ -261,7 +261,7 @@ export default function PaymentsPage() {
               <select
                 value={jobFilter}
                 onChange={(e) => setJobFilter(e.target.value)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="">All Jobs</option>
                 {jobOptions.map((j) => (
@@ -273,7 +273,7 @@ export default function PaymentsPage() {
               <select
                 value={vendorFilter}
                 onChange={(e) => setVendorFilter(e.target.value)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="">All Vendors</option>
                 {vendorOptions.map((v) => (
@@ -286,33 +286,33 @@ export default function PaymentsPage() {
                 type="date"
                 value={dateStart}
                 onChange={(e) => setDateStart(e.target.value)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
                 placeholder="From"
               />
               <input
                 type="date"
                 value={dateEnd}
                 onChange={(e) => setDateEnd(e.target.value)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
                 placeholder="To"
               />
             </div>
 
             {/* Bulk actions */}
             {selected.size > 0 && (
-              <div className="flex flex-wrap items-center gap-3 mb-3 p-3 bg-teal/5 border border-teal/30 animate-fade-up">
-                <span className="text-sm text-cream">{selected.size} selected</span>
+              <div className="flex flex-wrap items-center gap-3 mb-3 p-3 bg-slate-deep/5 border border-stone-blue/30 animate-fade-up">
+                <span className="text-sm text-slate-tile">{selected.size} selected</span>
                 <div className="flex-1" />
                 <input
                   type="date"
                   value={payDate}
                   onChange={(e) => setPayDate(e.target.value)}
-                  className="px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
+                  className="px-2 py-1.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile"
                 />
                 <select
                   value={payMethod}
                   onChange={(e) => setPayMethod(e.target.value as typeof payMethod)}
-                  className="px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
+                  className="px-2 py-1.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile"
                 >
                   <option value="check">Check</option>
                   <option value="ach">ACH</option>
@@ -322,14 +322,14 @@ export default function PaymentsPage() {
                 <button
                   onClick={() => bulk("schedule")}
                   disabled={bulkBusy}
-                  className="px-3 py-1.5 border border-teal text-teal hover:bg-teal/10 disabled:opacity-50 text-sm font-medium"
+                  className="px-3 py-1.5 border border-stone-blue text-stone-blue hover:bg-stone-blue/10 disabled:opacity-50 text-sm font-medium"
                 >
                   Schedule
                 </button>
                 <button
                   onClick={() => bulk("mark_paid")}
                   disabled={bulkBusy}
-                  className="px-3 py-1.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium"
+                  className="px-3 py-1.5 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white text-sm font-medium"
                 >
                   Mark as Paid
                 </button>
@@ -337,14 +337,14 @@ export default function PaymentsPage() {
             )}
 
             {filtered.length === 0 ? (
-              <div className="border border-brand-border p-10 text-center text-cream-dim text-sm">
+              <div className="border border-[rgba(59,88,100,0.15)] p-10 text-center text-[rgba(59,88,100,0.55)] text-sm">
                 No invoices match your filters.
               </div>
             ) : (
-              <div className="overflow-x-auto border border-brand-border">
+              <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
                 <table className="w-full min-w-[1100px] text-sm">
                   <thead>
-                    <tr className="bg-brand-surface text-left">
+                    <tr className="bg-[rgba(91,134,153,0.06)] text-left">
                       <th className="py-3 px-4 w-10">
                         <input
                           type="checkbox"
@@ -366,7 +366,7 @@ export default function PaymentsPage() {
                   </thead>
                   <tbody>
                     {filtered.map((inv) => (
-                      <tr key={inv.id} className="border-t border-brand-row-border hover:bg-brand-elevated/40 transition-colors">
+                      <tr key={inv.id} className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/40 transition-colors">
                         <td className="py-3 px-4">
                           <input
                             type="checkbox"
@@ -375,17 +375,17 @@ export default function PaymentsPage() {
                             className="rounded"
                           />
                         </td>
-                        <td className="py-3 px-4 text-cream cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
+                        <td className="py-3 px-4 text-slate-tile cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
                           {inv.vendor_name_raw ?? "Unknown"}
                         </td>
-                        <td className="py-3 px-4 text-cream-muted font-mono text-xs">
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">
                           {inv.invoice_number ?? "—"}
                         </td>
-                        <td className="py-3 px-4 text-cream-muted text-xs">{inv.jobs?.name ?? "—"}</td>
-                        <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{inv.jobs?.name ?? "—"}</td>
+                        <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                           {formatCents(inv.total_amount)}
                           {inv.payment_status === "partial" && (
-                            <div className="text-[10px] text-brass">
+                            <div className="text-[10px] text-nw-warn">
                               paid {formatCents(inv.payment_amount ?? 0)}
                             </div>
                           )}
@@ -395,10 +395,10 @@ export default function PaymentsPage() {
                             {inv.payment_status}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.scheduled_payment_date)}</td>
-                        <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
-                        <td className="py-3 px-4 text-cream-muted text-xs">{inv.payment_method ?? "—"}</td>
-                        <td className="py-3 px-4 text-cream-muted text-xs font-mono">{inv.payment_reference ?? "—"}</td>
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(inv.scheduled_payment_date)}</td>
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(inv.payment_date)}</td>
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{inv.payment_method ?? "—"}</td>
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs font-mono">{inv.payment_reference ?? "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -417,14 +417,14 @@ export default function PaymentsPage() {
             </div>
             {(["31_60", "61_90", "90_plus"] as AgingBucket[]).map((b) => (
               <div key={b}>
-                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2 mt-4">
+                <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-2 mt-4">
                   {b.replace("_", "–")} Days — {aging[b].count} invoice(s) — {formatCents(aging[b].amount)}
                 </p>
                 {aging[b].rows.length > 0 && (
-                  <div className="overflow-x-auto border border-brand-border">
+                  <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
                     <table className="w-full min-w-[700px] text-sm">
                       <thead>
-                        <tr className="bg-brand-surface text-left">
+                        <tr className="bg-[rgba(91,134,153,0.06)] text-left">
                           <Th>Vendor</Th>
                           <Th>Invoice #</Th>
                           <Th>Received</Th>
@@ -439,14 +439,14 @@ export default function PaymentsPage() {
                           const days = ref
                             ? Math.floor((Date.now() - new Date(ref + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24))
                             : 0;
-                          const color = b === "90_plus" ? "text-status-danger" : "text-brass";
+                          const color = b === "90_plus" ? "text-nw-danger" : "text-nw-warn";
                           return (
-                            <tr key={inv.id} className="border-t border-brand-row-border hover:bg-brand-elevated/30 cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
-                              <td className="py-3 px-4 text-cream">{inv.vendor_name_raw ?? "Unknown"}</td>
-                              <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
-                              <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(ref)}</td>
+                            <tr key={inv.id} className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/30 cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
+                              <td className="py-3 px-4 text-slate-tile">{inv.vendor_name_raw ?? "Unknown"}</td>
+                              <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                              <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(ref)}</td>
                               <td className={`py-3 px-4 ${color} text-xs font-medium`}>{days} days</td>
-                              <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                              <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                                 {formatCents(inv.total_amount)}
                               </td>
                               <td className="py-3 px-4">
@@ -472,7 +472,7 @@ export default function PaymentsPage() {
 
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
-    <th className={`py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider ${right ? "text-right" : ""}`}>
+    <th className={`py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider ${right ? "text-right" : ""}`}>
       {children}
     </th>
   );
@@ -490,12 +490,12 @@ function Card({
   danger?: boolean;
 }) {
   return (
-    <div className={`bg-brand-card border ${danger ? "border-status-danger/40" : "border-brand-border"} px-4 py-3`}>
-      <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</p>
-      <p className={`text-xl font-display font-medium mt-1 ${danger ? "text-status-danger" : "text-cream"}`}>
+    <div className={`bg-white border ${danger ? "border-nw-danger/40" : "border-[rgba(59,88,100,0.15)]"} px-4 py-3`}>
+      <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
+      <p className={`text-xl font-display font-medium mt-1 ${danger ? "text-nw-danger" : "text-slate-tile"}`}>
         {value}
       </p>
-      {sub && <p className="text-xs text-cream-dim mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -514,19 +514,19 @@ function AgingCard({
   danger?: boolean;
 }) {
   const color = danger ? "status-danger" : warn ? "brass" : "cream";
-  const borderColor = danger ? "border-status-danger/40" : warn ? "border-brass/40" : "border-brand-border";
+  const borderColor = danger ? "border-nw-danger/40" : warn ? "border-nw-warn/40" : "border-[rgba(59,88,100,0.15)]";
   return (
-    <div className={`bg-brand-card border ${borderColor} px-4 py-3`}>
-      <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</p>
+    <div className={`bg-white border ${borderColor} px-4 py-3`}>
+      <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
       <p className={`text-xl font-display font-medium mt-1 text-${color}`}>{formatCents(amount)}</p>
-      <p className="text-xs text-cream-dim mt-0.5">{count} invoice(s)</p>
+      <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">{count} invoice(s)</p>
     </div>
   );
 }
 
 function payStatusBadge(s: string): string {
-  if (s === "paid") return "bg-transparent text-status-success border border-status-success";
-  if (s === "scheduled") return "bg-transparent text-teal border border-teal";
-  if (s === "partial") return "bg-transparent text-brass border border-brass";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+  if (s === "paid") return "bg-transparent text-nw-success border border-nw-success";
+  if (s === "scheduled") return "bg-transparent text-stone-blue border border-stone-blue";
+  if (s === "partial") return "bg-transparent text-nw-warn border border-nw-warn";
+  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
 }

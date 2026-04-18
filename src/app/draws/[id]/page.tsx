@@ -160,7 +160,7 @@ export default function DrawDetailPage() {
     return (
       <AppShell>
         <div className="flex items-center justify-center py-32">
-          <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" />
+          <div className="w-8 h-8 border-2 border-stone-blue/30 border-t-teal animate-spin" />
         </div>
       </AppShell>
     );
@@ -169,7 +169,7 @@ export default function DrawDetailPage() {
     return (
       <AppShell>
         <div className="flex items-center justify-center py-32">
-          <p className="text-status-danger font-display text-lg">Draw not found</p>
+          <p className="text-nw-danger font-display text-lg">Draw not found</p>
         </div>
       </AppShell>
     );
@@ -238,22 +238,22 @@ export default function DrawDetailPage() {
     <AppShell>
 
       {/* Sub-header */}
-      <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-5 print:hidden">
+      <div className="border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/50 px-6 py-5 print:hidden">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4 flex-wrap">
             <button
               onClick={() => router.push("/draws")}
-              className="text-cream-dim hover:text-teal transition-colors text-sm"
+              className="text-[rgba(59,88,100,0.55)] hover:text-stone-blue transition-colors text-sm"
             >
               &larr; Draws
             </button>
-            <h1 className="font-display text-xl text-cream">
-              {draw.jobs?.name} <span className="text-cream-dim">&mdash;</span> Draw #{draw.draw_number}
+            <h1 className="font-display text-xl text-slate-tile">
+              {draw.jobs?.name} <span className="text-[rgba(59,88,100,0.55)]">&mdash;</span> Draw #{draw.draw_number}
               {draw.revision_number > 0 && (
-                <span className="text-brass ml-1">Rev {draw.revision_number}</span>
+                <span className="text-nw-warn ml-1">Rev {draw.revision_number}</span>
               )}
               {draw.is_final && (
-                <span className="ml-2 text-[10px] px-2 py-0.5 border border-brass text-brass uppercase tracking-wider">
+                <span className="ml-2 text-[10px] px-2 py-0.5 border border-nw-warn text-nw-warn uppercase tracking-wider">
                   FINAL
                 </span>
               )}
@@ -265,7 +265,7 @@ export default function DrawDetailPage() {
           <div className="flex items-center gap-2 flex-wrap print:hidden">
             <button
               onClick={() => window.print()}
-              className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
+              className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
               aria-label="Print this draw"
             >
               Print
@@ -278,7 +278,7 @@ export default function DrawDetailPage() {
                   a.download = "";
                   a.click();
                 }}
-                className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
               >
                 Export to Excel
               </button>
@@ -287,7 +287,7 @@ export default function DrawDetailPage() {
               <button
                 onClick={() => handleAction("submit")}
                 disabled={acting}
-                className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
               >
                 {acting ? "Processing..." : "Submit for Approval"}
               </button>
@@ -297,14 +297,14 @@ export default function DrawDetailPage() {
                 <button
                   onClick={() => handleAction("send_back")}
                   disabled={acting}
-                  className="px-4 py-2 border border-brass text-brass hover:bg-brass/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                  className="px-4 py-2 border border-nw-warn text-nw-warn hover:bg-nw-warn/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
                 >
                   Send Back to Draft
                 </button>
                 <button
                   onClick={() => handleAction("approve")}
                   disabled={acting}
-                  className="px-4 py-2 bg-status-success hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                  className="px-4 py-2 bg-nw-success hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
                 >
                   {acting ? "Processing..." : "Approve Draw"}
                 </button>
@@ -319,7 +319,7 @@ export default function DrawDetailPage() {
                   )
                 }
                 disabled={acting}
-                className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
               >
                 Lock Draw
               </button>
@@ -328,7 +328,7 @@ export default function DrawDetailPage() {
               <button
                 onClick={() => handleAction("mark_paid")}
                 disabled={acting}
-                className="px-4 py-2 border border-status-success text-status-success hover:bg-status-success/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 border border-nw-success text-nw-success hover:bg-nw-success/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
               >
                 Mark Paid
               </button>
@@ -342,7 +342,7 @@ export default function DrawDetailPage() {
                   )
                 }
                 disabled={acting}
-                className="px-4 py-2 border border-status-danger text-status-danger hover:bg-status-danger/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 border border-nw-danger text-nw-danger hover:bg-nw-danger/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
               >
                 Void
               </button>
@@ -352,8 +352,8 @@ export default function DrawDetailPage() {
       </div>
 
       {actionError && (
-        <div className="bg-status-danger/10 border-b border-status-danger/40">
-          <div className="max-w-[1600px] mx-auto px-6 py-3 text-sm text-status-danger">
+        <div className="bg-nw-danger/10 border-b border-nw-danger/40">
+          <div className="max-w-[1600px] mx-auto px-6 py-3 text-sm text-nw-danger">
             {actionError}
           </div>
         </div>
@@ -361,18 +361,18 @@ export default function DrawDetailPage() {
 
       {/* Locked banner */}
       {draw.status === "locked" && (
-        <div className="bg-teal/10 border-b border-teal/30">
+        <div className="bg-slate-deep/10 border-b border-stone-blue/30">
           <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-5 h-5 text-stone-blue flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
               </svg>
-              <p className="text-teal text-sm">This draw is locked — permanent record. Changes require a revision.</p>
+              <p className="text-stone-blue text-sm">This draw is locked — permanent record. Changes require a revision.</p>
             </div>
             <button
               onClick={handleCreateRevision}
               disabled={acting}
-              className="px-4 py-1.5 bg-transparent hover:bg-teal/10 border border-teal text-teal text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-1.5 bg-transparent hover:bg-stone-blue/10 border border-stone-blue text-stone-blue text-sm font-medium transition-colors disabled:opacity-50"
             >
               {acting ? "Creating..." : "Create Revision"}
             </button>
@@ -380,24 +380,24 @@ export default function DrawDetailPage() {
         </div>
       )}
       {draw.status === "paid" && (
-        <div className="bg-teal/10 border-b border-teal/30">
+        <div className="bg-slate-deep/10 border-b border-stone-blue/30">
           <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-3">
-            <svg className="w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-5 h-5 text-stone-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-teal text-sm">This draw has been paid.</p>
+            <p className="text-stone-blue text-sm">This draw has been paid.</p>
           </div>
         </div>
       )}
 
       {/* Pending-releases warning banner for submitted draws */}
       {draw.status === "submitted" && pendingReleaseCount > 0 && (
-        <div className="bg-brass/10 border-b border-brass/40">
+        <div className="bg-nw-warn/10 border-b border-nw-warn/40">
           <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-3">
-            <svg className="w-5 h-5 text-brass" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-5 h-5 text-nw-warn" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
             </svg>
-            <p className="text-brass text-sm">
+            <p className="text-nw-warn text-sm">
               <span className="font-medium">
                 {pendingReleaseCount} of {totalReleaseCount}
               </span>{" "}
@@ -434,13 +434,13 @@ export default function DrawDetailPage() {
           {/* G702 Summary */}
           <div className="xl:col-span-1">
             <div className="sticky top-24 space-y-5">
-              <div className="bg-brand-card border border-teal/30 p-6">
+              <div className="bg-white border border-stone-blue/30 p-6">
                 <p className="section-label">G702 — Application for Payment</p>
                 <div className="mt-5 space-y-2.5">
                   <G702Row num="1" label="Original Contract Sum" value={draw.original_contract_sum} />
                   <G702Row num="2" label="Net Change Orders" value={draw.net_change_orders} />
                   <G702Row num="3" label="Contract Sum to Date" value={draw.contract_sum_to_date} bold />
-                  <div className="border-t border-brand-border my-1" />
+                  <div className="border-t border-[rgba(59,88,100,0.15)] my-1" />
                   <G702Row num="4" label="Total Completed to Date" value={draw.total_completed_to_date} />
                   <G702Row num="5a" label="Retainage on Completed" value={draw.retainage_on_completed} sub />
                   <G702Row num="5b" label="Retainage on Stored" value={draw.retainage_on_stored} sub />
@@ -452,44 +452,44 @@ export default function DrawDetailPage() {
                   />
                   <G702Row num="7" label="Less Previous Certificates" value={draw.less_previous_certificates} />
                   <G702Row num="8" label="Current Payment Due" value={draw.current_payment_due} bold highlight />
-                  <div className="border-t border-brand-border my-1" />
+                  <div className="border-t border-[rgba(59,88,100,0.15)] my-1" />
                   <G702Row num="9" label="Balance + Retainage" value={draw.balance_to_finish} />
                 </div>
               </div>
 
-              <div className="bg-brand-card border border-teal/30 p-6">
+              <div className="bg-white border border-stone-blue/30 p-6">
                 <p className="section-label">Details</p>
                 <div className="mt-5 space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Application #</span>
-                    <span className="text-cream">
+                    <span className="text-[rgba(59,88,100,0.55)]">Application #</span>
+                    <span className="text-slate-tile">
                       {draw.application_number ?? draw.draw_number}
                       {draw.revision_number > 0 ? ` Rev ${draw.revision_number}` : ""}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Period</span>
-                    <span className="text-cream">
+                    <span className="text-[rgba(59,88,100,0.55)]">Period</span>
+                    <span className="text-slate-tile">
                       {formatDate(draw.period_start)} — {formatDate(draw.period_end)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">App Date</span>
-                    <span className="text-cream">{formatDate(draw.application_date)}</span>
+                    <span className="text-[rgba(59,88,100,0.55)]">App Date</span>
+                    <span className="text-slate-tile">{formatDate(draw.application_date)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Retainage %</span>
-                    <span className="text-cream">
+                    <span className="text-[rgba(59,88,100,0.55)]">Retainage %</span>
+                    <span className="text-slate-tile">
                       {draw.retainage_percent.toFixed(1)}%{draw.is_final && " (released)"}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Owner</span>
-                    <span className="text-cream">{draw.jobs?.client_name ?? "—"}</span>
+                    <span className="text-[rgba(59,88,100,0.55)]">Owner</span>
+                    <span className="text-slate-tile">{draw.jobs?.client_name ?? "—"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Invoices</span>
-                    <span className="text-cream">{draw.invoices?.length ?? 0}</span>
+                    <span className="text-[rgba(59,88,100,0.55)]">Invoices</span>
+                    <span className="text-slate-tile">{draw.invoices?.length ?? 0}</span>
                   </div>
                 </div>
               </div>
@@ -499,7 +499,7 @@ export default function DrawDetailPage() {
           {/* Right column with tabs */}
           <div className="xl:col-span-3 min-w-0">
             <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 mb-4">
-              <div className="flex gap-1 bg-brand-surface border border-brand-border p-1 w-fit whitespace-nowrap">
+              <div className="flex gap-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-1 w-fit whitespace-nowrap">
                 <TabButton active={activeTab === "detail"} onClick={() => setActiveTab("detail")}>
                   Detail
                 </TabButton>
@@ -515,7 +515,7 @@ export default function DrawDetailPage() {
                 >
                   Lien Releases
                   {missingDocCount > 0 && (
-                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-status-danger text-white">
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-nw-danger text-white">
                       {missingDocCount}
                     </span>
                   )}
@@ -577,15 +577,15 @@ export default function DrawDetailPage() {
             )}
             <p className="section-label">G703 — Continuation Sheet</p>
             {hasNoBudget && (
-              <div className="mt-3 border border-status-warning/40 bg-status-warning/5 px-4 py-3 text-sm text-status-warning">
+              <div className="mt-3 border border-nw-warn/40 bg-nw-warn/5 px-4 py-3 text-sm text-nw-warn">
                 No budget loaded for this job — scheduled values fall back to the job contract. Import a
                 budget on the Budget tab for accurate G703 math.
               </div>
             )}
-            <div className="mt-5 overflow-x-auto border border-brand-border">
+            <div className="mt-5 overflow-x-auto border border-[rgba(59,88,100,0.15)]">
               <table className="w-full min-w-[1100px] text-sm">
                 <thead>
-                  <tr className="bg-brand-surface text-left">
+                  <tr className="bg-[rgba(91,134,153,0.06)] text-left">
                     <Th sticky>A — Item</Th>
                     <Th>B — Description</Th>
                     <Th right>C — Scheduled Value</Th>
@@ -599,8 +599,8 @@ export default function DrawDetailPage() {
                 </thead>
                 <tbody>
                   {baseRows.length > 0 && (
-                    <tr className="bg-brand-surface/40 border-t border-brand-border">
-                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-cream-dim font-semibold">
+                    <tr className="bg-[rgba(91,134,153,0.06)]/40 border-t border-[rgba(59,88,100,0.15)]">
+                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-semibold">
                         Base Contract
                       </td>
                     </tr>
@@ -609,8 +609,8 @@ export default function DrawDetailPage() {
                     <G703RowView key={row.code + "-b"} row={row} idx={idx} />
                   ))}
                   {coRows.length > 0 && (
-                    <tr className="bg-brass/10 border-t-2 border-brass/40">
-                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-brass font-semibold">
+                    <tr className="bg-nw-warn/10 border-t-2 border-nw-warn/40">
+                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-nw-warn font-semibold">
                         Change Orders · PCCO adjustments
                       </td>
                     </tr>
@@ -620,31 +620,31 @@ export default function DrawDetailPage() {
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-brand-border-light bg-brand-surface">
-                    <td colSpan={2} className="py-3 px-4 text-cream font-medium">
+                  <tr className="border-t border-[rgba(59,88,100,0.15)]-light bg-[rgba(91,134,153,0.06)]">
+                    <td colSpan={2} className="py-3 px-4 text-slate-tile font-medium">
                       Grand Total
                     </td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                    <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                       {formatCents(totals.scheduled)}
                     </td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
-                      {totals.previous > 0 ? formatCents(totals.previous) : <span className="text-cream-dim">—</span>}
+                    <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
+                      {totals.previous > 0 ? formatCents(totals.previous) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
                     </td>
-                    <td className="py-3 px-4 text-teal text-right font-display font-medium">
+                    <td className="py-3 px-4 text-stone-blue text-right font-display font-medium">
                       {formatCents(totals.thisPeriod)}
                     </td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                    <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                       {formatCents(totals.totalToDate)}
                     </td>
-                    <td className="py-3 px-4 text-cream-dim text-right">
+                    <td className="py-3 px-4 text-[rgba(59,88,100,0.55)] text-right">
                       {totals.scheduled > 0
                         ? `${((totals.totalToDate / totals.scheduled) * 100).toFixed(1)}%`
                         : "—"}
                     </td>
-                    <td className="py-3 px-4 text-brass text-right font-display font-medium">
+                    <td className="py-3 px-4 text-nw-warn text-right font-display font-medium">
                       {formatCents(totals.retainage)}
                     </td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                    <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                       {formatCents(totals.balance)}
                     </td>
                   </tr>
@@ -659,21 +659,21 @@ export default function DrawDetailPage() {
                 {draw.jobs && (
                   <Link
                     href={`/jobs/${draw.jobs.id}/lien-releases`}
-                    className="text-xs text-teal hover:underline"
+                    className="text-xs text-stone-blue hover:underline"
                   >
                     Manage all releases for this job →
                   </Link>
                 )}
               </div>
               {draw.lien_releases.length === 0 ? (
-                <div className="border border-brand-border px-4 py-4 text-sm text-cream-dim">
+                <div className="border border-[rgba(59,88,100,0.15)] px-4 py-4 text-sm text-[rgba(59,88,100,0.55)]">
                   No lien releases yet. They will auto-generate when this draw is submitted.
                 </div>
               ) : (
-                <div className="overflow-x-auto border border-brand-border">
+                <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
                   <table className="w-full min-w-[700px] text-sm">
                     <thead>
-                      <tr className="bg-brand-surface text-left">
+                      <tr className="bg-[rgba(91,134,153,0.06)] text-left">
                         <Th>Vendor</Th>
                         <Th>Type</Th>
                         <Th right>Amount</Th>
@@ -684,12 +684,12 @@ export default function DrawDetailPage() {
                     </thead>
                     <tbody>
                       {draw.lien_releases.map((lr) => (
-                        <tr key={lr.id} className="border-t border-brand-row-border">
-                          <td className="py-3 px-4 text-cream">{lr.vendors?.name ?? "—"}</td>
-                          <td className="py-3 px-4 text-cream-muted text-xs">
+                        <tr key={lr.id} className="border-t border-[rgba(59,88,100,0.08)]">
+                          <td className="py-3 px-4 text-slate-tile">{lr.vendors?.name ?? "—"}</td>
+                          <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">
                             {formatReleaseType(lr.release_type)}
                           </td>
-                          <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                          <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                             {lr.amount != null ? formatCents(lr.amount) : "—"}
                           </td>
                           <td className="py-3 px-4">
@@ -697,14 +697,14 @@ export default function DrawDetailPage() {
                               {formatReleaseStatus(lr.status)}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(lr.through_date)}</td>
-                          <td className="py-3 px-4 text-cream-muted text-xs">
+                          <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(lr.through_date)}</td>
+                          <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">
                             {lr.document_url ? (
-                              <a href={lr.document_url} target="_blank" rel="noreferrer" className="text-teal hover:underline">
+                              <a href={lr.document_url} target="_blank" rel="noreferrer" className="text-stone-blue hover:underline">
                                 View
                               </a>
                             ) : (
-                              <span className="text-cream-dim">—</span>
+                              <span className="text-[rgba(59,88,100,0.55)]">—</span>
                             )}
                           </td>
                         </tr>
@@ -719,10 +719,10 @@ export default function DrawDetailPage() {
             {draw.invoices && draw.invoices.length > 0 && (
               <div className="mt-8">
                 <p className="section-label">Included Invoices</p>
-                <div className="mt-3 overflow-x-auto border border-brand-border">
+                <div className="mt-3 overflow-x-auto border border-[rgba(59,88,100,0.15)]">
                   <table className="w-full min-w-[500px] text-sm">
                     <thead>
-                      <tr className="bg-brand-surface text-left">
+                      <tr className="bg-[rgba(91,134,153,0.06)] text-left">
                         <Th>Vendor</Th>
                         <Th>Invoice #</Th>
                         <Th right>Amount</Th>
@@ -733,14 +733,14 @@ export default function DrawDetailPage() {
                       {draw.invoices.map((inv) => (
                         <tr
                           key={inv.id}
-                          className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                          className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 cursor-pointer transition-colors"
                           onClick={() => (window.location.href = `/invoices/${inv.id}`)}
                         >
-                          <td className="py-3 px-4 text-cream">{inv.vendor_name_raw ?? "Unknown"}</td>
-                          <td className="py-3 px-4 text-cream-muted font-mono text-xs">
+                          <td className="py-3 px-4 text-slate-tile">{inv.vendor_name_raw ?? "Unknown"}</td>
+                          <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">
                             {inv.invoice_number ?? "—"}
                           </td>
-                          <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                          <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                             {formatCents(inv.total_amount)}
                           </td>
                           <td className="py-3 px-4">
@@ -777,7 +777,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`px-4 py-2 text-sm font-medium transition-colors ${
-        active ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+        active ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
       }`}
     >
       {children}
@@ -798,9 +798,9 @@ function Th({
 }) {
   return (
     <th
-      className={`py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider ${
+      className={`py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
-      } ${sticky ? "sticky left-0 bg-brand-surface z-10" : ""}`}
+      } ${sticky ? "sticky left-0 bg-[rgba(91,134,153,0.06)] z-10" : ""}`}
     >
       {children}
     </th>
@@ -829,49 +829,49 @@ function G703RowView({
 }) {
   const overBudget = row.balance_to_finish < 0;
   const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
-  const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
-  const codeColor = co ? "text-brass" : "text-teal";
+  const highlight = row.this_period > 0 ? "bg-slate-deep/5" : stripe;
+  const codeColor = co ? "text-nw-warn" : "text-stone-blue";
   return (
-    <tr className={`border-t border-brand-row-border ${highlight}`}>
-      <td className={`py-3 px-4 ${codeColor} font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-brand-card"}`}>
+    <tr className={`border-t border-[rgba(59,88,100,0.08)] ${highlight}`}>
+      <td className={`py-3 px-4 ${codeColor} font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-white"}`}>
         {row.code}
       </td>
-      <td className="py-3 px-4 text-cream">
+      <td className="py-3 px-4 text-slate-tile">
         {row.description}
-        {co && <span className="ml-2 text-[10px] text-brass uppercase tracking-wider">CO</span>}
+        {co && <span className="ml-2 text-[10px] text-nw-warn uppercase tracking-wider">CO</span>}
       </td>
-      <td className="py-3 px-4 text-cream text-right">
+      <td className="py-3 px-4 text-slate-tile text-right">
         {formatCents(row.scheduled_value)}
         {row.co_adjustment > 0 && !co && (
-          <span className="text-[10px] text-teal ml-1" title={`Includes ${formatCents(row.co_adjustment)} in approved COs`}>
+          <span className="text-[10px] text-stone-blue ml-1" title={`Includes ${formatCents(row.co_adjustment)} in approved COs`}>
             (+{formatCents(row.co_adjustment)} CO)
           </span>
         )}
       </td>
-      <td className="py-3 px-4 text-cream text-right">
-        {row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}
+      <td className="py-3 px-4 text-slate-tile text-right">
+        {row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
       </td>
       <td className="py-3 px-4 text-right font-medium">
         {row.this_period > 0 ? (
-          <span className="text-teal">{formatCents(row.this_period)}</span>
+          <span className="text-stone-blue">{formatCents(row.this_period)}</span>
         ) : (
-          <span className="text-cream-dim">—</span>
+          <span className="text-[rgba(59,88,100,0.55)]">—</span>
         )}
       </td>
-      <td className="py-3 px-4 text-cream text-right">
-        {row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}
+      <td className="py-3 px-4 text-slate-tile text-right">
+        {row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
       </td>
-      <td className="py-3 px-4 text-cream-muted text-right">
-        {row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}
+      <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-right">
+        {row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
       </td>
       <td className="py-3 px-4 text-right">
         {row.retainage > 0 ? (
-          <span className="text-brass">{formatCents(row.retainage)}</span>
+          <span className="text-nw-warn">{formatCents(row.retainage)}</span>
         ) : (
-          <span className="text-cream-dim">—</span>
+          <span className="text-[rgba(59,88,100,0.55)]">—</span>
         )}
       </td>
-      <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>
+      <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-slate-tile"}`}>
         {overBudget && <span className="mr-1 font-bold" title="Over original budget — see change order log">*</span>}
         {formatCents(row.balance_to_finish)}
       </td>
@@ -880,28 +880,28 @@ function G703RowView({
 }
 
 function badgeClass(status: string): string {
-  if (status === "submitted") return "bg-transparent text-cream border border-cream";
+  if (status === "submitted") return "bg-transparent text-slate-tile border border-cream";
   if (["approved", "locked", "paid"].includes(status))
-    return "bg-transparent text-status-success border border-status-success";
+    return "bg-transparent text-nw-success border border-nw-success";
   if (status === "draft" || status === "pm_review")
-    return "bg-transparent text-brass border border-brass";
-  if (status === "void") return "bg-transparent text-status-danger border border-status-danger";
-  return "bg-transparent text-cream-muted border border-brand-border-light";
+    return "bg-transparent text-nw-warn border border-nw-warn";
+  if (status === "void") return "bg-transparent text-nw-danger border border-nw-danger";
+  return "bg-transparent text-[rgba(59,88,100,0.70)] border border-[rgba(59,88,100,0.15)]-light";
 }
 
 function paymentBadge(status: string | null): string {
-  if (status === "paid") return "bg-transparent text-status-success border border-status-success";
-  if (status === "scheduled") return "bg-transparent text-teal border border-teal";
-  if (status === "partial") return "bg-transparent text-brass border border-brass";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+  if (status === "paid") return "bg-transparent text-nw-success border border-nw-success";
+  if (status === "scheduled") return "bg-transparent text-stone-blue border border-stone-blue";
+  if (status === "partial") return "bg-transparent text-nw-warn border border-nw-warn";
+  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
 }
 
 function releaseBadge(status: string): string {
-  if (status === "received") return "bg-transparent text-status-success border border-status-success";
-  if (status === "pending") return "bg-transparent text-brass border border-brass";
+  if (status === "received") return "bg-transparent text-nw-success border border-nw-success";
+  if (status === "pending") return "bg-transparent text-nw-warn border border-nw-warn";
   if (status === "waived" || status === "not_required")
-    return "bg-transparent text-cream-dim border border-brand-border-light";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+    return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
+  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
 }
 
 function formatReleaseType(t: string): string {
@@ -947,15 +947,15 @@ function G702Row({
     <div className={`flex items-center justify-between ${sub ? "pl-4 opacity-70" : ""}`}>
       <div className="flex items-center gap-2">
         {num ? (
-          <span className="text-cream-dim text-[11px] font-mono w-6">{num}</span>
+          <span className="text-[rgba(59,88,100,0.55)] text-[11px] font-mono w-6">{num}</span>
         ) : (
           <span className="w-6" />
         )}
-        <span className={`text-xs ${bold ? "text-cream font-medium" : "text-cream-muted"}`}>{label}</span>
+        <span className={`text-xs ${bold ? "text-slate-tile font-medium" : "text-[rgba(59,88,100,0.70)]"}`}>{label}</span>
       </div>
       <span
         className={`font-display text-sm ${
-          highlight ? "text-brass font-medium" : bold ? "text-cream font-medium" : "text-cream"
+          highlight ? "text-nw-warn font-medium" : bold ? "text-slate-tile font-medium" : "text-slate-tile"
         }`}
       >
         {formatCents(value)}

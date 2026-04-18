@@ -61,13 +61,13 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
   if (loading) {
     return (
       <div className="py-12 text-center">
-        <div className="w-6 h-6 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-6 h-6 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
       </div>
     );
   }
   if (!data) {
     return (
-      <div className="border border-brand-border p-6 text-center text-cream-dim text-sm">
+      <div className="border border-[rgba(59,88,100,0.15)] p-6 text-center text-[rgba(59,88,100,0.55)] text-sm">
         No comparison data available.
       </div>
     );
@@ -75,9 +75,9 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
 
   if (!data.prior) {
     return (
-      <div className="border border-brand-border p-8 text-center">
-        <p className="text-cream font-display">First draw for this job</p>
-        <p className="text-cream-dim text-sm mt-1">
+      <div className="border border-[rgba(59,88,100,0.15)] p-8 text-center">
+        <p className="text-slate-tile font-display">First draw for this job</p>
+        <p className="text-[rgba(59,88,100,0.55)] text-sm mt-1">
           No previous draw exists yet — comparison becomes available starting with Draw #2.
         </p>
       </div>
@@ -112,27 +112,27 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
           invoiceCount={data.current.invoice_count}
           highlight
         />
-        <div className="bg-brand-card border border-brand-border p-4">
-          <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">
+        <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4">
+          <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
             Delta
           </p>
           <p
             className={`text-2xl font-display font-medium mt-2 ${
-              totalDelta > 0 ? "text-status-success" : totalDelta < 0 ? "text-status-danger" : "text-cream"
+              totalDelta > 0 ? "text-nw-success" : totalDelta < 0 ? "text-nw-danger" : "text-slate-tile"
             }`}
           >
             {totalDelta > 0 ? "+" : ""}
             {formatCents(totalDelta)}
           </p>
-          <p className="text-xs text-cream-dim mt-1">vs previous draw amount</p>
+          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">vs previous draw amount</p>
         </div>
       </div>
 
       {/* Per-line comparison */}
-      <div className="overflow-x-auto border border-brand-border">
+      <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
         <table className="w-full min-w-[900px] text-sm">
           <thead>
-            <tr className="bg-brand-surface text-left">
+            <tr className="bg-[rgba(91,134,153,0.06)] text-left">
               <Th>Code</Th>
               <Th>Description</Th>
               <Th right>Scheduled</Th>
@@ -156,7 +156,7 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
             ))}
             {data.lines.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-6 text-center text-cream-dim text-xs">
+                <td colSpan={8} className="py-6 text-center text-[rgba(59,88,100,0.55)] text-xs">
                   No line activity to compare.
                 </td>
               </tr>
@@ -170,9 +170,9 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
 
 function SectionRow({ label, co }: { label: string; co?: boolean }) {
   return (
-    <tr className={co ? "bg-brass/10" : "bg-brand-surface/40"}>
+    <tr className={co ? "bg-nw-warn/10" : "bg-[rgba(91,134,153,0.06)]/40"}>
       <td colSpan={8} className={`py-1.5 px-3 text-[10px] uppercase tracking-wider font-semibold ${
-        co ? "text-brass" : "text-cream-dim"
+        co ? "text-nw-warn" : "text-[rgba(59,88,100,0.55)]"
       }`}>
         {label}
       </td>
@@ -182,34 +182,34 @@ function SectionRow({ label, co }: { label: string; co?: boolean }) {
 
 function CompareRow({ line, co }: { line: CompareLine; co?: boolean }) {
   const deltaCol =
-    line.delta > 0 ? "text-status-success" : line.delta < 0 ? "text-status-danger" : "text-cream-dim";
+    line.delta > 0 ? "text-nw-success" : line.delta < 0 ? "text-nw-danger" : "text-[rgba(59,88,100,0.55)]";
   const flagBadges: { text: string; cls: string }[] = [];
-  if (line.new_line) flagBadges.push({ text: "NEW", cls: "border-teal text-teal" });
+  if (line.new_line) flagBadges.push({ text: "NEW", cls: "border-stone-blue text-stone-blue" });
   if (line.large_swing)
-    flagBadges.push({ text: `±${line.swing_pct.toFixed(0)}%`, cls: "border-brass text-brass" });
+    flagBadges.push({ text: `±${line.swing_pct.toFixed(0)}%`, cls: "border-nw-warn text-nw-warn" });
   if (line.went_backwards)
-    flagBadges.push({ text: "REVERSED", cls: "border-status-danger text-status-danger" });
+    flagBadges.push({ text: "REVERSED", cls: "border-nw-danger text-nw-danger" });
 
   return (
-    <tr className={`border-t border-brand-row-border ${line.large_swing ? "bg-brass/5" : ""}`}>
-      <td className={`py-2 px-3 font-mono text-xs font-bold ${co ? "text-brass" : "text-teal"}`}>
+    <tr className={`border-t border-[rgba(59,88,100,0.08)] ${line.large_swing ? "bg-nw-warn/5" : ""}`}>
+      <td className={`py-2 px-3 font-mono text-xs font-bold ${co ? "text-nw-warn" : "text-stone-blue"}`}>
         {line.code}
       </td>
-      <td className="py-2 px-3 text-cream">{line.description}</td>
-      <td className="py-2 px-3 text-cream text-right">
+      <td className="py-2 px-3 text-slate-tile">{line.description}</td>
+      <td className="py-2 px-3 text-slate-tile text-right">
         {line.scheduled_value > 0 ? formatCents(line.scheduled_value) : "—"}
       </td>
-      <td className="py-2 px-3 text-right text-cream">
-        {line.previous_period > 0 ? formatCents(line.previous_period) : <span className="text-cream-dim">—</span>}
+      <td className="py-2 px-3 text-right text-slate-tile">
+        {line.previous_period > 0 ? formatCents(line.previous_period) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
       </td>
-      <td className="py-2 px-3 text-right text-cream">
-        {line.current_period > 0 ? formatCents(line.current_period) : <span className="text-cream-dim">—</span>}
+      <td className="py-2 px-3 text-right text-slate-tile">
+        {line.current_period > 0 ? formatCents(line.current_period) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
       </td>
       <td className={`py-2 px-3 text-right font-display ${deltaCol}`}>
         {line.delta > 0 ? "+" : ""}
         {formatCents(line.delta)}
       </td>
-      <td className="py-2 px-3 text-right text-cream-muted text-xs">
+      <td className="py-2 px-3 text-right text-[rgba(59,88,100,0.70)] text-xs">
         {line.prior_cumulative_pct.toFixed(1)}% → {line.cumulative_pct.toFixed(1)}%
       </td>
       <td className="py-2 px-3">
@@ -245,14 +245,14 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`bg-brand-card border ${highlight ? "border-teal/40" : "border-brand-border"} p-4`}
+      className={`bg-white border ${highlight ? "border-stone-blue/40" : "border-[rgba(59,88,100,0.15)]"} p-4`}
     >
-      <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</p>
-      <p className="text-xs text-cream-muted mt-1">{period}</p>
-      <p className={`text-2xl font-display font-medium mt-2 ${highlight ? "text-brass" : "text-cream"}`}>
+      <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
+      <p className="text-xs text-[rgba(59,88,100,0.70)] mt-1">{period}</p>
+      <p className={`text-2xl font-display font-medium mt-2 ${highlight ? "text-nw-warn" : "text-slate-tile"}`}>
         {formatCents(amount)}
       </p>
-      <p className="text-xs text-cream-dim mt-1">
+      <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">
         {invoiceCount} invoice{invoiceCount === 1 ? "" : "s"} · {formatCents(completed)} completed
       </p>
     </div>
@@ -262,7 +262,7 @@ function SummaryCard({
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
     <th
-      className={`py-3 px-3 text-[10px] text-cream font-bold uppercase tracking-wider ${
+      className={`py-3 px-3 text-[10px] text-slate-tile font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
       }`}
     >

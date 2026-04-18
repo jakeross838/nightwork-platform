@@ -122,8 +122,8 @@ function ToastViewport({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id:
 
 const KIND_STYLES: Record<ToastKind, { border: string; iconBg: string; icon: JSX.Element }> = {
   success: {
-    border: "border-status-success",
-    iconBg: "text-status-success",
+    border: "border-nw-success",
+    iconBg: "text-nw-success",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -131,8 +131,8 @@ const KIND_STYLES: Record<ToastKind, { border: string; iconBg: string; icon: JSX
     ),
   },
   error: {
-    border: "border-status-danger",
-    iconBg: "text-status-danger",
+    border: "border-nw-danger",
+    iconBg: "text-nw-danger",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -140,8 +140,8 @@ const KIND_STYLES: Record<ToastKind, { border: string; iconBg: string; icon: JSX
     ),
   },
   warning: {
-    border: "border-status-warning",
-    iconBg: "text-status-warning",
+    border: "border-nw-warn",
+    iconBg: "text-nw-warn",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
@@ -149,8 +149,8 @@ const KIND_STYLES: Record<ToastKind, { border: string; iconBg: string; icon: JSX
     ),
   },
   info: {
-    border: "border-teal",
-    iconBg: "text-teal",
+    border: "border-stone-blue",
+    iconBg: "text-stone-blue",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -167,12 +167,12 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
       className={`pointer-events-auto flex items-start gap-3 bg-white border ${style.border} px-4 py-3 shadow-md animate-fade-up`}
     >
       <span className={style.iconBg}>{style.icon}</span>
-      <p className="flex-1 text-sm text-cream leading-snug">{toast.message}</p>
+      <p className="flex-1 text-sm text-slate-tile leading-snug">{toast.message}</p>
       <button
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss"
-        className="text-cream-dim hover:text-cream transition-colors"
+        className="text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

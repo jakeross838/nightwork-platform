@@ -130,50 +130,50 @@ export default function GettingStartedChecklist() {
   }
 
   return (
-    <aside className="w-full max-w-[420px] mx-auto mt-8 mb-0 text-left border border-brand-border bg-white p-5">
+    <aside className="w-full max-w-[420px] mx-auto mt-8 mb-0 text-left border border-[rgba(59,88,100,0.15)] bg-white p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <p className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Getting Started</p>
-          <h2 className="font-display text-lg text-cream mt-0.5">
+          <p className="text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">Getting Started</p>
+          <h2 className="font-display text-lg text-slate-tile mt-0.5">
             {done} of {total} complete
           </h2>
         </div>
         <button
           type="button"
           onClick={dismiss}
-          className="text-xs text-cream-dim hover:text-cream"
+          className="text-xs text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
           title="Hide checklist"
         >
           Hide
         </button>
       </div>
-      <div className="h-1 w-full bg-brand-surface mb-4">
+      <div className="h-1 w-full bg-[rgba(91,134,153,0.06)] mb-4">
         <div
-          className="h-full bg-teal transition-all"
+          className="h-full bg-slate-deep transition-all"
           style={{ width: `${(done / total) * 100}%` }}
         />
       </div>
       {done === 0 && !sampleLoaded && (
-        <div className="mb-4 pb-4 border-b border-brand-border">
-          <p className="text-xs text-cream-muted mb-2">
+        <div className="mb-4 pb-4 border-b border-[rgba(59,88,100,0.15)]">
+          <p className="text-xs text-[rgba(59,88,100,0.70)] mb-2">
             Want to see how it works? Load a demo project with realistic data.
           </p>
           <button
             type="button"
             onClick={loadSampleData}
             disabled={loadingSample}
-            className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-xs tracking-[0.06em] uppercase disabled:opacity-50 transition-colors"
+            className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper text-white text-xs tracking-[0.06em] uppercase disabled:opacity-50 transition-colors"
           >
             {loadingSample ? "Loading…" : "Load Sample Project"}
           </button>
           {sampleError && (
-            <p className="mt-2 text-xs text-status-danger">{sampleError}</p>
+            <p className="mt-2 text-xs text-nw-danger">{sampleError}</p>
           )}
         </div>
       )}
       {sampleLoaded && (
-        <div className="mb-4 pb-4 border-b border-brand-border">
-          <p className="text-xs text-status-success">
+        <div className="mb-4 pb-4 border-b border-[rgba(59,88,100,0.15)]">
+          <p className="text-xs text-nw-success">
             Sample project loaded! Refresh the page to see it in your dashboard.
           </p>
         </div>
@@ -183,13 +183,13 @@ export default function GettingStartedChecklist() {
           <li key={it.label}>
             <Link
               href={it.href}
-              className={`flex items-center gap-3 px-2 py-1.5 text-sm hover:bg-brand-surface ${
-                it.done ? "text-cream-dim line-through" : "text-cream"
+              className={`flex items-center gap-3 px-2 py-1.5 text-sm hover:bg-[rgba(91,134,153,0.06)] ${
+                it.done ? "text-[rgba(59,88,100,0.55)] line-through" : "text-slate-tile"
               }`}
             >
               <span
                 className={`w-4 h-4 flex items-center justify-center text-[10px] border ${
-                  it.done ? "bg-teal border-teal text-white" : "border-brand-border"
+                  it.done ? "bg-slate-deep border-stone-blue text-white" : "border-[rgba(59,88,100,0.15)]"
                 }`}
               >
                 {it.done ? "✓" : ""}

@@ -54,8 +54,8 @@ export default function QaQueuePage() {
  <FinancialViewTabs active="qa" />
  <div className="flex items-center justify-between mb-6">
  <div>
- <h2 className="font-display text-2xl text-cream">Accounting QA</h2>
- <p className="text-sm text-cream-dim mt-1">{invoices.length} invoice{invoices.length !== 1 ? "s" : ""} ready for QA review</p>
+ <h2 className="font-display text-2xl text-slate-tile">Accounting QA</h2>
+ <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">{invoices.length} invoice{invoices.length !== 1 ? "s" : ""} ready for QA review</p>
  </div>
  </div>
 
@@ -69,17 +69,17 @@ export default function QaQueuePage() {
  message="No invoices waiting for accounting review. PM-approved invoices will appear here."
  />
  ) : (
- <div className="overflow-x-auto border border-brand-border animate-fade-up">
+ <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)] animate-fade-up">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-brand-surface text-left">
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Invoice #</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Job</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Cost Code</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">PM Approved</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Waiting</th>
+ <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+ <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Vendor</th>
+ <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Invoice #</th>
+ <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Job</th>
+ <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Cost Code</th>
+ <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider text-right">Amount</th>
+ <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">PM Approved</th>
+ <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider text-right">Waiting</th>
  </tr>
  </thead>
  <tbody>
@@ -87,33 +87,33 @@ export default function QaQueuePage() {
  const approval = getApprovalInfo(inv.status_history ?? []);
  return (
  <tr key={inv.id}
- className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors animate-fade-up"
+ className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 cursor-pointer transition-colors animate-fade-up"
  style={{ animationDelay: `${0.05 + i * 0.03}s` }}
  onClick={() => window.location.href = `/invoices/${inv.id}/qa`}
  >
- <td className="py-4 px-5 text-cream font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
- <td className="py-4 px-5 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+ <td className="py-4 px-5 text-slate-tile font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
+ <td className="py-4 px-5 text-[rgba(59,88,100,0.70)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
  <td className="py-4 px-5">
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">{inv.jobs.name}</span>
+ <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-nw-warn border border-nw-warn text-xs font-medium">{inv.jobs.name}</span>
  ) : (
- <span className="text-cream-dim">—</span>
+ <span className="text-[rgba(59,88,100,0.55)]">—</span>
  )}
  </td>
- <td className="py-4 px-5 text-cream-muted text-xs">
+ <td className="py-4 px-5 text-[rgba(59,88,100,0.70)] text-xs">
  {inv.cost_codes ? `${inv.cost_codes.code} — ${inv.cost_codes.description}` : "—"}
  </td>
- <td className="py-4 px-5 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
- <td className="py-4 px-5 text-cream-dim text-xs">
+ <td className="py-4 px-5 text-slate-tile text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
+ <td className="py-4 px-5 text-[rgba(59,88,100,0.55)] text-xs">
  {approval ? (
  <>
- <span className="text-cream-muted">{approval.who}</span>
- <span className="text-cream-dim"> — {formatDateTime(approval.when)}</span>
+ <span className="text-[rgba(59,88,100,0.70)]">{approval.who}</span>
+ <span className="text-[rgba(59,88,100,0.55)]"> — {formatDateTime(approval.when)}</span>
  </>
  ) : "—"}
  </td>
  <td className="py-4 px-5 text-right">
- <span className={`text-sm font-medium ${daysAgo(inv.received_date) > 5 ? "text-status-danger" : daysAgo(inv.received_date) > 2 ? "text-brass" : "text-cream-dim"}`}>
+ <span className={`text-sm font-medium ${daysAgo(inv.received_date) > 5 ? "text-nw-danger" : daysAgo(inv.received_date) > 2 ? "text-nw-warn" : "text-[rgba(59,88,100,0.55)]"}`}>
  {daysAgo(inv.received_date)}d
  </span>
  </td>

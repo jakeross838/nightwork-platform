@@ -136,8 +136,8 @@ export default function VendorsPage() {
     <AppShell>
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
         <header className="mb-6">
-          <h1 className="font-display text-3xl text-cream tracking-tight">Admin</h1>
-          <p className="mt-1 text-sm text-cream-dim">Settings, reference data, and system tools.</p>
+          <h1 className="font-display text-3xl text-slate-tile tracking-tight">Admin</h1>
+          <p className="mt-1 text-sm text-[rgba(59,88,100,0.55)]">Settings, reference data, and system tools.</p>
         </header>
         <AdminMobileNav role={userRole} />
         <div className="flex gap-8">
@@ -145,21 +145,21 @@ export default function VendorsPage() {
           <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-display text-2xl text-cream">Vendors</h2>
-            <p className="text-sm text-cream-dim mt-1">Click a vendor to view details &middot; select multiple to merge</p>
+            <h2 className="font-display text-2xl text-slate-tile">Vendors</h2>
+            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">Click a vendor to view details &middot; select multiple to merge</p>
           </div>
           <div className="flex items-center gap-2">
             {selected.size >= 2 && (
               <button
                 onClick={openMerge}
-                className="px-4 py-2 bg-brass hover:bg-brass/80 text-brand-bg text-sm font-medium transition-colors"
+                className="px-4 py-2 bg-nw-warn hover:bg-nw-warn/80 text-brand-bg text-sm font-medium transition-colors"
               >
                 Merge {selected.size} Vendors
               </button>
             )}
             <button
               onClick={() => setImportOpen(true)}
-              className="px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
+              className="px-4 py-2 border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white text-sm font-medium transition-colors"
             >
               Import Vendors
             </button>
@@ -167,13 +167,13 @@ export default function VendorsPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 mb-6">
-          <div className="bg-brand-card border border-brand-border p-4">
-            <p className="text-xs text-cream-dim uppercase tracking-wider mb-1">Total Vendors</p>
-            <p className="text-2xl font-display text-cream">{totalVendors}</p>
+          <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4">
+            <p className="text-xs text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1">Total Vendors</p>
+            <p className="text-2xl font-display text-slate-tile">{totalVendors}</p>
           </div>
-          <div className="bg-brand-card border border-brand-border p-4">
-            <p className="text-xs text-cream-dim uppercase tracking-wider mb-1">No Invoices</p>
-            <p className="text-2xl font-display text-cream">{vendorsNoInvoices}</p>
+          <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4">
+            <p className="text-xs text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1">No Invoices</p>
+            <p className="text-2xl font-display text-slate-tile">{vendorsNoInvoices}</p>
           </div>
         </div>
 
@@ -183,7 +183,7 @@ export default function VendorsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search vendors by name..."
-            className="w-full sm:w-80 px-4 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder:text-cream-dim focus:outline-none focus:border-teal"
+            className="w-full sm:w-80 px-4 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder:text-[rgba(59,88,100,0.55)] focus:outline-none focus:border-stone-blue"
           />
         </div>
 
@@ -205,47 +205,47 @@ export default function VendorsPage() {
             />
           )
         ) : (
-          <div className="overflow-x-auto border border-brand-border animate-fade-up">
+          <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)] animate-fade-up">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-brand-surface text-left">
+                <tr className="bg-[rgba(91,134,153,0.06)] text-left">
                   <th className="py-3 px-4 w-10">
                     <span className="sr-only">Select</span>
                   </th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Name</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Default Cost Code</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Invoices</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Total Billed</th>
+                  <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Name</th>
+                  <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Default Cost Code</th>
+                  <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider text-right">Invoices</th>
+                  <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider text-right">Total Billed</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((v) => {
                   const agg = invoiceAgg[v.id];
                   return (
-                    <tr key={v.id} className="border-t border-brand-row-border hover:bg-brand-elevated/50 transition-colors">
+                    <tr key={v.id} className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 transition-colors">
                       <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selected.has(v.id)}
                           onChange={() => toggleSelect(v.id)}
-                          className="w-4 h-4 border-brand-border bg-brand-surface text-teal focus:ring-teal accent-teal"
+                          className="w-4 h-4 border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-stone-blue focus:ring-teal accent-teal"
                         />
                       </td>
                       <td className="py-4 px-5">
                         <Link
                           href={`/vendors/${v.id}`}
-                          className="text-cream font-medium hover:text-teal transition-colors"
+                          className="text-slate-tile font-medium hover:text-stone-blue transition-colors"
                         >
                           {v.name}
                         </Link>
                       </td>
-                      <td className="py-4 px-5 text-cream-muted">
+                      <td className="py-4 px-5 text-[rgba(59,88,100,0.70)]">
                         {v.cost_codes
                           ? `${v.cost_codes.code} - ${v.cost_codes.description}`
                           : "—"}
                       </td>
-                      <td className="py-4 px-5 text-cream text-right">{agg?.count ?? 0}</td>
-                      <td className="py-4 px-5 text-cream text-right font-display font-medium">
+                      <td className="py-4 px-5 text-slate-tile text-right">{agg?.count ?? 0}</td>
+                      <td className="py-4 px-5 text-slate-tile text-right font-display font-medium">
                         {formatCents(agg?.total ?? 0)}
                       </td>
                     </tr>
@@ -258,9 +258,9 @@ export default function VendorsPage() {
 
         {showMerge && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-brand-card border border-brand-border shadow-2xl max-w-lg w-full mx-4 p-6">
-              <h3 className="font-display text-lg text-cream mb-4">Merge Vendors</h3>
-              <p className="text-sm text-cream-dim mb-4">
+            <div className="bg-white border border-[rgba(59,88,100,0.15)] shadow-2xl max-w-lg w-full mx-4 p-6">
+              <h3 className="font-display text-lg text-slate-tile mb-4">Merge Vendors</h3>
+              <p className="text-sm text-[rgba(59,88,100,0.55)] mb-4">
                 Select which vendor name to keep as the primary. All invoices from the other vendors will be
                 reassigned to the primary, and the others will be removed.
               </p>
@@ -272,8 +272,8 @@ export default function VendorsPage() {
                       key={v.id}
                       className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
                         mergePrimaryId === v.id
-                          ? "border-teal bg-teal/10"
-                          : "border-brand-border bg-brand-surface hover:bg-brand-elevated/50"
+                          ? "border-stone-blue bg-slate-deep/10"
+                          : "border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] hover:bg-brand-elevated/50"
                       }`}
                     >
                       <input
@@ -285,8 +285,8 @@ export default function VendorsPage() {
                         className="accent-teal"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-cream font-medium truncate">{v.name}</p>
-                        <p className="text-xs text-cream-dim">
+                        <p className="text-sm text-slate-tile font-medium truncate">{v.name}</p>
+                        <p className="text-xs text-[rgba(59,88,100,0.55)]">
                           {agg?.count ?? 0} invoice{(agg?.count ?? 0) !== 1 ? "s" : ""} &middot;{" "}
                           {formatCents(agg?.total ?? 0)}
                         </p>
@@ -298,14 +298,14 @@ export default function VendorsPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowMerge(false)}
-                  className="px-4 py-2 bg-brand-surface hover:bg-brand-elevated text-cream-dim text-sm transition-colors border border-brand-border"
+                  className="px-4 py-2 bg-[rgba(91,134,153,0.06)] hover:bg-brand-elevated text-[rgba(59,88,100,0.55)] text-sm transition-colors border border-[rgba(59,88,100,0.15)]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleMerge}
                   disabled={!mergePrimaryId || merging}
-                  className="px-4 py-2 bg-brass hover:bg-brass/80 text-brand-bg text-sm font-medium transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-nw-warn hover:bg-nw-warn/80 text-brand-bg text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   {merging ? "Merging..." : "Confirm Merge"}
                 </button>

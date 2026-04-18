@@ -135,8 +135,8 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
             { label: "Lien Releases" },
           ]}
         />
-        <h2 className="font-display text-2xl text-cream mb-2">{job?.name} — Lien Releases</h2>
-        <p className="text-sm text-cream-dim mb-6">
+        <h2 className="font-display text-2xl text-slate-tile mb-2">{job?.name} — Lien Releases</h2>
+        <p className="text-sm text-[rgba(59,88,100,0.55)] mb-6">
           Track conditional and unconditional waivers for every vendor on every draw.
         </p>
         <JobTabs jobId={params.id} active="draws" />
@@ -145,7 +145,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
 
         {loading ? (
           <div className="py-16 text-center">
-            <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+            <div className="w-8 h-8 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
           </div>
         ) : (
           <>
@@ -154,7 +154,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               <select
                 value={drawFilter}
                 onChange={(e) => setDrawFilter(e.target.value)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="">All Draws</option>
                 {draws.map((d) => (
@@ -167,7 +167,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               <select
                 value={vendorFilter}
                 onChange={(e) => setVendorFilter(e.target.value)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="">All Vendors</option>
                 {vendors.map((v) => (
@@ -179,7 +179,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as (typeof STATUSES)[number])}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -192,51 +192,51 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               <button
                 onClick={() => bulk("mark_received")}
                 disabled={pendingIds.length === 0 || bulkBusy}
-                className="px-3 py-2 border border-status-success text-status-success hover:bg-status-success/10 disabled:opacity-40 text-sm font-medium transition-colors"
+                className="px-3 py-2 border border-nw-success text-nw-success hover:bg-nw-success/10 disabled:opacity-40 text-sm font-medium transition-colors"
               >
                 Mark {pendingIds.length} as Received
               </button>
               <button
                 onClick={() => bulk("waive")}
                 disabled={pendingIds.length === 0 || bulkBusy}
-                className="px-3 py-2 border border-brand-border text-cream-dim hover:text-cream disabled:opacity-40 text-sm font-medium transition-colors"
+                className="px-3 py-2 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)] hover:text-slate-tile disabled:opacity-40 text-sm font-medium transition-colors"
               >
                 Waive {pendingIds.length}
               </button>
             </div>
 
             {filtered.length === 0 ? (
-              <div className="border border-brand-border p-10 text-center">
-                <p className="text-cream font-display">No lien releases yet</p>
-                <p className="text-cream-dim text-sm mt-1">
+              <div className="border border-[rgba(59,88,100,0.15)] p-10 text-center">
+                <p className="text-slate-tile font-display">No lien releases yet</p>
+                <p className="text-[rgba(59,88,100,0.55)] text-sm mt-1">
                   They auto-generate when a draw is submitted for approval.
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto border border-brand-border">
+              <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-brand-surface text-left">
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Draw</th>
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Type</th>
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Status</th>
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Payment</th>
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Through Date</th>
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Document</th>
-                      <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Actions</th>
+                    <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Vendor</th>
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Draw</th>
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Type</th>
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider text-right">Amount</th>
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Status</th>
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Payment</th>
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Through Date</th>
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Document</th>
+                      <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map((r) => (
-                      <tr key={r.id} className="border-t border-brand-row-border hover:bg-brand-elevated/30 transition-colors">
-                        <td className="py-3 px-4 text-cream">{r.vendors?.name ?? "—"}</td>
-                        <td className="py-3 px-4 text-cream-muted">
+                      <tr key={r.id} className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/30 transition-colors">
+                        <td className="py-3 px-4 text-slate-tile">{r.vendors?.name ?? "—"}</td>
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)]">
                           {r.draws ? `Draw #${r.draws.draw_number}${r.draws.revision_number > 0 ? ` Rev ${r.draws.revision_number}` : ""}` : "—"}
                         </td>
-                        <td className="py-3 px-4 text-cream-muted text-xs">{humanType(r.release_type)}</td>
-                        <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{humanType(r.release_type)}</td>
+                        <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                           {r.amount != null ? formatCents(r.amount) : "—"}
                         </td>
                         <td className="py-3 px-4">
@@ -247,19 +247,19 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
                         <td className="py-3 px-4">
                           <PaymentStatusBadge summary={r.payment_summary} />
                         </td>
-                        <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(r.through_date)}</td>
-                        <td className="py-3 px-4 text-cream-muted text-xs">
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(r.through_date)}</td>
+                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">
                           {r.document_url ? (
                             <span className="inline-flex items-center gap-1.5">
-                              <svg className="w-3.5 h-3.5 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                              <svg className="w-3.5 h-3.5 text-nw-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
-                              <a className="text-teal hover:underline" href={r.document_url} target="_blank" rel="noreferrer">
+                              <a className="text-stone-blue hover:underline" href={r.document_url} target="_blank" rel="noreferrer">
                                 View
                               </a>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 text-status-danger">
+                            <span className="inline-flex items-center gap-1.5 text-nw-danger">
                               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                               </svg>
@@ -270,7 +270,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
                         <td className="py-3 px-4 text-right">
                           <button
                             onClick={() => setEditingId(r.id)}
-                            className="text-xs text-teal hover:underline"
+                            className="text-xs text-stone-blue hover:underline"
                           >
                             Edit
                           </button>
@@ -319,9 +319,9 @@ function EditModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={onClose}>
-      <div className="bg-brand-card border border-brand-border max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h3 className="font-display text-lg text-cream mb-1">Edit Lien Release</h3>
-        <p className="text-sm text-cream-dim mb-4">
+      <div className="bg-white border border-[rgba(59,88,100,0.15)] max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
+        <h3 className="font-display text-lg text-slate-tile mb-1">Edit Lien Release</h3>
+        <p className="text-sm text-[rgba(59,88,100,0.55)] mb-4">
           {release.vendors?.name ?? "Vendor"} — {release.draws ? `Draw #${release.draws.draw_number}` : "—"}
         </p>
         <div className="space-y-3">
@@ -386,7 +386,7 @@ function EditModal({
           </Field>
         </div>
         <div className="mt-5 flex items-center justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-cream-dim hover:text-cream text-sm">
+          <button onClick={onClose} className="px-4 py-2 text-[rgba(59,88,100,0.55)] hover:text-slate-tile text-sm">
             Cancel
           </button>
           <button
@@ -401,7 +401,7 @@ function EditModal({
               })
             }
             disabled={saving}
-            className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-60 text-white text-sm font-medium transition-colors"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -428,7 +428,7 @@ function EditModal({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">{label}</span>
+      <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1 block">{label}</span>
       {children}
     </label>
   );
@@ -446,9 +446,9 @@ function humanStatus(s: string): string {
 }
 
 function badgeFor(status: string): string {
-  if (status === "received") return "bg-transparent text-status-success border border-status-success";
-  if (status === "pending") return "bg-transparent text-brass border border-brass";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+  if (status === "received") return "bg-transparent text-nw-success border border-nw-success";
+  if (status === "pending") return "bg-transparent text-nw-warn border border-nw-warn";
+  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
 }
 
 function PaymentStatusBadge({
@@ -457,25 +457,25 @@ function PaymentStatusBadge({
   summary: LienRelease["payment_summary"];
 }) {
   if (!summary || summary.total_count === 0) {
-    return <span className="text-cream-dim text-xs">—</span>;
+    return <span className="text-[rgba(59,88,100,0.55)] text-xs">—</span>;
   }
   const { paid_count, total_count } = summary;
   if (paid_count === total_count) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-status-success text-status-success">
+      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-nw-success text-nw-success">
         Paid {paid_count}/{total_count}
       </span>
     );
   }
   if (paid_count === 0) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-brand-border-light text-cream-dim">
+      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-[rgba(59,88,100,0.15)]-light text-[rgba(59,88,100,0.55)]">
         Unpaid 0/{total_count}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-brass text-brass">
+    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-nw-warn text-nw-warn">
       Partial {paid_count}/{total_count}
     </span>
   );

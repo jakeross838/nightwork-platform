@@ -158,7 +158,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
       </main>
     );
   }
@@ -173,16 +173,16 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
             { label: "New" },
           ]}
         />
-        <h2 className="font-display text-2xl text-cream mb-6">New Purchase Order</h2>
+        <h2 className="font-display text-2xl text-slate-tile mb-6">New Purchase Order</h2>
 
-        <form className="bg-brand-card border border-brand-border p-6 space-y-5">
+        <form className="bg-white border border-[rgba(59,88,100,0.15)] p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
                 Vendor
               </label>
               <select
-                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}
               >
@@ -193,11 +193,11 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
                 PO Number
               </label>
               <input
-                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                 placeholder="Auto-generated (e.g. PO-001)"
                 value={poNumber}
                 onChange={(e) => setPoNumber(e.target.value)}
@@ -206,11 +206,11 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+            <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
               Description
             </label>
             <textarea
-              className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+              className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -226,7 +226,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
               onChange={(e) => setUseLineItems(e.target.checked)}
               className="accent-teal"
             />
-            <label htmlFor="useLineItems" className="text-sm text-cream-dim">
+            <label htmlFor="useLineItems" className="text-sm text-[rgba(59,88,100,0.55)]">
               Use multiple line items (each tied to its own budget line)
             </label>
           </div>
@@ -234,11 +234,11 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           {!useLineItems ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
                   Budget Line
                 </label>
                 <select
-                  className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                   value={budgetLineId}
                   onChange={(e) => setBudgetLineId(e.target.value)}
                 >
@@ -250,19 +250,19 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                   ))}
                 </select>
                 {selectedBudgetLineRemaining !== null && (
-                  <p className="text-[11px] text-cream-dim mt-1">
-                    Remaining on this line: <span className="text-cream tabular-nums">{formatCents(selectedBudgetLineRemaining)}</span>
+                  <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">
+                    Remaining on this line: <span className="text-slate-tile tabular-nums">{formatCents(selectedBudgetLineRemaining)}</span>
                   </p>
                 )}
               </div>
               <div>
-                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
                   Amount ($)
                 </label>
                 <input
                   type="number"
                   step="0.01"
-                  className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
@@ -271,13 +271,13 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           ) : (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">
+                <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
                   Line Items
                 </label>
                 <button
                   type="button"
                   onClick={addLine}
-                  className="text-[11px] text-teal hover:underline"
+                  className="text-[11px] text-stone-blue hover:underline"
                 >
                   + Add line
                 </button>
@@ -286,7 +286,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                 {lineItems.map((li, i) => (
                   <div key={i} className="grid grid-cols-[1.5fr_1fr_120px_auto] gap-2 items-start">
                     <select
-                      className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                      className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                       value={li.budget_line_id}
                       onChange={(e) => {
                         const bl = budgetLineById.get(e.target.value);
@@ -304,7 +304,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                       ))}
                     </select>
                     <input
-                      className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                      className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                       placeholder="Description"
                       value={li.description}
                       onChange={(e) => updateLine(i, { description: e.target.value })}
@@ -312,7 +312,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                     <input
                       type="number"
                       step="0.01"
-                      className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                      className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                       placeholder="$"
                       value={li.amount_dollars}
                       onChange={(e) => updateLine(i, { amount_dollars: e.target.value })}
@@ -320,7 +320,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                     <button
                       type="button"
                       onClick={() => removeLine(i)}
-                      className="text-cream-dim hover:text-status-danger px-2"
+                      className="text-[rgba(59,88,100,0.55)] hover:text-nw-danger px-2"
                       aria-label="Remove"
                     >
                       ×
@@ -328,20 +328,20 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-cream-dim mt-2">
-                Line total: <span className="text-cream tabular-nums">{formatCents(lineItemTotal)}</span>
+              <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-2">
+                Line total: <span className="text-slate-tile tabular-nums">{formatCents(lineItemTotal)}</span>
               </p>
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
                 Issued Date (optional)
               </label>
               <input
                 type="date"
-                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                 value={issuedDate}
                 onChange={(e) => setIssuedDate(e.target.value)}
               />
@@ -349,26 +349,26 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+            <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
               Notes
             </label>
             <textarea
-              className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+              className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 bg-brand-surface border border-brand-border px-4 py-3">
+          <div className="grid grid-cols-2 gap-3 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] px-4 py-3">
             <div>
-              <p className="text-[11px] text-cream-dim uppercase tracking-wider">Total</p>
-              <p className="text-lg text-teal font-display tabular-nums">{formatCents(effectiveAmount)}</p>
+              <p className="text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Total</p>
+              <p className="text-lg text-stone-blue font-display tabular-nums">{formatCents(effectiveAmount)}</p>
             </div>
             {selectedBudgetLineRemaining !== null && !useLineItems && effectiveAmount > selectedBudgetLineRemaining && (
               <div>
-                <p className="text-[11px] text-status-warning uppercase tracking-wider">Exceeds remaining budget</p>
-                <p className="text-sm text-status-warning tabular-nums">
+                <p className="text-[11px] text-nw-warn uppercase tracking-wider">Exceeds remaining budget</p>
+                <p className="text-sm text-nw-warn tabular-nums">
                   by {formatCents(effectiveAmount - selectedBudgetLineRemaining)}
                 </p>
               </div>
@@ -376,15 +376,15 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           </div>
 
           {error && (
-            <div className="border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">
+            <div className="border border-nw-danger/40 bg-nw-danger/5 px-4 py-2 text-sm text-nw-danger">
               {error}
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-brand-border">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[rgba(59,88,100,0.15)]">
             <Link
               href={`/jobs/${params.id}/purchase-orders`}
-              className="px-4 py-2 text-sm text-cream-dim hover:text-cream transition-colors"
+              className="px-4 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
             >
               Cancel
             </Link>
@@ -392,7 +392,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
               type="button"
               disabled={saving}
               onClick={(e) => handleSubmit(e, "draft")}
-              className="px-4 py-2 border border-brand-border text-sm text-cream hover:bg-brand-surface disabled:opacity-60 transition-colors"
+              className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile hover:bg-[rgba(91,134,153,0.06)] disabled:opacity-60 transition-colors"
             >
               {saving ? "Saving…" : "Save as Draft"}
             </button>
@@ -400,7 +400,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
               type="button"
               disabled={saving}
               onClick={(e) => handleSubmit(e, "issued")}
-              className="px-5 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="px-5 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
               {saving ? "Saving…" : "Issue PO"}
             </button>

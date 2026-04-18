@@ -445,8 +445,8 @@ export default function BudgetDrillDown({
   return (
     <div className="space-y-6">
       {mode === "full" && line && (
-        <section className="bg-brand-surface/40 border border-brand-border p-4">
-          <p className="text-[11px] uppercase tracking-wider text-cream-dim font-medium">
+        <section className="bg-[rgba(91,134,153,0.06)]/40 border border-[rgba(59,88,100,0.15)] p-4">
+          <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">
             Reconciliation
           </p>
           <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1.5 text-[12px]">
@@ -496,18 +496,18 @@ export default function BudgetDrillDown({
                       <div className="flex-1 min-w-0">
                         <Link
                           href={`/purchase-orders/${p.id}`}
-                          className="text-cream font-medium hover:text-teal transition-colors"
+                          className="text-slate-tile font-medium hover:text-stone-blue transition-colors"
                         >
                           {p.po_number ? `PO ${p.po_number}` : "PO"}
                         </Link>
-                        <span className="text-cream-dim ml-2">· {p.vendor ?? "—"}</span>
-                        <p className="mt-0.5 text-[11px] text-cream-dim uppercase tracking-wider">
+                        <span className="text-[rgba(59,88,100,0.55)] ml-2">· {p.vendor ?? "—"}</span>
+                        <p className="mt-0.5 text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
                           {p.status.replace(/_/g, " ")}
                         </p>
                       </div>
                       <div className="text-right shrink-0 tabular-nums">
-                        <p className="text-cream">{formatCents(p.amount)}</p>
-                        <p className="text-[11px] text-cream-dim">
+                        <p className="text-slate-tile">{formatCents(p.amount)}</p>
+                        <p className="text-[11px] text-[rgba(59,88,100,0.55)]">
                           Invoiced {formatCents(p.invoiced_total)} · Remaining{" "}
                           {formatCents(remaining)}
                         </p>
@@ -516,7 +516,7 @@ export default function BudgetDrillDown({
 
                     {/* Nested invoices under this PO */}
                     {nested.length > 0 && (
-                      <ul className="mt-2 pl-3 border-l-2 border-brand-border divide-y divide-brand-row-border">
+                      <ul className="mt-2 pl-3 border-l-2 border-[rgba(59,88,100,0.15)] divide-y divide-brand-row-border">
                         {nested.map((i) => (
                           <InvoiceItem key={i.id} row={i} showPoBadge={false} />
                         ))}
@@ -552,7 +552,7 @@ export default function BudgetDrillDown({
               <ul className="divide-y divide-brand-row-border">
                 {Array.from(invoicesByPo.entries()).map(([poId, rows]) => (
                   <li key={poId} className="py-2">
-                    <p className="text-[11px] text-cream-dim uppercase tracking-wider">
+                    <p className="text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
                       {rows[0]?.po_number ? `PO ${rows[0].po_number}` : "PO"}
                     </p>
                     <ul className="mt-1 divide-y divide-brand-row-border">
@@ -611,18 +611,18 @@ export default function BudgetDrillDown({
                     <div className="flex-1 min-w-0">
                       <Link
                         href={`/change-orders/${c.id}`}
-                        className="text-cream font-medium hover:text-teal transition-colors"
+                        className="text-slate-tile font-medium hover:text-stone-blue transition-colors"
                       >
                         {c.pcco_number ? `PCCO ${c.pcco_number}` : "CO"}
                       </Link>
-                      <span className="text-cream-dim ml-2">· {c.title ?? "—"}</span>
-                      <p className="mt-0.5 text-[11px] text-cream-dim">
+                      <span className="text-[rgba(59,88,100,0.55)] ml-2">· {c.title ?? "—"}</span>
+                      <p className="mt-0.5 text-[11px] text-[rgba(59,88,100,0.55)]">
                         {c.status.replace(/_/g, " ")} · Approved {formatDate(c.approved_date)}
                       </p>
                     </div>
                     <p
                       className={`shrink-0 tabular-nums font-medium ${
-                        c.amount < 0 ? "text-status-danger" : "text-status-success"
+                        c.amount < 0 ? "text-nw-danger" : "text-nw-success"
                       }`}
                     >
                       {c.amount > 0 ? "+" : ""}
@@ -646,18 +646,18 @@ export default function BudgetDrillDown({
             <ul className="divide-y divide-brand-row-border">
               {activity.map((a) => (
                 <li key={a.id} className="py-2 flex items-start gap-3 text-[12px]">
-                  <span className="text-cream-dim tabular-nums shrink-0 w-28">
+                  <span className="text-[rgba(59,88,100,0.55)] tabular-nums shrink-0 w-28">
                     {formatActivityTs(a.created_at)}
                   </span>
-                  <span className="text-cream flex-1">
+                  <span className="text-slate-tile flex-1">
                     <span className="font-medium">
                       {formatEntityAction(a.entity_type, a.action)}
                     </span>
                     {summarizeDetails(a.details) && (
-                      <span className="text-cream-dim"> · {summarizeDetails(a.details)}</span>
+                      <span className="text-[rgba(59,88,100,0.55)]"> · {summarizeDetails(a.details)}</span>
                     )}
                   </span>
-                  <span className="text-cream-dim shrink-0">{a.user_name ?? "—"}</span>
+                  <span className="text-[rgba(59,88,100,0.55)] shrink-0">{a.user_name ?? "—"}</span>
                 </li>
               ))}
             </ul>
@@ -682,42 +682,42 @@ function InvoiceItem({
           <div className="flex items-center gap-2 flex-wrap">
             <Link
               href={`/invoices/${row.id}`}
-              className="text-cream font-medium hover:text-teal transition-colors"
+              className="text-slate-tile font-medium hover:text-stone-blue transition-colors"
             >
               {row.vendor ?? "—"}
             </Link>
             {row.invoice_number && (
-              <span className="text-cream-dim">· #{row.invoice_number}</span>
+              <span className="text-[rgba(59,88,100,0.55)]">· #{row.invoice_number}</span>
             )}
             <span
               className={`inline-block px-1.5 py-0.5 text-[9px] uppercase tracking-wider border ${
                 row.status === "paid"
-                  ? "border-status-success/50 text-status-success"
+                  ? "border-nw-success/50 text-nw-success"
                   : row.status === "in_draw"
-                    ? "border-teal/50 text-teal"
-                    : "border-brand-border text-cream-dim"
+                    ? "border-stone-blue/50 text-stone-blue"
+                    : "border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)]"
               }`}
             >
               {row.status.replace(/_/g, " ")}
             </span>
             {showPoBadge && row.po_number && (
-              <span className="text-[11px] text-cream-dim">PO {row.po_number}</span>
+              <span className="text-[11px] text-[rgba(59,88,100,0.55)]">PO {row.po_number}</span>
             )}
             {showPoBadge && !row.po_number && (
-              <span className="text-[11px] text-cream-dim">direct</span>
+              <span className="text-[11px] text-[rgba(59,88,100,0.55)]">direct</span>
             )}
           </div>
           <p
-            className="mt-1 text-[11px] text-cream-muted leading-snug"
+            className="mt-1 text-[11px] text-[rgba(59,88,100,0.70)] leading-snug"
             title={row.description_full ?? undefined}
           >
             {row.description_preview}
           </p>
-          <p className="mt-0.5 text-[10px] text-cream-dim">
+          <p className="mt-0.5 text-[10px] text-[rgba(59,88,100,0.55)]">
             {formatDate(row.received_date)}
           </p>
         </div>
-        <p className="text-cream shrink-0 tabular-nums">{formatCents(row.amount)}</p>
+        <p className="text-slate-tile shrink-0 tabular-nums">{formatCents(row.amount)}</p>
       </div>
     </li>
   );
@@ -735,10 +735,10 @@ function Section({
   return (
     <section>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-display text-sm text-cream">{title}</h3>
+        <h3 className="font-display text-sm text-slate-tile">{title}</h3>
         {total !== null && (
-          <span className="text-[12px] text-cream-dim tabular-nums">
-            Total <span className="text-cream font-medium">{formatCents(total)}</span>
+          <span className="text-[12px] text-[rgba(59,88,100,0.55)] tabular-nums">
+            Total <span className="text-slate-tile font-medium">{formatCents(total)}</span>
           </span>
         )}
       </div>
@@ -750,13 +750,13 @@ function Section({
 function Loading() {
   return (
     <div className="py-6 flex items-center justify-center">
-      <div className="w-5 h-5 border-2 border-teal/30 border-t-teal animate-spin" />
+      <div className="w-5 h-5 border-2 border-stone-blue/30 border-t-teal animate-spin" />
     </div>
   );
 }
 
 function Empty({ label }: { label: string }) {
-  return <p className="text-[12px] text-cream-dim py-3">{label}</p>;
+  return <p className="text-[12px] text-[rgba(59,88,100,0.55)] py-3">{label}</p>;
 }
 
 function ReconLine({
@@ -772,13 +772,13 @@ function ReconLine({
 }) {
   const toneClass =
     tone === "positive"
-      ? "text-status-success"
+      ? "text-nw-success"
       : tone === "negative"
-        ? "text-status-danger"
-        : "text-cream";
+        ? "text-nw-danger"
+        : "text-slate-tile";
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-cream-dim">{label}</span>
+      <span className="text-[rgba(59,88,100,0.55)]">{label}</span>
       <span
         className={`text-right tabular-nums ${toneClass} ${strong ? "font-semibold" : ""}`}
       >

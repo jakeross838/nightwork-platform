@@ -38,13 +38,13 @@ interface ChangeOrder {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "text-cream-dim border-cream-dim/40",
-  pending: "text-status-warning border-status-warning/40",
-  pending_approval: "text-status-warning border-status-warning/40",
-  approved: "text-status-success border-status-success/40",
-  executed: "text-teal border-teal/40",
-  denied: "text-status-danger border-status-danger/40",
-  void: "text-status-danger border-status-danger/40 line-through",
+  draft: "text-[rgba(59,88,100,0.55)] border-cream-dim/40",
+  pending: "text-nw-warn border-nw-warn/40",
+  pending_approval: "text-nw-warn border-nw-warn/40",
+  approved: "text-nw-success border-nw-success/40",
+  executed: "text-stone-blue border-stone-blue/40",
+  denied: "text-nw-danger border-nw-danger/40",
+  void: "text-nw-danger border-nw-danger/40 line-through",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -131,7 +131,7 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
       </main>
     );
   }
@@ -139,8 +139,8 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <p className="text-cream">Job not found</p>
-        <Link href="/jobs" className="text-teal hover:underline text-sm">Back to jobs</Link>
+        <p className="text-slate-tile">Job not found</p>
+        <Link href="/jobs" className="text-stone-blue hover:underline text-sm">Back to jobs</Link>
       </main>
     );
   }
@@ -156,12 +156,12 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
         />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">{job.name}</h2>
-            <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
+            <h2 className="font-display text-2xl text-slate-tile">{job.name}</h2>
+            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">{job.address ?? "No address"}</p>
           </div>
           <Link
             href={`/jobs/${job.id}/change-orders/new`}
-            className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper text-white text-sm font-medium transition-colors"
           >
             + New Change Order
           </Link>
@@ -177,7 +177,7 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
         </div>
 
         {error && (
-          <div className="mb-4 border border-status-danger/40 bg-status-danger/5 px-4 py-3 text-sm text-status-danger">
+          <div className="mb-4 border border-nw-danger/40 bg-nw-danger/5 px-4 py-3 text-sm text-nw-danger">
             {error}
           </div>
         )}
@@ -190,10 +190,10 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
             primaryAction={{ label: "+ New Change Order", href: `/jobs/${job.id}/change-orders/new` }}
           />
         ) : (
-          <div className="bg-brand-card border border-brand-border overflow-x-auto">
+          <div className="bg-white border border-[rgba(59,88,100,0.15)] overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
+                <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
                   <th className="text-left px-4 py-3 font-medium">PCCO #</th>
                   <th className="text-left px-4 py-3 font-medium">Title</th>
                   <th className="text-left px-4 py-3 font-medium">Type</th>
@@ -206,37 +206,37 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
               </thead>
               <tbody>
                 {cos.map((co) => (
-                  <tr key={co.id} className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface/40">
-                    <td className="px-4 py-3 font-mono text-cream">
-                      <Link href={`/change-orders/${co.id}`} className="text-teal hover:underline">
+                  <tr key={co.id} className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.06)]/40">
+                    <td className="px-4 py-3 font-mono text-slate-tile">
+                      <Link href={`/change-orders/${co.id}`} className="text-stone-blue hover:underline">
                         #{co.pcco_number}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-cream">
+                    <td className="px-4 py-3 text-slate-tile">
                       <div className="max-w-md">
                         <p className="truncate">{co.title ?? co.description ?? "—"}</p>
                         {co.source_invoice_id && (
                           <Link
                             href={`/invoices/${co.source_invoice_id}`}
-                            className="text-[11px] text-teal hover:underline"
+                            className="text-[11px] text-stone-blue hover:underline"
                           >
                             ↳ from invoice
                           </Link>
                         )}
                         {co.denied_reason && (
-                          <p className="text-[11px] text-status-danger italic mt-0.5">Denied: {co.denied_reason}</p>
+                          <p className="text-[11px] text-nw-danger italic mt-0.5">Denied: {co.denied_reason}</p>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-cream-muted">
+                    <td className="px-4 py-3 text-[rgba(59,88,100,0.70)]">
                       {co.co_type === "owner" ? (
-                        <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-teal/40 text-teal">Owner</span>
+                        <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-stone-blue/40 text-stone-blue">Owner</span>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-brand-border text-cream-muted">Internal</span>
+                        <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)]">Internal</span>
                       )}
                     </td>
                     <td className={`px-4 py-3 text-right tabular-nums font-medium ${
-                      co.amount < 0 ? "text-status-danger" : co.amount > 0 ? "text-status-success" : "text-cream"
+                      co.amount < 0 ? "text-nw-danger" : co.amount > 0 ? "text-nw-success" : "text-slate-tile"
                     }`}>
                       {formatCents(co.amount)}
                     </td>
@@ -245,8 +245,8 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
                         {STATUS_LABELS[co.status] ?? co.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-cream-dim text-[11px]">{co.submitted_date ? formatDate(co.submitted_date) : "—"}</td>
-                    <td className="px-4 py-3 text-cream-dim text-[11px]">{co.approved_date ? formatDate(co.approved_date) : "—"}</td>
+                    <td className="px-4 py-3 text-[rgba(59,88,100,0.55)] text-[11px]">{co.submitted_date ? formatDate(co.submitted_date) : "—"}</td>
+                    <td className="px-4 py-3 text-[rgba(59,88,100,0.55)] text-[11px]">{co.approved_date ? formatDate(co.approved_date) : "—"}</td>
                     <td className="px-4 py-3 text-right">
                       <CoActions
                         co={co}
@@ -267,9 +267,9 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`border p-4 ${highlight ? "border-teal bg-teal-muted" : "border-brand-border bg-brand-card"}`}>
-      <p className="text-[11px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
-      <p className="text-lg text-cream mt-1 tabular-nums">{value}</p>
+    <div className={`border p-4 ${highlight ? "border-stone-blue bg-slate-deep-muted" : "border-[rgba(59,88,100,0.15)] bg-white"}`}>
+      <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
+      <p className="text-lg text-slate-tile mt-1 tabular-nums">{value}</p>
     </div>
   );
 }
@@ -295,13 +295,13 @@ function CoActions({
             if (!note) return;
             onStatus("void", { note });
           }}
-          className="px-3 py-1 text-xs border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
+          className="px-3 py-1 text-xs border border-nw-danger/60 text-nw-danger hover:bg-nw-danger hover:text-white disabled:opacity-50 transition-colors"
         >
           Void
         </button>
       );
     }
-    return <span className="text-[11px] text-cream-dim">—</span>;
+    return <span className="text-[11px] text-[rgba(59,88,100,0.55)]">—</span>;
   }
 
   return (
@@ -310,7 +310,7 @@ function CoActions({
         <button
           disabled={busy}
           onClick={() => onStatus("pending")}
-          className="px-3 py-1 text-xs border border-teal text-teal hover:bg-teal hover:text-white disabled:opacity-50 transition-colors"
+          className="px-3 py-1 text-xs border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white disabled:opacity-50 transition-colors"
         >
           {busy ? "…" : "Submit"}
         </button>
@@ -320,7 +320,7 @@ function CoActions({
           <button
             disabled={busy}
             onClick={() => onStatus("approved")}
-            className="px-3 py-1 text-xs bg-teal text-white hover:bg-teal-hover disabled:opacity-50 transition-colors"
+            className="px-3 py-1 text-xs bg-slate-deep text-white hover:bg-slate-deeper disabled:opacity-50 transition-colors"
           >
             {busy ? "…" : "Approve"}
           </button>
@@ -331,7 +331,7 @@ function CoActions({
               if (!reason) return;
               onStatus("denied", { denied_reason: reason });
             }}
-            className="px-3 py-1 text-xs border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
+            className="px-3 py-1 text-xs border border-nw-danger/60 text-nw-danger hover:bg-nw-danger hover:text-white disabled:opacity-50 transition-colors"
           >
             Deny
           </button>
@@ -344,7 +344,7 @@ function CoActions({
           if (!note) return;
           onStatus("void", { note });
         }}
-        className="px-3 py-1 text-xs border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
+        className="px-3 py-1 text-xs border border-nw-danger/60 text-nw-danger hover:bg-nw-danger hover:text-white disabled:opacity-50 transition-colors"
       >
         Void
       </button>

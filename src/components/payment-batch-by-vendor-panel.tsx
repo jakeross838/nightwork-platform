@@ -145,34 +145,34 @@ export default function PaymentBatchByVendorPanel({
   return (
     <div className="space-y-5 animate-fade-up">
       {error && (
-        <div className="bg-status-danger/10 border border-status-danger/40 px-4 py-3 text-sm text-status-danger">
+        <div className="bg-nw-danger/10 border border-nw-danger/40 px-4 py-3 text-sm text-nw-danger">
           {error}
         </div>
       )}
 
-      <div className="bg-brand-card border border-brand-border p-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4 flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="font-display text-cream">Batch Payments by Vendor</p>
-          <p className="text-xs text-cream-dim mt-0.5">
+          <p className="font-display text-slate-tile">Batch Payments by Vendor</p>
+          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">
             Pay every unpaid invoice for one or more vendors at once. Reference is per-vendor.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-sm">
-          <label className="flex items-center gap-2 text-cream-dim">
+          <label className="flex items-center gap-2 text-[rgba(59,88,100,0.55)]">
             Payment date
             <input
               type="date"
               value={paymentDate}
               onChange={(e) => setPaymentDate(e.target.value)}
-              className="flex-1 sm:flex-none px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
+              className="flex-1 sm:flex-none px-2 py-1.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile"
             />
           </label>
-          <label className="flex items-center gap-2 text-cream-dim">
+          <label className="flex items-center gap-2 text-[rgba(59,88,100,0.55)]">
             Default method
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as Method)}
-              className="flex-1 sm:flex-none px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
+              className="flex-1 sm:flex-none px-2 py-1.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile"
             >
               <option value="check">Check</option>
               <option value="ach">ACH</option>
@@ -184,14 +184,14 @@ export default function PaymentBatchByVendorPanel({
       </div>
 
       {groups.length === 0 ? (
-        <div className="border border-brand-border p-10 text-center text-cream-dim text-sm">
+        <div className="border border-[rgba(59,88,100,0.15)] p-10 text-center text-[rgba(59,88,100,0.55)] text-sm">
           No unpaid invoices to batch.
         </div>
       ) : (
-        <div className="overflow-x-auto border border-brand-border">
+        <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
           <table className="w-full min-w-[700px] text-sm">
             <thead>
-              <tr className="bg-brand-surface text-left">
+              <tr className="bg-[rgba(91,134,153,0.06)] text-left">
                 <th className="py-3 px-4 w-10">
                   <input
                     type="checkbox"
@@ -213,8 +213,8 @@ export default function PaymentBatchByVendorPanel({
                 return (
                   <tr
                     key={g.vendor_id}
-                    className={`border-t border-brand-row-border ${
-                      sel ? "bg-teal/5" : "hover:bg-brand-elevated/40"
+                    className={`border-t border-[rgba(59,88,100,0.08)] ${
+                      sel ? "bg-slate-deep/5" : "hover:bg-brand-elevated/40"
                     }`}
                   >
                     <td className="py-3 px-4">
@@ -224,9 +224,9 @@ export default function PaymentBatchByVendorPanel({
                         onChange={() => toggleVendor(g.vendor_id)}
                       />
                     </td>
-                    <td className="py-3 px-4 text-cream">{g.vendor_name}</td>
-                    <td className="py-3 px-4 text-cream-muted text-right">{g.invoices.length}</td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                    <td className="py-3 px-4 text-slate-tile">{g.vendor_name}</td>
+                    <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-right">{g.invoices.length}</td>
+                    <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                       {formatCents(g.total)}
                     </td>
                     <td className="py-3 px-4">
@@ -239,7 +239,7 @@ export default function PaymentBatchByVendorPanel({
                             [g.vendor_id]: e.target.value as Method,
                           }))
                         }
-                        className="px-2 py-1 bg-brand-surface border border-brand-border text-xs text-cream disabled:opacity-50"
+                        className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-xs text-slate-tile disabled:opacity-50"
                       >
                         <option value="check">Check</option>
                         <option value="ach">ACH</option>
@@ -256,7 +256,7 @@ export default function PaymentBatchByVendorPanel({
                           setRefs((prev) => ({ ...prev, [g.vendor_id]: e.target.value }))
                         }
                         placeholder="Check # or ref"
-                        className="w-32 px-2 py-1 bg-brand-surface border border-brand-border text-xs text-cream font-mono disabled:opacity-50"
+                        className="w-32 px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-xs text-slate-tile font-mono disabled:opacity-50"
                       />
                     </td>
                   </tr>
@@ -268,15 +268,15 @@ export default function PaymentBatchByVendorPanel({
       )}
 
       {selected.size > 0 && (
-        <div className="sticky bottom-0 -mx-4 px-4 sm:-mx-6 sm:px-6 py-4 bg-brand-bg/95 backdrop-blur border-t border-teal/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-sm text-cream">
+        <div className="sticky bottom-0 -mx-4 px-4 sm:-mx-6 sm:px-6 py-4 bg-white-sand/95 backdrop-blur border-t border-stone-blue/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-sm text-slate-tile">
             <span className="font-medium">Pay {selected.size} vendors</span> ·{" "}
-            <span className="text-cream-dim">{selectedInvoiceCount} invoices</span> · Total{" "}
-            <span className="text-brass font-display">{formatCents(selectedTotal)}</span>
+            <span className="text-[rgba(59,88,100,0.55)]">{selectedInvoiceCount} invoices</span> · Total{" "}
+            <span className="text-nw-warn font-display">{formatCents(selectedTotal)}</span>
           </p>
           <button
             onClick={() => setShowConfirm(true)}
-            className="w-full sm:w-auto px-5 py-2.5 bg-teal hover:bg-teal-hover text-white text-sm font-medium uppercase tracking-wider"
+            className="w-full sm:w-auto px-5 py-2.5 bg-slate-deep hover:bg-slate-deeper text-white text-sm font-medium uppercase tracking-wider"
           >
             Process Batch
           </button>
@@ -322,18 +322,18 @@ function ConfirmModal({
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={onCancel}>
       <div
-        className="bg-brand-card border border-brand-border max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6"
+        className="bg-white border border-[rgba(59,88,100,0.15)] max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="font-display text-lg text-cream mb-1">Confirm Batch Payment</h3>
-        <p className="text-sm text-cream-dim mb-4">
-          Payment date: <span className="text-cream">{formatDate(paymentDate)}</span> · {groups.length}{" "}
+        <h3 className="font-display text-lg text-slate-tile mb-1">Confirm Batch Payment</h3>
+        <p className="text-sm text-[rgba(59,88,100,0.55)] mb-4">
+          Payment date: <span className="text-slate-tile">{formatDate(paymentDate)}</span> · {groups.length}{" "}
           vendors · {formatCents(total)}
         </p>
-        <div className="border border-brand-border max-h-72 overflow-auto">
+        <div className="border border-[rgba(59,88,100,0.15)] max-h-72 overflow-auto">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
-              <tr className="bg-brand-surface text-left sticky top-0">
+              <tr className="bg-[rgba(91,134,153,0.06)] text-left sticky top-0">
                 <Th>Vendor</Th>
                 <Th right>Invoices</Th>
                 <Th right>Total</Th>
@@ -343,12 +343,12 @@ function ConfirmModal({
             </thead>
             <tbody>
               {groups.map((g) => (
-                <tr key={g.vendor_id} className="border-t border-brand-row-border">
-                  <td className="py-2 px-3 text-cream">{g.vendor_name}</td>
-                  <td className="py-2 px-3 text-cream-muted text-right">{g.invoices.length}</td>
-                  <td className="py-2 px-3 text-cream text-right font-display">{formatCents(g.total)}</td>
-                  <td className="py-2 px-3 text-cream-muted">{methods[g.vendor_id] ?? defaultMethod}</td>
-                  <td className="py-2 px-3 text-cream-muted font-mono text-xs">
+                <tr key={g.vendor_id} className="border-t border-[rgba(59,88,100,0.08)]">
+                  <td className="py-2 px-3 text-slate-tile">{g.vendor_name}</td>
+                  <td className="py-2 px-3 text-[rgba(59,88,100,0.70)] text-right">{g.invoices.length}</td>
+                  <td className="py-2 px-3 text-slate-tile text-right font-display">{formatCents(g.total)}</td>
+                  <td className="py-2 px-3 text-[rgba(59,88,100,0.70)]">{methods[g.vendor_id] ?? defaultMethod}</td>
+                  <td className="py-2 px-3 text-[rgba(59,88,100,0.70)] font-mono text-xs">
                     {refs[g.vendor_id]?.trim() || "—"}
                   </td>
                 </tr>
@@ -359,14 +359,14 @@ function ConfirmModal({
         <div className="mt-5 flex items-center justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-cream-dim hover:text-cream text-sm"
+            className="px-4 py-2 text-[rgba(59,88,100,0.55)] hover:text-slate-tile text-sm"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={submitting}
-            className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium"
+            className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white text-sm font-medium"
           >
             {submitting ? "Processing…" : `Pay ${groups.length} vendors`}
           </button>
@@ -388,10 +388,10 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
           {receipts.reduce((s, r) => s + r.invoice_count, 0)} invoices · {formatCents(total)}
         </p>
       </div>
-      <div className="bg-status-success/10 border border-status-success/40 p-4 flex items-center justify-between gap-3 flex-wrap print:hidden">
+      <div className="bg-nw-success/10 border border-nw-success/40 p-4 flex items-center justify-between gap-3 flex-wrap print:hidden">
         <div>
-          <p className="text-status-success font-display text-lg">Batch payment complete</p>
-          <p className="text-xs text-cream-dim mt-0.5">
+          <p className="text-nw-success font-display text-lg">Batch payment complete</p>
+          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">
             {receipts.length} vendors · {receipts.reduce((s, r) => s + r.invoice_count, 0)} invoices ·{" "}
             {formatCents(total)}
           </p>
@@ -399,23 +399,23 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
         <div className="flex items-center gap-2">
           <button
             onClick={() => window.print()}
-            className="px-3 py-1.5 border border-brand-border text-cream text-sm hover:bg-brand-elevated"
+            className="px-3 py-1.5 border border-[rgba(59,88,100,0.15)] text-slate-tile text-sm hover:bg-brand-elevated"
           >
             Print
           </button>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 bg-teal hover:bg-teal-hover text-white text-sm"
+            className="px-3 py-1.5 bg-slate-deep hover:bg-slate-deeper text-white text-sm"
           >
             Done
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto border border-brand-border">
+      <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-brand-surface text-left">
+            <tr className="bg-[rgba(91,134,153,0.06)] text-left">
               <Th>Vendor</Th>
               <Th right>Invoices</Th>
               <Th right>Total</Th>
@@ -427,25 +427,25 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
           </thead>
           <tbody>
             {receipts.map((r) => (
-              <tr key={r.vendor_id} className="border-t border-brand-row-border">
-                <td className="py-3 px-4 text-cream">{r.vendor_name}</td>
-                <td className="py-3 px-4 text-cream-muted text-right">{r.invoice_count}</td>
-                <td className="py-3 px-4 text-cream text-right font-display">{formatCents(r.total)}</td>
-                <td className="py-3 px-4 text-cream-muted">{r.payment_method}</td>
-                <td className="py-3 px-4 text-cream-muted font-mono text-xs">
+              <tr key={r.vendor_id} className="border-t border-[rgba(59,88,100,0.08)]">
+                <td className="py-3 px-4 text-slate-tile">{r.vendor_name}</td>
+                <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-right">{r.invoice_count}</td>
+                <td className="py-3 px-4 text-slate-tile text-right font-display">{formatCents(r.total)}</td>
+                <td className="py-3 px-4 text-[rgba(59,88,100,0.70)]">{r.payment_method}</td>
+                <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">
                   {r.payment_reference ?? "—"}
                 </td>
-                <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(r.payment_date)}</td>
+                <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(r.payment_date)}</td>
                 <td className="py-3 px-4">
                   {r.missing_lien_release && r.draw_ids.length > 0 ? (
                     <Link
                       href={`/draws/${r.draw_ids[0]}`}
-                      className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-brass text-brass hover:bg-brass/10"
+                      className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-nw-warn text-nw-warn hover:bg-nw-warn/10"
                     >
                       Lien missing
                     </Link>
                   ) : (
-                    <span className="text-cream-dim text-xs">—</span>
+                    <span className="text-[rgba(59,88,100,0.55)] text-xs">—</span>
                   )}
                 </td>
               </tr>
@@ -460,7 +460,7 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
     <th
-      className={`py-3 px-4 text-[10px] text-cream font-bold uppercase tracking-wider ${
+      className={`py-3 px-4 text-[10px] text-slate-tile font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
       }`}
     >

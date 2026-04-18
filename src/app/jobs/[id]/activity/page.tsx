@@ -31,13 +31,13 @@ export default function JobActivityPage({ params }: { params: { id: string } }) 
           ]}
         />
         <div className="mb-4">
-          <h2 className="font-display text-2xl text-cream">{jobName || "..."}</h2>
+          <h2 className="font-display text-2xl text-slate-tile">{jobName || "..."}</h2>
         </div>
         <JobTabs jobId={params.id} active="activity" />
         <JobFinancialBar jobId={params.id} />
 
-        <div className="bg-brand-card border border-brand-border p-8 text-center">
-          <p className="text-sm text-cream-dim">
+        <div className="bg-white border border-[rgba(59,88,100,0.15)] p-8 text-center">
+          <p className="text-sm text-[rgba(59,88,100,0.55)]">
             Activity log coming soon. Will show CO approvals, invoice status
             changes, draw submissions, and team notes for this job.
           </p>
