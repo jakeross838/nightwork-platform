@@ -522,6 +522,25 @@ export async function saveParsedInvoice(
     }
   }
 
+  // ---- Auto-populate invoice_allocations ----
+  // When the invoice has a cost_code_id, create a single allocation at the
+  // full amount so the PM doesn't have to click "Save allocations" before
+  // the amount flows into budget views. PM can still split later via the UI.
+  if (matchedCostCode?.id && totalAmountCents > 0) {
+    try {
+      await supabase.from("invoice_allocations").insert({
+        invoice_id: invoiceId,
+        cost_code_id: matchedCostCode.id,
+        amount_cents: totalAmountCents,
+        description: parsed.description ?? null,
+      });
+    } catch (allocErr) {
+      console.warn(
+        `[save] invoice_allocations auto-create failed for ${invoiceId}: ${allocErr instanceof Error ? allocErr.message : allocErr}`
+      );
+    }
+  }
+
   // Fire PM notifications when a matched, non-overhead invoice lands in a
   // queue they're responsible for. Wrapped so dispatch failures can't roll
   // back the save.
