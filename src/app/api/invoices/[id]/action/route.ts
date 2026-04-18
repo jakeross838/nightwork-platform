@@ -7,6 +7,7 @@ import {
 import { recalcLinesAndPOs } from "@/lib/recalc";
 import { logStatusChange } from "@/lib/activity-log";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
+import { captureCorrections } from "@/lib/invoices/corrections";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -244,6 +245,16 @@ export async function POST(
  }
  if (Object.keys(mergedQaOverrides).length > 0) {
  updatePayload.qa_overrides = mergedQaOverrides;
+ }
+
+ // Capture parser corrections before applying updates
+ if (updates && Object.keys(updates).length > 0) {
+ const { data: { user } } = await supabase.auth.getUser();
+ if (user) {
+ captureCorrections(supabase, params.id, updates, user.id).catch((err) => {
+ console.warn("[corrections] capture failed:", err);
+ });
+ }
  }
 
  const { error: updateError } = await supabase

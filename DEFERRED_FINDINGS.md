@@ -382,3 +382,25 @@ just untidy.
 
 **Fix:** Clean up the prop type to explicitly union href-action
 vs click-action.
+
+## F-021: Parser self-learning via correction capture
+**Discovered:** 2026-04-18 during Fish invoice dogfood
+**Status:** Phase A shipped 2026-04-19.
+
+Every time a PM edits a parser-populated field on an invoice,
+the delta is recorded in `parser_corrections`. Captures:
+original value, corrected value, parser confidence at extract
+time, vendor context.
+
+**Phase A (shipped):** `parser_corrections` table + hook in
+invoice action route. Data starts flowing immediately.
+
+**Phase B (vendor-memory):** Deferred until correction volume
+supports it (target: 500+ corrections across multiple vendors).
+Inject vendor-specific correction patterns into parser prompts
+as few-shot examples.
+
+**Phase C (fine-tuning or pattern-mining):** Evaluate after
+3-6 months of production correction data. Decide between
+prompt engineering, retrieval-augmented generation, or
+fine-tuning based on correction patterns observed.
