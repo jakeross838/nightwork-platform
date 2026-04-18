@@ -100,10 +100,18 @@ export async function POST(
       .is("deleted_at", null);
     const invIds = (invs ?? []).map((i) => i.id as string);
     if (invIds.length > 0) {
-      await supabase
+      const { data: relinked, error: relinkErr } = await supabase
         .from("invoices")
         .update({ draw_id: revision.id })
-        .in("id", invIds);
+        .in("id", invIds)
+        .select("id");
+      if (relinkErr) {
+        console.error("[revise] invoice re-link failed:", relinkErr.message);
+      } else if (!relinked || relinked.length !== invIds.length) {
+        console.warn(
+          `[revise] Expected to re-link ${invIds.length} invoices, only ${relinked?.length ?? 0} updated`
+        );
+      }
     }
 
     await logActivity({

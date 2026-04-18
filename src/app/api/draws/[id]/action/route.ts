@@ -344,11 +344,17 @@ export async function POST(
         .is("deleted_at", null);
       const invIds = (invs ?? []).map((i) => i.id as string);
       if (invIds.length > 0) {
-        await supabase
+        const { data: unlinked, error: unlinkErr } = await supabase
           .from("invoices")
           .update({ status: "qa_approved", draw_id: null })
           .in("id", invIds)
-          .in("status", ["in_draw"]);
+          .in("status", ["in_draw"])
+          .select("id");
+        if (unlinkErr) {
+          console.error("[void] invoice unlink failed:", unlinkErr.message);
+        } else if (!unlinked || unlinked.length === 0) {
+          console.warn(`[void] Expected to unlink invoices but 0 updated`);
+        }
         try {
           const { data: lines } = await supabase
             .from("invoice_line_items")
