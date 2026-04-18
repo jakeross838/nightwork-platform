@@ -52,7 +52,7 @@ export default function JobFinancialBar({
         supabase
           .from("jobs")
           .select(
-            "original_contract_amount, current_contract_amount, approved_cos_total"
+            "original_contract_amount, current_contract_amount, approved_cos_total, previous_certificates_total"
           )
           .eq("id", jobId)
           .is("deleted_at", null)
@@ -71,10 +71,13 @@ export default function JobFinancialBar({
       const approvedCos = (job as { approved_cos_total?: number }).approved_cos_total ?? 0;
       const revised =
         (job as { current_contract_amount?: number }).current_contract_amount ?? original + approvedCos;
-      const billed = (invRows ?? []).reduce(
+      // Include pre-Nightwork certified baseline for mid-project imports.
+      const baseline = (job as { previous_certificates_total?: number }).previous_certificates_total ?? 0;
+      const nightworkBilled = (invRows ?? []).reduce(
         (s, r) => s + ((r as { total_amount: number }).total_amount ?? 0),
         0
       );
+      const billed = baseline + nightworkBilled;
       const remaining = revised - billed;
       const pct = revised > 0 ? Math.min(100, Math.max(0, (billed / revised) * 100)) : 0;
 

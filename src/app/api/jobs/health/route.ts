@@ -33,6 +33,7 @@ export interface JobHealth {
   contract_type: string;
   original_contract_amount: number;
   current_contract_amount: number;
+  previous_certificates_total: number;
   contract_date: string | null;
   status: string;
   pm_id: string | null;
@@ -83,7 +84,7 @@ export const GET = withApiError(async (req: NextRequest) => {
   ] = await Promise.all([
     timed("jobs-health", "jobs.by_org", false,
       supabase.from("jobs")
-        .select("id, name, address, client_name, contract_type, original_contract_amount, current_contract_amount, contract_date, status, pm_id")
+        .select("id, name, address, client_name, contract_type, original_contract_amount, current_contract_amount, previous_certificates_total, contract_date, status, pm_id")
         .eq("org_id", orgId).is("deleted_at", null).order("name")),
     timed("jobs-health", "budget_lines.by_org", false,
       supabase.from("budget_lines").select("job_id, revised_estimate, invoiced")
@@ -194,7 +195,11 @@ export const GET = withApiError(async (req: NextRequest) => {
       ? ((budget.invoiced - budget.revised) / budget.revised) * 100
       : 0;
     const budgetUsedPct = budget.revised > 0 ? (budget.invoiced / budget.revised) * 100 : 0;
-    const pctComplete = budgetUsedPct;
+    // Include pre-Nightwork baseline for mid-project imports.
+    const baseline = (j as { previous_certificates_total?: number }).previous_certificates_total ?? 0;
+    const revised = (j as { current_contract_amount?: number }).current_contract_amount ?? 0;
+    const totalBilled = baseline + budget.invoiced;
+    const pctComplete = revised > 0 ? (totalBilled / revised) * 100 : budgetUsedPct;
 
     const reasons: string[] = [];
     let attentionCount = 0;
