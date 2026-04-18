@@ -147,9 +147,9 @@ function PdfViewer({
   }, []);
 
   return (
-    <div className={`border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] flex flex-col ${fullscreen ? "h-full" : ""}`}>
-      <div className="flex items-center justify-between border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] px-3 py-2 gap-2 flex-wrap">
-        <span className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] truncate pr-2 min-w-0 flex-1">
+    <div className={`border border-brand-border bg-brand-surface flex flex-col ${fullscreen ? "h-full" : ""}`}>
+      <div className="flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2 gap-2 flex-wrap">
+        <span className="text-[11px] tracking-[0.08em] uppercase text-cream-dim truncate pr-2 min-w-0 flex-1">
           PDF{fileName ? ` · ${fileName}` : ""}
           {numPages ? ` · ${numPages} page${numPages !== 1 ? "s" : ""}` : ""}
         </span>
@@ -157,19 +157,19 @@ function PdfViewer({
           <button
             type="button"
             onClick={zoomOut}
-            className="px-2 py-1 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile border border-[rgba(59,88,100,0.15)]"
+            className="px-2 py-1 text-sm text-cream-dim hover:text-cream border border-brand-border"
             aria-label="Zoom out"
             title="Zoom out"
           >
             &#8722;
           </button>
-          <span className="px-2 text-[11px] text-[rgba(59,88,100,0.55)] w-14 text-center tabular-nums">
+          <span className="px-2 text-[11px] text-cream-dim w-14 text-center tabular-nums">
             {fitMode === "width" ? "Fit W" : fitMode === "page" ? "Fit P" : `${Math.round(scale * 100)}%`}
           </span>
           <button
             type="button"
             onClick={zoomIn}
-            className="px-2 py-1 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile border border-[rgba(59,88,100,0.15)]"
+            className="px-2 py-1 text-sm text-cream-dim hover:text-cream border border-brand-border"
             aria-label="Zoom in"
             title="Zoom in"
           >
@@ -181,7 +181,7 @@ function PdfViewer({
               setFitMode("width");
               setScale(1);
             }}
-            className={`px-2 py-1 text-[11px] border ${fitMode === "width" ? "bg-slate-deep text-white border-stone-blue" : "text-[rgba(59,88,100,0.55)] border-[rgba(59,88,100,0.15)]"}`}
+            className={`px-2 py-1 text-[11px] border ${fitMode === "width" ? "bg-teal text-white border-teal" : "text-cream-dim border-brand-border"}`}
             title="Fit width"
           >
             Fit W
@@ -192,7 +192,7 @@ function PdfViewer({
               setFitMode("page");
               setScale(1);
             }}
-            className={`px-2 py-1 text-[11px] border ${fitMode === "page" ? "bg-slate-deep text-white border-stone-blue" : "text-[rgba(59,88,100,0.55)] border-[rgba(59,88,100,0.15)]"}`}
+            className={`px-2 py-1 text-[11px] border ${fitMode === "page" ? "bg-teal text-white border-teal" : "text-cream-dim border-brand-border"}`}
             title="Fit page"
           >
             Fit P
@@ -201,7 +201,7 @@ function PdfViewer({
             <button
               type="button"
               onClick={onExpand}
-              className="px-2 py-1 text-[11px] border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)] hover:text-slate-tile ml-1"
+              className="px-2 py-1 text-[11px] border border-brand-border text-cream-dim hover:text-cream ml-1"
               title="Expand"
               aria-label="Expand PDF"
             >
@@ -211,7 +211,7 @@ function PdfViewer({
           <a
             href={downloadUrl ?? fileUrl}
             download={fileName ?? undefined}
-            className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white transition-colors whitespace-nowrap ml-1"
+            className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-teal text-teal hover:bg-teal hover:text-white transition-colors whitespace-nowrap ml-1"
           >
             Download Original
           </a>
@@ -219,7 +219,7 @@ function PdfViewer({
             <button
               type="button"
               onClick={onClose}
-              className="px-2 py-1 text-[11px] border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)] hover:text-slate-tile ml-1"
+              className="px-2 py-1 text-[11px] border border-brand-border text-cream-dim hover:text-cream ml-1"
               title="Close"
               aria-label="Close expanded PDF"
             >
@@ -233,14 +233,14 @@ function PdfViewer({
         className={`${fullscreen ? "flex-1" : "max-h-[700px]"} overflow-auto p-3 bg-white`}
       >
         {error ? (
-          <div className="p-4 text-center text-sm text-nw-danger">
+          <div className="p-4 text-center text-sm text-status-danger">
             <p className="font-medium">Preview failed</p>
             <p className="mt-1 text-xs">{error}</p>
             <a
               href={downloadUrl ?? fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block mt-3 px-3 py-1.5 border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white text-xs font-medium transition-colors"
+              className="inline-block mt-3 px-3 py-1.5 border border-teal text-teal hover:bg-teal hover:text-white text-xs font-medium transition-colors"
             >
               Open PDF in new tab
             </a>
@@ -256,8 +256,8 @@ function PdfViewer({
             onLoadError={handleLoadError}
             loading={
               <div className="p-8 text-center">
-                <div className="w-6 h-6 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
-                <p className="mt-2 text-xs text-[rgba(59,88,100,0.55)]">
+                <div className="w-6 h-6 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+                <p className="mt-2 text-xs text-cream-dim">
                   {retryCount > 0 ? `Retrying (${retryCount}/${MAX_RETRIES})…` : "Loading PDF…"}
                 </p>
               </div>

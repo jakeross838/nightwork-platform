@@ -162,7 +162,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
       </main>
     );
   }
@@ -177,24 +177,24 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
             { label: "New" },
           ]}
         />
-        <h2 className="font-display text-2xl text-slate-tile mb-6">New Change Order</h2>
+        <h2 className="font-display text-2xl text-cream mb-6">New Change Order</h2>
 
         {sourceInvoiceId && (
-          <div className="mb-6 border border-stone-blue/40 bg-slate-deep/5 px-4 py-3 text-sm text-slate-tile">
+          <div className="mb-6 border border-teal/40 bg-teal/5 px-4 py-3 text-sm text-cream">
             <p>
-              Drafting from <Link href={`/invoices/${sourceInvoiceId}`} className="text-stone-blue hover:underline">an invoice</Link>.
+              Drafting from <Link href={`/invoices/${sourceInvoiceId}`} className="text-teal hover:underline">an invoice</Link>.
               Fields below are pre-filled — review before submitting.
             </p>
           </div>
         )}
 
-        <form className="bg-white border border-[rgba(59,88,100,0.15)] p-6 space-y-5">
+        <form className="bg-brand-card border border-brand-border p-6 space-y-5">
           <div>
-            <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+            <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
               Title
             </label>
             <input
-              className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+              className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Upgrade kitchen appliances to Sub-Zero"
@@ -203,11 +203,11 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+            <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
               Description (optional)
             </label>
             <textarea
-              className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+              className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -217,11 +217,11 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
                 CO Type
               </label>
               <select
-                className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                 value={coType}
                 onChange={(e) => setCoType(e.target.value as "owner" | "internal")}
               >
@@ -230,24 +230,24 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
                 Base Amount ($)
               </label>
               <input
                 type="number"
                 step="0.01"
-                className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Positive or negative"
               />
             </div>
             <div>
-              <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
                 GC Fee
               </label>
               <select
-                className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                 value={rateOption}
                 onChange={(e) => setRateOption(e.target.value as "default" | "18" | "0" | "custom")}
               >
@@ -260,7 +260,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
                 <input
                   type="number"
                   step="0.1"
-                  className="w-full mt-2 px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                  className="w-full mt-2 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                   value={customRate}
                   onChange={(e) => setCustomRate(e.target.value)}
                   placeholder="e.g. 15"
@@ -271,54 +271,54 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
                 Days Added
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] px-4 py-3">
+          <div className="grid grid-cols-3 gap-3 bg-brand-surface border border-brand-border px-4 py-3">
             <div>
-              <p className="text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Base</p>
-              <p className="text-sm text-slate-tile font-medium tabular-nums">{formatCents(amountCents)}</p>
+              <p className="text-[11px] text-cream-dim uppercase tracking-wider">Base</p>
+              <p className="text-sm text-cream font-medium tabular-nums">{formatCents(amountCents)}</p>
             </div>
             <div>
-              <p className="text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">GC Fee ({(effectiveRate * 100).toFixed(1)}%)</p>
-              <p className="text-sm text-slate-tile font-medium tabular-nums">{formatCents(feeCents)}</p>
+              <p className="text-[11px] text-cream-dim uppercase tracking-wider">GC Fee ({(effectiveRate * 100).toFixed(1)}%)</p>
+              <p className="text-sm text-cream font-medium tabular-nums">{formatCents(feeCents)}</p>
             </div>
             <div>
-              <p className="text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Total</p>
-              <p className="text-lg text-stone-blue font-display tabular-nums">{formatCents(totalCents)}</p>
+              <p className="text-[11px] text-cream-dim uppercase tracking-wider">Total</p>
+              <p className="text-lg text-teal font-display tabular-nums">{formatCents(totalCents)}</p>
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
+              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">
                 Budget Line Allocations
               </label>
               <button
                 type="button"
                 onClick={addLine}
-                className="text-[11px] text-stone-blue hover:underline"
+                className="text-[11px] text-teal hover:underline"
               >
                 + Add line
               </button>
             </div>
-            <p className="text-[11px] text-[rgba(59,88,100,0.55)] mb-3">
+            <p className="text-[11px] text-cream-dim mb-3">
               Which budget lines does this CO affect? On approval, each line&apos;s co_adjustments (and revised estimate) will reflect its amount. Totals must match the base amount, or leave empty for a contract-only CO.
             </p>
             <div className="space-y-2">
               {lines.map((l, i) => (
                 <div key={i} className="grid grid-cols-[1.5fr_1fr_140px_auto] gap-2 items-start">
                   <select
-                    className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                    className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                     value={l.budget_line_id}
                     onChange={(e) => {
                       const bl = budgetLineById.get(e.target.value);
@@ -336,7 +336,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
                     ))}
                   </select>
                   <input
-                    className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                    className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                     placeholder="Description"
                     value={l.description}
                     onChange={(e) => updateLine(i, { description: e.target.value })}
@@ -344,7 +344,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
                   <input
                     type="number"
                     step="0.01"
-                    className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                    className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
                     placeholder="$ (+ or -)"
                     value={l.amount_dollars}
                     onChange={(e) => updateLine(i, { amount_dollars: e.target.value })}
@@ -352,7 +352,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
                   <button
                     type="button"
                     onClick={() => removeLine(i)}
-                    className="text-[rgba(59,88,100,0.55)] hover:text-nw-danger px-2"
+                    className="text-cream-dim hover:text-status-danger px-2"
                     aria-label="Remove"
                   >
                     ×
@@ -361,22 +361,22 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
               ))}
             </div>
             {lines.filter((l) => l.budget_line_id || parseFloat(l.amount_dollars)).length > 0 && (
-              <p className={`text-[11px] mt-2 ${lineTotal === amountCents || amountCents === 0 ? "text-nw-success" : "text-nw-warn"}`}>
+              <p className={`text-[11px] mt-2 ${lineTotal === amountCents || amountCents === 0 ? "text-status-success" : "text-status-warning"}`}>
                 Line total: {formatCents(lineTotal)} / {formatCents(amountCents)}
               </p>
             )}
           </div>
 
           {error && (
-            <div className="border border-nw-danger/40 bg-nw-danger/5 px-4 py-2 text-sm text-nw-danger">
+            <div className="border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">
               {error}
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[rgba(59,88,100,0.15)]">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-brand-border">
             <Link
               href={`/jobs/${params.id}/change-orders`}
-              className="px-4 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
+              className="px-4 py-2 text-sm text-cream-dim hover:text-cream transition-colors"
             >
               Cancel
             </Link>
@@ -384,7 +384,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
               type="button"
               disabled={saving}
               onClick={() => handleSubmit(false)}
-              className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile hover:bg-[rgba(91,134,153,0.06)] disabled:opacity-60 transition-colors"
+              className="px-4 py-2 border border-brand-border text-sm text-cream hover:bg-brand-surface disabled:opacity-60 transition-colors"
             >
               {saving ? "Saving…" : "Save as Draft"}
             </button>
@@ -392,7 +392,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
               type="button"
               disabled={saving}
               onClick={() => handleSubmit(true)}
-              className="px-5 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="px-5 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
               {saving ? "Saving…" : "Submit for Approval"}
             </button>

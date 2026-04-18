@@ -498,10 +498,10 @@ export default function NewDrawWizardPage() {
         }}
         className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors ${
           active
-            ? "bg-slate-deep text-white"
+            ? "bg-teal text-white"
             : done
-              ? "bg-brand-elevated text-slate-tile"
-              : "bg-[rgba(91,134,153,0.06)] text-[rgba(59,88,100,0.70)]"
+              ? "bg-brand-elevated text-cream"
+              : "bg-brand-surface text-cream-muted"
         }`}
       >
         <span className="font-mono">
@@ -518,12 +518,12 @@ export default function NewDrawWizardPage() {
     <AppShell>
       <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
         <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-          <h2 className="font-display text-2xl text-slate-tile">Create New Draw</h2>
+          <h2 className="font-display text-2xl text-cream">Create New Draw</h2>
           {jobId && draftId && (
-            <span className="text-xs text-[rgba(59,88,100,0.55)]">Draft auto-save enabled</span>
+            <span className="text-xs text-cream-dim">Draft auto-save enabled</span>
           )}
         </div>
-        <p className="text-sm text-[rgba(59,88,100,0.55)] mb-6">
+        <p className="text-sm text-cream-dim mb-6">
           Step-by-step wizard. Save as draft at any step — pick up later from the draws list.
         </p>
 
@@ -535,7 +535,7 @@ export default function NewDrawWizardPage() {
         </div>
 
         {error && (
-          <div className="mb-4 bg-nw-danger/10 border border-nw-danger/40 px-4 py-3 text-sm text-nw-danger">
+          <div className="mb-4 bg-status-danger/10 border border-status-danger/40 px-4 py-3 text-sm text-status-danger">
             {error}
           </div>
         )}
@@ -543,15 +543,15 @@ export default function NewDrawWizardPage() {
         {/* ─────────────────────────  STEP 1  ───────────────────────── */}
         {step === 1 && (
           <div className="space-y-6 animate-fade-up">
-            <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 space-y-4">
+            <div className="bg-brand-card border border-brand-border p-6 space-y-4">
               <div>
-                <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
                   Job
                 </label>
                 <select
                   value={jobId}
                   onChange={(e) => setJobId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
                 >
                   <option value="">Select a job…</option>
                   {jobs.map((j) => (
@@ -563,7 +563,7 @@ export default function NewDrawWizardPage() {
               </div>
 
               {jobMeta && job && (
-                <div className="bg-slate-deep/5 border border-stone-blue/30 p-4 space-y-2">
+                <div className="bg-teal/5 border border-teal/30 p-4 space-y-2">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <Stat label="Contract" value={formatCents(jobMeta.contractAmount)} />
                     <Stat label="Billed to date" value={formatCents(jobMeta.billedToDate)} />
@@ -578,7 +578,7 @@ export default function NewDrawWizardPage() {
               )}
 
               {jobId && jobMeta && jobMeta.invoicesSinceLastDraw === 0 && (
-                <div className="bg-nw-warn/10 border border-nw-warn/40 px-4 py-3 text-sm text-nw-warn">
+                <div className="bg-brass/10 border border-brass/40 px-4 py-3 text-sm text-brass">
                   No new approved invoices since{" "}
                   {jobMeta.lastDrawNumber
                     ? `Draw #${jobMeta.lastDrawNumber}`
@@ -588,7 +588,7 @@ export default function NewDrawWizardPage() {
               )}
 
               {jobId && (
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-nw-warn">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-brass">
                   <input
                     type="checkbox"
                     checked={isFinal}
@@ -600,7 +600,7 @@ export default function NewDrawWizardPage() {
               )}
 
               {blockingOpenDraw && (
-                <div className="bg-nw-danger/10 border border-nw-danger/40 px-4 py-3 text-sm text-nw-danger">
+                <div className="bg-status-danger/10 border border-status-danger/40 px-4 py-3 text-sm text-status-danger">
                   Draw #{blockingOpenDraw.draw_number} is still in{" "}
                   <span className="font-medium">{blockingOpenDraw.status}</span> status — approve
                   or void it before creating Draw #{nextDrawNumber}.
@@ -612,7 +612,7 @@ export default function NewDrawWizardPage() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!jobId || !!blockingOpenDraw}
-                className="px-6 py-2.5 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white font-medium transition-colors"
+                className="px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium transition-colors"
               >
                 Next: Period
               </button>
@@ -623,17 +623,17 @@ export default function NewDrawWizardPage() {
         {/* ─────────────────────────  STEP 2  ───────────────────────── */}
         {step === 2 && (
           <div className="space-y-6 animate-fade-up">
-            <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 space-y-4">
+            <div className="bg-brand-card border border-brand-border p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <DateField label="Application Date" value={appDate} onChange={setAppDate} />
                 <DateField label="Period Start" value={periodStart} onChange={setPeriodStart} />
                 <DateField label="Period End" value={periodEnd} onChange={setPeriodEnd} />
               </div>
-              <div className="text-xs text-[rgba(59,88,100,0.55)]">
+              <div className="text-xs text-cream-dim">
                 Default period start = day after the last locked draw&apos;s period end. Default end =
                 today.
               </div>
-              <div className="bg-slate-deep/5 border border-stone-blue/30 px-4 py-3 text-sm text-slate-tile">
+              <div className="bg-teal/5 border border-teal/30 px-4 py-3 text-sm text-cream">
                 <span className="font-medium">{periodInvoices.length}</span> approved invoice(s)
                 received between {formatDate(periodStart)} and {formatDate(periodEnd)}.
               </div>
@@ -642,7 +642,7 @@ export default function NewDrawWizardPage() {
             <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(1)}
-                className="w-full sm:w-auto px-6 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
               >
                 Back
               </button>
@@ -650,14 +650,14 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
                 >
                   Save Draft
                 </button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={!periodStart || !periodEnd}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
                 >
                   Next: Review Line Items
                 </button>
@@ -670,18 +670,18 @@ export default function NewDrawWizardPage() {
         {step === 3 && (
           <div className="space-y-6 animate-fade-up">
             {periodInvoices.length === 0 ? (
-              <div className="bg-white border border-[rgba(59,88,100,0.15)] p-8 text-center text-slate-tile">
+              <div className="bg-brand-card border border-brand-border p-8 text-center text-cream">
                 No invoices found in this period.
               </div>
             ) : (
-              <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4">
-                <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-3">
+              <div className="bg-brand-card border border-brand-border p-4">
+                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3">
                   {selected.size} of {periodInvoices.length} invoice(s) selected
                 </p>
-                <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)] max-h-72">
+                <div className="overflow-x-auto border border-brand-border max-h-72">
                   <table className="w-full min-w-[520px] text-sm">
                     <thead>
-                      <tr className="bg-[rgba(91,134,153,0.06)] text-left sticky top-0">
+                      <tr className="bg-brand-surface text-left sticky top-0">
                         <th className="py-2 px-3 w-8">
                           <input
                             type="checkbox"
@@ -705,7 +705,7 @@ export default function NewDrawWizardPage() {
                       {periodInvoices.map((inv) => (
                         <tr
                           key={inv.id}
-                          className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 cursor-pointer"
+                          className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer"
                           onClick={() => toggleInvoice(inv.id)}
                         >
                           <td className="py-2 px-3">
@@ -715,16 +715,16 @@ export default function NewDrawWizardPage() {
                               onChange={() => toggleInvoice(inv.id)}
                             />
                           </td>
-                          <td className="py-2 px-3 text-slate-tile">
+                          <td className="py-2 px-3 text-cream">
                             {inv.vendor_name_raw ?? "Unknown"}
                           </td>
-                          <td className="py-2 px-3 text-[rgba(59,88,100,0.70)] font-mono text-xs">
+                          <td className="py-2 px-3 text-cream-muted font-mono text-xs">
                             {inv.invoice_number ?? "—"}
                           </td>
-                          <td className="py-2 px-3 text-[rgba(59,88,100,0.70)] text-xs">
+                          <td className="py-2 px-3 text-cream-muted text-xs">
                             {inv.cost_codes ? `${inv.cost_codes.code}` : "—"}
                           </td>
-                          <td className="py-2 px-3 text-slate-tile text-right font-display">
+                          <td className="py-2 px-3 text-cream text-right font-display">
                             {formatCents(inv.total_amount)}
                           </td>
                         </tr>
@@ -736,19 +736,19 @@ export default function NewDrawWizardPage() {
             )}
 
             {/* G703-style preview */}
-            <div className="bg-white border border-[rgba(59,88,100,0.15)]">
-              <div className="px-4 py-3 border-b border-[rgba(59,88,100,0.15)] flex items-center justify-between">
-                <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
+            <div className="bg-brand-card border border-brand-border">
+              <div className="px-4 py-3 border-b border-brand-border flex items-center justify-between">
+                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">
                   G703 Continuation Sheet — Preview
                 </p>
                 {previewLoading && (
-                  <div className="w-3 h-3 border border-stone-blue border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3 h-3 border border-teal border-t-transparent rounded-full animate-spin" />
                 )}
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[900px] text-sm">
                   <thead>
-                    <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+                    <tr className="bg-brand-surface text-left">
                       <Th>Code</Th>
                       <Th>Description</Th>
                       <Th right>Scheduled</Th>
@@ -761,8 +761,8 @@ export default function NewDrawWizardPage() {
                   </thead>
                   <tbody>
                     {baseLines.length > 0 && (
-                      <tr className="bg-[rgba(91,134,153,0.06)]/40">
-                        <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-semibold">
+                      <tr className="bg-brand-surface/40">
+                        <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-cream-dim font-semibold">
                           Base Contract
                         </td>
                       </tr>
@@ -778,11 +778,11 @@ export default function NewDrawWizardPage() {
                     ))}
                     {coLines.length > 0 && (
                       <>
-                        <tr className="bg-nw-warn/10 border-t-2 border-nw-warn/40">
-                          <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-nw-warn font-semibold">
+                        <tr className="bg-brass/10 border-t-2 border-brass/40">
+                          <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-brass font-semibold">
                             Change Orders
                             {preview?.change_orders.some((c) => c.pcco_number != null) && (
-                              <span className="ml-2 text-[rgba(59,88,100,0.55)] font-normal normal-case">
+                              <span className="ml-2 text-cream-dim font-normal normal-case">
                                 {preview!.change_orders
                                   .filter((c) => c.pcco_number != null)
                                   .map((c) => `PCCO #${c.pcco_number}`)
@@ -805,7 +805,7 @@ export default function NewDrawWizardPage() {
                     )}
                     {(!preview || preview.lines.length === 0) && (
                       <tr>
-                        <td colSpan={8} className="py-6 text-center text-[rgba(59,88,100,0.55)] text-xs">
+                        <td colSpan={8} className="py-6 text-center text-cream-dim text-xs">
                           {previewLoading ? "Calculating…" : "No line items yet."}
                         </td>
                       </tr>
@@ -818,7 +818,7 @@ export default function NewDrawWizardPage() {
             <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(2)}
-                className="w-full sm:w-auto px-6 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
               >
                 Back
               </button>
@@ -826,14 +826,14 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
                 >
                   Save Draft
                 </button>
                 <button
                   onClick={() => setStep(4)}
                   disabled={selected.size === 0}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
                 >
                   Next: Summary
                 </button>
@@ -845,17 +845,17 @@ export default function NewDrawWizardPage() {
         {/* ─────────────────────────  STEP 4  ───────────────────────── */}
         {step === 4 && preview && (
           <div className="space-y-6 animate-fade-up">
-            <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6">
-              <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-4">
+            <div className="bg-brand-card border border-brand-border p-6">
+              <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4">
                 G702 Summary — Application for Payment{" "}
-                {isFinal && <span className="text-nw-warn">(FINAL)</span>}
+                {isFinal && <span className="text-brass">(FINAL)</span>}
               </p>
               <div className="space-y-3">
                 <G702Line num="1" label="Original Contract Sum" value={preview.totals.original_contract_sum} />
                 <G702Line num="1a" label="Deposit" value={preview.totals.deposit_amount} sub />
                 <G702Line num="2" label="Net Change by Change Orders" value={preview.totals.net_change_orders} />
                 <G702Line num="3" label="Contract Sum to Date" value={preview.totals.contract_sum_to_date} highlight />
-                <div className="border-t border-[rgba(59,88,100,0.15)] my-2" />
+                <div className="border-t border-brand-border my-2" />
                 <G702Line num="4" label="Total Completed & Stored to Date" value={preview.totals.total_completed_to_date} />
                 <G702Line num="5a" label="Retainage on Completed Work" value={preview.totals.retainage_on_completed} sub />
                 <G702Line num="5b" label="Retainage on Stored Material" value={preview.totals.retainage_on_stored} sub />
@@ -863,14 +863,14 @@ export default function NewDrawWizardPage() {
                 <G702Line num="6" label="Total Earned Less Retainage" value={preview.totals.total_earned_less_retainage} />
                 <G702Line num="7" label="Less Previous Certificates" value={preview.totals.less_previous_certificates} />
                 <G702Line num="8" label="Current Payment Due" value={preview.totals.current_payment_due} highlight />
-                <div className="border-t border-[rgba(59,88,100,0.15)] my-2" />
+                <div className="border-t border-brand-border my-2" />
                 <G702Line num="9" label="Balance to Finish + Retainage" value={preview.totals.balance_to_finish} />
               </div>
             </div>
 
             {warnings.length > 0 && (
-              <div className="bg-nw-warn/10 border border-nw-warn/40 p-4">
-                <p className="text-[11px] font-medium text-nw-warn uppercase tracking-wider mb-2">
+              <div className="bg-brass/10 border border-brass/40 p-4">
+                <p className="text-[11px] font-medium text-brass uppercase tracking-wider mb-2">
                   Warnings ({warnings.length})
                 </p>
                 <ul className="space-y-1.5 text-sm">
@@ -878,7 +878,7 @@ export default function NewDrawWizardPage() {
                     <li
                       key={i}
                       className={
-                        w.kind === "warn" ? "text-nw-warn" : "text-[rgba(59,88,100,0.70)]"
+                        w.kind === "warn" ? "text-brass" : "text-cream-muted"
                       }
                     >
                       {w.kind === "warn" ? "⚠" : "ℹ"} {w.text}
@@ -888,24 +888,24 @@ export default function NewDrawWizardPage() {
               </div>
             )}
 
-            <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6">
-              <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-3">
+            <div className="bg-brand-card border border-brand-border p-6">
+              <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3">
                 Draw Details
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <div className="text-[rgba(59,88,100,0.55)]">Job</div>
-                  <div className="text-slate-tile">{preview.job.name}</div>
+                  <div className="text-cream-dim">Job</div>
+                  <div className="text-cream">{preview.job.name}</div>
                 </div>
                 <div>
-                  <div className="text-[rgba(59,88,100,0.55)]">Period</div>
-                  <div className="text-slate-tile">
+                  <div className="text-cream-dim">Period</div>
+                  <div className="text-cream">
                     {formatDate(periodStart)} → {formatDate(periodEnd)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[rgba(59,88,100,0.55)]">Invoices</div>
-                  <div className="text-slate-tile">{selected.size}</div>
+                  <div className="text-cream-dim">Invoices</div>
+                  <div className="text-cream">{selected.size}</div>
                 </div>
               </div>
             </div>
@@ -913,7 +913,7 @@ export default function NewDrawWizardPage() {
             <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(3)}
-                className="w-full sm:w-auto px-6 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
               >
                 Back
               </button>
@@ -921,14 +921,14 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
                 >
                   Save Draft
                 </button>
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto px-8 py-2.5 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-8 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
                 >
                   {submitting ? "Creating…" : "Create Draw"}
                 </button>
@@ -944,9 +944,9 @@ export default function NewDrawWizardPage() {
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div>
-      <div className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">{label}</div>
-      <div className="text-slate-tile font-display font-medium">{value}</div>
-      {sub && <div className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">{sub}</div>}
+      <div className="text-[11px] uppercase tracking-wider text-cream-dim">{label}</div>
+      <div className="text-cream font-display font-medium">{value}</div>
+      {sub && <div className="text-xs text-cream-dim mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -962,14 +962,14 @@ function DateField({
 }) {
   return (
     <div>
-      <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+      <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
         {label}
       </label>
       <input
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+        className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
       />
     </div>
   );
@@ -978,7 +978,7 @@ function DateField({
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
     <th
-      className={`py-2 px-3 text-[10px] text-slate-tile font-bold uppercase tracking-wider ${
+      className={`py-2 px-3 text-[10px] text-cream font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
       }`}
     >
@@ -1003,14 +1003,14 @@ function G702Line({
   return (
     <div className={`flex items-center justify-between ${sub ? "pl-6 opacity-80" : ""}`}>
       <div className="flex items-center gap-3">
-        <span className="text-[rgba(59,88,100,0.55)] text-xs font-mono w-6">{num}</span>
-        <span className={`text-sm ${highlight ? "text-slate-tile font-medium" : "text-[rgba(59,88,100,0.70)]"}`}>
+        <span className="text-cream-dim text-xs font-mono w-6">{num}</span>
+        <span className={`text-sm ${highlight ? "text-cream font-medium" : "text-cream-muted"}`}>
           {label}
         </span>
       </div>
       <span
         className={`font-display ${
-          highlight ? "text-nw-warn font-medium text-base" : "text-slate-tile text-sm"
+          highlight ? "text-brass font-medium text-base" : "text-cream text-sm"
         }`}
       >
         {formatCents(value)}
@@ -1039,17 +1039,17 @@ function G703EditRow({
 
   return (
     <>
-      <tr className={`border-t border-[rgba(59,88,100,0.08)] ${hasOverride ? "bg-nw-warn/5" : ""}`}>
-        <td className={`py-2 px-3 font-mono text-xs font-bold ${isCo ? "text-nw-warn" : "text-stone-blue"}`}>
+      <tr className={`border-t border-brand-row-border ${hasOverride ? "bg-brass/5" : ""}`}>
+        <td className={`py-2 px-3 font-mono text-xs font-bold ${isCo ? "text-brass" : "text-teal"}`}>
           {line.code}
         </td>
-        <td className="py-2 px-3 text-slate-tile">
+        <td className="py-2 px-3 text-cream">
           {line.description}
-          {isCo && <span className="ml-2 text-[10px] text-nw-warn">CO</span>}
+          {isCo && <span className="ml-2 text-[10px] text-brass">CO</span>}
         </td>
-        <td className="py-2 px-3 text-slate-tile text-right">{formatCents(line.scheduled_value)}</td>
-        <td className="py-2 px-3 text-slate-tile text-right">
-          {line.previous_applications > 0 ? formatCents(line.previous_applications) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
+        <td className="py-2 px-3 text-cream text-right">{formatCents(line.scheduled_value)}</td>
+        <td className="py-2 px-3 text-cream text-right">
+          {line.previous_applications > 0 ? formatCents(line.previous_applications) : <span className="text-cream-dim">—</span>}
         </td>
         <td className="py-2 px-3 text-right">
           <input
@@ -1057,27 +1057,27 @@ function G703EditRow({
             step="0.01"
             value={dollars}
             onChange={(e) => onChange(e.target.value, reason)}
-            className="w-24 px-1.5 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile text-right font-display focus:border-stone-blue focus:outline-none"
+            className="w-24 px-1.5 py-1 bg-brand-surface border border-brand-border text-sm text-cream text-right font-display focus:border-teal focus:outline-none"
           />
         </td>
-        <td className={`py-2 px-3 text-right ${overrun ? "text-nw-danger font-medium" : "text-slate-tile"}`}>
+        <td className={`py-2 px-3 text-right ${overrun ? "text-status-danger font-medium" : "text-cream"}`}>
           {formatCents(line.total_completed)}
         </td>
-        <td className={`py-2 px-3 text-right ${line.balance_to_finish < 0 ? "text-nw-danger" : "text-slate-tile"}`}>
+        <td className={`py-2 px-3 text-right ${line.balance_to_finish < 0 ? "text-status-danger" : "text-cream"}`}>
           {formatCents(line.balance_to_finish)}
         </td>
-        <td className="py-2 px-3 text-right text-nw-warn">{formatCents(line.retainage)}</td>
+        <td className="py-2 px-3 text-right text-brass">{formatCents(line.retainage)}</td>
       </tr>
       {hasOverride && (
         <tr>
-          <td colSpan={8} className="py-1.5 px-3 bg-nw-warn/5">
+          <td colSpan={8} className="py-1.5 px-3 bg-brass/5">
             <input
               type="text"
               placeholder="Reason for adjustment (required)"
               value={reason}
               onChange={(e) => onChange(dollars, e.target.value)}
-              className={`w-full px-2 py-1 bg-[rgba(91,134,153,0.06)] border text-xs text-slate-tile focus:border-stone-blue focus:outline-none ${
-                reason.trim() ? "border-[rgba(59,88,100,0.15)]" : "border-nw-danger/40"
+              className={`w-full px-2 py-1 bg-brand-surface border text-xs text-cream focus:border-teal focus:outline-none ${
+                reason.trim() ? "border-brand-border" : "border-status-danger/40"
               }`}
             />
           </td>

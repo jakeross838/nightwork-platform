@@ -112,17 +112,17 @@ export default function InvoiceAllocationsEditor({
   }
 
   if (loading) {
-    return <div className="text-xs text-[rgba(59,88,100,0.55)] py-2">Loading allocations...</div>;
+    return <div className="text-xs text-cream-dim py-2">Loading allocations...</div>;
   }
 
   const canEdit = !readOnly && !locked;
 
   return (
-    <div className="mt-3 border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/30 p-3">
+    <div className="mt-3 border border-brand-border bg-brand-surface/30 p-3">
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h4 className="text-sm font-medium text-slate-tile">Allocations</h4>
-          <p className="text-[11px] text-[rgba(59,88,100,0.55)]">
+          <h4 className="text-sm font-medium text-cream">Allocations</h4>
+          <p className="text-[11px] text-cream-dim">
             Split this invoice across multiple cost codes. Sum must equal the invoice total.
             {autoCreated && " (Auto-created from invoice-level cost code \u2014 edit to split.)"}
           </p>
@@ -131,7 +131,7 @@ export default function InvoiceAllocationsEditor({
           <button
             onClick={addRow}
             disabled={saving}
-            className="text-xs px-2 py-1 border border-stone-blue text-stone-blue hover:bg-stone-blue/10"
+            className="text-xs px-2 py-1 border border-teal text-teal hover:bg-teal/10"
           >
             + Split row
           </button>
@@ -139,14 +139,14 @@ export default function InvoiceAllocationsEditor({
       </div>
 
       {locked && (
-        <div className="mb-2 text-[11px] text-nw-warn border border-nw-warn/40 bg-nw-warn/5 px-2 py-1">
+        <div className="mb-2 text-[11px] text-brass border border-brass/40 bg-brass/5 px-2 py-1">
           Cannot edit: this invoice is on a submitted draw.
         </div>
       )}
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] border-b border-[rgba(59,88,100,0.15)]">
+          <tr className="text-left text-[11px] uppercase tracking-wider text-cream-dim border-b border-brand-border">
             <th className="py-1 pr-2">Cost code</th>
             <th className="py-1 pr-2">Description</th>
             <th className="py-1 pr-2 text-right">Amount ($)</th>
@@ -155,10 +155,10 @@ export default function InvoiceAllocationsEditor({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
+            <tr key={i} className="border-b border-brand-row-border last:border-0">
               <td className="py-1 pr-2">
                 <select
-                  className={`input text-xs${!r.cost_code_id ? " border-nw-danger/60" : ""}`}
+                  className={`input text-xs${!r.cost_code_id ? " border-status-danger/60" : ""}`}
                   value={r.cost_code_id ?? ""}
                   onChange={(e) => updateRow(i, { cost_code_id: e.target.value || null })}
                   disabled={!canEdit}
@@ -196,7 +196,7 @@ export default function InvoiceAllocationsEditor({
                 {canEdit && rows.length > 1 && (
                   <button
                     onClick={() => removeRow(i)}
-                    className="text-[11px] text-nw-danger hover:underline"
+                    className="text-[11px] text-status-danger hover:underline"
                   >
                     Remove
                   </button>
@@ -206,14 +206,14 @@ export default function InvoiceAllocationsEditor({
           ))}
         </tbody>
         <tfoot>
-          <tr className="border-t-2 border-[rgba(59,88,100,0.15)]">
-            <td className="py-1 pr-2 text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Total</td>
+          <tr className="border-t-2 border-brand-border">
+            <td className="py-1 pr-2 text-[11px] text-cream-dim uppercase tracking-wider">Total</td>
             <td />
             <td className="py-1 pr-2 text-right font-medium">
-              <span className={balanced ? "text-stone-blue" : "text-nw-danger"}>
+              <span className={balanced ? "text-teal" : "text-status-danger"}>
                 {formatCents(sum)}
               </span>
-              <span className="text-[rgba(59,88,100,0.55)]"> / {formatCents(invoiceTotalCents)}</span>
+              <span className="text-cream-dim"> / {formatCents(invoiceTotalCents)}</span>
             </td>
             <td />
           </tr>
@@ -221,7 +221,7 @@ export default function InvoiceAllocationsEditor({
       </table>
 
       {error && (
-        <div className="mt-2 border border-nw-danger/40 bg-nw-danger/5 px-2 py-1 text-xs text-nw-danger">
+        <div className="mt-2 border border-status-danger/40 bg-status-danger/5 px-2 py-1 text-xs text-status-danger">
           {error}
         </div>
       )}
@@ -231,7 +231,7 @@ export default function InvoiceAllocationsEditor({
           <button
             onClick={save}
             disabled={saving || !balanced || anyCostCodeMissing}
-            className="px-3 py-1 bg-slate-deep text-white text-xs font-medium hover:bg-stone-blue/90 disabled:opacity-60"
+            className="px-3 py-1 bg-teal text-white text-xs font-medium hover:bg-teal/90 disabled:opacity-60"
             title={
               anyCostCodeMissing
                 ? "Every allocation needs a cost code"
@@ -243,14 +243,14 @@ export default function InvoiceAllocationsEditor({
             {saving ? "Saving..." : "Save allocations"}
           </button>
           {!balanced && (
-            <span className="text-[11px] text-nw-danger">
+            <span className="text-[11px] text-status-danger">
               {sum > invoiceTotalCents
                 ? `Over by ${formatCents(sum - invoiceTotalCents)}`
                 : `Under by ${formatCents(invoiceTotalCents - sum)}`}
             </span>
           )}
           {anyCostCodeMissing && balanced && (
-            <span className="text-[11px] text-nw-danger">
+            <span className="text-[11px] text-status-danger">
               Assign a cost code to every row
             </span>
           )}

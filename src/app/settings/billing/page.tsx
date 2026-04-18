@@ -133,14 +133,14 @@ export default async function BillingSettingsPage({
         </Banner>
       )}
 
-      <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6">
+      <section className="bg-white border border-brand-border p-6">
         <div className="flex items-baseline justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)]">Current Plan</p>
-            <h2 className="mt-1 font-display text-3xl text-slate-tile">{planName}</h2>
-            <p className="mt-1 text-sm text-[rgba(59,88,100,0.70)]">
+            <p className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">Current Plan</p>
+            <h2 className="mt-1 font-display text-3xl text-cream">{planName}</h2>
+            <p className="mt-1 text-sm text-cream-muted">
               {PLAN_MONTHLY_PRICE[planSlug]}
-              {planSlug !== "free_trial" && <span className="text-[rgba(59,88,100,0.55)]">/mo</span>}
+              {planSlug !== "free_trial" && <span className="text-cream-dim">/mo</span>}
             </p>
           </div>
           <StatusBadge status={org.subscription_status} />
@@ -171,7 +171,7 @@ export default async function BillingSettingsPage({
           <Row label="Stripe customer" value={org.stripe_customer_id ?? "—"} />
         </dl>
 
-        <div className="mt-6 pt-6 border-t border-[rgba(59,88,100,0.15)]">
+        <div className="mt-6 pt-6 border-t border-brand-border">
           <BillingActions
             hasCustomer={Boolean(org.stripe_customer_id)}
             hasActiveSub={Boolean(currentSub)}
@@ -182,9 +182,9 @@ export default async function BillingSettingsPage({
       </section>
 
       {onTrial && !currentSub && (
-        <section className="bg-slate-deep-muted border border-stone-blue p-6">
-          <h3 className="font-display text-lg text-slate-tile">Upgrade when you&apos;re ready</h3>
-          <p className="mt-2 text-sm text-[rgba(59,88,100,0.70)]">
+        <section className="bg-teal-muted border border-teal p-6">
+          <h3 className="font-display text-lg text-cream">Upgrade when you&apos;re ready</h3>
+          <p className="mt-2 text-sm text-cream-muted">
             {trialDaysLeft !== null
               ? `You have ${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left on your trial.`
               : "Your trial is active."}{" "}
@@ -192,7 +192,7 @@ export default async function BillingSettingsPage({
           </p>
           <Link
             href="/pricing"
-            className="mt-4 inline-block px-5 py-2.5 bg-slate-deep text-white text-[13px] tracking-[0.08em] uppercase hover:bg-slate-deeper transition-colors"
+            className="mt-4 inline-block px-5 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase hover:bg-teal-hover transition-colors"
           >
             Compare Plans
           </Link>
@@ -244,20 +244,20 @@ function capitalize(s: string): string {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <>
-      <dt className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)]">{label}</dt>
-      <dd className="text-slate-tile break-all">{value}</dd>
+      <dt className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">{label}</dt>
+      <dd className="text-cream break-all">{value}</dd>
     </>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const styles = {
-    trialing: "bg-slate-deep-muted text-stone-blue border-stone-blue",
-    active: "bg-nw-success-muted text-nw-success border-nw-success",
-    past_due: "bg-nw-warn-muted text-nw-warn border-nw-warn",
-    cancelled: "bg-nw-danger-muted text-nw-danger border-nw-danger",
+    trialing: "bg-teal-muted text-teal border-teal",
+    active: "bg-status-success-muted text-status-success border-status-success",
+    past_due: "bg-status-warning-muted text-status-warning border-status-warning",
+    cancelled: "bg-status-danger-muted text-status-danger border-status-danger",
   } as const;
-  const cls = (styles as Record<string, string>)[status] ?? "bg-[rgba(91,134,153,0.06)] text-[rgba(59,88,100,0.70)] border-[rgba(59,88,100,0.15)]";
+  const cls = (styles as Record<string, string>)[status] ?? "bg-brand-surface text-cream-muted border-brand-border";
   return (
     <span className={`px-2.5 py-1 border text-[11px] tracking-[0.08em] uppercase ${cls}`}>
       {formatStatus(status)}
@@ -273,9 +273,9 @@ function Banner({
   children: React.ReactNode;
 }) {
   const cls = {
-    success: "bg-nw-success-muted border-nw-success/40 text-nw-success",
-    warning: "bg-nw-warn-muted border-nw-warn/40 text-nw-warn",
-    danger: "bg-nw-danger-muted border-nw-danger/40 text-nw-danger",
+    success: "bg-status-success-muted border-status-success/40 text-status-success",
+    warning: "bg-status-warning-muted border-status-warning/40 text-status-warning",
+    danger: "bg-status-danger-muted border-status-danger/40 text-status-danger",
   }[kind];
   return <div className={`px-4 py-3 border ${cls} text-sm`}>{children}</div>;
 }

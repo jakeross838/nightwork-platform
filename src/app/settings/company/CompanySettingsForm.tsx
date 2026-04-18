@@ -145,7 +145,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
         <Section title="Logo">
           <div className="flex items-center gap-4">
             <div
-              className="h-16 w-40 flex items-center justify-center border border-[rgba(59,88,100,0.15)] bg-[var(--org-primary)]"
+              className="h-16 w-40 flex items-center justify-center border border-brand-border bg-[var(--org-primary)]"
             >
               {form.logo_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -166,10 +166,10 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
                 onChange={onLogoChange}
                 className="text-sm"
               />
-              <p className="mt-1 text-xs text-[rgba(59,88,100,0.55)]">
+              <p className="mt-1 text-xs text-cream-dim">
                 PNG, JPG, SVG, or WebP. Displays at 32px tall in the nav.
               </p>
-              {uploading && <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">Uploading…</p>}
+              {uploading && <p className="text-xs text-cream-dim mt-1">Uploading…</p>}
             </div>
           </div>
         </Section>
@@ -187,7 +187,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
               onChange={(v) => update("accent_color", v)}
             />
           </div>
-          <p className="text-xs text-[rgba(59,88,100,0.55)]">
+          <p className="text-xs text-cream-dim">
             Primary drives the nav bar, buttons, and highlights. Accent appears on subtle
             borders and divider lines.
           </p>
@@ -205,7 +205,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
           {message && (
             <span
               className={`text-xs tracking-[0.04em] ${
-                message.kind === "ok" ? "text-nw-success" : "text-nw-danger"
+                message.kind === "ok" ? "text-status-success" : "text-status-danger"
               }`}
             >
               {message.text}
@@ -217,7 +217,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
       {/* Live preview */}
       <aside className="h-max sticky top-24">
         <p className="section-label">Live Preview</p>
-        <div className="border border-[rgba(59,88,100,0.15)] bg-white">
+        <div className="border border-brand-border bg-white">
           <div
             className="px-4 py-3 flex items-center gap-3"
             style={{ background: form.primary_color, borderTop: `3px solid ${form.primary_color}` }}
@@ -248,7 +248,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
               className="h-px w-full mt-3"
               style={{ background: form.accent_color ?? form.primary_color }}
             />
-            <p className="text-xs text-[rgba(59,88,100,0.55)] mt-2">{form.tagline ?? ""}</p>
+            <p className="text-xs text-cream-dim mt-2">{form.tagline ?? ""}</p>
           </div>
         </div>
       </aside>
@@ -258,7 +258,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border border-[rgba(59,88,100,0.15)] bg-white p-5">
+    <section className="border border-brand-border bg-white p-5">
       <h2 className="section-label">{title}</h2>
       <div className="space-y-3">{children}</div>
     </section>
@@ -280,7 +280,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
         {label}
       </span>
       <input
@@ -288,7 +288,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm text-slate-tile focus-teal"
+        className="w-full px-3 py-2 border border-brand-border bg-white text-sm text-cream focus-teal"
       />
     </label>
   );
@@ -305,7 +305,7 @@ function ColorField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
         {label}
       </span>
       <div className="flex items-center gap-2">
@@ -313,13 +313,13 @@ function ColorField({
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-10 w-12 border border-[rgba(59,88,100,0.15)] cursor-pointer p-0"
+          className="h-10 w-12 border border-brand-border cursor-pointer p-0"
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm text-slate-tile focus-teal font-mono uppercase"
+          className="flex-1 px-3 py-2 border border-brand-border bg-white text-sm text-cream focus-teal font-mono uppercase"
         />
       </div>
     </label>

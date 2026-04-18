@@ -322,17 +322,17 @@ export default function ImportPageContent() {
       <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 md:px-6 py-8">
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <div className="text-xs tracking-[0.15em] uppercase text-[rgba(59,88,100,0.55)]">
+            <div className="text-xs tracking-[0.15em] uppercase text-cream-dim">
               Invoices
             </div>
-            <h1 className="font-display text-3xl text-slate-tile mt-1">Bulk Import</h1>
-            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
+            <h1 className="font-display text-3xl text-cream mt-1">Bulk Import</h1>
+            <p className="text-sm text-cream-dim mt-1">
               Drop PDFs or images. Up to 50 files, 10MB each. Parsing is sequential to respect AI rate limits.
             </p>
           </div>
           <Link
             href="/invoices"
-            className="text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+            className="text-sm text-cream-dim hover:text-cream"
           >
             ← Back to invoices
           </Link>
@@ -360,13 +360,13 @@ export default function ImportPageContent() {
 
         {/* Status / progress card */}
         {batch && (
-          <section className="mt-8 border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]">
-            <header className="px-5 py-4 border-b border-[rgba(59,88,100,0.15)] flex items-center justify-between">
+          <section className="mt-8 border border-brand-border bg-brand-surface">
+            <header className="px-5 py-4 border-b border-brand-border flex items-center justify-between">
               <div>
-                <div className="text-xs uppercase tracking-[0.1em] text-[rgba(59,88,100,0.55)]">
+                <div className="text-xs uppercase tracking-[0.1em] text-cream-dim">
                   Batch
                 </div>
-                <div className="text-slate-tile font-medium">
+                <div className="text-cream font-medium">
                   {counts.parsed + counts.errors + counts.duplicates + counts.sent} of {batch.total_files} processed
                 </div>
               </div>
@@ -381,7 +381,7 @@ export default function ImportPageContent() {
             {/* Progress bar */}
             <div className="h-1 bg-brand-border">
               <div
-                className="h-full bg-slate-deep transition-all duration-500"
+                className="h-full bg-teal transition-all duration-500"
                 style={{
                   width: `${
                     batch.total_files > 0
@@ -397,12 +397,12 @@ export default function ImportPageContent() {
             </div>
 
             {/* Actions toolbar */}
-            <div className="px-5 py-3 bg-white-sand/40 border-b border-[rgba(59,88,100,0.15)] flex items-center gap-3 flex-wrap">
+            <div className="px-5 py-3 bg-brand-bg/40 border-b border-brand-border flex items-center gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={doSendToQueue}
                 disabled={!done || counts.parsed === 0}
-                className="px-4 py-2 bg-slate-deep text-white text-xs tracking-[0.08em] uppercase hover:bg-slate-deeper disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-teal text-white text-xs tracking-[0.08em] uppercase hover:bg-teal-hover disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Send {counts.parsed} to Approval Queue
               </button>
@@ -410,20 +410,20 @@ export default function ImportPageContent() {
                 type="button"
                 onClick={doDeleteErrors}
                 disabled={!done || counts.errors === 0}
-                className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-xs tracking-[0.08em] uppercase text-slate-tile hover:bg-[rgba(91,134,153,0.06)]-hover disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 border border-brand-border text-xs tracking-[0.08em] uppercase text-cream hover:bg-brand-surface-hover disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Delete {counts.errors} Errors
               </button>
               <div className="flex-1" />
               {selected.size > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[rgba(59,88,100,0.55)]">
+                  <span className="text-xs text-cream-dim">
                     {selected.size} selected
                   </span>
                   <select
                     value={assignJobId}
                     onChange={(e) => setAssignJobId(e.target.value)}
-                    className="px-2 py-1.5 bg-white-sand border border-[rgba(59,88,100,0.15)] text-xs text-slate-tile"
+                    className="px-2 py-1.5 bg-brand-bg border border-brand-border text-xs text-cream"
                   >
                     <option value="">Assign job…</option>
                     {jobs.map((j) => (
@@ -436,7 +436,7 @@ export default function ImportPageContent() {
                     type="button"
                     onClick={doBulkAssign}
                     disabled={!assignJobId}
-                    className="px-3 py-1.5 bg-nw-warn text-bg-dark text-xs tracking-[0.08em] uppercase hover:bg-nw-warn/90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 bg-brass text-bg-dark text-xs tracking-[0.08em] uppercase hover:bg-brass/90 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Apply
                   </button>
@@ -449,7 +449,7 @@ export default function ImportPageContent() {
                 sent_to_queue_count counter above). */}
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-[0.1em] text-[rgba(59,88,100,0.55)] border-b border-[rgba(59,88,100,0.15)]">
+                <tr className="text-left text-xs uppercase tracking-[0.1em] text-cream-dim border-b border-brand-border">
                   <th className="px-4 py-2 w-8">
                     <input
                       type="checkbox"
@@ -474,7 +474,7 @@ export default function ImportPageContent() {
               <tbody>
                 {visibleRows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-[rgba(59,88,100,0.55)] text-sm">
+                    <td colSpan={7} className="px-4 py-8 text-center text-cream-dim text-sm">
                       All processed rows have been sent to the approval queue.
                       Batch history kept in <span className="font-mono text-xs">sent_to_queue_count</span> above.
                     </td>
@@ -527,12 +527,12 @@ function DropZone({
       }}
       className={`cursor-pointer border border-dashed transition-all ${
         dragOver
-          ? "border-stone-blue bg-slate-deep/5"
-          : "border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-hover bg-[rgba(91,134,153,0.06)]/50"
+          ? "border-teal bg-teal/5"
+          : "border-brand-border hover:border-brand-border-hover bg-brand-surface/50"
       } ${disabled ? "opacity-50 cursor-not-allowed" : ""} px-8 py-12 text-center`}
     >
       <svg
-        className="w-10 h-10 mx-auto text-[rgba(59,88,100,0.55)] mb-3"
+        className="w-10 h-10 mx-auto text-cream-dim mb-3"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -540,10 +540,10 @@ function DropZone({
       >
         <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
       </svg>
-      <div className="text-slate-tile font-medium">
+      <div className="text-cream font-medium">
         {disabled ? "Processing…" : "Drop invoices here or click to browse"}
       </div>
-      <div className="text-xs text-[rgba(59,88,100,0.55)] mt-1">
+      <div className="text-xs text-cream-dim mt-1">
         PDF or image · up to 50 files · 10MB each
       </div>
     </div>
@@ -561,31 +561,31 @@ function Stat({
 }) {
   const color =
     tone === "ok"
-      ? "text-nw-success"
+      ? "text-status-success"
       : tone === "warn"
-      ? "text-nw-warn"
+      ? "text-brass"
       : tone === "err"
-      ? "text-nw-danger"
-      : "text-[rgba(59,88,100,0.55)]";
+      ? "text-status-danger"
+      : "text-cream-dim";
   return (
     <div className="text-center">
       <div className={`text-lg ${color} font-medium`}>{value}</div>
-      <div className="text-[10px] uppercase tracking-[0.1em] text-[rgba(59,88,100,0.55)]">{label}</div>
+      <div className="text-[10px] uppercase tracking-[0.1em] text-cream-dim">{label}</div>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; tone: string }> = {
-    import_queued: { label: "Queued", tone: "bg-brand-border/50 text-[rgba(59,88,100,0.55)]" },
-    import_parsing: { label: "Parsing…", tone: "bg-slate-deep/20 text-stone-blue" },
-    import_parsed: { label: "Parsed", tone: "bg-nw-success/20 text-nw-success" },
-    import_error: { label: "Error", tone: "bg-nw-danger/20 text-nw-danger" },
-    import_duplicate: { label: "Duplicate", tone: "bg-nw-warn/20 text-nw-warn" },
-    pm_review: { label: "Sent → PM", tone: "bg-cream/10 text-[rgba(59,88,100,0.55)]" },
-    qa_review: { label: "Sent → QA", tone: "bg-cream/10 text-[rgba(59,88,100,0.55)]" },
+    import_queued: { label: "Queued", tone: "bg-brand-border/50 text-cream-dim" },
+    import_parsing: { label: "Parsing…", tone: "bg-teal/20 text-teal" },
+    import_parsed: { label: "Parsed", tone: "bg-status-success/20 text-status-success" },
+    import_error: { label: "Error", tone: "bg-status-danger/20 text-status-danger" },
+    import_duplicate: { label: "Duplicate", tone: "bg-brass/20 text-brass" },
+    pm_review: { label: "Sent → PM", tone: "bg-cream/10 text-cream-dim" },
+    qa_review: { label: "Sent → QA", tone: "bg-cream/10 text-cream-dim" },
   };
-  const v = map[status] ?? { label: status, tone: "bg-brand-border/30 text-[rgba(59,88,100,0.55)]" };
+  const v = map[status] ?? { label: status, tone: "bg-brand-border/30 text-cream-dim" };
   return (
     <span className={`inline-block px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] ${v.tone}`}>
       {v.label}
@@ -605,7 +605,7 @@ function RowView({
   const canSelect =
     row.status === "import_parsed" || row.status === "import_duplicate";
   return (
-    <tr className="border-b border-[rgba(59,88,100,0.15)]/40 hover:bg-[rgba(91,134,153,0.06)]-hover/30">
+    <tr className="border-b border-brand-border/40 hover:bg-brand-surface-hover/30">
       <td className="px-4 py-2">
         <input
           type="checkbox"
@@ -615,11 +615,11 @@ function RowView({
         />
       </td>
       <td className="px-3 py-2">
-        <div className="text-slate-tile text-sm truncate max-w-[320px]" title={row.original_filename ?? ""}>
+        <div className="text-cream text-sm truncate max-w-[320px]" title={row.original_filename ?? ""}>
           {row.original_filename ?? "—"}
         </div>
         {row.import_error && (
-          <div className="text-[11px] text-nw-danger mt-0.5 truncate max-w-[320px]" title={row.import_error}>
+          <div className="text-[11px] text-status-danger mt-0.5 truncate max-w-[320px]" title={row.import_error}>
             {row.import_error}
           </div>
         )}
@@ -627,19 +627,19 @@ function RowView({
       <td className="px-3 py-2">
         <StatusBadge status={row.status} />
       </td>
-      <td className="px-3 py-2 text-[rgba(59,88,100,0.55)] text-sm">
+      <td className="px-3 py-2 text-cream-dim text-sm">
         {row.vendor_name_raw ?? (row.status === "import_queued" || row.status === "import_parsing" ? "…" : "—")}
       </td>
-      <td className="px-3 py-2 text-right text-[rgba(59,88,100,0.55)] text-sm">
+      <td className="px-3 py-2 text-right text-cream-dim text-sm">
         {row.total_amount && row.total_amount > 0 ? formatCents(row.total_amount) : "—"}
       </td>
       <td className="px-3 py-2 text-sm">
         {row.jobs?.name ? (
-          <span className="text-slate-tile">{row.jobs.name}</span>
+          <span className="text-cream">{row.jobs.name}</span>
         ) : row.status === "import_parsed" ? (
-          <span className="text-nw-warn text-xs">Unmatched — assign</span>
+          <span className="text-brass text-xs">Unmatched — assign</span>
         ) : (
-          <span className="text-[rgba(59,88,100,0.55)]">—</span>
+          <span className="text-cream-dim">—</span>
         )}
       </td>
       <td className="px-3 py-2 text-sm">
@@ -648,7 +648,7 @@ function RowView({
             {Math.round(row.confidence_score * 100)}% — {confidenceLabel(row.confidence_score)}
           </span>
         ) : (
-          <span className="text-[rgba(59,88,100,0.55)]">—</span>
+          <span className="text-cream-dim">—</span>
         )}
       </td>
     </tr>

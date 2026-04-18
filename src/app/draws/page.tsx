@@ -9,11 +9,11 @@ import { SkeletonList } from "@/components/loading-skeleton";
 import { formatCents, formatDate, formatStatus, statusBadgeOutline } from "@/lib/utils/format";
 
 function drawBadgeOutline(status: string): string {
- if (status === "submitted") return "bg-transparent text-slate-tile border border-cream";
- if (status === "paid") return "bg-transparent text-nw-success border border-nw-success";
- if (status === "approved") return "bg-transparent text-nw-success border border-nw-success";
- if (status === "pm_review" || status === "draft") return "bg-transparent text-nw-warn border border-nw-warn";
- if (status === "void") return "bg-transparent text-nw-danger border border-nw-danger";
+ if (status === "submitted") return "bg-transparent text-cream border border-cream";
+ if (status === "paid") return "bg-transparent text-status-success border border-status-success";
+ if (status === "approved") return "bg-transparent text-status-success border border-status-success";
+ if (status === "pm_review" || status === "draft") return "bg-transparent text-brass border border-brass";
+ if (status === "void") return "bg-transparent text-status-danger border border-status-danger";
  return statusBadgeOutline(status);
 }
 
@@ -59,11 +59,11 @@ export default function DrawsPage() {
  <FinancialViewTabs active="draws" />
  <div className="flex items-center justify-between mb-6">
  <div>
- <h2 className="font-display text-2xl text-slate-tile">Draws</h2>
- <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">AIA G702/G703 pay applications</p>
+ <h2 className="font-display text-2xl text-cream">Draws</h2>
+ <p className="text-sm text-cream-dim mt-1">AIA G702/G703 pay applications</p>
  </div>
  <Link href="/draws/new"
- className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper text-brand-bg text-sm font-medium transition-colors">
+ className="px-4 py-2 bg-teal hover:bg-teal-hover text-brand-bg text-sm font-medium transition-colors">
  Create New Draw
  </Link>
  </div>
@@ -82,39 +82,39 @@ export default function DrawsPage() {
  {Object.entries(grouped).map(([, { job, draws: jobDraws }]) => (
  <div key={job?.id ?? "unknown"}>
  <div className="flex items-center gap-3 mb-3">
- <span className="inline-flex items-center px-2.5 py-0.5 bg-transparent text-nw-warn border border-nw-warn text-sm font-medium">
+ <span className="inline-flex items-center px-2.5 py-0.5 bg-transparent text-brass border border-brass text-sm font-medium">
  {job?.name ?? "Unknown Job"}
  </span>
- <span className="text-xs text-[rgba(59,88,100,0.55)]">{job?.address}</span>
+ <span className="text-xs text-cream-dim">{job?.address}</span>
  </div>
- <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+ <div className="overflow-x-auto border border-brand-border">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-[rgba(91,134,153,0.06)] text-left">
- <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Draw #</th>
- <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Period</th>
- <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Application Date</th>
- <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Status</th>
- <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider text-right">Current Payment Due</th>
+ <tr className="bg-brand-surface text-left">
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Draw #</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Period</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Application Date</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Status</th>
+ <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Current Payment Due</th>
  </tr>
  </thead>
  <tbody>
  {jobDraws.map((d) => (
  <tr key={d.id}
- className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+ className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
  onClick={() => window.location.href = `/draws/${d.id}`}>
- <td className="py-4 px-5 text-slate-tile font-display font-medium">
+ <td className="py-4 px-5 text-cream font-display font-medium">
  #{d.draw_number}
- {d.revision_number > 0 && <span className="text-nw-warn ml-1 text-xs">Rev {d.revision_number}</span>}
+ {d.revision_number > 0 && <span className="text-brass ml-1 text-xs">Rev {d.revision_number}</span>}
  </td>
- <td className="py-4 px-5 text-[rgba(59,88,100,0.70)]">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
- <td className="py-4 px-5 text-[rgba(59,88,100,0.70)]">{formatDate(d.application_date)}</td>
+ <td className="py-4 px-5 text-cream-muted">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
+ <td className="py-4 px-5 text-cream-muted">{formatDate(d.application_date)}</td>
  <td className="py-4 px-5">
  <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${drawBadgeOutline(d.status)}`}>
  {formatStatus(d.status)}
  </span>
  </td>
- <td className="py-4 px-5 text-slate-tile text-right font-display font-medium">{formatCents(d.current_payment_due)}</td>
+ <td className="py-4 px-5 text-cream text-right font-display font-medium">{formatCents(d.current_payment_due)}</td>
  </tr>
  ))}
  </tbody>

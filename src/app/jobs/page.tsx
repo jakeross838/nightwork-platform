@@ -40,9 +40,9 @@ type StatusFilter = "all" | JobStatus;
 
 const HEALTH_RANK: Record<Health, number> = { red: 0, yellow: 1, green: 2 };
 const HEALTH_DOT: Record<Health, string> = {
-  green: "bg-nw-success",
-  yellow: "bg-nw-warn",
-  red: "bg-nw-danger",
+  green: "bg-status-success",
+  yellow: "bg-brass",
+  red: "bg-status-danger",
 };
 const HEALTH_LABEL: Record<Health, string> = {
   green: "On track",
@@ -52,20 +52,20 @@ const HEALTH_LABEL: Record<Health, string> = {
 
 function StatusBadge({ status }: { status: JobStatus }) {
   const map: Record<JobStatus, string> = {
-    active: "text-nw-success border-nw-success",
-    complete: "text-[rgba(59,88,100,0.55)] border-[rgba(59,88,100,0.30)]",
-    warranty: "text-nw-warn border-nw-warn",
-    cancelled: "text-nw-danger border-nw-danger",
+    active: "text-status-success border-status-success",
+    complete: "text-teal border-teal",
+    warranty: "text-brass border-brass",
+    cancelled: "text-status-danger border-status-danger",
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase border bg-transparent ${map[status]}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider border bg-transparent ${map[status]}`}>
       {status}
     </span>
   );
 }
 
 function HealthDot({ health, reasons }: { health: Health; reasons: string[] }) {
-  const tooltip = reasons.length > 0 ? reasons.join(" \u00b7 ") : HEALTH_LABEL[health];
+  const tooltip = reasons.length > 0 ? reasons.join(" • ") : HEALTH_LABEL[health];
   return (
     <span
       title={tooltip}
@@ -156,14 +156,14 @@ export default function JobsPage() {
 
   if (authorized === false) {
     return (
-      <main className="max-w-[1180px] mx-auto px-6 py-16 text-center">
-        <h2 className="font-display text-[22px] font-medium text-slate-tile">Access denied</h2>
-        <p className="mt-2 text-[13px] text-[rgba(59,88,100,0.55)]">
+      <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
+        <h2 className="font-display text-2xl text-cream">Access denied</h2>
+        <p className="mt-2 text-sm text-cream-dim">
           Jobs management is restricted to administrators.
         </p>
         <Link
           href="/"
-          className="inline-block mt-6 px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:border-stone-blue transition-colors font-mono text-[11px] tracking-[0.12em] uppercase"
+          className="inline-block mt-6 px-4 py-2 border border-brand-border text-cream hover:border-teal transition-colors"
         >
           Return home
         </Link>
@@ -172,12 +172,11 @@ export default function JobsPage() {
   }
 
   return (
-      <main className="max-w-[1180px] mx-auto px-4 md:px-8 py-7">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5 flex-wrap gap-4">
+      <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-[22px] font-medium tracking-[-0.01em] text-slate-tile">Jobs</h2>
-            <p className="text-[13px] text-[rgba(59,88,100,0.55)] mt-0.5">
+            <h2 className="font-display text-2xl text-cream">Jobs</h2>
+            <p className="text-sm text-cream-dim mt-1">
               {loading
                 ? "Loading..."
                 : `${filtered.length} ${filtered.length === 1 ? "job" : "jobs"}${statusFilter !== "all" ? ` (${statusFilter})` : ""}`}
@@ -185,7 +184,7 @@ export default function JobsPage() {
           </div>
           <Link
             href="/jobs/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-deep hover:bg-slate-deeper text-white-sand font-mono text-[11px] tracking-[0.12em] uppercase font-medium transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-teal hover:bg-teal-hover text-white text-sm font-medium transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -201,12 +200,12 @@ export default function JobsPage() {
             placeholder="Search by name, address, or client..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-3 py-2 bg-white border border-[rgba(59,88,100,0.15)] text-[14px] font-sans text-slate-tile placeholder:text-[rgba(59,88,100,0.40)] focus:border-stone-blue focus:outline-none"
+            className="flex-1 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="px-3 py-2 bg-white border border-[rgba(59,88,100,0.15)] text-[14px] font-sans text-slate-tile focus:border-stone-blue focus:outline-none"
+            className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
           >
             <option value="active">Active</option>
             <option value="complete">Complete</option>
@@ -217,11 +216,11 @@ export default function JobsPage() {
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className="px-3 py-2 bg-white border border-[rgba(59,88,100,0.15)] text-[14px] font-sans text-slate-tile focus:border-stone-blue focus:outline-none"
+            className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
             aria-label="Sort jobs"
           >
             <option value="health">Sort: Health (worst first)</option>
-            <option value="name">Sort: Name (A-Z)</option>
+            <option value="name">Sort: Name (A→Z)</option>
             <option value="activity">Sort: Last activity</option>
             <option value="budget">Sort: Budget remaining</option>
           </select>
@@ -229,7 +228,7 @@ export default function JobsPage() {
 
         {/* Health legend */}
         {!loading && jobs.length > 0 && (
-          <div className="flex items-center gap-4 mb-4 font-mono text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">
+          <div className="flex items-center gap-4 mb-4 text-[11px] text-cream-dim">
             <span className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${HEALTH_DOT.green}`} /> Green: on track
             </span>
@@ -272,7 +271,7 @@ export default function JobsPage() {
                 <Link
                   key={j.id}
                   href={`/jobs/${j.id}`}
-                  className="block border border-[rgba(59,88,100,0.15)] bg-white p-4 active:bg-[rgba(91,134,153,0.04)] transition-colors"
+                  className="block border border-brand-border bg-brand-card p-4 active:bg-brand-surface transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <span className="mt-1.5">
@@ -281,40 +280,40 @@ export default function JobsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="text-[14px] text-slate-tile font-medium truncate">{j.name}</div>
-                          <div className="text-[12px] text-[rgba(59,88,100,0.55)] truncate">{j.address ?? "\u2014"}</div>
+                          <div className="text-cream font-medium truncate">{j.name}</div>
+                          <div className="text-xs text-cream-dim truncate">{j.address ?? "—"}</div>
                         </div>
                         <StatusBadge status={j.status} />
                       </div>
-                      <div className="mt-2 text-[12px] text-[rgba(59,88,100,0.55)]">
-                        <span>{j.client_name ?? "\u2014"}</span>
-                        <span className="text-[rgba(59,88,100,0.40)]"> \u00b7 PM: {j.pm_name ?? "\u2014"}</span>
+                      <div className="mt-2 text-xs text-cream-muted">
+                        <span>{j.client_name ?? "—"}</span>
+                        <span className="text-cream-dim"> · PM: {j.pm_name ?? "—"}</span>
                       </div>
-                      <div className="mt-3 grid grid-cols-3 gap-2">
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                         <div>
-                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Complete</div>
-                          <div className="font-mono text-[12px] text-slate-tile tabular-nums">{formatPercent(j.pct_complete)}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Complete</div>
+                          <div className="text-cream tabular-nums">{formatPercent(j.pct_complete)}</div>
                         </div>
                         <div>
-                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Budget Used</div>
-                          <div className={`font-mono text-[12px] tabular-nums ${j.budget_used_pct > 100 ? "text-nw-danger" : "text-slate-tile"}`}>
+                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Budget Used</div>
+                          <div className={`tabular-nums ${j.budget_used_pct > 100 ? "text-status-danger" : "text-cream"}`}>
                             {formatPercent(j.budget_used_pct)}
                           </div>
                         </div>
                         <div>
-                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Open Invoices</div>
-                          <div className="font-mono text-[12px] tabular-nums">
+                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Open Invoices</div>
+                          <div className="text-cream tabular-nums">
                             {j.open_invoices > 0 ? (
-                              <span className={j.oldest_invoice_days >= 7 ? "text-nw-danger" : "text-nw-warn"}>
+                              <span className={j.oldest_invoice_days >= 7 ? "text-status-danger" : "text-brass"}>
                                 {j.open_invoices}
                               </span>
                             ) : (
-                              <span className="text-[rgba(59,88,100,0.40)]">\u2014</span>
+                              <span className="text-cream-dim">—</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="mt-2 font-mono text-[10px] tracking-[0.08em] text-[rgba(59,88,100,0.55)]">
+                      <div className="mt-2 text-[10px] text-cream-dim">
                         {j.last_activity_at ? `Active ${formatRelativeTime(j.last_activity_at)}` : `Contract ${formatDate(j.contract_date)}`}
                       </div>
                     </div>
@@ -324,64 +323,64 @@ export default function JobsPage() {
             </div>
 
             {/* Desktop table view (>= md) */}
-            <div className="hidden md:block border border-[rgba(59,88,100,0.15)] bg-white overflow-x-auto">
-              <table className="w-full text-[13px]">
+            <div className="hidden md:block border border-brand-border bg-brand-card overflow-x-auto">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[rgba(59,88,100,0.15)]">
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium w-8" aria-label="Health"></th>
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Name</th>
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Client / PM</th>
-                    <th className="text-right px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">% Complete</th>
-                    <th className="text-right px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Budget Used</th>
-                    <th className="text-center px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Open Inv.</th>
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Last Activity</th>
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Status</th>
+                  <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
+                    <th className="text-left px-4 py-3 font-medium w-8" aria-label="Health"></th>
+                    <th className="text-left px-4 py-3 font-medium">Name</th>
+                    <th className="text-left px-4 py-3 font-medium">Client / PM</th>
+                    <th className="text-right px-4 py-3 font-medium">% Complete</th>
+                    <th className="text-right px-4 py-3 font-medium">Budget Used</th>
+                    <th className="text-center px-4 py-3 font-medium">Open Invoices</th>
+                    <th className="text-left px-4 py-3 font-medium">Last Activity</th>
+                    <th className="text-left px-4 py-3 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((j) => (
                     <tr
                       key={j.id}
-                      className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.04)] cursor-pointer transition-colors"
+                      className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface cursor-pointer transition-colors"
                       onClick={() => router.push(`/jobs/${j.id}`)}
                     >
-                      <td className="px-3 py-3">
+                      <td className="px-4 py-3">
                         <HealthDot health={j.health} reasons={j.health_reasons} />
                       </td>
-                      <td className="px-3 py-3">
-                        <div className="text-slate-tile font-medium">{j.name}</div>
-                        <div className="text-[12px] text-[rgba(59,88,100,0.55)]">{j.address ?? "\u2014"}</div>
+                      <td className="px-4 py-3">
+                        <div className="text-cream font-medium">{j.name}</div>
+                        <div className="text-xs text-cream-dim">{j.address ?? "—"}</div>
                       </td>
-                      <td className="px-3 py-3 text-[rgba(59,88,100,0.70)]">
-                        <div>{j.client_name ?? "\u2014"}</div>
-                        <div className="text-[12px] text-[rgba(59,88,100,0.55)]">PM: {j.pm_name ?? "\u2014"}</div>
+                      <td className="px-4 py-3 text-cream-muted">
+                        <div>{j.client_name ?? "—"}</div>
+                        <div className="text-xs text-cream-dim">PM: {j.pm_name ?? "—"}</div>
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-[12px] text-slate-tile tabular-nums">
+                      <td className="px-4 py-3 text-right text-cream tabular-nums">
                         {formatPercent(j.pct_complete)}
                       </td>
-                      <td className="px-3 py-3 text-right font-mono tabular-nums">
-                        <span className={`text-[12px] ${j.budget_used_pct > 100 ? "text-nw-danger" : "text-slate-tile"}`}>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        <span className={j.budget_used_pct > 100 ? "text-status-danger" : "text-cream"}>
                           {formatPercent(j.budget_used_pct)}
                         </span>
-                        <div className="text-[10px] text-[rgba(59,88,100,0.55)]">
+                        <div className="text-[10px] text-cream-dim">
                           {formatCents(j.invoiced_total)} / {formatCents(j.budget_total)}
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-4 py-3 text-center">
                         {j.open_invoices > 0 ? (
-                          <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 font-mono text-[9px] tracking-[0.12em] uppercase border ${
-                            j.oldest_invoice_days >= 7 ? "border-nw-danger text-nw-danger" : "border-nw-warn text-nw-warn"
+                          <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium border ${
+                            j.oldest_invoice_days >= 7 ? "border-status-danger text-status-danger" : "border-brass text-brass"
                           }`}>
                             {j.open_invoices}
                           </span>
                         ) : (
-                          <span className="text-[rgba(59,88,100,0.40)] text-[12px]">\u2014</span>
+                          <span className="text-cream-dim text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-3 py-3 text-[rgba(59,88,100,0.55)] text-[12px]">
+                      <td className="px-4 py-3 text-cream-muted text-xs">
                         {j.last_activity_at ? formatRelativeTime(j.last_activity_at) : formatDate(j.contract_date)}
                       </td>
-                      <td className="px-3 py-3"><StatusBadge status={j.status} /></td>
+                      <td className="px-4 py-3"><StatusBadge status={j.status} /></td>
                     </tr>
                   ))}
                 </tbody>

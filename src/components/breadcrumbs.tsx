@@ -23,13 +23,13 @@ export default function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
   return (
     <nav aria-label="Breadcrumb" className="mb-4 print:hidden">
       {/* Mobile trail — collapse middle items if more than 3 */}
-      <ol className="flex items-center gap-1.5 text-[13px] text-[rgba(59,88,100,0.55)] sm:hidden">
+      <ol className="flex items-center gap-1.5 text-[13px] text-cream-dim sm:hidden">
         {renderCollapsed(trail).map((item, i, arr) => (
           <Crumb key={`${item.label}-${i}`} item={item} isLast={i === arr.length - 1} />
         ))}
       </ol>
       {/* Desktop trail — full path with wrapping */}
-      <ol className="hidden sm:flex items-center gap-1.5 text-[13px] text-[rgba(59,88,100,0.55)] flex-wrap">
+      <ol className="hidden sm:flex items-center gap-1.5 text-[13px] text-cream-dim flex-wrap">
         {trail.map((item, i) => (
           <Crumb key={`${item.label}-${i}`} item={item} isLast={i === trail.length - 1} />
         ))}
@@ -49,18 +49,18 @@ function Crumb({ item, isLast }: { item: BreadcrumbItem; isLast: boolean }) {
       {item.href && !isLast ? (
         <Link
           href={item.href}
-          className="hover:text-stone-blue transition-colors underline-offset-4 hover:underline truncate"
+          className="hover:text-teal transition-colors underline-offset-4 hover:underline truncate"
         >
           {item.label}
         </Link>
       ) : (
-        <span className={`truncate ${isLast ? "text-slate-tile font-medium" : "text-[rgba(59,88,100,0.55)]"}`}>
+        <span className={`truncate ${isLast ? "text-cream font-medium" : "text-cream-dim"}`}>
           {item.label}
         </span>
       )}
       {!isLast && (
         <svg
-          className="w-3 h-3 text-[rgba(59,88,100,0.55)]/60 shrink-0"
+          className="w-3 h-3 text-cream-dim/60 shrink-0"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

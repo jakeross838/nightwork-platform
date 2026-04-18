@@ -5,8 +5,8 @@ import CsvImporter from "@/components/csv-importer";
 export default function POImportContent({ jobId }: { jobId: string }) {
   return (
     <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
-      <h2 className="font-display text-2xl text-slate-tile mb-3">Import Purchase Orders</h2>
-      <p className="text-sm text-[rgba(59,88,100,0.55)] mb-6">
+      <h2 className="font-display text-2xl text-cream mb-3">Import Purchase Orders</h2>
+      <p className="text-sm text-cream-dim mb-6">
         Upload a CSV or Excel file with columns for PO number, vendor, description, and amount.
         Unknown vendors will be created automatically.
       </p>

@@ -140,13 +140,13 @@ function SearchCombobox({ label, value, onChange, options, disabled, aiFilled, g
 
  return (
  <div ref={ref} className="relative">
- <label className="flex items-center gap-2 text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5">
+ <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">
  {label}
  {aiFilled && <AiBadge />}
  </label>
  <div
- className={`flex items-center w-full px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border text-sm transition-colors cursor-text ${
- open ? "border-stone-blue" : aiFilled ? "border-stone-blue/40" : "border-[rgba(59,88,100,0.15)]"
+ className={`flex items-center w-full px-3 py-2.5 bg-brand-surface border text-sm transition-colors cursor-text ${
+ open ? "border-teal" : aiFilled ? "border-teal/40" : "border-brand-border"
  } ${disabled ? "opacity-50 pointer-events-none" : ""}`}
  onClick={() => { setOpen(true); setSearch(""); setTimeout(() => inputRef.current?.focus(), 0); }}
  >
@@ -156,7 +156,7 @@ function SearchCombobox({ label, value, onChange, options, disabled, aiFilled, g
  value={search}
  onChange={(e) => setSearch(e.target.value)}
  placeholder={selectedLabel || placeholder || "Type to search..."}
- className="flex-1 bg-transparent text-slate-tile placeholder-cream-dim outline-none text-sm"
+ className="flex-1 bg-transparent text-cream placeholder-cream-dim outline-none text-sm"
  onKeyDown={(e) => {
  if (e.key === "Escape") setOpen(false);
  if (e.key === "Enter" && filtered.length > 0) {
@@ -166,36 +166,36 @@ function SearchCombobox({ label, value, onChange, options, disabled, aiFilled, g
  }}
  />
  ) : (
- <span className={`flex-1 truncate ${value ? "text-slate-tile" : "text-[rgba(59,88,100,0.55)]"}`}>
+ <span className={`flex-1 truncate ${value ? "text-cream" : "text-cream-dim"}`}>
  {selectedLabel || placeholder || "Select..."}
  </span>
  )}
  {value && !disabled && (
- <button onClick={(e) => { e.stopPropagation(); onChange(""); }} className="ml-2 text-[rgba(59,88,100,0.55)] hover:text-slate-tile">
+ <button onClick={(e) => { e.stopPropagation(); onChange(""); }} className="ml-2 text-cream-dim hover:text-cream">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
  </svg>
  </button>
  )}
- <svg className={`w-4 h-4 ml-1 text-[rgba(59,88,100,0.55)] transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className={`w-4 h-4 ml-1 text-cream-dim transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
  </svg>
  </div>
 
  {open && (
- <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-[rgba(59,88,100,0.15)] shadow-2xl">
+ <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-brand-card border border-brand-border shadow-2xl">
  {filtered.length === 0 ? (
- <div className="px-3 py-4 text-sm text-[rgba(59,88,100,0.55)] text-center">No matches</div>
+ <div className="px-3 py-4 text-sm text-cream-dim text-center">No matches</div>
  ) : grouped && groups.length > 0 ? (
  groups.map(group => {
  const groupItems = filtered.filter(o => o.group === group);
  if (groupItems.length === 0) return null;
  return (
  <div key={group}>
- <div className="px-3 py-1.5 text-[10px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider bg-[rgba(91,134,153,0.06)] sticky top-0">{group}</div>
+ <div className="px-3 py-1.5 text-[10px] font-medium text-cream-dim uppercase tracking-wider bg-brand-surface sticky top-0">{group}</div>
  {groupItems.map(o => (
  <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
- className={`w-full text-left px-3 py-2 text-sm hover:bg-brand-elevated transition-colors ${o.value === value ? "text-stone-blue bg-slate-deep/5" : "text-slate-tile"}`}>
+ className={`w-full text-left px-3 py-2 text-sm hover:bg-brand-elevated transition-colors ${o.value === value ? "text-teal bg-teal/5" : "text-cream"}`}>
  {o.label}
  </button>
  ))}
@@ -205,7 +205,7 @@ function SearchCombobox({ label, value, onChange, options, disabled, aiFilled, g
  ) : (
  filtered.map(o => (
  <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
- className={`w-full text-left px-3 py-2 text-sm hover:bg-brand-elevated transition-colors ${o.value === value ? "text-stone-blue bg-slate-deep/5" : o.value === "" ? "text-[rgba(59,88,100,0.55)]" : "text-slate-tile"}`}>
+ className={`w-full text-left px-3 py-2 text-sm hover:bg-brand-elevated transition-colors ${o.value === value ? "text-teal bg-teal/5" : o.value === "" ? "text-cream-dim" : "text-cream"}`}>
  {o.label}
  </button>
  ))
@@ -217,7 +217,7 @@ function SearchCombobox({ label, value, onChange, options, disabled, aiFilled, g
 }
 
 function AiBadge() {
- return <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-stone-blue border border-stone-blue normal-case tracking-normal">AI</span>;
+ return <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-teal border border-teal normal-case tracking-normal">AI</span>;
 }
 
 /** Resolve the matching base↔CO cost code variant. Mapping is the literal
@@ -287,7 +287,7 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
  setOpen(false);
  }
 
- const borderColor = open ? "border-stone-blue" : aiSuggestion ? "border-stone-blue/40" : "border-[rgba(59,88,100,0.15)]";
+ const borderColor = open ? "border-teal" : aiSuggestion ? "border-teal/40" : "border-brand-border";
 
  return (
  <div ref={rootRef} className="relative">
@@ -303,29 +303,29 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
  setOpen(true);
  }
  }}
- className={`flex items-center w-full min-h-[26px] px-2 py-1 bg-[rgba(91,134,153,0.06)] border ${borderColor} text-xs text-slate-tile cursor-pointer transition-colors ${disabled ? "opacity-50 pointer-events-none" : "hover:border-stone-blue/60"}`}
+ className={`flex items-center w-full min-h-[26px] px-2 py-1 bg-brand-surface border ${borderColor} text-xs text-cream cursor-pointer transition-colors ${disabled ? "opacity-50 pointer-events-none" : "hover:border-teal/60"}`}
  >
- <span className={`flex-1 truncate ${selected && selected.value ? "text-slate-tile" : "text-[rgba(59,88,100,0.55)]"}`}>
+ <span className={`flex-1 truncate ${selected && selected.value ? "text-cream" : "text-cream-dim"}`}>
  {selected?.label || "Select…"}
  </span>
- <svg className={`w-3 h-3 ml-1 text-[rgba(59,88,100,0.55)] transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className={`w-3 h-3 ml-1 text-cream-dim transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
  </svg>
  </div>
  {aiSuggestion && (
- <span className="absolute -top-2 right-1 text-[9px] px-1 bg-white text-stone-blue border border-stone-blue tracking-tight z-10">
+ <span className="absolute -top-2 right-1 text-[9px] px-1 bg-brand-card text-teal border border-teal tracking-tight z-10">
  AI {Math.round(aiSuggestion.confidence * 100)}%
  </span>
  )}
  {open && (
- <div className="absolute z-40 mt-1 min-w-[280px] max-w-[400px] bg-white border border-[rgba(59,88,100,0.15)] shadow-2xl left-0">
- <div className="p-1.5 border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]">
+ <div className="absolute z-40 mt-1 min-w-[280px] max-w-[400px] bg-brand-card border border-brand-border shadow-2xl left-0">
+ <div className="p-1.5 border-b border-brand-border bg-brand-surface">
  <input
  ref={inputRef}
  value={search}
  onChange={(e) => { setSearch(e.target.value); setHighlight(0); }}
  placeholder="Type to filter…"
- className="w-full px-2 py-1 bg-white border border-[rgba(59,88,100,0.15)] text-xs text-slate-tile placeholder-cream-dim focus:outline-none focus:border-stone-blue"
+ className="w-full px-2 py-1 bg-brand-card border border-brand-border text-xs text-cream placeholder-cream-dim focus:outline-none focus:border-teal"
  onKeyDown={(e) => {
  if (e.key === "Escape") { e.preventDefault(); setOpen(false); }
  else if (e.key === "ArrowDown") { e.preventDefault(); setHighlight(h => Math.min(h + 1, flat.length - 1)); }
@@ -336,7 +336,7 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
  </div>
  <div className="max-h-56 overflow-y-auto">
  {flat.length === 0 ? (
- <div className="px-3 py-3 text-xs text-[rgba(59,88,100,0.55)] text-center">No matches</div>
+ <div className="px-3 py-3 text-xs text-cream-dim text-center">No matches</div>
  ) : groups.length > 0 ? (
  <>
  {filtered.filter(o => !o.group).map(o => {
@@ -346,14 +346,14 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
  <button key={o.value} data-idx={idx} type="button"
  onMouseEnter={() => setHighlight(idx)}
  onClick={() => commit(o.value)}
- className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-slate-deep-muted" : ""} ${o.value === value ? "text-stone-blue font-medium" : o.value === "" ? "text-[rgba(59,88,100,0.55)]" : "text-slate-tile"}`}>
+ className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-teal-muted" : ""} ${o.value === value ? "text-teal font-medium" : o.value === "" ? "text-cream-dim" : "text-cream"}`}>
  {o.label}
  </button>
  );
  })}
  {groups.map(group => (
  <div key={group}>
- <div className="sticky top-0 px-2.5 py-1 text-[10px] font-semibold text-[rgba(59,88,100,0.55)] uppercase tracking-wider bg-[rgba(91,134,153,0.06)] border-b border-[rgba(59,88,100,0.15)]">{group}</div>
+ <div className="sticky top-0 px-2.5 py-1 text-[10px] font-semibold text-cream-dim uppercase tracking-wider bg-brand-surface border-b border-brand-border">{group}</div>
  {filtered.filter(o => o.group === group).map(o => {
  const idx = flat.indexOf(o);
  const isHl = idx === highlight;
@@ -361,7 +361,7 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
  <button key={o.value} data-idx={idx} type="button"
  onMouseEnter={() => setHighlight(idx)}
  onClick={() => commit(o.value)}
- className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-slate-deep-muted" : ""} ${o.value === value ? "text-stone-blue font-medium" : "text-slate-tile"}`}>
+ className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-teal-muted" : ""} ${o.value === value ? "text-teal font-medium" : "text-cream"}`}>
  {o.label}
  </button>
  );
@@ -377,7 +377,7 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
  <button key={o.value} data-idx={idx} type="button"
  onMouseEnter={() => setHighlight(idx)}
  onClick={() => commit(o.value)}
- className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-slate-deep-muted" : ""} ${o.value === value ? "text-stone-blue font-medium" : "text-slate-tile"}`}>
+ className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-teal-muted" : ""} ${o.value === value ? "text-teal font-medium" : "text-cream"}`}>
  {o.label}
  </button>
  );
@@ -392,10 +392,10 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
 
 // ── Status History Timeline ─────────────────────────────
 function statusDotColor(newStatus: string): string {
- if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-nw-success";
- if (["pm_held", "info_requested"].includes(newStatus)) return "bg-nw-warn";
- if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-nw-danger";
- return "bg-slate-deep"; // forward progress: pm_review, qa_review, ai_processed
+ if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-status-success";
+ if (["pm_held", "info_requested"].includes(newStatus)) return "bg-brass";
+ if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-status-danger";
+ return "bg-teal"; // forward progress: pm_review, qa_review, ai_processed
 }
 
 // formatWho is imported from lib/utils/format
@@ -822,13 +822,13 @@ export default function InvoiceReviewPage() {
 
  if (loading) return (
  <div className="min-h-screen flex items-center justify-center">
- <div className="w-8 h-8 border-2 border-stone-blue/30 border-t-teal animate-spin" />
+ <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" />
  </div>
  );
 
  if (!invoice) return (
  <div className="min-h-screen flex items-center justify-center">
- <p className="text-nw-danger font-display text-lg">Invoice not found</p>
+ <p className="text-status-danger font-display text-lg">Invoice not found</p>
  </div>
  );
 
@@ -1077,17 +1077,17 @@ export default function InvoiceReviewPage() {
  <AppShell>
 
  {/* Sub-header */}
- <div className="border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/50 px-4 md:px-6 py-3 print:hidden">
+ <div className="border-b border-brand-border bg-brand-surface/50 px-4 md:px-6 py-3 print:hidden">
  <div className="max-w-[1600px] mx-auto flex items-center gap-3 md:gap-4 flex-wrap">
- <Link href="/invoices/queue" className="text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors text-sm">&larr; Queue</Link>
- <h1 className="font-display text-base md:text-xl text-slate-tile flex items-center gap-2 min-w-0">
+ <Link href="/invoices/queue" className="text-cream-dim hover:text-cream transition-colors text-sm">&larr; Queue</Link>
+ <h1 className="font-display text-base md:text-xl text-cream flex items-center gap-2 min-w-0">
  <span className="truncate">{invoice.vendor_name_raw ?? "Invoice"}</span>
  <VendorContactPopover
  vendorId={invoice.vendor_id}
  vendorName={invoice.vendor_name_raw ?? invoice.vendors?.name ?? null}
  vendor={invoice.vendors}
  />
- <span className="text-[rgba(59,88,100,0.55)] hidden md:inline">&mdash;</span>
+ <span className="text-cream-dim hidden md:inline">&mdash;</span>
  <span className="md:hidden"> </span>
  <span className="truncate">{invoice.invoice_number ?? "No #"}</span>
  </h1>
@@ -1098,22 +1098,22 @@ export default function InvoiceReviewPage() {
  {formatStatus(invoice.status)}
  </span>
  {isCreditMemo && (
- <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-stone-blue border border-stone-blue">
+ <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-teal border border-teal">
  Credit Memo
  </span>
  )}
  {isChangeOrder && (
- <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-nw-warn border border-nw-warn">
+ <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-brass border border-brass">
  Change Order
  </span>
  )}
- <span className="inline-flex items-center gap-1.5 text-xs text-[rgba(59,88,100,0.55)]">
+ <span className="inline-flex items-center gap-1.5 text-xs text-cream-dim">
  <span>PM:</span>
  <select
  value={invoice.assigned_pm?.id ?? ""}
  onChange={(e) => handleReassignPm(e.target.value)}
  disabled={reassigning}
- className="bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile px-2 py-1 focus:border-stone-blue focus:outline-none disabled:opacity-50 cursor-pointer"
+ className="bg-brand-surface border border-brand-border text-sm text-cream px-2 py-1 focus:border-teal focus:outline-none disabled:opacity-50 cursor-pointer"
  >
  <option value="">Unassigned</option>
  {pmUsers.map(u => (
@@ -1123,7 +1123,7 @@ export default function InvoiceReviewPage() {
  </span>
  <button
  onClick={() => window.print()}
- className="ml-auto px-3 py-1 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-xs uppercase tracking-[0.06em] transition-colors"
+ className="ml-auto px-3 py-1 border border-brand-border text-cream hover:bg-brand-elevated text-xs uppercase tracking-[0.06em] transition-colors"
  aria-label="Print this invoice"
  >
  Print
@@ -1133,14 +1133,14 @@ export default function InvoiceReviewPage() {
 
  {/* Kick-back banner from QA */}
  {kickBackInfo && (
- <div className="bg-nw-danger-muted border-b border-nw-danger/20 px-6 py-3">
+ <div className="bg-status-danger-muted border-b border-status-danger/20 px-6 py-3">
  <div className="max-w-[1600px] mx-auto flex items-start gap-3">
- <svg className="w-5 h-5 text-nw-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-5 h-5 text-status-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
  <div>
- <p className="text-sm font-medium text-nw-danger">Kicked Back by Accounting</p>
- <p className="text-sm text-nw-danger/80 mt-0.5">{kickBackInfo}</p>
+ <p className="text-sm font-medium text-status-danger">Kicked Back by Accounting</p>
+ <p className="text-sm text-status-danger/80 mt-0.5">{kickBackInfo}</p>
  </div>
  </div>
  </div>
@@ -1163,18 +1163,18 @@ export default function InvoiceReviewPage() {
 
  {/* Deny banner with reopen */}
  {denyInfo !== null && (
- <div className="bg-nw-danger-muted border-b border-nw-danger/20 px-6 py-3">
+ <div className="bg-status-danger-muted border-b border-status-danger/20 px-6 py-3">
  <div className="max-w-[1600px] mx-auto flex items-start gap-3">
- <svg className="w-5 h-5 text-nw-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-5 h-5 text-status-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
  </svg>
  <div className="flex-1">
- <p className="text-sm font-medium text-nw-danger">This invoice was denied</p>
- {denyInfo && <p className="text-sm text-nw-danger/80 mt-0.5">{denyInfo}</p>}
+ <p className="text-sm font-medium text-status-danger">This invoice was denied</p>
+ {denyInfo && <p className="text-sm text-status-danger/80 mt-0.5">{denyInfo}</p>}
  <button
  onClick={handleReopen}
  disabled={saving}
- className="mt-2 px-3 py-1.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light text-slate-tile text-sm font-medium transition-colors disabled:opacity-50"
+ className="mt-2 px-3 py-1.5 bg-brand-surface border border-brand-border hover:border-brand-border-light text-cream text-sm font-medium transition-colors disabled:opacity-50"
  >
  {saving ? "Reopening..." : "Reopen for Review"}
  </button>
@@ -1196,7 +1196,7 @@ export default function InvoiceReviewPage() {
  <button
  onClick={() => handleAction("info_received", "Info received — returning to PM review")}
  disabled={saving}
- className="mt-2 px-3 py-1.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light text-slate-tile text-sm font-medium transition-colors disabled:opacity-50"
+ className="mt-2 px-3 py-1.5 bg-brand-surface border border-brand-border hover:border-brand-border-light text-cream text-sm font-medium transition-colors disabled:opacity-50"
  >
  {saving ? "Processing..." : "Info Received — Resume Review"}
  </button>
@@ -1207,14 +1207,14 @@ export default function InvoiceReviewPage() {
 
  {/* Math mismatch banner */}
  {invoice.ai_raw_response?.flags?.includes("math_mismatch") && (
- <div className="bg-nw-danger-muted border-b border-nw-danger/20 px-6 py-3">
+ <div className="bg-status-danger-muted border-b border-status-danger/20 px-6 py-3">
  <div className="max-w-[1600px] mx-auto flex items-start gap-3">
- <svg className="w-5 h-5 text-nw-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-5 h-5 text-status-danger flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
  <div>
- <p className="text-sm font-medium text-nw-danger">Math Mismatch Detected</p>
- <p className="text-sm text-nw-danger/80 mt-0.5">Line items may not sum to the stated total. Verify amounts before approving.</p>
+ <p className="text-sm font-medium text-status-danger">Math Mismatch Detected</p>
+ <p className="text-sm text-status-danger/80 mt-0.5">Line items may not sum to the stated total. Verify amounts before approving.</p>
  </div>
  </div>
  </div>
@@ -1244,24 +1244,24 @@ export default function InvoiceReviewPage() {
  />
  {/* Receipt document type badge */}
  {invoice.document_type === "receipt" && (
- <div className="mb-4 border border-cream-dim/30 bg-cream-dim/5 px-4 py-2.5 text-sm text-[rgba(59,88,100,0.55)] animate-fade-up inline-flex items-center gap-2">
- <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-cream-dim/40 text-[rgba(59,88,100,0.55)] font-medium">Receipt</span>
+ <div className="mb-4 border border-cream-dim/30 bg-cream-dim/5 px-4 py-2.5 text-sm text-cream-dim animate-fade-up inline-flex items-center gap-2">
+ <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-cream-dim/40 text-cream-dim font-medium">Receipt</span>
  <span>This is a receipt — vendor and invoice number are optional.</span>
  </div>
  )}
  {/* Partial approval banner — shown on both halves of a split */}
  {(invoice.parent_invoice_id || invoice.partial_approval_note) && (
- <div className="mb-4 border border-nw-warn/50 bg-nw-warn/5 px-4 py-3 text-sm text-slate-tile animate-fade-up">
+ <div className="mb-4 border border-brass/50 bg-brass/5 px-4 py-3 text-sm text-cream animate-fade-up">
  <div className="flex items-start gap-3">
- <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-nw-warn text-nw-warn">
+ <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-brass text-brass">
  Partial
  </span>
  <div className="flex-1">
  {invoice.parent_invoice_id ? (
  <p>
- <span className="font-medium text-slate-tile">Approved portion</span> of a split invoice.{" "}
+ <span className="font-medium text-cream">Approved portion</span> of a split invoice.{" "}
  {siblingInvoice && (
- <Link href={`/invoices/${siblingInvoice.id}`} className="text-stone-blue hover:underline">
+ <Link href={`/invoices/${siblingInvoice.id}`} className="text-teal hover:underline">
  See held portion ({formatCents(siblingInvoice.total_amount)} · {formatStatus(siblingInvoice.status)}) →
  </Link>
  )}
@@ -1269,19 +1269,19 @@ export default function InvoiceReviewPage() {
  ) : (
  <>
  <p>
- <span className="font-medium text-slate-tile">Held portion</span> — {siblingInvoice && (
+ <span className="font-medium text-cream">Held portion</span> — {siblingInvoice && (
  <>{formatCents(siblingInvoice.total_amount)} approved,{" "}</>
  )}
  {formatCents(invoice.total_amount)} held.
  </p>
  {invoice.partial_approval_note && (
- <p className="mt-1 text-[rgba(59,88,100,0.55)]">
+ <p className="mt-1 text-cream-dim">
  <span className="uppercase tracking-wider text-[10px] mr-2">Reason:</span>
  {invoice.partial_approval_note}
  </p>
  )}
  {siblingInvoice && (
- <Link href={`/invoices/${siblingInvoice.id}`} className="inline-block mt-1 text-stone-blue hover:underline">
+ <Link href={`/invoices/${siblingInvoice.id}`} className="inline-block mt-1 text-teal hover:underline">
  See approved portion →
  </Link>
  )}
@@ -1302,21 +1302,21 @@ export default function InvoiceReviewPage() {
 
  {/* Duplicate warning banner (Phase 8e) */}
  {invoice.is_potential_duplicate && invoice.duplicate_of && (
- <div className="mb-4 border border-nw-warn/60 bg-nw-warn/10 px-4 py-3 text-sm animate-fade-up">
+ <div className="mb-4 border border-brass/60 bg-brass/10 px-4 py-3 text-sm animate-fade-up">
  <div className="flex items-start gap-3">
- <svg className="w-5 h-5 text-nw-warn flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-5 h-5 text-brass flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
  </svg>
  <div className="flex-1 min-w-0">
- <p className="text-nw-warn font-medium">Possible duplicate detected</p>
- <p className="text-[rgba(59,88,100,0.70)] mt-1">
+ <p className="text-brass font-medium">Possible duplicate detected</p>
+ <p className="text-cream-muted mt-1">
  Matches {invoice.duplicate_of.vendor_name_raw ?? "existing invoice"}{" "}
  {formatCents(invoice.duplicate_of.total_amount)}
  {invoice.duplicate_of.invoice_date ? ` on ${formatDate(invoice.duplicate_of.invoice_date)}` : ""}
  {invoice.duplicate_of.job_name ? ` (${invoice.duplicate_of.job_name})` : ""}
  {invoice.duplicate_of.invoice_number ? ` — Invoice #${invoice.duplicate_of.invoice_number}` : ""}
  .{" "}
- <Link href={`/invoices/${invoice.duplicate_of.id}`} className="text-stone-blue hover:underline font-medium">
+ <Link href={`/invoices/${invoice.duplicate_of.id}`} className="text-teal hover:underline font-medium">
  View existing &rarr;
  </Link>
  </p>
@@ -1327,7 +1327,7 @@ export default function InvoiceReviewPage() {
  const res = await fetch(`/api/invoices/${invoice.id}/dismiss-duplicate`, { method: "POST" });
  if (res.ok) refreshInvoice();
  }}
- className="px-3 py-1.5 text-xs font-medium text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)] hover:text-slate-tile hover:border-[rgba(59,88,100,0.15)]-light transition-colors whitespace-nowrap"
+ className="px-3 py-1.5 text-xs font-medium text-cream-dim border border-brand-border hover:text-cream hover:border-brand-border-light transition-colors whitespace-nowrap"
  >
  Not a duplicate
  </button>
@@ -1341,18 +1341,18 @@ export default function InvoiceReviewPage() {
      collapse the PDF pane too, not just mobile. */}
  <button
  onClick={() => setShowDocPreview(!showDocPreview)}
- className="w-full flex items-center justify-between px-4 py-3 bg-white border border-[rgba(59,88,100,0.15)] mb-4"
+ className="w-full flex items-center justify-between px-4 py-3 bg-brand-card border border-brand-border mb-4"
  >
- <span className="text-sm font-medium text-slate-tile">
+ <span className="text-sm font-medium text-cream">
  {showDocPreview ? "Hide Original Document" : "View Original Document"}
  </span>
- <svg className={`w-4 h-4 text-[rgba(59,88,100,0.55)] transition-transform ${showDocPreview ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className={`w-4 h-4 text-cream-dim transition-transform ${showDocPreview ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
  </svg>
  </button>
  <div className={showDocPreview ? "block" : "hidden"}>
  <div className="xl:sticky xl:top-24">
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-3 brass-underline hidden xl:block">Original Document</p>
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline hidden xl:block">Original Document</p>
  <div className="xl:mt-5">
  <InvoiceFilePreview
  invoiceId={invoice.id}
@@ -1371,32 +1371,32 @@ export default function InvoiceReviewPage() {
 
  {/* ── Middle: Editable Form ── */}
  <div className="xl:col-span-1 space-y-6 animate-fade-up stagger-2">
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider brass-underline">Invoice Details</p>
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">Invoice Details</p>
 
  {/* Missing field flags */}
  {(missingInvoiceNumber || missingInvoiceDate || dateReasonablenessWarning) && (
  <div className="mt-4 flex flex-wrap gap-2">
  {missingInvoiceNumber && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-nw-warn-muted text-nw-warn border border-nw-warn/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
  No invoice #
  </span>
  )}
  {missingInvoiceDate && (
  workflowSettings?.require_invoice_date ? (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-nw-danger-muted text-nw-danger border border-nw-danger/40">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-danger-muted text-status-danger border border-status-danger/40">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
  No date detected — required
  </span>
  ) : (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-nw-warn-muted text-nw-warn border border-nw-warn/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
  No date detected
  </span>
  )
  )}
  {dateReasonablenessWarning && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-nw-warn-muted text-nw-warn border border-nw-warn/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
  {dateReasonablenessWarning}
  </span>
@@ -1413,7 +1413,7 @@ export default function InvoiceReviewPage() {
  {/* Change Order toggle — auto-swaps default cost code + every line
  between base ("07101 Pilings") and C-variant ("07101C Pilings CO"). */}
  <div className="flex items-center gap-3">
- <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Change Order?</label>
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Change Order?</label>
  <button
  onClick={() => {
  const next = !isChangeOrder;
@@ -1433,11 +1433,11 @@ export default function InvoiceReviewPage() {
  })));
  }}
  disabled={!isReviewable}
- className={`relative inline-flex h-6 w-11 items-center transition-colors disabled:opacity-50 ${isChangeOrder ? "bg-nw-warn" : "bg-brand-border"}`}
+ className={`relative inline-flex h-6 w-11 items-center transition-colors disabled:opacity-50 ${isChangeOrder ? "bg-brass" : "bg-brand-border"}`}
  >
  <span className={`inline-block h-4 w-4 transform bg-white transition-transform ${isChangeOrder ? "translate-x-6" : "translate-x-1"}`} />
  </button>
- <span className="text-xs text-[rgba(59,88,100,0.55)]">{isChangeOrder ? "Yes" : "No"}</span>
+ <span className="text-xs text-cream-dim">{isChangeOrder ? "Yes" : "No"}</span>
  </div>
 
  {/* CO Reference — only when toggle is on */}
@@ -1477,25 +1477,25 @@ export default function InvoiceReviewPage() {
  <div>
  <FormField label="Total ($)" value={totalAmount} onChange={setTotalAmount} type="number" disabled={!isReviewable} />
  {amountOverAi && !amountOver10Pct && (
- <p className="mt-1.5 text-[11px] text-nw-warn">
+ <p className="mt-1.5 text-[11px] text-brass">
  +{amountIncreasePct.toFixed(1)}% vs AI-parsed {formatCents(aiParsedTotal)}
  </p>
  )}
  {amountOver10Pct && (
- <p className="mt-1.5 text-[11px] text-nw-danger font-medium">
+ <p className="mt-1.5 text-[11px] text-status-danger font-medium">
  Warning: +{amountIncreasePct.toFixed(1)}% over AI-parsed {formatCents(aiParsedTotal)} — note required
  </p>
  )}
  {isCreditMemo && (
- <span className="mt-1.5 inline-flex items-center px-2 py-0.5 text-[11px] font-medium bg-transparent text-stone-blue border border-stone-blue">
+ <span className="mt-1.5 inline-flex items-center px-2 py-0.5 text-[11px] font-medium bg-transparent text-teal border border-teal">
  Credit Memo
  </span>
  )}
  </div>
  <div>
- <label className="flex items-center gap-2 text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5">Type</label>
+ <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">Type</label>
  <select value={invoiceType} onChange={(e) => setInvoiceType(e.target.value)} disabled={!isReviewable}
- className="w-full px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none disabled:opacity-50">
+ className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none disabled:opacity-50">
  <option value="lump_sum">Lump Sum</option>
  <option value="progress">Progress</option>
  <option value="time_and_materials">Time &amp; Materials</option>
@@ -1506,9 +1506,9 @@ export default function InvoiceReviewPage() {
  <FormField label="Description" value={description} onChange={setDescription} type="textarea" disabled={!isReviewable} />
 
  {/* Raw AI data */}
- <div className="border-t border-[rgba(59,88,100,0.15)] pt-4">
- <p className="text-[11px] text-[rgba(59,88,100,0.55)] mb-2 uppercase tracking-wider">AI Parsed (raw)</p>
- <div className="grid grid-cols-2 gap-2 text-xs text-[rgba(59,88,100,0.55)]">
+ <div className="border-t border-brand-border pt-4">
+ <p className="text-[11px] text-cream-dim mb-2 uppercase tracking-wider">AI Parsed (raw)</p>
+ <div className="grid grid-cols-2 gap-2 text-xs text-cream-dim">
  <div>Vendor: {invoice.vendor_name_raw ?? "—"}</div>
  <div>Job Ref: {invoice.job_reference_raw ?? "—"}</div>
  <div>PO Ref: {invoice.po_reference_raw ?? "—"}</div>
@@ -1518,11 +1518,11 @@ export default function InvoiceReviewPage() {
 
  {/* Line Items — editable per-row cost code + CO toggle (multi-cost-code support) */}
  {lineItems.length > 0 && (
- <div className="border-t border-[rgba(59,88,100,0.15)] pt-4">
+ <div className="border-t border-brand-border pt-4">
  <div className="flex items-center justify-between mb-2">
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Line Items</p>
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Line Items</p>
  {uniqueLineCodeIds.length > 0 && (
- <p className="text-[11px] text-[rgba(59,88,100,0.55)]">
+ <p className="text-[11px] text-cream-dim">
  {lineItems.length} line{lineItems.length === 1 ? "" : "s"} across {uniqueLineCodeIds.length} cost code{uniqueLineCodeIds.length === 1 ? "" : "s"}
  </p>
  )}
@@ -1530,15 +1530,15 @@ export default function InvoiceReviewPage() {
 
  {/* Cost code summary */}
  {costCodeSummary.length > 0 && (
- <div className="mb-2 bg-[rgba(91,134,153,0.06)]/60 border border-[rgba(59,88,100,0.15)]">
- <div className="px-3 py-2 border-b border-[rgba(59,88,100,0.15)]">
- <p className="text-[10px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
+ <div className="mb-2 bg-brand-surface/60 border border-brand-border">
+ <div className="px-3 py-2 border-b border-brand-border">
+ <p className="text-[10px] text-cream-dim uppercase tracking-wider">
  Cost Code Split · {costCodeSummary.length} code{costCodeSummary.length !== 1 ? "s" : ""}
  </p>
  </div>
  <table className="w-full text-xs">
  <thead>
- <tr className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
+ <tr className="text-[10px] uppercase tracking-wider text-cream-dim">
  <th className="text-left px-3 py-1.5 font-medium">Code</th>
  <th className="text-left px-3 py-1.5 font-medium">Description</th>
  <th className="text-right px-3 py-1.5 font-medium">Lines</th>
@@ -1547,11 +1547,11 @@ export default function InvoiceReviewPage() {
  </thead>
  <tbody>
  {costCodeSummary.map(cs => (
- <tr key={cs.id} className="border-t border-[rgba(59,88,100,0.08)]">
- <td className="px-3 py-1.5 font-mono text-stone-blue">{cs.code}</td>
- <td className="px-3 py-1.5 text-[rgba(59,88,100,0.70)]">{cs.description}</td>
- <td className="px-3 py-1.5 text-right text-[rgba(59,88,100,0.55)] tabular-nums">{cs.count}</td>
- <td className="px-3 py-1.5 text-right text-slate-tile font-medium tabular-nums">{formatCents(cs.total)}</td>
+ <tr key={cs.id} className="border-t border-brand-row-border">
+ <td className="px-3 py-1.5 font-mono text-teal">{cs.code}</td>
+ <td className="px-3 py-1.5 text-cream-muted">{cs.description}</td>
+ <td className="px-3 py-1.5 text-right text-cream-dim tabular-nums">{cs.count}</td>
+ <td className="px-3 py-1.5 text-right text-cream font-medium tabular-nums">{formatCents(cs.total)}</td>
  </tr>
  ))}
  </tbody>
@@ -1559,16 +1559,16 @@ export default function InvoiceReviewPage() {
  </div>
  )}
 
- <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+ <div className="overflow-x-auto border border-brand-border">
  <table className="w-full text-xs">
  <thead>
- <tr className="bg-[rgba(91,134,153,0.06)]">
- <th className="py-2 px-3 text-left text-slate-tile font-semibold">Description</th>
- <th className="py-2 px-3 text-left text-slate-tile font-semibold min-w-[220px]">Cost Code</th>
- <th className="py-2 px-3 text-left text-slate-tile font-semibold min-w-[180px]">PO</th>
- <th className="py-2 px-3 text-center text-slate-tile font-semibold">CO</th>
- <th className="py-2 px-3 text-left text-slate-tile font-semibold min-w-[120px]">CO Ref</th>
- <th className="py-2 px-3 text-right text-slate-tile font-semibold">Amount</th>
+ <tr className="bg-brand-surface">
+ <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold min-w-[220px]">Cost Code</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold min-w-[180px]">PO</th>
+ <th className="py-2 px-3 text-center text-cream font-semibold">CO</th>
+ <th className="py-2 px-3 text-left text-cream font-semibold min-w-[120px]">CO Ref</th>
+ <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
  </tr>
  </thead>
  <tbody>
@@ -1577,8 +1577,8 @@ export default function InvoiceReviewPage() {
  const aiSugActive = li.cost_code_id === li.ai_suggested_cost_code_id && aiSug;
  const missingCoRef = li.is_change_order && !li.co_reference.trim();
  return (
- <tr key={li.id ?? idx} className="border-t border-[rgba(59,88,100,0.08)] align-top">
- <td className="py-2 px-3 text-slate-tile max-w-[360px]">
+ <tr key={li.id ?? idx} className="border-t border-brand-row-border align-top">
+ <td className="py-2 px-3 text-cream max-w-[360px]">
  {li.description ? (
  <>
  <div className={expandedDescriptions.has(idx) ? "" : "line-clamp-2"}>
@@ -1593,17 +1593,17 @@ export default function InvoiceReviewPage() {
  else next.add(idx);
  return next;
  })}
- className="text-[10px] text-stone-blue hover:underline mt-0.5"
+ className="text-[10px] text-teal hover:underline mt-0.5"
  >
  {expandedDescriptions.has(idx) ? "Show less" : "Show more"}
  </button>
  )}
  </>
  ) : (
- <span className="text-[rgba(59,88,100,0.55)] italic">(no description)</span>
+ <span className="text-cream-dim italic">(no description)</span>
  )}
  {(li.qty != null || li.rate != null) && (
- <div className="text-[10px] text-[rgba(59,88,100,0.55)] mt-0.5">
+ <div className="text-[10px] text-cream-dim mt-0.5">
  {li.qty != null && <span>{li.qty}{li.unit ? ` ${li.unit}` : ""}</span>}
  {li.qty != null && li.rate != null && <span> × </span>}
  {li.rate != null && <span>{formatDollars(li.rate)}</span>}
@@ -1624,12 +1624,12 @@ export default function InvoiceReviewPage() {
  if (!li.cost_code_id) return null;
  const budget = budgetByCostCode.get(li.cost_code_id);
  if (!budget) return (
- <p className="mt-1 text-[10px] text-[rgba(59,88,100,0.55)]">No budget line for this cost code</p>
+ <p className="mt-1 text-[10px] text-cream-dim">No budget line for this cost code</p>
  );
  const remainingAfter = budget.remaining - li.amount_cents;
  const willOver = remainingAfter < 0;
  return (
- <p className={`mt-1 text-[10px] ${willOver ? "text-nw-danger font-medium" : "text-[rgba(59,88,100,0.55)]"}`}>
+ <p className={`mt-1 text-[10px] ${willOver ? "text-status-danger font-medium" : "text-cream-dim"}`}>
  {willOver
  ? `Over budget by ${formatCents(Math.abs(remainingAfter))}`
  : `${formatCents(budget.remaining)} remaining · after: ${formatCents(remainingAfter)}`}
@@ -1656,7 +1656,7 @@ export default function InvoiceReviewPage() {
  }));
  }}
  disabled={!isReviewable}
- className="w-full px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-xs text-slate-tile focus:outline-none focus:border-stone-blue disabled:opacity-50"
+ className="w-full px-2 py-1 bg-brand-surface border border-brand-border text-xs text-cream focus:outline-none focus:border-teal disabled:opacity-50"
  >
  <option value="">— No PO —</option>
  {purchaseOrders.map(po => {
@@ -1675,7 +1675,7 @@ export default function InvoiceReviewPage() {
  const remaining = po.amount - po.invoiced_total;
  const over = li.amount_cents > remaining;
  return (
- <p className={`mt-1 text-[10px] ${over ? "text-nw-warn font-medium" : "text-[rgba(59,88,100,0.55)]"}`}>
+ <p className={`mt-1 text-[10px] ${over ? "text-status-warning font-medium" : "text-cream-dim"}`}>
  {over
  ? `Exceeds PO by ${formatCents(li.amount_cents - remaining)}`
  : `${formatCents(remaining)} remaining on PO`}
@@ -1696,7 +1696,7 @@ export default function InvoiceReviewPage() {
  };
  }))}
  disabled={!isReviewable}
- className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-nw-warn" : "bg-brand-border"}`}
+ className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-brass" : "bg-brand-border"}`}
  aria-label="Toggle Change Order"
  >
  <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${li.is_change_order ? "translate-x-5" : "translate-x-1"}`} />
@@ -1710,21 +1710,21 @@ export default function InvoiceReviewPage() {
  onChange={(e) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, co_reference: e.target.value } : item))}
  disabled={!isReviewable}
  placeholder="PCCO #"
- className={`w-full max-w-[140px] px-2 py-1 bg-[rgba(91,134,153,0.06)] border text-xs text-slate-tile focus:outline-none disabled:opacity-50 ${missingCoRef ? "border-nw-danger" : "border-[rgba(59,88,100,0.15)] focus:border-stone-blue"}`}
+ className={`w-full max-w-[140px] px-2 py-1 bg-brand-surface border text-xs text-cream focus:outline-none disabled:opacity-50 ${missingCoRef ? "border-status-danger" : "border-brand-border focus:border-teal"}`}
  />
  ) : (
- <span className="text-[rgba(59,88,100,0.55)]">—</span>
+ <span className="text-cream-dim">—</span>
  )}
  </td>
- <td className="py-2 px-3 text-right text-slate-tile font-medium">{formatCents(li.amount_cents)}</td>
+ <td className="py-2 px-3 text-right text-cream font-medium">{formatCents(li.amount_cents)}</td>
  </tr>
  );
  })}
  </tbody>
  <tfoot>
- <tr className="border-t-2 border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/40">
- <td colSpan={5} className="py-2 px-3 text-right text-[rgba(59,88,100,0.55)] text-[11px] uppercase tracking-wider">Line Items Sum</td>
- <td className={`py-2 px-3 text-right font-medium ${hasAmountMismatch ? "text-nw-danger" : "text-slate-tile"}`}>
+ <tr className="border-t-2 border-brand-border bg-brand-surface/40">
+ <td colSpan={5} className="py-2 px-3 text-right text-cream-dim text-[11px] uppercase tracking-wider">Line Items Sum</td>
+ <td className={`py-2 px-3 text-right font-medium ${hasAmountMismatch ? "text-status-danger" : "text-cream"}`}>
  {formatCents(lineItemSumCents)}
  </td>
  </tr>
@@ -1732,15 +1732,15 @@ export default function InvoiceReviewPage() {
  </table>
  </div>
  {hasAmountMismatch && (
- <div className="mt-2 px-3 py-2 bg-nw-danger-muted border border-nw-danger/20">
- <p className="text-xs text-nw-danger font-medium">
+ <div className="mt-2 px-3 py-2 bg-status-danger-muted border border-status-danger/20">
+ <p className="text-xs text-status-danger font-medium">
  Line items sum ({formatCents(lineItemSumCents)}) does not match invoice total ({formatCents(totalCents)})
  </p>
  </div>
  )}
  {missingCoReference && (
- <div className="mt-2 px-3 py-2 bg-nw-danger-muted border border-nw-danger/20">
- <p className="text-xs text-nw-danger font-medium">
+ <div className="mt-2 px-3 py-2 bg-status-danger-muted border border-status-danger/20">
+ <p className="text-xs text-status-danger font-medium">
  {lineItemsMissingCoReference.length} change-order line{lineItemsMissingCoReference.length === 1 ? "" : "s"} missing CO Reference
  </p>
  </div>
@@ -1751,7 +1751,7 @@ export default function InvoiceReviewPage() {
 
  {/* Actions — desktop only (mobile uses sticky bar below) */}
  {isReviewable && (
- <div className="hidden md:block border-t border-[rgba(59,88,100,0.15)] pt-6 space-y-3">
+ <div className="hidden md:block border-t border-brand-border pt-6 space-y-3">
  <div className="flex gap-3">
  <button
  onClick={openApproveFlow}
@@ -1761,7 +1761,7 @@ export default function InvoiceReviewPage() {
  className={`flex-1 px-4 py-3 font-medium transition-all text-white ${
  approveDisabledReason
  ? "bg-gray-400 opacity-50 hover:bg-gray-400"
- : "bg-nw-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
+ : "bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
  }`}>
  {saving ? "Saving..." : "Approve"}
  </button>
@@ -1773,21 +1773,21 @@ export default function InvoiceReviewPage() {
  className={`flex-1 px-4 py-3 font-medium transition-all border-2 ${
  approveDisabledReason
  ? "bg-gray-100 border-gray-300 text-gray-400 opacity-60 hover:bg-gray-100 hover:text-gray-400"
- : "border-nw-success text-nw-success hover:bg-nw-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-nw-success"
+ : "border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success"
  }`}>
  Partial Approve
  </button>
  <button onClick={() => setShowNoteModal("hold")} disabled={saving}
- className="flex-1 px-4 py-3 bg-nw-warn hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all">
+ className="flex-1 px-4 py-3 bg-brass hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all">
  Hold
  </button>
  <button onClick={() => setShowNoteModal("deny")} disabled={saving}
- className="flex-1 px-4 py-3 bg-nw-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
+ className="flex-1 px-4 py-3 bg-status-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
  Deny
  </button>
  </div>
  <button onClick={() => setShowRequestInfoModal(true)} disabled={saving}
- className="w-full px-4 py-2 border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light text-[rgba(59,88,100,0.70)] text-sm transition-colors">
+ className="w-full px-4 py-2 border border-brand-border hover:border-brand-border-light text-cream-muted text-sm transition-colors">
  Request Info
  </button>
  </div>
@@ -1804,14 +1804,14 @@ export default function InvoiceReviewPage() {
  {overBudgetByCode.map(s => {
  const cc = costCodes.find(c => c.id === s.ccId);
  return (
- <div key={s.ccId} className="border-b border-[rgba(59,88,100,0.15)] pb-3 last:border-b-0 last:pb-0">
+ <div key={s.ccId} className="border-b border-brand-border pb-3 last:border-b-0 last:pb-0">
  <div className="flex items-baseline justify-between mb-2">
- <span className="text-xs font-mono text-stone-blue">{cc?.code ?? "???"}</span>
+ <span className="text-xs font-mono text-teal">{cc?.code ?? "???"}</span>
  <span className="flex items-center gap-1">
  {s.bi?.is_allowance && (
- <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-bold bg-transparent text-stone-blue border border-stone-blue uppercase">Allowance</span>
+ <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-bold bg-transparent text-teal border border-teal uppercase">Allowance</span>
  )}
- <span className="text-[10px] text-[rgba(59,88,100,0.55)] truncate max-w-[120px] text-right">{cc?.description ?? ""}</span>
+ <span className="text-[10px] text-cream-dim truncate max-w-[120px] text-right">{cc?.description ?? ""}</span>
  </span>
  </div>
  {s.bi ? (
@@ -1827,9 +1827,9 @@ export default function InvoiceReviewPage() {
  {s.severity !== "none" && <OverBudgetAlert severity={s.severity} overage={s.overageCents} pct={s.pct} isAllowance={!!s.bi.is_allowance} />}
  </div>
  ) : (
- <div className="px-2 py-1.5 bg-nw-danger-muted border border-nw-danger/20">
- <p className="text-[11px] text-nw-danger font-medium">No budget set — $0 budget line</p>
- <p className="text-[10px] text-[rgba(59,88,100,0.55)] mt-0.5">Use Convert to Change Order or Approve as Overage.</p>
+ <div className="px-2 py-1.5 bg-status-danger-muted border border-status-danger/20">
+ <p className="text-[11px] text-status-danger font-medium">No budget set — $0 budget line</p>
+ <p className="text-[10px] text-cream-dim mt-0.5">Use Convert to Change Order or Approve as Overage.</p>
  </div>
  )}
  </div>
@@ -1846,12 +1846,12 @@ export default function InvoiceReviewPage() {
  return (
  <div className="space-y-3">
  {budgetInfo.is_allowance && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-stone-blue border border-stone-blue uppercase">Allowance</span>
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-teal border border-teal uppercase">Allowance</span>
  )}
  <BudgetRow label="Original Estimate" value={budgetInfo.original_estimate} />
  <BudgetRow label="Revised Estimate" value={budgetInfo.revised_estimate} />
  <BudgetRow label="Total Spent" value={budgetInfo.total_spent} />
- <div className="border-t border-[rgba(59,88,100,0.15)] pt-3">
+ <div className="border-t border-brand-border pt-3">
  <BudgetRow label="Remaining" value={budgetInfo.remaining}
  highlight={singleClass.severity === "red" || singleClass.severity === "orange" ? "danger" : singleClass.severity === "yellow" ? "warning" : "success"} />
  </div>
@@ -1860,12 +1860,12 @@ export default function InvoiceReviewPage() {
  );
  })() : (
  jobId && costCodeId ? (
- <div className="px-3 py-2.5 bg-nw-warn/10 border border-nw-warn/20 ">
- <p className="text-xs text-nw-warn font-medium">No budget set for this cost code</p>
- <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">Approving will create a $0 budget line — this invoice will show as over-budget on the draw.</p>
+ <div className="px-3 py-2.5 bg-brass/10 border border-brass/20 ">
+ <p className="text-xs text-brass font-medium">No budget set for this cost code</p>
+ <p className="text-[11px] text-cream-dim mt-1">Approving will create a $0 budget line — this invoice will show as over-budget on the draw.</p>
  </div>
  ) : (
- <p className="text-sm text-[rgba(59,88,100,0.55)]">Select job + cost code</p>
+ <p className="text-sm text-cream-dim">Select job + cost code</p>
  )
  )}
  </SidebarCard>
@@ -1878,27 +1878,27 @@ export default function InvoiceReviewPage() {
  <SidebarCard title="Payment Tracking">
  <div className="space-y-4">
  <div>
- <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">Check #</label>
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">Check #</label>
  <input type="text" value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} placeholder="e.g. 10452"
- className="w-full px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none transition-colors" />
+ className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none transition-colors" />
  </div>
  <div className="flex items-center gap-3">
- <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Picked Up</label>
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Picked Up</label>
  <button onClick={() => setPickedUp(!pickedUp)}
- className={`relative inline-flex h-6 w-11 items-center transition-colors ${pickedUp ? "bg-nw-success" : "bg-brand-border"}`}>
+ className={`relative inline-flex h-6 w-11 items-center transition-colors ${pickedUp ? "bg-status-success" : "bg-brand-border"}`}>
  <span className={`inline-block h-4 w-4 transform bg-white transition-transform ${pickedUp ? "translate-x-6" : "translate-x-1"}`} />
  </button>
- <span className="text-xs text-[rgba(59,88,100,0.55)]">{pickedUp ? "Yes" : "No"}</span>
+ <span className="text-xs text-cream-dim">{pickedUp ? "Yes" : "No"}</span>
  </div>
  {!pickedUp && (
  <div>
- <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">Mailed Date</label>
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">Mailed Date</label>
  <input type="date" value={mailedDate} onChange={(e) => setMailedDate(e.target.value)}
- className="w-full px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none transition-colors" />
+ className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none transition-colors" />
  </div>
  )}
  <button onClick={handleSavePaymentTracking} disabled={savingPayment}
- className="w-full px-4 py-2.5 bg-slate-deep hover:bg-slate-deeper text-brand-bg font-medium transition-colors disabled:opacity-50">
+ className="w-full px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors disabled:opacity-50">
  {savingPayment ? "Saving..." : "Save"}
  </button>
  </div>
@@ -1913,7 +1913,7 @@ export default function InvoiceReviewPage() {
  .filter(([f, s]) => f !== "auto_fills" && typeof s === "number")
  .map(([field, score]) => (
  <div key={field} className="flex items-center justify-between text-sm">
- <span className="text-[rgba(59,88,100,0.70)]">{formatFlag(field)}</span>
+ <span className="text-cream-muted">{formatFlag(field)}</span>
  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${confidenceColor(score as number)}`}>{Math.round((score as number) * 100)}%</span>
  </div>
  ))}
@@ -1934,13 +1934,13 @@ export default function InvoiceReviewPage() {
  )}
  <div className={`absolute left-0 top-1 w-[15px] h-[15px] border-2 border-brand-card ${statusDotColor(newStatus)}`} />
  <div className="text-xs">
- <p className="text-slate-tile font-medium">
+ <p className="text-cream font-medium">
  {formatStatus(String(entry.old_status))} &rarr; {formatStatus(newStatus)}
  </p>
- <p className="text-[rgba(59,88,100,0.55)] mt-0.5">
+ <p className="text-cream-dim mt-0.5">
  {formatWho(String(entry.who), userNames)} &mdash; {formatDateTime(String(entry.when))}
  </p>
- {entry.note ? <p className="text-[rgba(59,88,100,0.55)]/80 mt-1 italic text-[11px] leading-relaxed">{String(entry.note)}</p> : null}
+ {entry.note ? <p className="text-cream-dim/80 mt-1 italic text-[11px] leading-relaxed">{String(entry.note)}</p> : null}
  </div>
  </div>
  );
@@ -1960,7 +1960,7 @@ export default function InvoiceReviewPage() {
 
  {/* ── Sticky Mobile Action Bar ── */}
  {isReviewable && (
- <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white-sand/95 backdrop-blur-sm border-t border-[rgba(59,88,100,0.15)] px-4 py-3 z-30">
+ <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-bg/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 z-30">
  <div className="flex gap-2">
  <button
  onClick={openApproveFlow}
@@ -1970,7 +1970,7 @@ export default function InvoiceReviewPage() {
  className={`flex-1 px-2 py-3 font-medium transition-all text-white text-sm ${
  approveDisabledReason
  ? "bg-gray-400 opacity-50 hover:bg-gray-400"
- : "bg-nw-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
+ : "bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
  }`}>
  {saving ? "..." : "Approve"}
  </button>
@@ -1982,21 +1982,21 @@ export default function InvoiceReviewPage() {
  className={`flex-1 px-2 py-3 font-medium transition-all text-sm border ${
  approveDisabledReason
  ? "bg-gray-100 border-gray-300 text-gray-400 opacity-60 hover:bg-gray-100 hover:text-gray-400"
- : "border-nw-success text-nw-success hover:bg-nw-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-nw-success"
+ : "border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success"
  }`}>
  Partial
  </button>
  <button onClick={() => setShowNoteModal("hold")} disabled={saving}
- className="flex-1 px-2 py-3 bg-nw-warn hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all text-sm">
+ className="flex-1 px-2 py-3 bg-brass hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all text-sm">
  Hold
  </button>
  <button onClick={() => setShowNoteModal("deny")} disabled={saving}
- className="flex-1 px-2 py-3 bg-nw-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
+ className="flex-1 px-2 py-3 bg-status-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
  Deny
  </button>
  </div>
  <button onClick={() => setShowRequestInfoModal(true)} disabled={saving}
- className="w-full mt-2 px-3 py-2 border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light text-[rgba(59,88,100,0.70)] text-xs transition-colors">
+ className="w-full mt-2 px-3 py-2 border border-brand-border hover:border-brand-border-light text-cream-muted text-xs transition-colors">
  Request Info
  </button>
  </div>
@@ -2005,53 +2005,53 @@ export default function InvoiceReviewPage() {
  {/* ── Approve Confirmation Modal ── */}
  {showApproveConfirm && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
- <h3 className="font-display text-xl text-slate-tile mb-2">
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <h3 className="font-display text-xl text-cream mb-2">
  {isCreditMemo ? "Approve Credit Memo" : "Approve Invoice"}
  </h3>
 
  {isCreditMemo && (
- <p className="text-sm text-[rgba(59,88,100,0.70)] mb-3">
+ <p className="text-sm text-cream-muted mb-3">
  Approve credit of {formatCents(Math.abs(totalCents))} from {invoice.vendor_name_raw ?? "Unknown"}?
  </p>
  )}
 
  {/* Soft warnings for optional fields (job+cost code enforced before reaching this modal) */}
  {(missingInvoiceNumber || missingInvoiceDate) && (
- <div className="mb-4 px-3 py-2.5 bg-nw-warn-muted border border-nw-warn/20 space-y-1">
- {missingInvoiceNumber && <p className="text-xs text-nw-warn">Missing invoice number</p>}
- {missingInvoiceDate && <p className="text-xs text-nw-warn">Missing invoice date</p>}
- <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">You can still approve, but consider filling these in.</p>
+ <div className="mb-4 px-3 py-2.5 bg-status-warning-muted border border-brass/20 space-y-1">
+ {missingInvoiceNumber && <p className="text-xs text-brass">Missing invoice number</p>}
+ {missingInvoiceDate && <p className="text-xs text-brass">Missing invoice date</p>}
+ <p className="text-[11px] text-cream-dim mt-1">You can still approve, but consider filling these in.</p>
  </div>
  )}
 
- <div className="bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-4 space-y-2 text-sm">
+ <div className="bg-brand-surface border border-brand-border p-4 space-y-2 text-sm">
  <div className="flex justify-between">
- <span className="text-[rgba(59,88,100,0.55)]">Amount</span>
- <span className={`font-display font-medium ${isCreditMemo ? "text-stone-blue" : "text-nw-warn"}`}>{formatCents(totalCents)}</span>
+ <span className="text-cream-dim">Amount</span>
+ <span className={`font-display font-medium ${isCreditMemo ? "text-teal" : "text-brass"}`}>{formatCents(totalCents)}</span>
  </div>
  <div className="flex justify-between">
- <span className="text-[rgba(59,88,100,0.55)]">Vendor</span>
- <span className="text-slate-tile">{invoice.vendor_name_raw ?? "Unknown"}</span>
+ <span className="text-cream-dim">Vendor</span>
+ <span className="text-cream">{invoice.vendor_name_raw ?? "Unknown"}</span>
  </div>
  <div className="flex justify-between">
- <span className="text-[rgba(59,88,100,0.55)]">Job</span>
- <span className="text-slate-tile">{selectedJob?.name ?? "Not assigned"}</span>
+ <span className="text-cream-dim">Job</span>
+ <span className="text-cream">{selectedJob?.name ?? "Not assigned"}</span>
  </div>
  <div className="flex justify-between">
- <span className="text-[rgba(59,88,100,0.55)]">Default Cost Code</span>
- <span className="text-slate-tile">{selectedCostCode ? `${selectedCostCode.code} — ${selectedCostCode.description}` : "Not assigned"}</span>
+ <span className="text-cream-dim">Default Cost Code</span>
+ <span className="text-cream">{selectedCostCode ? `${selectedCostCode.code} — ${selectedCostCode.description}` : "Not assigned"}</span>
  </div>
  {uniqueLineCodeIds.length > 1 && (
  <div className="flex justify-between">
- <span className="text-[rgba(59,88,100,0.55)]">Cost Code Split</span>
- <span className="text-slate-tile">{uniqueLineCodeIds.length} codes across {lineItems.length} lines</span>
+ <span className="text-cream-dim">Cost Code Split</span>
+ <span className="text-cream">{uniqueLineCodeIds.length} codes across {lineItems.length} lines</span>
  </div>
  )}
  {isChangeOrder && (
  <div className="flex justify-between">
- <span className="text-[rgba(59,88,100,0.55)]">Change Order</span>
- <span className="text-nw-warn">{coReference || "Yes"}</span>
+ <span className="text-cream-dim">Change Order</span>
+ <span className="text-brass">{coReference || "Yes"}</span>
  </div>
  )}
  </div>
@@ -2060,11 +2060,11 @@ export default function InvoiceReviewPage() {
  <button
  onClick={() => { setShowApproveConfirm(false); handleAction("approve"); }}
  disabled={saving}
- className="flex-1 px-4 py-2.5 bg-nw-success hover:brightness-110 text-white font-medium disabled:opacity-50 transition-all">
+ className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 text-white font-medium disabled:opacity-50 transition-all">
  {isCreditMemo ? "Confirm Credit Approval" : "Confirm Approval"}
  </button>
  <button onClick={() => setShowApproveConfirm(false)}
- className="flex-1 px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors">
+ className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
  Cancel
  </button>
  </div>
@@ -2080,28 +2080,28 @@ export default function InvoiceReviewPage() {
  const formatCc = (ccId: string) => costCodes.find(c => c.id === ccId)?.code ?? "???";
  return (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
- <div className="bg-white border border-nw-danger/40 p-6 w-full max-w-lg animate-fade-up shadow-2xl">
+ <div className="bg-brand-card border border-status-danger/40 p-6 w-full max-w-lg animate-fade-up shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
- <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${hasRed ? "bg-nw-danger-muted" : "bg-nw-warn-muted"}`}>
- <svg className={`w-5 h-5 ${hasRed ? "text-nw-danger" : "text-nw-warn"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${hasRed ? "bg-status-danger-muted" : "bg-status-warning-muted"}`}>
+ <svg className={`w-5 h-5 ${hasRed ? "text-status-danger" : "text-status-warning"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
  </div>
- <h3 className="font-display text-xl text-slate-tile">
+ <h3 className="font-display text-xl text-cream">
  {hasRed ? "Over Budget — Review Required" : "Over Budget — Note Required"}
  </h3>
  </div>
- <p className="text-sm text-[rgba(59,88,100,0.70)] mb-3">
+ <p className="text-sm text-cream-muted mb-3">
  This invoice exceeds the budget on {overBudgetByCode.filter(r => r.severity !== "none").length} cost code(s):
  </p>
- <ul className="bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-3 space-y-1 mb-4 max-h-40 overflow-y-auto">
+ <ul className="bg-brand-surface border border-brand-border p-3 space-y-1 mb-4 max-h-40 overflow-y-auto">
  {overBudgetByCode.filter(r => r.severity !== "none").map(r => (
- <li key={r.ccId} className="text-xs text-[rgba(59,88,100,0.70)] flex justify-between">
+ <li key={r.ccId} className="text-xs text-cream-muted flex justify-between">
  <span>
- <span className="font-mono text-stone-blue">{formatCc(r.ccId)}</span>
- {r.bi?.is_allowance && <span className="ml-1 text-stone-blue">[Allowance]</span>}
+ <span className="font-mono text-teal">{formatCc(r.ccId)}</span>
+ {r.bi?.is_allowance && <span className="ml-1 text-teal">[Allowance]</span>}
  </span>
- <span className={r.severity === "red" ? "text-nw-danger" : r.severity === "orange" ? "text-nw-warn" : "text-nw-warn"}>
+ <span className={r.severity === "red" ? "text-status-danger" : r.severity === "orange" ? "text-status-warning" : "text-brass"}>
  +{formatCents(r.overageCents)} ({r.pct.toFixed(1)}%)
  </span>
  </li>
@@ -2109,29 +2109,29 @@ export default function InvoiceReviewPage() {
  </ul>
 
  {hasAllowanceOverage && (
- <div className="mb-4 px-3 py-2 bg-slate-deep/10 border border-stone-blue/30">
- <p className="text-xs text-stone-blue font-medium">Allowance overage detected</p>
- <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-0.5">
+ <div className="mb-4 px-3 py-2 bg-teal/10 border border-teal/30">
+ <p className="text-xs text-teal font-medium">Allowance overage detected</p>
+ <p className="text-[11px] text-cream-dim mt-0.5">
  Allowances are expected to generate change orders — &quot;Convert to Change Order&quot; is the recommended path.
  </p>
  </div>
  )}
 
- <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
  {hasRed ? "Overage Note (required if approving as overage)" : "Overage Note (required)"}
  </label>
  <textarea
  value={overBudgetNote}
  onChange={(e) => setOverBudgetNote(e.target.value)}
  placeholder={`Why is this going over? (e.g. "Client requested ${orangeRows.length > 0 && orangeRows[0].bi?.is_allowance ? "tile upgrade" : "additional scope"}"`}
- className="w-full h-20 px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none"
+ className="w-full h-20 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
  />
 
  <div className="flex flex-col gap-2 mt-5">
  {hasRed && (
  <button
  onClick={handleConvertToChangeOrder}
- className="w-full px-4 py-2.5 bg-slate-deep hover:bg-slate-deeper text-brand-bg font-medium transition-all">
+ className="w-full px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-all">
  Convert to Change Order
  </button>
  )}
@@ -2149,12 +2149,12 @@ export default function InvoiceReviewPage() {
  setOverBudgetNote("");
  }}
  disabled={!overBudgetNote.trim() || saving}
- className={`flex-1 px-4 py-2.5 font-medium disabled:opacity-50 transition-all ${hasRed ? "bg-nw-danger text-white" : "bg-nw-success text-white"} hover:brightness-110`}>
+ className={`flex-1 px-4 py-2.5 font-medium disabled:opacity-50 transition-all ${hasRed ? "bg-status-danger text-white" : "bg-status-success text-white"} hover:brightness-110`}>
  {hasRed ? "Approve as Overage" : "Approve With Note"}
  </button>
  <button
  onClick={() => { setShowOverBudgetModal(false); setOverBudgetNote(""); }}
- className="flex-1 px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors">
+ className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
  Cancel
  </button>
  </div>
@@ -2167,25 +2167,25 @@ export default function InvoiceReviewPage() {
  {/* ── Amount Guard Modal (>10% over AI-parsed) ── */}
  {showAmountGuard && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
- <div className="bg-white border border-nw-danger/40 p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <div className="bg-brand-card border border-status-danger/40 p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
- <div className="w-10 h-10 bg-nw-danger-muted flex items-center justify-center flex-shrink-0">
- <svg className="w-5 h-5 text-nw-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <div className="w-10 h-10 bg-status-danger-muted flex items-center justify-center flex-shrink-0">
+ <svg className="w-5 h-5 text-status-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
  </div>
- <h3 className="font-display text-xl text-slate-tile">Amount Change Requires Note</h3>
+ <h3 className="font-display text-xl text-cream">Amount Change Requires Note</h3>
  </div>
- <p className="text-sm text-[rgba(59,88,100,0.70)] mb-4">
- You&apos;re approving <span className="font-medium text-slate-tile">{formatCents(totalCents)}</span>, which is{" "}
- <span className="text-nw-danger font-medium">+{amountIncreasePct.toFixed(1)}%</span> over the AI-parsed total of{" "}
- <span className="text-slate-tile">{formatCents(aiParsedTotal)}</span>. A note is required for any increase over 10%.
+ <p className="text-sm text-cream-muted mb-4">
+ You&apos;re approving <span className="font-medium text-cream">{formatCents(totalCents)}</span>, which is{" "}
+ <span className="text-status-danger font-medium">+{amountIncreasePct.toFixed(1)}%</span> over the AI-parsed total of{" "}
+ <span className="text-cream">{formatCents(aiParsedTotal)}</span>. A note is required for any increase over 10%.
  </p>
  <textarea
  value={amountGuardNote}
  onChange={(e) => setAmountGuardNote(e.target.value)}
  placeholder="Reason for the amount change (required)..."
- className="w-full h-24 px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none"
+ className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
  />
  <div className="flex gap-3 mt-5">
  <button
@@ -2196,11 +2196,11 @@ export default function InvoiceReviewPage() {
  setAmountGuardNote("");
  }}
  disabled={!amountGuardNote.trim() || saving}
- className="flex-1 px-4 py-2.5 bg-nw-success hover:brightness-110 text-white font-medium disabled:opacity-50 transition-all">
+ className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 text-white font-medium disabled:opacity-50 transition-all">
  Approve With Note
  </button>
  <button onClick={() => { setShowAmountGuard(false); setAmountGuardNote(""); }}
- className="flex-1 px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors">
+ className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
  Cancel
  </button>
  </div>
@@ -2211,28 +2211,28 @@ export default function InvoiceReviewPage() {
  {/* ── Missing CO Reference Modal ── */}
  {showMissingCoBlock && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
- <div className="w-10 h-10 bg-nw-danger-muted flex items-center justify-center flex-shrink-0">
- <svg className="w-5 h-5 text-nw-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <div className="w-10 h-10 bg-status-danger-muted flex items-center justify-center flex-shrink-0">
+ <svg className="w-5 h-5 text-status-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
  </div>
- <h3 className="font-display text-xl text-slate-tile">CO Reference Required</h3>
+ <h3 className="font-display text-xl text-cream">CO Reference Required</h3>
  </div>
- <p className="text-sm text-[rgba(59,88,100,0.70)] mb-3">
+ <p className="text-sm text-cream-muted mb-3">
  {lineItemsMissingCoReference.length} change-order line item{lineItemsMissingCoReference.length === 1 ? "" : "s"} need a CO Reference (e.g. &quot;PCCO #3&quot;) before approval.
  </p>
- <ul className="bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-3 space-y-1 mb-5 max-h-40 overflow-y-auto">
+ <ul className="bg-brand-surface border border-brand-border p-3 space-y-1 mb-5 max-h-40 overflow-y-auto">
  {lineItemsMissingCoReference.map((l, i) => (
- <li key={l.id ?? i} className="text-xs text-[rgba(59,88,100,0.70)]">
+ <li key={l.id ?? i} className="text-xs text-cream-muted">
  Line {l.line_index + 1}: {l.description || "(no description)"} — {formatCents(l.amount_cents)}
  </li>
  ))}
  </ul>
  <button
  onClick={() => setShowMissingCoBlock(false)}
- className="w-full px-4 py-2.5 bg-slate-deep hover:bg-slate-deeper text-brand-bg font-medium transition-colors">
+ className="w-full px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors">
  Go Back and Fill In
  </button>
  </div>
@@ -2242,26 +2242,26 @@ export default function InvoiceReviewPage() {
  {/* ── Missing Fields Block Modal ── */}
  {showMissingFieldsBlock && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
- <div className="w-10 h-10 bg-nw-danger-muted flex items-center justify-center flex-shrink-0">
- <svg className="w-5 h-5 text-nw-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <div className="w-10 h-10 bg-status-danger-muted flex items-center justify-center flex-shrink-0">
+ <svg className="w-5 h-5 text-status-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
  </div>
- <h3 className="font-display text-xl text-slate-tile">Cannot Approve</h3>
+ <h3 className="font-display text-xl text-cream">Cannot Approve</h3>
  </div>
- <p className="text-sm text-[rgba(59,88,100,0.70)] mb-2">Job and Cost Code are required before approving.</p>
- <div className="bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-3 space-y-1.5 mb-5">
+ <p className="text-sm text-cream-muted mb-2">Job and Cost Code are required before approving.</p>
+ <div className="bg-brand-surface border border-brand-border p-3 space-y-1.5 mb-5">
  <div className="flex items-center gap-2">
- <span className={`w-2 h-2 ${jobId ? "bg-nw-success" : "bg-nw-danger"}`} />
- <span className={`text-sm ${jobId ? "text-[rgba(59,88,100,0.70)]" : "text-slate-tile font-medium"}`}>
+ <span className={`w-2 h-2 ${jobId ? "bg-status-success" : "bg-status-danger"}`} />
+ <span className={`text-sm ${jobId ? "text-cream-muted" : "text-cream font-medium"}`}>
  {jobId ? `Job: ${selectedJob?.name ?? "Assigned"}` : "Job — not assigned"}
  </span>
  </div>
  <div className="flex items-center gap-2">
- <span className={`w-2 h-2 ${costCodeId ? "bg-nw-success" : "bg-nw-danger"}`} />
- <span className={`text-sm ${costCodeId ? "text-[rgba(59,88,100,0.70)]" : "text-slate-tile font-medium"}`}>
+ <span className={`w-2 h-2 ${costCodeId ? "bg-status-success" : "bg-status-danger"}`} />
+ <span className={`text-sm ${costCodeId ? "text-cream-muted" : "text-cream font-medium"}`}>
  {costCodeId ? `Cost Code: ${selectedCostCode?.code ?? "Assigned"}` : "Cost Code — not assigned"}
  </span>
  </div>
@@ -2269,13 +2269,13 @@ export default function InvoiceReviewPage() {
  <div className="flex gap-3">
  <button
  onClick={() => setShowMissingFieldsBlock(false)}
- className="flex-1 px-4 py-2.5 bg-slate-deep hover:bg-slate-deeper text-brand-bg font-medium transition-colors">
+ className="flex-1 px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors">
  Go Back and Assign
  </button>
  <button
  onClick={() => { setShowMissingFieldsBlock(false); handleAction("hold", "Held — missing job or cost code assignment"); }}
  disabled={saving}
- className="flex-1 px-4 py-2.5 bg-nw-warn hover:brightness-110 text-brand-bg font-medium disabled:opacity-50 transition-all">
+ className="flex-1 px-4 py-2.5 bg-brass hover:brightness-110 text-brand-bg font-medium disabled:opacity-50 transition-all">
  Hold Instead
  </button>
  </div>
@@ -2286,17 +2286,17 @@ export default function InvoiceReviewPage() {
  {/* ── Request Info Modal ── */}
  {showRequestInfoModal && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
- <h3 className="font-display text-xl text-slate-tile mb-4">Request Information</h3>
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <h3 className="font-display text-xl text-cream mb-4">Request Information</h3>
  <div className="space-y-4">
  <div>
- <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
  Who do you need info from?
  </label>
  <select
  value={infoRecipient}
  onChange={(e) => setInfoRecipient(e.target.value)}
- className="w-full px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+ className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
  >
  <option value="">Select...</option>
  <option value="Vendor">Vendor</option>
@@ -2306,14 +2306,14 @@ export default function InvoiceReviewPage() {
  </select>
  </div>
  <div>
- <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
  What do you need?
  </label>
  <textarea
  value={infoQuestion}
  onChange={(e) => setInfoQuestion(e.target.value)}
  placeholder="Describe the information you need..."
- className="w-full h-24 px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none"
+ className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
  />
  </div>
  </div>
@@ -2326,12 +2326,12 @@ export default function InvoiceReviewPage() {
  setInfoQuestion("");
  }}
  disabled={!infoRecipient || !infoQuestion.trim() || saving}
- className="flex-1 px-4 py-2.5 bg-nw-warn hover:brightness-110 text-brand-bg font-medium disabled:opacity-50 transition-all">
+ className="flex-1 px-4 py-2.5 bg-brass hover:brightness-110 text-brand-bg font-medium disabled:opacity-50 transition-all">
  {saving ? "Sending..." : "Send Request"}
  </button>
  <button
  onClick={() => { setShowRequestInfoModal(false); setInfoRecipient(""); setInfoQuestion(""); }}
- className="flex-1 px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors">
+ className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
  Cancel
  </button>
  </div>
@@ -2342,21 +2342,21 @@ export default function InvoiceReviewPage() {
  {/* ── Hold / Deny Note Modal ── */}
  {showNoteModal && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
- <h3 className="font-display text-xl text-slate-tile mb-4">
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <h3 className="font-display text-xl text-cream mb-4">
  {showNoteModal === "hold" ? "Hold Invoice" : "Deny Invoice"}
  </h3>
  <textarea value={actionNote} onChange={(e) => setActionNote(e.target.value)} placeholder="Add a note (required)..."
- className="w-full h-24 px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none" />
+ className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none" />
  <div className="flex gap-3 mt-4">
  <button
  onClick={() => { if (actionNote.trim()) { handleAction(showNoteModal, actionNote.trim()); setShowNoteModal(null); setActionNote(""); } }}
  disabled={!actionNote.trim() || saving}
- className={`flex-1 px-4 py-2.5 font-medium disabled:opacity-50 transition-all ${showNoteModal === "hold" ? "bg-nw-warn text-brand-bg" : "bg-nw-danger text-white"}`}>
+ className={`flex-1 px-4 py-2.5 font-medium disabled:opacity-50 transition-all ${showNoteModal === "hold" ? "bg-brass text-brand-bg" : "bg-status-danger text-white"}`}>
  {showNoteModal === "hold" ? "Hold" : "Deny"}
  </button>
  <button onClick={() => { setShowNoteModal(null); setActionNote(""); }}
- className="flex-1 px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors">
+ className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
  Cancel
  </button>
  </div>
@@ -2367,15 +2367,15 @@ export default function InvoiceReviewPage() {
  {/* ── Partial Approve Modal ── */}
  {showPartialModal && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-3xl max-h-[92vh] overflow-y-auto animate-fade-up shadow-2xl">
- <h3 className="font-display text-xl text-slate-tile mb-2">Partial Approval</h3>
- <p className="text-sm text-[rgba(59,88,100,0.55)] mb-5">
+ <div className="bg-brand-card border border-brand-border p-6 w-full max-w-3xl max-h-[92vh] overflow-y-auto animate-fade-up shadow-2xl">
+ <h3 className="font-display text-xl text-cream mb-2">Partial Approval</h3>
+ <p className="text-sm text-cream-dim mb-5">
  Check the lines to approve now. The rest stays on Hold with a required note. Approved lines split into a new invoice that flows to QA; held lines remain on this record.
  </p>
- <div className="border border-[rgba(59,88,100,0.15)]">
+ <div className="border border-brand-border">
  <table className="w-full text-sm">
  <thead>
- <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] bg-[rgba(91,134,153,0.06)]/50">
+ <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
  <th className="text-left px-3 py-2 font-medium w-8">
  <input
  type="checkbox"
@@ -2399,7 +2399,7 @@ export default function InvoiceReviewPage() {
  if (!id) return null;
  const checked = partialApprovedIds.has(id);
  return (
- <tr key={id} className={`border-b border-[rgba(59,88,100,0.08)] last:border-0 ${checked ? "bg-nw-success/5" : ""}`}>
+ <tr key={id} className={`border-b border-brand-row-border last:border-0 ${checked ? "bg-status-success/5" : ""}`}>
  <td className="px-3 py-2">
  <input
  type="checkbox"
@@ -2415,34 +2415,34 @@ export default function InvoiceReviewPage() {
  }}
  />
  </td>
- <td className="px-3 py-2 text-slate-tile">
+ <td className="px-3 py-2 text-cream">
  <span className="line-clamp-2">{li.description || "—"}</span>
  {li.is_change_order && li.co_reference && (
- <span className="ml-2 text-[10px] uppercase tracking-wider text-nw-warn">CO {li.co_reference}</span>
+ <span className="ml-2 text-[10px] uppercase tracking-wider text-brass">CO {li.co_reference}</span>
  )}
  </td>
- <td className="px-3 py-2 text-[rgba(59,88,100,0.70)] text-xs font-mono">
+ <td className="px-3 py-2 text-cream-muted text-xs font-mono">
  {cc ? `${cc.code} ${cc.description}` : "—"}
  </td>
- <td className="px-3 py-2 text-right text-slate-tile tabular-nums">{formatCents(li.amount_cents)}</td>
+ <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(li.amount_cents)}</td>
  </tr>
  );
  })}
  </tbody>
  <tfoot>
- <tr className="border-t-2 border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]">
- <td colSpan={3} className="px-3 py-2 text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
+ <tr className="border-t-2 border-brand-border bg-brand-surface">
+ <td colSpan={3} className="px-3 py-2 text-[11px] uppercase tracking-wider text-cream-dim">
  Approving {partialApprovedIds.size} of {lineItems.length} lines
  </td>
- <td className="px-3 py-2 text-right text-nw-success font-display tabular-nums">
+ <td className="px-3 py-2 text-right text-status-success font-display tabular-nums">
  {formatCents(lineItems.filter((l) => l.id && partialApprovedIds.has(l.id)).reduce((s, l) => s + l.amount_cents, 0))}
  </td>
  </tr>
- <tr className="bg-[rgba(91,134,153,0.06)]">
- <td colSpan={3} className="px-3 py-2 text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
+ <tr className="bg-brand-surface">
+ <td colSpan={3} className="px-3 py-2 text-[11px] uppercase tracking-wider text-cream-dim">
  Holding the remaining
  </td>
- <td className="px-3 py-2 text-right text-nw-warn font-display tabular-nums">
+ <td className="px-3 py-2 text-right text-brass font-display tabular-nums">
  {formatCents(lineItems.filter((l) => l.id && !partialApprovedIds.has(l.id)).reduce((s, l) => s + l.amount_cents, 0))}
  </td>
  </tr>
@@ -2451,7 +2451,7 @@ export default function InvoiceReviewPage() {
  </div>
 
  <div className="mt-5">
- <label className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5 block">
+ <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
  Why is the rest held? (required)
  </label>
  <textarea
@@ -2459,17 +2459,17 @@ export default function InvoiceReviewPage() {
  onChange={(e) => setPartialNote(e.target.value)}
  rows={3}
  placeholder="e.g. Scope on lines 3-5 wasn't agreed — waiting on confirmation from vendor"
- className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none"
+ className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
  />
  </div>
 
  {partialError && (
- <div className="mt-3 border border-nw-danger/40 bg-nw-danger/5 px-4 py-2 text-sm text-nw-danger">
+ <div className="mt-3 border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">
  {partialError}
  </div>
  )}
 
- <div className="flex gap-3 mt-5 pt-4 border-t border-[rgba(59,88,100,0.15)]">
+ <div className="flex gap-3 mt-5 pt-4 border-t border-brand-border">
  <button
  disabled={partialSubmitting || partialApprovedIds.size === 0 || partialApprovedIds.size === lineItems.length || !partialNote.trim()}
  onClick={async () => {
@@ -2494,12 +2494,12 @@ export default function InvoiceReviewPage() {
  setPartialSubmitting(false);
  }
  }}
- className="flex-1 px-4 py-2.5 bg-nw-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all"
+ className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all"
  >
  {partialSubmitting ? "Splitting…" : `Approve ${partialApprovedIds.size} line${partialApprovedIds.size !== 1 ? "s" : ""} & hold the rest`}
  </button>
  <button onClick={() => setShowPartialModal(false)}
- className="px-5 py-2.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors">
+ className="px-5 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
  Cancel
  </button>
  </div>
@@ -2521,9 +2521,9 @@ function OverBudgetAlert({ severity, overage, pct, isAllowance }: {
  isAllowance: boolean;
 }) {
  const colorMap: Record<string, { bg: string; border: string; text: string; label: string }> = {
- yellow: { bg: "bg-nw-warn-muted", border: "border-nw-warn/30", text: "text-nw-warn", label: "Over budget" },
- orange: { bg: "bg-nw-warn-muted", border: "border-nw-warn/40", text: "text-nw-warn", label: "Significantly over budget" },
- red: { bg: "bg-nw-danger-muted", border: "border-nw-danger/40", text: "text-nw-danger", label: isAllowance ? "Allowance overage" : "Severely over budget" },
+ yellow: { bg: "bg-status-warning-muted", border: "border-brass/30", text: "text-brass", label: "Over budget" },
+ orange: { bg: "bg-status-warning-muted", border: "border-status-warning/40", text: "text-status-warning", label: "Significantly over budget" },
+ red: { bg: "bg-status-danger-muted", border: "border-status-danger/40", text: "text-status-danger", label: isAllowance ? "Allowance overage" : "Severely over budget" },
  };
  const c = colorMap[severity];
  const fmt = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
@@ -2541,12 +2541,12 @@ function OverBudgetAlert({ severity, overage, pct, isAllowance }: {
  +{fmt(overage)} · {pct.toFixed(1)}% over
  </p>
  {severity === "orange" && (
- <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1.5 leading-snug">
+ <p className="text-[11px] text-cream-dim mt-1.5 leading-snug">
  A note is required at approval time.
  </p>
  )}
  {severity === "red" && (
- <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1.5 leading-snug">
+ <p className="text-[11px] text-cream-dim mt-1.5 leading-snug">
  {isAllowance
  ? "Allowances usually become change orders. Use Convert to Change Order below."
  : "Approve as overage with a note, or convert to a formal change order."}
@@ -2560,8 +2560,8 @@ function OverBudgetAlert({ severity, overage, pct, isAllowance }: {
 
 function SidebarCard({ title, children }: { title: string; children: React.ReactNode }) {
  return (
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-5">
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-4 brass-underline">{title}</p>
+ <div className="bg-brand-card border border-brand-border p-5">
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">{title}</p>
  <div className="mt-5">{children}</div>
  </div>
  );
@@ -2571,10 +2571,10 @@ function FormField({ label, value, onChange, type = "text", disabled, placeholde
  label: string; value: string; onChange: (v: string) => void;
  type?: "text" | "number" | "date" | "textarea"; disabled?: boolean; placeholder?: string;
 }) {
- const base = "w-full px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none disabled:opacity-50 transition-colors";
+ const base = "w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none disabled:opacity-50 transition-colors";
  return (
  <div>
- <label className="flex items-center gap-2 text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1.5">{label}</label>
+ <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">{label}</label>
  {type === "textarea" ? (
  <textarea value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} rows={3} placeholder={placeholder} className={`${base} resize-none`} />
  ) : (
@@ -2628,16 +2628,16 @@ function EditHistoryCard({
  if (entries.length === 0) return null;
 
  return (
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-5">
+ <div className="bg-brand-card border border-brand-border p-5">
  <button
  onClick={() => setOpen(!open)}
  className="w-full flex items-center justify-between"
  >
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider brass-underline">
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">
  Edit History ({entries.length})
  </p>
  <svg
- className={`w-4 h-4 text-[rgba(59,88,100,0.55)] transition-transform ${open ? "rotate-180" : ""}`}
+ className={`w-4 h-4 text-cream-dim transition-transform ${open ? "rotate-180" : ""}`}
  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
  >
  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -2646,19 +2646,19 @@ function EditHistoryCard({
  {open && (
  <div className="mt-4 space-y-3">
  {entries.map((entry, i) => (
- <div key={i} className="text-xs border-l-2 border-stone-blue/30 pl-3 py-1">
- <p className="text-slate-tile">
+ <div key={i} className="text-xs border-l-2 border-teal/30 pl-3 py-1">
+ <p className="text-cream">
  <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold mr-1.5 bg-transparent border ${
- entry.source === "PM" ? "text-stone-blue border-stone-blue" : "text-nw-warn border-nw-warn"
+ entry.source === "PM" ? "text-teal border-teal" : "text-brass border-brass"
  }`}>
  {entry.source}
  </span>
  changed <span className="font-medium">{FIELD_LABELS[entry.field] ?? entry.field}</span>
  </p>
- <p className="text-[rgba(59,88,100,0.55)] mt-1">
+ <p className="text-cream-dim mt-1">
  <span className="line-through">{formatOverrideValue(entry.old)}</span>
  {" "}&rarr;{" "}
- <span className="text-slate-tile">{formatOverrideValue(entry.newVal)}</span>
+ <span className="text-cream">{formatOverrideValue(entry.newVal)}</span>
  </p>
  </div>
  ))}
@@ -2669,10 +2669,10 @@ function EditHistoryCard({
 }
 
 function BudgetRow({ label, value, highlight }: { label: string; value: number; highlight?: "danger" | "warning" | "success" }) {
- const color = highlight === "danger" ? "text-nw-danger" : highlight === "warning" ? "text-nw-warn" : highlight === "success" ? "text-nw-success" : "text-slate-tile";
+ const color = highlight === "danger" ? "text-status-danger" : highlight === "warning" ? "text-brass" : highlight === "success" ? "text-status-success" : "text-cream";
  return (
  <div className="flex justify-between text-sm">
- <span className="text-[rgba(59,88,100,0.55)]">{label}</span>
+ <span className="text-cream-dim">{label}</span>
  <span className={`font-medium font-display ${color}`}>{formatCents(value)}</span>
  </div>
  );
@@ -2720,48 +2720,48 @@ function PaymentSection({
  <SidebarCard title="Payment">
  <div className="space-y-2.5 text-sm">
  <div className="flex justify-between items-center">
- <span className="text-[rgba(59,88,100,0.70)]">Status</span>
+ <span className="text-cream-muted">Status</span>
  <span
  className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${
  status === "paid"
- ? "border-nw-success text-nw-success"
+ ? "border-status-success text-status-success"
  : status === "scheduled"
- ? "border-stone-blue text-stone-blue"
+ ? "border-teal text-teal"
  : status === "partial"
- ? "border-nw-warn text-nw-warn"
- : "border-[rgba(59,88,100,0.15)]-light text-[rgba(59,88,100,0.55)]"
+ ? "border-brass text-brass"
+ : "border-brand-border-light text-cream-dim"
  }`}
  >
  {status}
  </span>
  </div>
- <div className="flex justify-between"><span className="text-[rgba(59,88,100,0.70)]">Received</span><span className="text-[rgba(59,88,100,0.70)]">{formatDate(invoice.received_date)}</span></div>
+ <div className="flex justify-between"><span className="text-cream-muted">Received</span><span className="text-cream-muted">{formatDate(invoice.received_date)}</span></div>
  {invoice.scheduled_payment_date && (
- <div className="flex justify-between"><span className="text-[rgba(59,88,100,0.70)]">Scheduled</span><span className="text-slate-tile">{formatDate(invoice.scheduled_payment_date)}</span></div>
+ <div className="flex justify-between"><span className="text-cream-muted">Scheduled</span><span className="text-cream">{formatDate(invoice.scheduled_payment_date)}</span></div>
  )}
  {invoice.payment_date && (
- <div className="flex justify-between"><span className="text-[rgba(59,88,100,0.70)]">Paid</span><span className="text-slate-tile">{formatDate(invoice.payment_date)}</span></div>
+ <div className="flex justify-between"><span className="text-cream-muted">Paid</span><span className="text-cream">{formatDate(invoice.payment_date)}</span></div>
  )}
  {invoice.payment_method && (
- <div className="flex justify-between"><span className="text-[rgba(59,88,100,0.70)]">Method</span><span className="text-slate-tile">{invoice.payment_method}</span></div>
+ <div className="flex justify-between"><span className="text-cream-muted">Method</span><span className="text-cream">{invoice.payment_method}</span></div>
  )}
  {invoice.payment_reference && (
- <div className="flex justify-between"><span className="text-[rgba(59,88,100,0.70)]">Reference</span><span className="text-slate-tile font-mono text-xs">{invoice.payment_reference}</span></div>
+ <div className="flex justify-between"><span className="text-cream-muted">Reference</span><span className="text-cream font-mono text-xs">{invoice.payment_reference}</span></div>
  )}
- <div className="flex justify-between border-t border-[rgba(59,88,100,0.15)] pt-2.5">
- <span className="text-[rgba(59,88,100,0.70)]">Total</span>
- <span className="text-slate-tile font-display text-base font-medium">{formatCents(invoice.total_amount)}</span>
+ <div className="flex justify-between border-t border-brand-border pt-2.5">
+ <span className="text-cream-muted">Total</span>
+ <span className="text-cream font-display text-base font-medium">{formatCents(invoice.total_amount)}</span>
  </div>
  {invoice.payment_amount != null && invoice.payment_amount !== invoice.total_amount && (
  <div className="flex justify-between">
- <span className="text-[rgba(59,88,100,0.70)]">Paid so far</span>
- <span className="text-nw-warn font-display font-medium">{formatCents(invoice.payment_amount)}</span>
+ <span className="text-cream-muted">Paid so far</span>
+ <span className="text-brass font-display font-medium">{formatCents(invoice.payment_amount)}</span>
  </div>
  )}
  </div>
 
  {error && (
- <div className="mt-3 bg-nw-danger/10 border border-nw-danger/40 px-3 py-2 text-xs text-nw-danger">
+ <div className="mt-3 bg-status-danger/10 border border-status-danger/40 px-3 py-2 text-xs text-status-danger">
  {error}
  </div>
  )}
@@ -2772,7 +2772,7 @@ function PaymentSection({
  <button
  onClick={() => call({ action: "schedule" })}
  disabled={busy}
- className="px-3 py-2 border border-stone-blue text-stone-blue hover:bg-stone-blue/10 disabled:opacity-50 text-sm font-medium transition-colors"
+ className="px-3 py-2 border border-teal text-teal hover:bg-teal/10 disabled:opacity-50 text-sm font-medium transition-colors"
  >
  {busy ? "Scheduling…" : "Schedule Payment"}
  </button>
@@ -2781,7 +2781,7 @@ function PaymentSection({
  <button
  onClick={() => setShowPayModal(true)}
  disabled={busy}
- className="px-3 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white text-sm font-medium transition-colors"
+ className="px-3 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium transition-colors"
  >
  Mark as Paid
  </button>
@@ -2794,7 +2794,7 @@ function PaymentSection({
  }
  }}
  disabled={busy}
- className="px-3 py-2 border border-nw-danger text-nw-danger hover:bg-nw-danger/10 disabled:opacity-50 text-sm font-medium transition-colors"
+ className="px-3 py-2 border border-status-danger text-status-danger hover:bg-status-danger/10 disabled:opacity-50 text-sm font-medium transition-colors"
  >
  Reverse Payment
  </button>
@@ -2805,21 +2805,21 @@ function PaymentSection({
 
  {showPayModal && (
  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={() => setShowPayModal(false)}>
- <div className="bg-white border border-[rgba(59,88,100,0.15)] max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
- <h3 className="font-display text-lg text-slate-tile mb-1">Mark Invoice as Paid</h3>
- <p className="text-sm text-[rgba(59,88,100,0.55)] mb-4">{invoice.vendor_name_raw ?? "Vendor"} — {formatCents(invoice.total_amount)}</p>
+ <div className="bg-brand-card border border-brand-border max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+ <h3 className="font-display text-lg text-cream mb-1">Mark Invoice as Paid</h3>
+ <p className="text-sm text-cream-dim mb-4">{invoice.vendor_name_raw ?? "Vendor"} — {formatCents(invoice.total_amount)}</p>
  <div className="space-y-3">
  <label className="block">
- <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1 block">Payment Date</span>
- <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none" />
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">Payment Date</span>
+ <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none" />
  </label>
  <label className="block">
- <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1 block">Amount (dollars)</span>
- <input type="number" step="0.01" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none" />
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">Amount (dollars)</span>
+ <input type="number" step="0.01" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none" />
  </label>
  <label className="block">
- <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1 block">Method</span>
- <select value={payMethod} onChange={(e) => setPayMethod(e.target.value as typeof payMethod)} className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">Method</span>
+ <select value={payMethod} onChange={(e) => setPayMethod(e.target.value as typeof payMethod)} className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none">
  <option value="check">Check</option>
  <option value="ach">ACH</option>
  <option value="wire">Wire</option>
@@ -2827,12 +2827,12 @@ function PaymentSection({
  </select>
  </label>
  <label className="block">
- <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1 block">Reference (check #, txn ID)</span>
- <input type="text" value={payReference} onChange={(e) => setPayReference(e.target.value)} placeholder="e.g. 10452" className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none" />
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 block">Reference (check #, txn ID)</span>
+ <input type="text" value={payReference} onChange={(e) => setPayReference(e.target.value)} placeholder="e.g. 10452" className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none" />
  </label>
  </div>
  <div className="mt-5 flex items-center justify-end gap-3">
- <button onClick={() => setShowPayModal(false)} className="px-4 py-2 text-[rgba(59,88,100,0.55)] hover:text-slate-tile text-sm">Cancel</button>
+ <button onClick={() => setShowPayModal(false)} className="px-4 py-2 text-cream-dim hover:text-cream text-sm">Cancel</button>
  <button
  onClick={() =>
  call({
@@ -2844,7 +2844,7 @@ function PaymentSection({
  })
  }
  disabled={busy}
- className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-60 text-white text-sm font-medium transition-colors"
+ className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
  >
  {busy ? "Recording…" : "Record Payment"}
  </button>

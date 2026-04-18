@@ -27,7 +27,7 @@ export default function JobTabs({
   active: JobTabKey;
 }) {
   return (
-    <div className="border-b border-[rgba(59,88,100,0.15)] mb-6">
+    <div className="border-b border-brand-border mb-6">
       <nav className="flex items-center gap-1 overflow-x-auto" aria-label="Job sections">
         {TABS.map((tab) => {
           const isActive = tab.key === active;
@@ -37,14 +37,14 @@ export default function JobTabs({
               href={`/jobs/${jobId}${tab.slug}`}
               className={`relative px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
                 isActive
-                  ? "text-stone-blue"
-                  : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+                  ? "text-teal"
+                  : "text-cream-dim hover:text-cream"
               }`}
               aria-current={isActive ? "page" : undefined}
             >
               {tab.label}
               {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-deep" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-teal" />
               )}
             </Link>
           );

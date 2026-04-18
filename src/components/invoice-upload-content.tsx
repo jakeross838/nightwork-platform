@@ -76,12 +76,12 @@ function ProgressSteps({ currentStep, startedAt, error }: { currentStep: ParseSt
  <div key={step.key} className={`flex items-center gap-3 transition-opacity duration-300 ${isPending ? "opacity-30" : "opacity-100"}`}>
  {/* Icon */}
  {isDone ? (
- <div className="w-5 h-5 bg-nw-success/20 flex items-center justify-center flex-shrink-0">
- <svg className="w-3 h-3 text-nw-success" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+ <div className="w-5 h-5 bg-status-success/20 flex items-center justify-center flex-shrink-0">
+ <svg className="w-3 h-3 text-status-success" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
  </div>
  ) : isActive ? (
  <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
- <div className="w-2.5 h-2.5 bg-slate-deep animate-pulse" />
+ <div className="w-2.5 h-2.5 bg-teal animate-pulse" />
  </div>
  ) : (
  <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
@@ -89,7 +89,7 @@ function ProgressSteps({ currentStep, startedAt, error }: { currentStep: ParseSt
  </div>
  )}
  {/* Label */}
- <span className={`text-sm ${isDone ? "text-[rgba(59,88,100,0.55)]" : isActive ? "text-slate-tile font-medium" : "text-[rgba(59,88,100,0.55)]"}`}>
+ <span className={`text-sm ${isDone ? "text-cream-dim" : isActive ? "text-cream font-medium" : "text-cream-dim"}`}>
  {step.label}
  </span>
  </div>
@@ -98,7 +98,7 @@ function ProgressSteps({ currentStep, startedAt, error }: { currentStep: ParseSt
  </div>
  {/* Slow parse warning */}
  {elapsed >= 15 && currentStep !== "complete" && !error && (
- <p className="mt-3 text-xs text-[rgba(59,88,100,0.55)] animate-fade-up">
+ <p className="mt-3 text-xs text-cream-dim animate-fade-up">
  Complex documents take a bit longer — still working...
  </p>
  )}
@@ -111,14 +111,14 @@ function FilePreview({ fileStatus }: { fileStatus: FileStatus }) {
 
  // PDF → iframe
  if (file.type === "application/pdf") {
- return <iframe src={objectUrl} className="w-full h-full min-h-[500px] border border-[rgba(59,88,100,0.15)]" title={file.name} />;
+ return <iframe src={objectUrl} className="w-full h-full min-h-[500px] border border-brand-border" title={file.name} />;
  }
 
  // Image → img (click-to-zoom handled by InvoiceFilePreview in the detail view;
  // keeping the upload flow simple with a flat render)
  if (file.type.startsWith("image/")) {
  // eslint-disable-next-line @next/next/no-img-element
- return <img src={objectUrl} alt={file.name} className="w-full h-auto max-h-[600px] object-contain border border-[rgba(59,88,100,0.15)]" />;
+ return <img src={objectUrl} alt={file.name} className="w-full h-auto max-h-[600px] object-contain border border-brand-border" />;
  }
 
  // DOCX → render mammoth HTML (included in the parse response)
@@ -127,24 +127,24 @@ function FilePreview({ fileStatus }: { fileStatus: FileStatus }) {
  file.name.toLowerCase().endsWith(".docx");
  if (isDocx) {
  return (
- <div className="border border-[rgba(59,88,100,0.15)] bg-white">
- <div className="flex items-center justify-between border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] px-3 py-2">
- <span className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)]">
+ <div className="border border-brand-border bg-white">
+ <div className="flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2">
+ <span className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">
  DOCX · {file.name}
  </span>
  <a
  href={objectUrl}
  download={file.name}
- className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white transition-colors"
+ className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
  >
  Download Original
  </a>
  </div>
- <div className="max-h-[600px] overflow-auto p-6 text-sm text-slate-tile leading-relaxed docx-html">
+ <div className="max-h-[600px] overflow-auto p-6 text-sm text-cream leading-relaxed docx-html">
  {result?.docx_html ? (
  <div dangerouslySetInnerHTML={{ __html: result.docx_html }} />
  ) : (
- <p className="text-[rgba(59,88,100,0.55)] text-sm">
+ <p className="text-cream-dim text-sm">
  DOCX preview will render after parsing completes.
  </p>
  )}
@@ -155,16 +155,16 @@ function FilePreview({ fileStatus }: { fileStatus: FileStatus }) {
 
  // Unknown → download fallback
  return (
- <div className="flex items-center justify-center h-64 border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]">
+ <div className="flex items-center justify-center h-64 border border-brand-border bg-brand-surface">
  <div className="text-center">
- <svg className="mx-auto h-12 w-12 text-[rgba(59,88,100,0.55)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+ <svg className="mx-auto h-12 w-12 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
  </svg>
- <p className="mt-2 text-sm text-[rgba(59,88,100,0.55)]">{file.name}</p>
+ <p className="mt-2 text-sm text-cream-dim">{file.name}</p>
  <a
  href={objectUrl}
  download={file.name}
- className="inline-flex items-center gap-1 mt-3 text-[12px] px-3 py-1.5 border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white transition-colors"
+ className="inline-flex items-center gap-1 mt-3 text-[12px] px-3 py-1.5 border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
  >
  Download {file.name}
  </a>
@@ -203,7 +203,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
 
  {/* Document type warning */}
  {isNotInvoice && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-nw-warn-muted text-nw-warn border border-nw-warn/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
@@ -213,7 +213,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
 
  {/* Math mismatch */}
  {(mathMismatchInfo || parsed.flags.includes("math_mismatch")) && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-nw-danger-muted text-nw-danger border border-nw-danger/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-danger-muted text-status-danger border border-status-danger/20">
  {mathMismatchInfo
  ? `Math Mismatch: Line items sum to ${formatDollars(mathMismatchInfo.lineItemsSum)} but invoice states ${formatDollars(mathMismatchInfo.statedTotal)} — difference of ${formatDollars(mathMismatchInfo.difference)}`
  : "Math Mismatch"}
@@ -222,7 +222,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
 
  {/* Other flags */}
  {parsed.flags.filter(f => f !== "math_mismatch" && f !== "not_an_invoice").map((flag) => (
- <span key={flag} className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium bg-nw-warn-muted text-nw-warn border border-nw-warn/20">
+ <span key={flag} className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
  {formatFlag(flag)}
  </span>
  ))}
@@ -244,9 +244,9 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
  {(parsed.job_suggestion || parsed.cost_code_suggestion) && (
  <div className="space-y-2">
  {parsed.job_suggestion && (
- <div className="flex items-center gap-2 px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] ">
- <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider flex-shrink-0">Suggested Job</span>
- <span className="text-sm text-slate-tile font-medium truncate">
+ <div className="flex items-center gap-2 px-3 py-2.5 bg-brand-surface border border-brand-border ">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider flex-shrink-0">Suggested Job</span>
+ <span className="text-sm text-cream font-medium truncate">
  {parsed.job_suggestion.name}
  </span>
  <span className={`ml-auto flex-shrink-0 px-2 py-0.5 text-xs ${confidenceColor(parsed.job_suggestion.confidence)}`}>
@@ -255,9 +255,9 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
  </div>
  )}
  {parsed.cost_code_suggestion && (
- <div className="flex items-center gap-2 px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] ">
- <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider flex-shrink-0">Suggested Cost Code</span>
- <span className="text-sm text-slate-tile font-medium truncate">
+ <div className="flex items-center gap-2 px-3 py-2.5 bg-brand-surface border border-brand-border ">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider flex-shrink-0">Suggested Cost Code</span>
+ <span className="text-sm text-cream font-medium truncate">
  {parsed.cost_code_suggestion.code} — {parsed.cost_code_suggestion.description}
  </span>
  <span className={`ml-auto flex-shrink-0 px-2 py-0.5 text-xs ${confidenceColor(parsed.cost_code_suggestion.confidence)}`}>
@@ -271,47 +271,47 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
  {/* Description */}
  {parsed.description && (
  <div>
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1">Description</p>
- <p className="text-sm text-[rgba(59,88,100,0.70)]">{parsed.description}</p>
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1">Description</p>
+ <p className="text-sm text-cream-muted">{parsed.description}</p>
  </div>
  )}
 
  {/* Line Items — smart display */}
  {parsed.line_items.length > 0 && (
  <div>
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-2">
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">
  {allLineItemsZero ? "Scope Items" : "Line Items"}
  </p>
  {allLineItemsZero ? (
  // Scope-only display: just descriptions, no $0 columns
- <div className=" border border-[rgba(59,88,100,0.15)] overflow-hidden">
+ <div className=" border border-brand-border overflow-hidden">
  {parsed.line_items.map((item, i) => (
- <div key={i} className={`px-3 py-2 text-sm text-[rgba(59,88,100,0.70)] ${i > 0 ? "border-t border-[rgba(59,88,100,0.08)]" : ""}`}>
+ <div key={i} className={`px-3 py-2 text-sm text-cream-muted ${i > 0 ? "border-t border-brand-row-border" : ""}`}>
  {item.description}
  </div>
  ))}
  </div>
  ) : (
  // Full table with amounts
- <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+ <div className="overflow-x-auto border border-brand-border">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-[rgba(91,134,153,0.06)] text-left">
- <th className="py-2 px-3 text-[rgba(59,88,100,0.55)] font-medium text-xs">Description</th>
- <th className="py-2 px-3 text-[rgba(59,88,100,0.55)] font-medium text-xs text-right">Qty</th>
- <th className="py-2 px-3 text-[rgba(59,88,100,0.55)] font-medium text-xs">Unit</th>
- <th className="py-2 px-3 text-[rgba(59,88,100,0.55)] font-medium text-xs text-right">Rate</th>
- <th className="py-2 px-3 text-[rgba(59,88,100,0.55)] font-medium text-xs text-right">Amount</th>
+ <tr className="bg-brand-surface text-left">
+ <th className="py-2 px-3 text-cream-dim font-medium text-xs">Description</th>
+ <th className="py-2 px-3 text-cream-dim font-medium text-xs text-right">Qty</th>
+ <th className="py-2 px-3 text-cream-dim font-medium text-xs">Unit</th>
+ <th className="py-2 px-3 text-cream-dim font-medium text-xs text-right">Rate</th>
+ <th className="py-2 px-3 text-cream-dim font-medium text-xs text-right">Amount</th>
  </tr>
  </thead>
  <tbody>
  {parsed.line_items.map((item, i) => (
- <tr key={i} className="border-t border-[rgba(59,88,100,0.08)]">
- <td className="py-2 px-3 text-[rgba(59,88,100,0.70)]">{item.description}</td>
- <td className="py-2 px-3 text-[rgba(59,88,100,0.70)] text-right">{item.qty ?? "—"}</td>
- <td className="py-2 px-3 text-[rgba(59,88,100,0.55)]">{item.unit ?? "—"}</td>
- <td className="py-2 px-3 text-[rgba(59,88,100,0.70)] text-right">{item.rate != null ? formatDollars(item.rate) : "—"}</td>
- <td className="py-2 px-3 text-slate-tile text-right font-medium">{formatDollars(item.amount)}</td>
+ <tr key={i} className="border-t border-brand-row-border">
+ <td className="py-2 px-3 text-cream-muted">{item.description}</td>
+ <td className="py-2 px-3 text-cream-muted text-right">{item.qty ?? "—"}</td>
+ <td className="py-2 px-3 text-cream-dim">{item.unit ?? "—"}</td>
+ <td className="py-2 px-3 text-cream-muted text-right">{item.rate != null ? formatDollars(item.rate) : "—"}</td>
+ <td className="py-2 px-3 text-cream text-right font-medium">{formatDollars(item.amount)}</td>
  </tr>
  ))}
  </tbody>
@@ -322,33 +322,33 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
  )}
 
  {/* Totals */}
- <div className="border-t border-[rgba(59,88,100,0.15)] pt-3 space-y-1.5">
+ <div className="border-t border-brand-border pt-3 space-y-1.5">
  {parsed.subtotal > 0 && (
  <div className="flex justify-between text-sm">
- <span className="text-[rgba(59,88,100,0.55)]">Subtotal</span>
- <span className="text-[rgba(59,88,100,0.70)]">{formatDollars(parsed.subtotal)}</span>
+ <span className="text-cream-dim">Subtotal</span>
+ <span className="text-cream-muted">{formatDollars(parsed.subtotal)}</span>
  </div>
  )}
  {parsed.tax != null && parsed.tax > 0 && (
  <div className="flex justify-between text-sm">
- <span className="text-[rgba(59,88,100,0.55)]">Tax</span>
- <span className="text-[rgba(59,88,100,0.70)]">{formatDollars(parsed.tax)}</span>
+ <span className="text-cream-dim">Tax</span>
+ <span className="text-cream-muted">{formatDollars(parsed.tax)}</span>
  </div>
  )}
  <div className="flex justify-between text-base font-semibold pt-1">
- <span className="text-slate-tile">Total</span>
- <span className="text-nw-warn font-display text-lg">{formatDollars(parsed.total_amount)}</span>
+ <span className="text-cream">Total</span>
+ <span className="text-brass font-display text-lg">{formatDollars(parsed.total_amount)}</span>
  </div>
  </div>
 
  {/* Field Confidence */}
  {parsed.confidence_details && (
  <div className="pt-2">
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-2">Field Confidence</p>
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">Field Confidence</p>
  <div className="grid grid-cols-2 gap-2">
  {Object.entries(parsed.confidence_details).map(([field, score]) => (
  <div key={field} className="flex items-center justify-between text-xs">
- <span className="text-[rgba(59,88,100,0.55)]">{formatFlag(field)}</span>
+ <span className="text-cream-dim">{formatFlag(field)}</span>
  <span className={`px-1.5 py-0.5 ${confidenceColor(score)}`}>
  {Math.round(score * 100)}%
  </span>
@@ -364,8 +364,8 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
  return (
  <div>
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
- <p className="text-sm text-slate-tile mt-0.5">{value || "—"}</p>
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</p>
+ <p className="text-sm text-cream mt-0.5">{value || "—"}</p>
  </div>
  );
 }
@@ -384,27 +384,27 @@ function DuplicateModal({
  const amountDollars = duplicate.existing.total_amount / 100;
  return (
  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] shadow-2xl max-w-md w-full mx-4 p-6">
+ <div className="bg-brand-card border border-brand-border shadow-2xl max-w-md w-full mx-4 p-6">
  {/* Warning icon */}
  <div className="flex items-center gap-3 mb-4">
- <div className="w-10 h-10 bg-nw-warn-muted flex items-center justify-center flex-shrink-0">
- <svg className="w-5 h-5 text-nw-warn" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <div className="w-10 h-10 bg-status-warning-muted flex items-center justify-center flex-shrink-0">
+ <svg className="w-5 h-5 text-brass" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
  </div>
- <h3 className="text-lg font-display text-slate-tile">Possible Duplicate Detected</h3>
+ <h3 className="text-lg font-display text-cream">Possible Duplicate Detected</h3>
  </div>
 
- <p className="text-sm text-[rgba(59,88,100,0.70)] mb-4">
- An invoice from <span className="font-medium text-slate-tile">{duplicate.existing.vendor_name_raw}</span> for{" "}
- <span className="font-medium text-nw-warn">{formatDollars(amountDollars)}</span> already
+ <p className="text-sm text-cream-muted mb-4">
+ An invoice from <span className="font-medium text-cream">{duplicate.existing.vendor_name_raw}</span> for{" "}
+ <span className="font-medium text-brass">{formatDollars(amountDollars)}</span> already
  exists in the system.
  </p>
 
- <div className="bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] px-4 py-3 mb-5">
+ <div className="bg-brand-surface border border-brand-border px-4 py-3 mb-5">
  <div className="flex items-center justify-between text-sm">
- <span className="text-[rgba(59,88,100,0.55)]">Status</span>
- <span className="text-slate-tile font-medium capitalize">{duplicate.existing.status.replace(/_/g, " ")}</span>
+ <span className="text-cream-dim">Status</span>
+ <span className="text-cream font-medium capitalize">{duplicate.existing.status.replace(/_/g, " ")}</span>
  </div>
  </div>
 
@@ -412,7 +412,7 @@ function DuplicateModal({
  href={`/invoices/${duplicate.existing.id}`}
  target="_blank"
  rel="noopener noreferrer"
- className="inline-flex items-center gap-1.5 text-sm text-stone-blue hover:text-stone-blue-hover transition-colors mb-5"
+ className="inline-flex items-center gap-1.5 text-sm text-teal hover:text-teal-hover transition-colors mb-5"
  >
  View existing invoice
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -423,14 +423,14 @@ function DuplicateModal({
  <div className="flex gap-3">
  <button
  onClick={onCancel}
- className="flex-1 px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-slate-tile text-sm font-medium hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+ className="flex-1 px-4 py-2.5 border border-brand-border text-cream text-sm font-medium hover:bg-brand-surface transition-colors"
  >
  Cancel
  </button>
  <button
  onClick={onSaveAnyway}
  disabled={saving}
- className="flex-1 px-4 py-2.5 bg-nw-warn-muted text-nw-warn text-sm font-medium hover:brightness-110 disabled:opacity-50 transition-all"
+ className="flex-1 px-4 py-2.5 bg-status-warning-muted text-brass text-sm font-medium hover:brightness-110 disabled:opacity-50 transition-all"
  >
  {saving ? "Saving..." : "Save Anyway"}
  </button>
@@ -566,10 +566,10 @@ export default function UploadContent() {
  <>
  {/* Sub-header with Save All */}
  {parsedUnsaved.length > 1 && (
- <div className="border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/50 px-6 py-3">
+ <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
  <div className="max-w-7xl mx-auto flex items-center justify-end">
  <button onClick={saveAll} disabled={savingAll}
- className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-brand-bg text-sm font-medium transition-colors">
+ className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-sm font-medium transition-colors">
  {savingAll ? "Saving..." : `Save All & Route (${parsedUnsaved.length})`}
  </button>
  </div>
@@ -579,27 +579,27 @@ export default function UploadContent() {
  <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
  {/* Document type toggle */}
  <div className="flex items-center gap-3 mb-6">
- <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Document Type</span>
- <div className="inline-flex border border-[rgba(59,88,100,0.15)]">
+ <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">Document Type</span>
+ <div className="inline-flex border border-brand-border">
  <button
   onClick={() => setDocumentType("invoice")}
   className={`px-4 py-1.5 text-sm font-medium transition-colors ${
   documentType === "invoice"
-   ? "bg-slate-deep text-brand-bg"
-   : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile hover:bg-[rgba(91,134,153,0.06)]"
+   ? "bg-teal text-brand-bg"
+   : "text-cream-dim hover:text-cream hover:bg-brand-surface"
   }`}
  >Invoice</button>
  <button
   onClick={() => setDocumentType("receipt")}
   className={`px-4 py-1.5 text-sm font-medium transition-colors ${
   documentType === "receipt"
-   ? "bg-slate-deep text-brand-bg"
-   : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile hover:bg-[rgba(91,134,153,0.06)]"
+   ? "bg-teal text-brand-bg"
+   : "text-cream-dim hover:text-cream hover:bg-brand-surface"
   }`}
  >Receipt</button>
  </div>
  {documentType === "receipt" && (
- <span className="text-xs text-[rgba(59,88,100,0.55)]">
+ <span className="text-xs text-cream-dim">
   Hardware runs, permits, dump fees, card charges, petty cash
  </span>
  )}
@@ -612,20 +612,20 @@ export default function UploadContent() {
  onDrop={(e) => { e.preventDefault(); setIsDragging(false); processFiles(Array.from(e.dataTransfer.files)); }}
  onClick={() => inputRef.current?.click()}
  className={`relative border border-dashed p-8 md:p-16 text-center cursor-pointer transition-all duration-300 ${
- isDragging ? "border-stone-blue bg-slate-deep/5 shadow-[0_0_40px_-10px_rgba(74,155,142,0.2)]" : "border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light bg-[rgba(91,134,153,0.06)]/30"
+ isDragging ? "border-teal bg-teal/5 shadow-[0_0_40px_-10px_rgba(74,155,142,0.2)]" : "border-brand-border hover:border-brand-border-light bg-brand-surface/30"
  }`}
  >
  <input ref={inputRef} type="file" multiple accept={ACCEPTED_EXTENSIONS}
  onChange={(e) => { if (e.target.files) { processFiles(Array.from(e.target.files)); e.target.value = ""; } }}
  className="hidden" />
- <div className="inline-flex items-center justify-center w-14 h-14 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] mb-5">
- <svg className={`w-6 h-6 transition-colors ${isDragging ? "text-stone-blue" : "text-[rgba(59,88,100,0.55)]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+ <div className="inline-flex items-center justify-center w-14 h-14 bg-brand-surface border border-brand-border mb-5">
+ <svg className={`w-6 h-6 transition-colors ${isDragging ? "text-teal" : "text-cream-dim"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
  </svg>
  </div>
- <p className="text-lg text-slate-tile font-display">{isDragging ? "Drop files here" : <><span className="hidden md:inline">Drag & drop {documentType === "receipt" ? "receipts" : "invoices"}</span><span className="md:hidden">Upload {documentType === "receipt" ? "Receipts" : "Invoices"}</span></>}</p>
- <p className="mt-1.5 text-sm text-[rgba(59,88,100,0.55)] hidden md:block">or click to browse &mdash; PDF, DOCX, XLSX, JPG, PNG</p>
- <button className="mt-4 px-6 py-3 bg-slate-deep hover:bg-slate-deeper text-brand-bg font-medium transition-colors md:hidden">Browse Files</button>
+ <p className="text-lg text-cream font-display">{isDragging ? "Drop files here" : <><span className="hidden md:inline">Drag & drop {documentType === "receipt" ? "receipts" : "invoices"}</span><span className="md:hidden">Upload {documentType === "receipt" ? "Receipts" : "Invoices"}</span></>}</p>
+ <p className="mt-1.5 text-sm text-cream-dim hidden md:block">or click to browse &mdash; PDF, DOCX, XLSX, JPG, PNG</p>
+ <button className="mt-4 px-6 py-3 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors md:hidden">Browse Files</button>
  </div>
 
  {/* Results */}
@@ -633,38 +633,38 @@ export default function UploadContent() {
  <div className="mt-8 space-y-6">
  {files.map((fileStatus, index) => (
  <div key={`${fileStatus.file.name}-${index}`}
- className="bg-white border border-[rgba(59,88,100,0.15)] overflow-hidden animate-fade-up"
+ className="bg-brand-card border border-brand-border overflow-hidden animate-fade-up"
  style={{ animationDelay: `${index * 0.05}s` }}>
  {/* Card Header */}
- <div className="px-6 py-4 border-b border-[rgba(59,88,100,0.15)] flex items-center gap-3">
+ <div className="px-6 py-4 border-b border-brand-border flex items-center gap-3">
  {fileStatus.status === "uploading" && (
  <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
- <div className="w-2.5 h-2.5 bg-slate-deep animate-pulse" />
+ <div className="w-2.5 h-2.5 bg-teal animate-pulse" />
  </div>
  )}
  {fileStatus.status === "done" && !fileStatus.saved && (
- <div className="w-5 h-5 bg-nw-success/20 flex items-center justify-center flex-shrink-0">
- <svg className="w-3 h-3 text-nw-success" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+ <div className="w-5 h-5 bg-status-success/20 flex items-center justify-center flex-shrink-0">
+ <svg className="w-3 h-3 text-status-success" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
  </div>
  )}
  {fileStatus.saved && (
- <div className="w-5 h-5 bg-slate-deep/20 flex items-center justify-center flex-shrink-0">
- <svg className="w-3 h-3 text-stone-blue" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+ <div className="w-5 h-5 bg-teal/20 flex items-center justify-center flex-shrink-0">
+ <svg className="w-3 h-3 text-teal" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
  </div>
  )}
  {fileStatus.status === "error" && (
- <div className="w-5 h-5 bg-nw-danger/20 flex items-center justify-center flex-shrink-0">
- <svg className="w-3 h-3 text-nw-danger" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
+ <div className="w-5 h-5 bg-status-danger/20 flex items-center justify-center flex-shrink-0">
+ <svg className="w-3 h-3 text-status-danger" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
  </div>
  )}
  <div className="flex-1 min-w-0">
- <span className="text-sm font-medium text-slate-tile">{fileStatus.file.name}</span>
- <span className="text-xs text-[rgba(59,88,100,0.55)] ml-2">{(fileStatus.file.size / 1024).toFixed(0)} KB</span>
+ <span className="text-sm font-medium text-cream">{fileStatus.file.name}</span>
+ <span className="text-xs text-cream-dim ml-2">{(fileStatus.file.size / 1024).toFixed(0)} KB</span>
  </div>
- {fileStatus.saved && <span className="text-xs text-stone-blue flex-shrink-0">Saved &amp; Routed</span>}
+ {fileStatus.saved && <span className="text-xs text-teal flex-shrink-0">Saved &amp; Routed</span>}
  {fileStatus.status === "done" && fileStatus.result && !fileStatus.saved && (
  <button onClick={(e) => { e.stopPropagation(); saveOne(index); }} disabled={fileStatus.saving}
- className="flex-shrink-0 px-4 py-1.5 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-brand-bg text-xs font-semibold transition-colors">
+ className="flex-shrink-0 px-4 py-1.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-xs font-semibold transition-colors">
  {fileStatus.saving ? "Saving..." : "Save & Route"}
  </button>
  )}
@@ -677,11 +677,11 @@ export default function UploadContent() {
 
  {/* Error with retry — file stays in the list so user can retry or remove */}
  {fileStatus.status === "error" && (
- <div className="px-6 py-4 flex items-start gap-3 bg-nw-danger/5 border-t border-nw-danger/20">
+ <div className="px-6 py-4 flex items-start gap-3 bg-status-danger/5 border-t border-status-danger/20">
  <div className="flex-1">
- <p className="text-sm font-medium text-nw-danger">AI parsing failed — try again or upload manually</p>
- <p className="text-xs text-nw-danger/80 mt-1">{fileStatus.error}</p>
- <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-2">
+ <p className="text-sm font-medium text-status-danger">AI parsing failed — try again or upload manually</p>
+ <p className="text-xs text-status-danger/80 mt-1">{fileStatus.error}</p>
+ <p className="text-[11px] text-cream-dim mt-2">
  The file is still attached. Click Retry to parse again, or remove it from the batch.
  </p>
  </div>
@@ -712,7 +712,7 @@ export default function UploadContent() {
  setFiles((prev) => prev.map((f, i) => i === index ? { ...f, status: "error" as const, error: message } : f));
  });
  }}
- className="flex-shrink-0 px-4 py-2 bg-nw-danger hover:brightness-110 text-white text-xs font-medium transition-all"
+ className="flex-shrink-0 px-4 py-2 bg-status-danger hover:brightness-110 text-white text-xs font-medium transition-all"
  >
  Retry
  </button>
@@ -723,11 +723,11 @@ export default function UploadContent() {
  {fileStatus.status === "done" && fileStatus.result && (
  <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-brand-border">
  <div className="p-5">
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-3">Original Document</p>
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3">Original Document</p>
  <FilePreview fileStatus={fileStatus} />
  </div>
  <div className="p-5">
- <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-3">AI Extracted Data</p>
+ <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3">AI Extracted Data</p>
  <ParsedDataCard parsed={fileStatus.result.parsed} />
  </div>
  </div>

@@ -226,23 +226,23 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   if (authorized === false) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-        <h2 className="font-display text-2xl text-slate-tile">Access denied</h2>
-        <p className="mt-2 text-sm text-[rgba(59,88,100,0.55)]">Jobs management is restricted to administrators.</p>
+        <h2 className="font-display text-2xl text-cream">Access denied</h2>
+        <p className="mt-2 text-sm text-cream-dim">Jobs management is restricted to administrators.</p>
       </main>
     );
   }
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-stone-blue/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
       </main>
     );
   }
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-        <h2 className="font-display text-2xl text-slate-tile">Job not found</h2>
-        <Link href="/jobs" className="inline-block mt-4 text-sm text-stone-blue hover:underline">Back to jobs</Link>
+        <h2 className="font-display text-2xl text-cream">Job not found</h2>
+        <Link href="/jobs" className="inline-block mt-4 text-sm text-teal hover:underline">Back to jobs</Link>
       </main>
     );
   }
@@ -253,15 +253,15 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         <Breadcrumbs items={[{ label: "Jobs", href: "/jobs" }, { label: job.name }]} />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-slate-tile">{job.name}</h2>
-            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
+            <h2 className="font-display text-2xl text-cream">{job.name}</h2>
+            <p className="text-sm text-cream-dim mt-1">
               {job.address ?? "No address"} · {job.contract_type === "cost_plus" ? "Cost Plus" : "Fixed Price"}
             </p>
           </div>
           {!editing && (
             <button
               onClick={() => setEditing(true)}
-              className="px-4 py-2 border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white text-sm font-medium transition-colors"
+              className="px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
             >
               Edit
             </button>
@@ -281,8 +281,8 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               preloaded={overviewPreloaded}
             />
 
-            <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6 mt-4">
-              <h3 className="font-display text-base text-slate-tile mb-3">Job Details</h3>
+            <section className="bg-brand-card border border-brand-border p-6 mt-4">
+              <h3 className="font-display text-base text-cream mb-3">Job Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <Detail label="Client Name" value={job.client_name} />
                 <Detail label="Client Email" value={job.client_email} />
@@ -301,7 +301,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             </section>
           </>
         ) : (
-          <form onSubmit={handleSave} className="bg-white border border-[rgba(59,88,100,0.15)] p-6 mb-6 space-y-4">
+          <form onSubmit={handleSave} className="bg-brand-card border border-brand-border p-6 mb-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <EditField label="Name">
                 <input className="input" value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -369,7 +369,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     setForm({ ...form, starting_application_number: Number(e.target.value) })
                   }
                 />
-                <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">
+                <p className="text-[11px] text-cream-dim mt-1">
                   For jobs that started before Nightwork. Set this to the AIA pay app number of
                   the first draw Nightwork will generate (e.g. 11 if the last manual draw was #10).
                 </p>
@@ -385,7 +385,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     setForm({ ...form, previous_certificates_total: Math.round((parseFloat(e.target.value) || 0) * 100) })
                   }
                 />
-                <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">
+                <p className="text-[11px] text-cream-dim mt-1">
                   Total certified payments from draws completed before Nightwork. Feeds G702 Line 6.
                 </p>
               </EditField>
@@ -399,7 +399,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     setForm({ ...form, previous_change_orders_total: Math.round((parseFloat(e.target.value) || 0) * 100) })
                   }
                 />
-                <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">
+                <p className="text-[11px] text-cream-dim mt-1">
                   Net change order total (including GC fees) from before Nightwork. Feeds G702 Line 2.
                 </p>
               </EditField>
@@ -413,17 +413,17 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               </EditField>
             </div>
             {formError && (
-              <div className="border border-nw-danger/40 bg-nw-danger/5 px-4 py-2 text-sm text-nw-danger">{formError}</div>
+              <div className="border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">{formError}</div>
             )}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[rgba(59,88,100,0.15)]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-brand-border">
               <button
                 type="button"
                 onClick={() => { setEditing(false); setForm(job); setFormError(null); }}
-                className="px-4 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
+                className="px-4 py-2 text-sm text-cream-dim hover:text-cream transition-colors"
               >
                 Cancel
               </button>
-              <button type="submit" disabled={saving} className="px-5 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-60 text-white text-sm font-medium transition-colors">
+              <button type="submit" disabled={saving} className="px-5 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors">
                 {saving ? "Saving…" : "Save Changes"}
               </button>
             </div>
@@ -431,18 +431,18 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         )}
 
         {/* Quick budget status / import */}
-        <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6 mb-6">
+        <section className="bg-brand-card border border-brand-border p-6 mb-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 className="font-display text-lg text-slate-tile">Budget</h3>
-              <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
+              <h3 className="font-display text-lg text-cream">Budget</h3>
+              <p className="text-sm text-cream-dim mt-1">
                 {budgetCount === 0 ? "No budget lines yet" : `${budgetCount} lines imported`}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Link
                 href={`/jobs/${job.id}/budget`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
               >
                 View Full Budget →
               </Link>
@@ -450,21 +450,21 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={importing}
-                className="inline-flex items-center gap-1.5 px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-[rgba(91,134,153,0.06)] disabled:opacity-60 text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-brand-border text-cream hover:bg-brand-surface disabled:opacity-60 text-sm font-medium transition-colors"
               >
                 {importing ? "Importing…" : "Import Budget (.xlsx / .csv)"}
               </button>
             </div>
           </div>
           {importError && (
-            <div className="mt-3 border border-nw-danger/40 bg-nw-danger/5 px-4 py-3 text-sm text-nw-danger">
+            <div className="mt-3 border border-status-danger/40 bg-status-danger/5 px-4 py-3 text-sm text-status-danger">
               <p className="font-medium">Import failed</p>
               <p className="mt-1">{importError}</p>
             </div>
           )}
           {importResult && (
-            <div className="mt-3 border border-stone-blue/40 bg-slate-deep/5 px-4 py-3 text-sm text-slate-tile">
-              <p className="font-medium text-stone-blue">
+            <div className="mt-3 border border-teal/40 bg-teal/5 px-4 py-3 text-sm text-cream">
+              <p className="font-medium text-teal">
                 {importResult.pay_app?.detected ? "Pay app import complete" : "Import complete"}
               </p>
               <p className="mt-1">
@@ -475,18 +475,18 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   ` · ${importResult.unmatched_codes.length} unmatched codes`}
               </p>
               {importResult.pay_app?.detected && (
-                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-[rgba(59,88,100,0.55)]">
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-cream-dim">
                   {importResult.pay_app.application_number != null && (
-                    <div>Application #: <span className="text-slate-tile">{importResult.pay_app.application_number}</span></div>
+                    <div>Application #: <span className="text-cream">{importResult.pay_app.application_number}</span></div>
                   )}
                   {importResult.pay_app.original_contract_sum != null && (
-                    <div>Original contract: <span className="text-slate-tile">${importResult.pay_app.original_contract_sum.toLocaleString()}</span></div>
+                    <div>Original contract: <span className="text-cream">${importResult.pay_app.original_contract_sum.toLocaleString()}</span></div>
                   )}
                   {importResult.pay_app.contract_sum_to_date != null && (
-                    <div>Contract sum to date: <span className="text-slate-tile">${importResult.pay_app.contract_sum_to_date.toLocaleString()}</span></div>
+                    <div>Contract sum to date: <span className="text-cream">${importResult.pay_app.contract_sum_to_date.toLocaleString()}</span></div>
                   )}
                   {importResult.pay_app.total_completed_to_date != null && (
-                    <div>Total completed: <span className="text-slate-tile">${importResult.pay_app.total_completed_to_date.toLocaleString()}</span></div>
+                    <div>Total completed: <span className="text-cream">${importResult.pay_app.total_completed_to_date.toLocaleString()}</span></div>
                   )}
                 </div>
               )}
@@ -513,8 +513,8 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
 function Detail({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
-      <p className="text-sm text-slate-tile mt-0.5">{value ?? "—"}</p>
+      <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</p>
+      <p className="text-sm text-cream mt-0.5">{value ?? "—"}</p>
     </div>
   );
 }
@@ -522,7 +522,7 @@ function Detail({ label, value }: { label: string; value: string | null | undefi
 function EditField({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <label className={`flex flex-col gap-1 ${full ? "md:col-span-2" : ""}`}>
-      <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</span>
       {children}
     </label>
   );

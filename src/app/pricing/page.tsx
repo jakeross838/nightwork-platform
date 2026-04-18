@@ -132,11 +132,11 @@ export default async function PricingPage() {
 
       <section className="px-6 pt-16 pb-8">
         <div className="max-w-[1200px] mx-auto text-center">
-          <span className="text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">Plans</span>
-          <h1 className="mt-2 font-display text-4xl md:text-5xl text-slate-tile tracking-tight">
+          <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Plans</span>
+          <h1 className="mt-2 font-display text-4xl md:text-5xl text-cream tracking-tight">
             Pricing that scales with your jobs
           </h1>
-          <p className="mt-4 text-[rgba(59,88,100,0.70)] max-w-2xl mx-auto">
+          <p className="mt-4 text-cream-muted max-w-2xl mx-auto">
             Start free. Upgrade when your portfolio grows. Every plan includes unlimited draws and cost codes — you only pay for users and AI volume.
           </p>
         </div>
@@ -150,14 +150,14 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 bg-[rgba(91,134,153,0.06)] border-y border-[rgba(59,88,100,0.15)]">
+      <section className="px-6 py-16 bg-brand-surface border-y border-brand-border">
         <div className="max-w-[820px] mx-auto">
-          <h2 className="font-display text-2xl text-slate-tile mb-6">Frequently asked</h2>
-          <div className="divide-y divide-brand-border border-y border-[rgba(59,88,100,0.15)]">
+          <h2 className="font-display text-2xl text-cream mb-6">Frequently asked</h2>
+          <div className="divide-y divide-brand-border border-y border-brand-border">
             {FAQ.map((f) => (
               <div key={f.q} className="py-5">
-                <p className="font-medium text-slate-tile text-[15px]">{f.q}</p>
-                <p className="mt-2 text-sm text-[rgba(59,88,100,0.70)] leading-relaxed">{f.a}</p>
+                <p className="font-medium text-cream text-[15px]">{f.q}</p>
+                <p className="mt-2 text-sm text-cream-muted leading-relaxed">{f.a}</p>
               </div>
             ))}
           </div>
@@ -178,26 +178,26 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
 
   const buttonClass =
     plan.highlight
-      ? "bg-slate-deep text-white hover:bg-slate-deeper"
-      : "border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-[rgba(91,134,153,0.06)]";
+      ? "bg-teal text-white hover:bg-teal-hover"
+      : "border border-brand-border text-cream hover:bg-brand-surface";
 
   return (
     <div
       className={`flex flex-col p-6 border bg-white ${
-        plan.highlight ? "border-stone-blue shadow-[0_12px_32px_-16px_rgba(63,88,98,0.35)]" : "border-[rgba(59,88,100,0.15)]"
+        plan.highlight ? "border-teal shadow-[0_12px_32px_-16px_rgba(63,88,98,0.35)]" : "border-brand-border"
       }`}
     >
       {plan.highlight && (
-        <span className="self-start px-2 py-0.5 bg-slate-deep text-white text-[10px] tracking-[0.12em] uppercase mb-3">
+        <span className="self-start px-2 py-0.5 bg-teal text-white text-[10px] tracking-[0.12em] uppercase mb-3">
           Most Popular
         </span>
       )}
-      <h2 className="font-display text-xl text-slate-tile">{plan.name}</h2>
-      <p className="mt-3 text-sm text-[rgba(59,88,100,0.70)] h-10">{plan.blurb}</p>
+      <h2 className="font-display text-xl text-cream">{plan.name}</h2>
+      <p className="mt-3 text-sm text-cream-muted h-10">{plan.blurb}</p>
       <div className="mt-5">
-        <span className="font-display text-4xl text-slate-tile">{plan.price}</span>
+        <span className="font-display text-4xl text-cream">{plan.price}</span>
         {plan.key !== "enterprise" && plan.price !== "$0" && (
-          <span className="text-[rgba(59,88,100,0.55)] text-sm font-sans"> /mo</span>
+          <span className="text-cream-dim text-sm font-sans"> /mo</span>
         )}
       </div>
       <dl className="mt-6 space-y-2 text-sm">
@@ -206,10 +206,10 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
         <SpecRow label="Storage" value={plan.storage} />
         <SpecRow label="Jobs" value={plan.jobs} />
       </dl>
-      <ul className="mt-6 space-y-2 text-sm text-[rgba(59,88,100,0.70)] flex-1">
+      <ul className="mt-6 space-y-2 text-sm text-cream-muted flex-1">
         {plan.features.map((f) => (
           <li key={f} className="flex gap-2">
-            <span className="text-stone-blue mt-0.5">✓</span>
+            <span className="text-teal mt-0.5">✓</span>
             <span>{f}</span>
           </li>
         ))}
@@ -217,7 +217,7 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
       {isContact ? (
         <a
           href={plan.ctaHref}
-          className="mt-8 block text-center px-4 py-3 border border-[rgba(59,88,100,0.15)] text-[13px] tracking-[0.08em] uppercase hover:bg-[rgba(91,134,153,0.06)]"
+          className="mt-8 block text-center px-4 py-3 border border-brand-border text-[13px] tracking-[0.08em] uppercase hover:bg-brand-surface"
         >
           {plan.cta}
         </a>
@@ -241,9 +241,9 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
 
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4 border-b border-[rgba(59,88,100,0.15)]/70 pb-1.5">
-      <dt className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)]">{label}</dt>
-      <dd className="text-slate-tile text-sm">{value}</dd>
+    <div className="flex justify-between gap-4 border-b border-brand-border/70 pb-1.5">
+      <dt className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">{label}</dt>
+      <dd className="text-cream text-sm">{value}</dd>
     </div>
   );
 }

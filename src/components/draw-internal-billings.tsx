@@ -172,7 +172,7 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
   }
 
   if (loading) {
-    return <div className="text-[rgba(59,88,100,0.55)] text-sm py-8 text-center">Loading internal billings...</div>;
+    return <div className="text-cream-dim text-sm py-8 text-center">Loading internal billings...</div>;
   }
 
   // Compute live total for all selected
@@ -188,32 +188,32 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
       {/* Already attached */}
       {attachedBillings.length > 0 && (
         <div>
-          <h3 className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-3">
+          <h3 className="text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-3">
             Attached to This Draw
           </h3>
-          <div className="border border-[rgba(59,88,100,0.15)] divide-y divide-brand-border">
+          <div className="border border-brand-border divide-y divide-brand-border">
             {attachedBillings.map((b) => (
-              <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-white">
+              <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-brand-card">
                 <div className="flex items-center gap-3">
-                  <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-slate-deep/20 text-stone-blue">
+                  <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-teal/20 text-teal">
                     INTERNAL
                   </span>
-                  <span className="text-sm text-slate-tile">
+                  <span className="text-sm text-cream">
                     {b.internal_billing_types?.name ?? "—"}
                   </span>
                   {b.description && (
-                    <span className="text-sm text-[rgba(59,88,100,0.55)]">— {b.description}</span>
+                    <span className="text-sm text-cream-dim">— {b.description}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-slate-tile tabular-nums">
+                  <span className="text-sm text-cream tabular-nums">
                     {formatCents(b.amount_cents)}
                   </span>
                   {isDraft && (
                     <button
                       onClick={() => handleDetach(b.id)}
                       disabled={detachingId === b.id}
-                      className="text-xs text-nw-danger hover:underline disabled:opacity-50"
+                      className="text-xs text-status-danger hover:underline disabled:opacity-50"
                     >
                       {detachingId === b.id ? "..." : "Detach"}
                     </button>
@@ -221,9 +221,9 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
                 </div>
               </div>
             ))}
-            <div className="flex justify-between px-4 py-2 bg-[rgba(91,134,153,0.06)] text-sm">
-              <span className="text-[rgba(59,88,100,0.55)]">Attached total</span>
-              <span className="text-slate-tile font-medium tabular-nums">{formatCents(attachedTotal)}</span>
+            <div className="flex justify-between px-4 py-2 bg-brand-surface text-sm">
+              <span className="text-cream-dim">Attached total</span>
+              <span className="text-cream font-medium tabular-nums">{formatCents(attachedTotal)}</span>
             </div>
           </div>
         </div>
@@ -232,16 +232,16 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
       {/* Draft billings available to attach */}
       {isDraft && draftBillings.length > 0 && (
         <div>
-          <h3 className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-3">
+          <h3 className="text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-3">
             Available to Attach
           </h3>
 
           {/* Base display */}
-          <div className="mb-3 px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-[rgba(59,88,100,0.55)]">
-            Draw base (budget + CO lines): <span className="text-slate-tile font-medium">{formatCents(baseCents)}</span>
+          <div className="mb-3 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream-dim">
+            Draw base (budget + CO lines): <span className="text-cream font-medium">{formatCents(baseCents)}</span>
           </div>
 
-          <div className="border border-[rgba(59,88,100,0.15)] divide-y divide-brand-border">
+          <div className="border border-brand-border divide-y divide-brand-border">
             {draftBillings.map((b) => {
               const method = getMethodLabel(b);
               const checked = selected.has(b.id);
@@ -251,7 +251,7 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
                 <label
                   key={b.id}
                   className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                    checked ? "bg-slate-deep/5" : "bg-white hover:bg-[rgba(91,134,153,0.06)]"
+                    checked ? "bg-teal/5" : "bg-brand-card hover:bg-brand-surface"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -261,11 +261,11 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
                       onChange={() => toggleSelect(b.id)}
                       className="accent-teal"
                     />
-                    <span className="text-sm text-slate-tile">
+                    <span className="text-sm text-cream">
                       {b.internal_billing_types?.name ?? "—"}
                     </span>
                     {b.description && (
-                      <span className="text-sm text-[rgba(59,88,100,0.55)]">— {b.description}</span>
+                      <span className="text-sm text-cream-dim">— {b.description}</span>
                     )}
                     {method === "percentage" && b.percentage && (
                       <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-amber-500/20 text-amber-300">
@@ -273,11 +273,11 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-slate-tile tabular-nums">
+                  <div className="text-sm text-cream tabular-nums">
                     {method === "percentage" && b.percentage ? (
                       <span>
                         {formatCents(amount)}{" "}
-                        <span className="text-[rgba(59,88,100,0.55)] text-xs">
+                        <span className="text-cream-dim text-xs">
                           (= base × {(b.percentage * 100).toFixed(0)}%)
                         </span>
                       </span>
@@ -290,14 +290,14 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
             })}
 
             {selected.size > 0 && (
-              <div className="flex justify-between items-center px-4 py-3 bg-[rgba(91,134,153,0.06)]">
-                <span className="text-sm text-[rgba(59,88,100,0.55)]">
-                  {selected.size} selected — total: <span className="text-slate-tile font-medium">{formatCents(selectedTotal)}</span>
+              <div className="flex justify-between items-center px-4 py-3 bg-brand-surface">
+                <span className="text-sm text-cream-dim">
+                  {selected.size} selected — total: <span className="text-cream font-medium">{formatCents(selectedTotal)}</span>
                 </span>
                 <button
                   onClick={handleAttach}
                   disabled={attaching}
-                  className="bg-slate-deep text-white px-4 py-1.5 text-sm disabled:opacity-50"
+                  className="bg-teal text-white px-4 py-1.5 text-sm disabled:opacity-50"
                 >
                   {attaching ? "Attaching..." : "Attach Selected"}
                 </button>
@@ -308,9 +308,9 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
       )}
 
       {isDraft && draftBillings.length === 0 && attachedBillings.length === 0 && (
-        <div className="text-center py-8 text-[rgba(59,88,100,0.55)] text-sm">
+        <div className="text-center py-8 text-cream-dim text-sm">
           No internal billings for this job.{" "}
-          <a href={`/jobs/${jobId}/internal-billings`} className="text-stone-blue hover:underline">
+          <a href={`/jobs/${jobId}/internal-billings`} className="text-teal hover:underline">
             Add billings
           </a>{" "}
           first, then attach them here.
@@ -318,7 +318,7 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
       )}
 
       {!isDraft && attachedBillings.length === 0 && (
-        <div className="text-center py-8 text-[rgba(59,88,100,0.55)] text-sm">
+        <div className="text-center py-8 text-cream-dim text-sm">
           No internal billings attached to this draw.
         </div>
       )}

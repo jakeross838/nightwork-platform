@@ -216,8 +216,8 @@ export default function BulkLienReleasesPage() {
         <FinancialViewTabs active="liens" />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-slate-tile">Lien Releases</h2>
-            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
+            <h2 className="font-display text-2xl text-cream">Lien Releases</h2>
+            <p className="text-sm text-cream-dim mt-1">
               All lien releases across every active draw. Drop a stack of signed PDFs below — we&rsquo;ll match each one to a release by vendor and amount.
             </p>
           </div>
@@ -229,11 +229,11 @@ export default function BulkLienReleasesPage() {
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           className={`mb-6 border-2 border-dashed p-6 text-center transition-colors ${
-            dragOver ? "border-stone-blue bg-slate-deep/5" : "border-[rgba(59,88,100,0.15)] bg-white"
+            dragOver ? "border-teal bg-teal/5" : "border-brand-border bg-brand-card"
           }`}
         >
-          <p className="font-display text-slate-tile">Drop signed lien releases here</p>
-          <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
+          <p className="font-display text-cream">Drop signed lien releases here</p>
+          <p className="text-sm text-cream-dim mt-1">
             PDFs, JPG/PNG supported. Files are matched to open lien releases by the vendor name and (if present) amount in the filename.
           </p>
           <div className="mt-3">
@@ -248,7 +248,7 @@ export default function BulkLienReleasesPage() {
             <button
               onClick={() => bulkInput.current?.click()}
               disabled={bulkBusy || (releases?.length ?? 0) === 0}
-              className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper disabled:opacity-50 text-white text-sm font-medium"
+              className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium"
             >
               {bulkBusy ? "Uploading…" : "Choose files"}
             </button>
@@ -256,29 +256,29 @@ export default function BulkLienReleasesPage() {
         </div>
 
         {bulkResults && (
-          <div className="mb-6 bg-white border border-stone-blue/30 p-4 text-sm">
-            <p className="font-display text-slate-tile mb-2">Bulk upload results</p>
+          <div className="mb-6 bg-brand-card border border-teal/30 p-4 text-sm">
+            <p className="font-display text-cream mb-2">Bulk upload results</p>
             <ul className="divide-y divide-brand-row-border">
               {bulkResults.map((r, i) => (
                 <li key={i} className="py-2 flex items-center gap-3 flex-wrap">
-                  <span className="font-mono text-xs text-[rgba(59,88,100,0.55)] truncate max-w-[320px]">{r.file}</span>
+                  <span className="font-mono text-xs text-cream-dim truncate max-w-[320px]">{r.file}</span>
                   {r.releaseId ? (
                     <>
                       <span className={`inline-block px-2 py-0.5 text-[11px] border uppercase tracking-wider ${
                         r.matchScore === "exact"
-                          ? "text-nw-success border-nw-success"
+                          ? "text-status-success border-status-success"
                           : r.matchScore === "vendor+amount"
-                            ? "text-stone-blue border-stone-blue"
-                            : "text-nw-warn border-nw-warn"
+                            ? "text-teal border-teal"
+                            : "text-brass border-brass"
                       }`}>
                         {r.matchScore}
                       </span>
-                      <span className="text-slate-tile">{r.vendor}</span>
-                      <span className="text-[rgba(59,88,100,0.70)]">· {r.job}</span>
-                      <span className="text-[rgba(59,88,100,0.55)] tabular-nums ml-auto">{r.amount != null ? formatCents(r.amount) : "—"}</span>
+                      <span className="text-cream">{r.vendor}</span>
+                      <span className="text-cream-muted">· {r.job}</span>
+                      <span className="text-cream-dim tabular-nums ml-auto">{r.amount != null ? formatCents(r.amount) : "—"}</span>
                     </>
                   ) : (
-                    <span className="text-nw-danger text-xs">No vendor match — use per-row upload below</span>
+                    <span className="text-status-danger text-xs">No vendor match — use per-row upload below</span>
                   )}
                 </li>
               ))}
@@ -310,12 +310,12 @@ export default function BulkLienReleasesPage() {
                 placeholder="Search vendor, job, or type…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 min-w-[240px] px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none"
+                className="flex-1 min-w-[240px] px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none"
               />
               <select
                 value={jobFilter}
                 onChange={(e) => setJobFilter(e.target.value)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
               >
                 <option value="">All Jobs</option>
                 {jobs.map((j) => (
@@ -325,7 +325,7 @@ export default function BulkLienReleasesPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -335,10 +335,10 @@ export default function BulkLienReleasesPage() {
               </select>
             </div>
 
-            <div className="bg-white border border-[rgba(59,88,100,0.15)] overflow-x-auto">
+            <div className="bg-brand-card border border-brand-border overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
+                  <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
                     <th className="text-left px-4 py-3 font-medium">Vendor</th>
                     <th className="text-left px-4 py-3 font-medium">Job</th>
                     <th className="text-left px-4 py-3 font-medium">Draw</th>
@@ -354,25 +354,25 @@ export default function BulkLienReleasesPage() {
                   {filtered.map((r) => {
                     const missing = !r.document_url && (r.status === "pending" || r.status === "received");
                     return (
-                      <tr key={r.id} className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.06)]/40">
-                        <td className="px-4 py-3 text-slate-tile">{r.vendors?.name ?? "—"}</td>
-                        <td className="px-4 py-3 text-[rgba(59,88,100,0.70)]">
+                      <tr key={r.id} className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface/40">
+                        <td className="px-4 py-3 text-cream">{r.vendors?.name ?? "—"}</td>
+                        <td className="px-4 py-3 text-cream-muted">
                           {r.jobs ? (
-                            <Link href={`/jobs/${r.jobs.id}/lien-releases`} className="hover:text-stone-blue hover:underline">
+                            <Link href={`/jobs/${r.jobs.id}/lien-releases`} className="hover:text-teal hover:underline">
                               {r.jobs.name}
                             </Link>
                           ) : "—"}
                         </td>
-                        <td className="px-4 py-3 text-[rgba(59,88,100,0.70)]">
+                        <td className="px-4 py-3 text-cream-muted">
                           {r.draws ? `#${r.draws.draw_number}${r.draws.revision_number > 0 ? ` Rev ${r.draws.revision_number}` : ""}` : "—"}
                         </td>
-                        <td className="px-4 py-3 text-[rgba(59,88,100,0.70)] text-xs">
+                        <td className="px-4 py-3 text-cream-muted text-xs">
                           {r.release_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-tile tabular-nums">
+                        <td className="px-4 py-3 text-right text-cream tabular-nums">
                           {r.amount != null ? formatCents(r.amount) : "—"}
                         </td>
-                        <td className="px-4 py-3 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(r.through_date)}</td>
+                        <td className="px-4 py-3 text-cream-muted text-xs">{formatDate(r.through_date)}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${badgeFor(r.status)}`}>
                             {r.status.replace(/_/g, " ")}
@@ -380,13 +380,13 @@ export default function BulkLienReleasesPage() {
                         </td>
                         <td className="px-4 py-3 text-xs">
                           {r.document_url ? (
-                            <a href={r.document_url} target="_blank" rel="noreferrer" className="text-stone-blue hover:underline">
+                            <a href={r.document_url} target="_blank" rel="noreferrer" className="text-teal hover:underline">
                               View
                             </a>
                           ) : missing ? (
-                            <span className="text-nw-danger">Missing</span>
+                            <span className="text-status-danger">Missing</span>
                           ) : (
-                            <span className="text-[rgba(59,88,100,0.55)]">—</span>
+                            <span className="text-cream-dim">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -404,7 +404,7 @@ export default function BulkLienReleasesPage() {
                           <button
                             onClick={() => rowInputs.current[r.id]?.click()}
                             disabled={busyId === r.id}
-                            className="px-3 py-1 text-xs border border-stone-blue text-stone-blue hover:bg-stone-blue hover:text-white disabled:opacity-50 transition-colors"
+                            className="px-3 py-1 text-xs border border-teal text-teal hover:bg-teal hover:text-white disabled:opacity-50 transition-colors"
                           >
                             {busyId === r.id ? "Uploading…" : r.document_url ? "Replace" : "Upload"}
                           </button>
@@ -424,16 +424,16 @@ export default function BulkLienReleasesPage() {
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4">
-      <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
-      <p className={`text-2xl mt-1 font-display tabular-nums ${highlight ? "text-nw-danger" : "text-slate-tile"}`}>{value}</p>
+    <div className="bg-brand-card border border-brand-border p-4">
+      <p className="text-[11px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
+      <p className={`text-2xl mt-1 font-display tabular-nums ${highlight ? "text-status-danger" : "text-cream"}`}>{value}</p>
     </div>
   );
 }
 
 function badgeFor(status: string): string {
-  if (status === "received") return "text-nw-success border-nw-success/60";
-  if (status === "pending") return "text-nw-warn border-nw-warn/60";
-  if (status === "waived") return "text-[rgba(59,88,100,0.55)] border-cream-dim/40";
-  return "text-[rgba(59,88,100,0.70)] border-[rgba(59,88,100,0.15)]";
+  if (status === "received") return "text-status-success border-status-success/60";
+  if (status === "pending") return "text-brass border-brass/60";
+  if (status === "waived") return "text-cream-dim border-cream-dim/40";
+  return "text-cream-muted border-brand-border";
 }
