@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import AppShell from "@/components/app-shell";
 import { toast } from "@/lib/utils/toast";
 import { formatCents, confidenceLabel, confidenceColor } from "@/lib/utils/format";
 import { supabase } from "@/lib/supabase/client";
@@ -65,7 +64,7 @@ interface JobOption {
   name: string;
 }
 
-export default function ImportPage() {
+export default function ImportPageContent() {
   const [batchId, setBatchId] = useState<string | null>(null);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [batch, setBatch] = useState<BatchSummary | null>(null);
@@ -319,7 +318,7 @@ export default function ImportPage() {
   const done = !parsing && (batch?.status === "complete" || batch?.status === "partial");
 
   return (
-    <AppShell>
+    <>
       <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 md:px-6 py-8">
         <div className="mb-6 flex items-end justify-between">
           <div>
@@ -494,7 +493,7 @@ export default function ImportPage() {
           </section>
         )}
       </main>
-    </AppShell>
+    </>
   );
 }
 

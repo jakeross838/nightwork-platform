@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatStatus, formatDate, statusBadgeOutline } from "@/lib/utils/format";
 import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
+import InvoiceUploadModal from "@/components/invoice-upload-modal";
+import InvoiceImportModal from "@/components/invoice-import-modal";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList, SkeletonStatCard } from "@/components/loading-skeleton";
 
@@ -136,9 +139,13 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 }
 
 export default function AllInvoicesPage() {
+ const searchParams = useSearchParams();
+ const router = useRouter();
  const [invoices, setInvoices] = useState<Invoice[]>([]);
  const [pmUsers, setPmUsers] = useState<PmUser[]>([]);
  const [loading, setLoading] = useState(true);
+ const [uploadOpen, setUploadOpen] = useState(searchParams.get("action") === "upload");
+ const [importOpen, setImportOpen] = useState(searchParams.get("action") === "import");
 
  // Tabs
  const [activeTab, setActiveTab] = useState<"all" | "payment">("all");
@@ -385,6 +392,23 @@ export default function AllInvoicesPage() {
  ? (isFiltered ? `Showing ${filtered.length} of ${invoices.length} invoices` : `${invoices.length} total invoices`)
  : `${paymentInvoices.length} invoices ready for payment`}
  </p>
+ </div>
+ <div className="flex items-center gap-2">
+ <button
+ onClick={() => setImportOpen(true)}
+ className="px-4 py-2 border border-brand-border text-cream-dim hover:text-cream hover:bg-brand-surface text-sm font-medium transition-colors flex items-center gap-2"
+ >
+ Import CSV
+ </button>
+ <button
+ onClick={() => setUploadOpen(true)}
+ className="px-4 py-2 bg-teal hover:bg-teal-hover text-brand-bg text-sm font-medium transition-colors flex items-center gap-2"
+ >
+ <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+ </svg>
+ Upload Invoice
+ </button>
  </div>
  </div>
 
@@ -784,6 +808,16 @@ export default function AllInvoicesPage() {
  </>
  )}
  </main>
+ <InvoiceUploadModal open={uploadOpen} onClose={() => {
+ setUploadOpen(false);
+ if (searchParams.get("action")) router.replace("/invoices");
+ window.location.reload();
+ }} />
+ <InvoiceImportModal open={importOpen} onClose={() => {
+ setImportOpen(false);
+ if (searchParams.get("action")) router.replace("/invoices");
+ window.location.reload();
+ }} />
  </AppShell>
  );
 }

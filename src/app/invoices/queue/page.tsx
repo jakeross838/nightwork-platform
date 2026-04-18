@@ -724,7 +724,7 @@ export default function QueuePage() {
  variant="success"
  title="You're all caught up!"
  message="No invoices waiting for PM review. Newly uploaded invoices will appear here."
- primaryAction={{ label: "Upload Invoices", href: "/invoices/upload" }}
+ primaryAction={{ label: "Upload Invoices", href: "/invoices?action=upload" }}
  />
  ) : (
  <>
