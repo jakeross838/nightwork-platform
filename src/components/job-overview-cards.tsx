@@ -65,12 +65,14 @@ export default function JobOverviewCards({
   originalContract,
   revisedContract,
   approvedCosTotal,
+  previousCertificatesTotal = 0,
   preloaded,
 }: {
   jobId: string;
   originalContract: number;
   revisedContract: number;
   approvedCosTotal: number;
+  previousCertificatesTotal?: number;
   preloaded?: JobOverviewPreloaded | null;
 }) {
   const [budgetHealth, setBudgetHealth] = useState<BudgetHealth | null>(preloaded?.budget_health ?? null);
@@ -250,8 +252,10 @@ export default function JobOverviewCards({
       );
 
       // Billed to date (% complete on Contract Summary card).
+      // Include pre-Nightwork baseline for mid-project imports.
       const allInv = (allInvRes.data as Array<{ total_amount: number }> | null) ?? [];
-      setBilledToDate(allInv.reduce((s, r) => s + (r.total_amount ?? 0), 0));
+      const nightworkBilled = allInv.reduce((s, r) => s + (r.total_amount ?? 0), 0);
+      setBilledToDate(previousCertificatesTotal + nightworkBilled);
     }
     load();
     return () => {

@@ -123,10 +123,13 @@ export const GET = withApiError(async (
   const approvedCos = (job.approved_cos_total as number) ?? 0;
   const revised = (job.current_contract_amount as number) ?? original + approvedCos;
 
-  // Financial bar — billed + % complete + remaining
-  const billed = (billedInvoicesRes.data ?? []).reduce(
+  // Financial bar — billed + % complete + remaining.
+  // Include pre-Nightwork baseline for mid-project imports.
+  const baseline = (job.previous_certificates_total as number) ?? 0;
+  const nightworkBilled = (billedInvoicesRes.data ?? []).reduce(
     (s: number, r: { total_amount?: number }) => s + (r.total_amount ?? 0), 0
   );
+  const billed = baseline + nightworkBilled;
   const pendingInvoiceRows = (pendingInvoicesRes.data ?? []) as Array<{ total_amount: number }>;
   const pctComplete = revised > 0 ? Math.min(100, Math.max(0, (billed / revised) * 100)) : 0;
 

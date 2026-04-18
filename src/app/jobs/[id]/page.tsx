@@ -277,6 +277,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               originalContract={job.original_contract_amount}
               revisedContract={job.current_contract_amount}
               approvedCosTotal={job.approved_cos_total ?? 0}
+              previousCertificatesTotal={job.previous_certificates_total ?? 0}
               preloaded={overviewPreloaded}
             />
 
