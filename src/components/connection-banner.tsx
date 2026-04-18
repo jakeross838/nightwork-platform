@@ -1,18 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+
+/** Public routes where the user is not authenticated — skip the
+ *  Supabase ping to avoid false-positive RLS failures. */
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/pricing", "/reset-password"];
+
+function isPublicPath(pathname: string): boolean {
+  if (pathname === "/") return true;
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
 
 /**
  * Pings Supabase every 30s. If the ping fails (network error, DNS, 500, etc.)
  * a sticky red banner appears at the top telling the user their changes may
  * not be saved. Clears automatically on recovery.
+ *
+ * Skips pinging on public/unauthenticated routes where cost_codes RLS would
+ * reject the query and falsely trigger the banner.
  */
 export default function ConnectionBanner() {
+  const pathname = usePathname();
   const [offline, setOffline] = useState(false);
   const [lastErrorAt, setLastErrorAt] = useState<Date | null>(null);
 
   useEffect(() => {
+    // Don't ping on public pages — RLS blocks unauthenticated reads.
+    if (isPublicPath(pathname)) {
+      setOffline(false);
+      return;
+    }
+
     let cancelled = false;
     let failures = 0;
 
@@ -65,7 +85,7 @@ export default function ConnectionBanner() {
       window.removeEventListener("offline", goOffline);
       window.removeEventListener("online", goOnline);
     };
-  }, []);
+  }, [pathname]);
 
   if (!offline) return null;
 
