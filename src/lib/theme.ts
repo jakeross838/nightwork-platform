@@ -1,46 +1,41 @@
 /**
- * Nightwork — Design Tokens (Slate palette)
+ * Nightwork — Design Tokens
  * Swap this file + globals.css variables to change the entire theme.
- * Brand colors default to the Slate palette; org-specific overrides
- * are set at runtime via --org-primary CSS variable in layout.tsx.
+ * Brand-specific colors (bgInverse/textPrimary/borderBrand/money) default
+ * to Ross Built's navy, but are overridden at runtime by --org-primary
+ * CSS variable (set per-org in layout.tsx from the organizations table).
  */
 
 export const theme = {
  colors: {
- bgPage: "#F7F5EC",
- bgSubtle: "rgba(91, 134, 153, 0.06)",
- bgMuted: "rgba(59, 88, 100, 0.08)",
- bgInverse: "#1A2830",
- bgInverseHover: "#132028",
- textPrimary: "#3B5864",
- textBody: "#3B5864",
- textSecondary: "rgba(59, 88, 100, 0.70)",
- textInverse: "#F7F5EC",
- borderDefault: "rgba(59, 88, 100, 0.15)",
- borderStrong: "rgba(59, 88, 100, 0.30)",
- borderBrand: "#5B8699",
+ bgPage: "#F7F5ED",
+ bgSubtle: "#F5F5F5",
+ bgMuted: "#E8E8E8",
+ bgInverse: "#3F5862",
+ textPrimary: "#3F5862",
+ textBody: "#3D3D3D",
+ textSecondary: "#878787",
+ textInverse: "#FFFFFF",
+ borderDefault: "#E8E8E8",
+ borderStrong: "#A0A0A0",
+ borderBrand: "#3F5862",
  white: "#FFFFFF",
- success: "#4A8A6F",
- warning: "#C98A3B",
- error: "#B0554E",
- money: "#3B5864",
- stoneBlue: "#5B8699",
- gulfBlue: "#4E7A8C",
- oceanside: "#CBD8DB",
+ success: "#2E7D32",
+ warning: "#E65100",
+ error: "#c0392b",
+ money: "#3F5862",
  },
  fonts: {
- display: '"Space Grotesk", system-ui, sans-serif',
- body: '"Inter", system-ui, -apple-system, sans-serif',
- mono: '"JetBrains Mono", ui-monospace, monospace',
+ family: '"Century Gothic", "CenturyGothic", "AppleGothic", sans-serif',
  },
  // Excel export colors (ARGB without alpha prefix for exceljs)
  excel: {
- headerBg: "1A2830",
- headerText: "F7F5EC",
- accentLine: "5B8699",
- lightBg: "F7F5EC",
+ headerBg: "3F5862",
+ headerText: "FFFFFF",
+ accentLine: "3F5862",
+ lightBg: "F5F5F5",
  white: "FFFFFF",
  black: "000000",
- error: "B0554E",
+ error: "C0392B",
  },
 } as const;

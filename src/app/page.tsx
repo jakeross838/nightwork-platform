@@ -159,7 +159,7 @@ function PricePreview({ name, price, tagline, highlight }: { name: string; price
       <h3 className="font-display text-xl text-cream">{name}</h3>
       <p className="mt-4 font-display text-4xl text-cream">
         {price}
-        <span className="text-sm text-cream-dim font-sans">/mo</span>
+        <span className="text-sm text-cream-dim font-body">/mo</span>
       </p>
       <p className="mt-3 text-sm text-cream-muted">{tagline}</p>
     </div>

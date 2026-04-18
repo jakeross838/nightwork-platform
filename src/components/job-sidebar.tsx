@@ -22,20 +22,11 @@ interface SidebarJob {
 
 const COLLAPSE_KEY = "nightwork:sidebar-collapsed";
 
-const SORT_LABELS: Record<SortKey, string> = {
-  alpha: "A-Z",
-  status: "Status",
-  recent: "Recent",
-};
-
-const SORT_CYCLE: SortKey[] = ["alpha", "status", "recent"];
-
-/** Status dot color — rounded-full is the ONE exception to the square rule */
 function statusDot(status: string): string {
-  if (status === "active") return "bg-nw-success";
-  if (status === "warranty") return "bg-nw-warn";
-  if (status === "complete") return "bg-[rgba(59,88,100,0.55)]";
-  return "bg-[rgba(59,88,100,0.55)]";
+  if (status === "active") return "bg-status-success";
+  if (status === "complete") return "bg-cream-dim";
+  if (status === "warranty") return "bg-brass";
+  return "bg-cream-dim";
 }
 
 function statusLabel(status: string): string {
@@ -79,13 +70,6 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
       const next = !prev;
       localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
       return next;
-    });
-  }, []);
-
-  const cycleSort = useCallback(() => {
-    setSort((prev) => {
-      const idx = SORT_CYCLE.indexOf(prev);
-      return SORT_CYCLE[(idx + 1) % SORT_CYCLE.length];
     });
   }, []);
 
@@ -167,150 +151,72 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
     return `/jobs/${jobId}`;
   }
 
-  /* ─── Mobile mode ─── */
+  // Mobile mode: render job list inline for the drawer (no collapse, no aside wrapper)
   if (mobile) {
     return (
-      <div className="flex flex-col h-full bg-white">
-        {/* Header controls */}
-        <div
-          className="p-3 space-y-2 border-b"
-          style={{ borderColor: "rgba(59,88,100,0.15)" }}
-        >
-          {/* JOBS label + sort toggle */}
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.70)] font-medium">
-              Jobs
-            </span>
-            <button
-              type="button"
-              onClick={cycleSort}
-              className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
-            >
-              {SORT_LABELS[sort]}
-            </button>
-          </div>
-
+      <div className="flex flex-col h-full">
+        <div className="p-3 space-y-2">
           {canCreateJob && (
             <Link
               href="/jobs/new"
-              className="flex items-center justify-center gap-1.5 w-full py-2 font-mono text-[10px] tracking-[0.14em] uppercase font-medium border text-stone-blue hover:bg-stone-blue hover:text-white transition-colors"
-              style={{ borderColor: "var(--nw-stone-blue)" }}
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 text-[11px] tracking-[0.06em] uppercase font-medium border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
             >
               + New Job
             </Link>
           )}
-
           {role === "pm" && (
-            <div
-              className="flex gap-0.5 p-0.5 border"
-              style={{ borderColor: "rgba(59,88,100,0.15)" }}
-            >
-              <button
-                type="button"
-                onClick={() => setFilter("mine")}
-                className={`flex-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
-                  filter === "mine"
-                    ? "bg-[rgba(91,134,153,0.1)] text-slate-tile font-medium"
-                    : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
-                }`}
-              >
-                My Jobs
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilter("all")}
-                className={`flex-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
-                  filter === "all"
-                    ? "bg-[rgba(91,134,153,0.1)] text-slate-tile font-medium"
-                    : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
-                }`}
-              >
-                All Jobs
-              </button>
+            <div className="flex gap-1 bg-brand-surface border border-brand-border p-0.5">
+              <button type="button" onClick={() => setFilter("mine")}
+                className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                  filter === "mine" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+                }`}>My Jobs</button>
+              <button type="button" onClick={() => setFilter("all")}
+                className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                  filter === "all" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+                }`}>All Jobs</button>
             </div>
           )}
-
-          <input
-            type="text"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-2 py-1.5 font-sans text-[13px] border bg-white text-slate-tile placeholder:text-[rgba(59,88,100,0.40)] focus:outline-none focus:border-stone-blue"
-            style={{ borderColor: "rgba(59,88,100,0.15)" }}
-          />
+          <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-2 py-1.5 text-xs border border-brand-border bg-white text-cream placeholder:text-cream-dim/50 focus:outline-none focus:border-teal" />
         </div>
-
-        {/* Selected job detail */}
         {selectedJob && (
-          <div
-            className="px-3 py-3 border-b bg-[rgba(91,134,153,0.1)]"
-            style={{ borderColor: "rgba(59,88,100,0.15)" }}
-          >
-            <p className="text-[13px] font-sans font-medium text-slate-tile">
-              {selectedJob.name}
-            </p>
+          <div className="px-3 pb-3 border-b border-brand-border bg-teal/5">
+            <p className="text-sm font-medium text-cream">{selectedJob.name}</p>
             <div className="flex items-center gap-1.5 mt-1">
-              <span
-                className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`}
-              />
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(59,88,100,0.70)]">
-                {statusLabel(selectedJob.status)}
-              </span>
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`} />
+              <span className="text-[10px] uppercase tracking-wider text-cream-dim">{statusLabel(selectedJob.status)}</span>
             </div>
           </div>
         )}
-
-        {/* Job list */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="p-4 text-center">
-              <div className="w-5 h-5 border-2 border-stone-blue/30 border-t-stone-blue rounded-full animate-spin mx-auto" />
+              <div className="w-5 h-5 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
             </div>
           ) : otherJobs.length === 0 ? (
-            <p className="p-3 text-[13px] font-sans text-[rgba(59,88,100,0.55)] text-center">
-              {search ? "No matches" : "No jobs"}
-            </p>
+            <p className="p-3 text-xs text-cream-dim text-center">{search ? "No matches" : "No jobs"}</p>
           ) : (
             otherJobs.map((j) => (
-              <Link
-                key={j.id}
-                href={jobHref(j.id)}
-                className="flex items-center gap-2 px-3 py-2.5 font-sans text-[13px] text-slate-tile transition-colors hover:bg-[rgba(91,134,153,0.06)] border-b"
-                style={{ borderColor: "rgba(59,88,100,0.08)" }}
-                title={j.address ?? j.name}
-              >
-                <span
-                  className={`shrink-0 inline-block w-1.5 h-1.5 rounded-full ${statusDot(j.status)}`}
-                />
-                <span className="truncate">{j.name}</span>
+              <Link key={j.id} href={jobHref(j.id)}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-brand-surface/50 border-b border-brand-border/30"
+                title={j.address ?? j.name}>
+                <span className={`shrink-0 inline-block w-1.5 h-1.5 rounded-full ${statusDot(j.status)}`} />
+                <span className="truncate text-cream text-[13px]">{j.name}</span>
               </Link>
             ))
           )}
-        </div>
-
-        {/* Job count footer */}
-        <div
-          className="px-3 py-2 border-t"
-          style={{ borderColor: "rgba(59,88,100,0.15)" }}
-        >
-          <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">
-            {filtered.length} Job{filtered.length !== 1 ? "s" : ""}
-          </span>
         </div>
       </div>
     );
   }
 
-  /* ─── Collapsed rail (48px) ─── */
+  // Collapsed rail
   if (collapsed) {
     return (
-      <aside
-        className="hidden md:flex flex-col items-center w-12 shrink-0 border-r bg-white py-4 gap-2"
-        style={{ borderColor: "rgba(59,88,100,0.15)" }}
-      >
+      <aside className="hidden md:flex flex-col items-center w-12 shrink-0 border-r border-brand-border bg-white py-4 gap-3">
         <button
           onClick={toggleCollapse}
-          className="w-8 h-8 flex items-center justify-center text-[rgba(59,88,100,0.55)] hover:text-slate-tile hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-cream-dim hover:text-cream hover:bg-brand-surface transition-colors"
           title="Expand sidebar"
           aria-label="Expand sidebar"
         >
@@ -326,56 +232,31 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
                 key={j.id}
                 href={jobHref(j.id)}
                 className={`block w-full py-2 px-1 text-center transition-colors ${
-                  active
-                    ? "bg-[rgba(91,134,153,0.1)] border-l-2 border-l-stone-blue"
-                    : "hover:bg-[rgba(91,134,153,0.06)]"
+                  active ? "bg-teal/10 border-l-2 border-teal" : "hover:bg-brand-surface/50"
                 }`}
                 title={j.name}
               >
-                <span
-                  className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(j.status)}`}
-                />
+                <span className={`inline-block w-2 h-2 rounded-full ${statusDot(j.status)}`} />
               </Link>
             );
           })}
         </div>
-        {/* Job count at bottom */}
-        <span className="font-mono text-[10px] text-[rgba(59,88,100,0.55)]">
-          {filtered.length}
-        </span>
       </aside>
     );
   }
 
-  /* ─── Expanded sidebar (220px) ─── */
+  // Expanded sidebar
   return (
-    <aside
-      className="hidden md:flex flex-col w-[220px] shrink-0 border-r bg-white overflow-hidden"
-      style={{ borderColor: "rgba(59,88,100,0.15)" }}
-    >
+    <aside className="hidden md:flex flex-col w-[220px] shrink-0 border-r border-brand-border bg-white overflow-hidden">
       {/* Header */}
-      <div
-        className="p-3 border-b space-y-2"
-        style={{ borderColor: "rgba(59,88,100,0.15)" }}
-      >
-        {/* JOBS label + sort toggle + collapse */}
+      <div className="p-3 border-b border-brand-border space-y-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.70)] font-medium">
-              Jobs
-            </span>
-            <button
-              type="button"
-              onClick={cycleSort}
-              className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.40)] hover:text-slate-tile transition-colors"
-              title={`Sort: ${SORT_LABELS[sort]}`}
-            >
-              {SORT_LABELS[sort]}
-            </button>
-          </div>
+          <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim font-medium">
+            Jobs
+          </span>
           <button
             onClick={toggleCollapse}
-            className="w-6 h-6 flex items-center justify-center text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
+            className="w-6 h-6 flex items-center justify-center text-cream-dim hover:text-cream transition-colors"
             title="Collapse sidebar"
             aria-label="Collapse sidebar"
           >
@@ -388,26 +269,20 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
         {canCreateJob && (
           <Link
             href="/jobs/new"
-            className="flex items-center justify-center gap-1.5 w-full py-2 font-mono text-[10px] tracking-[0.14em] uppercase font-medium border text-stone-blue hover:bg-stone-blue hover:text-white transition-colors"
-            style={{ borderColor: "var(--nw-stone-blue)" }}
+            className="flex items-center justify-center gap-1.5 w-full py-1.5 text-[11px] tracking-[0.06em] uppercase font-medium border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
           >
             + New Job
           </Link>
         )}
 
-        {/* Filter toggle -- only shown for PMs */}
+        {/* Filter toggle — only shown for PMs who have a meaningful distinction */}
         {role === "pm" && (
-          <div
-            className="flex gap-0.5 p-0.5 border"
-            style={{ borderColor: "rgba(59,88,100,0.15)" }}
-          >
+          <div className="flex gap-1 bg-brand-surface border border-brand-border p-0.5">
             <button
               type="button"
               onClick={() => setFilter("mine")}
-              className={`flex-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
-                filter === "mine"
-                  ? "bg-[rgba(91,134,153,0.1)] text-slate-tile font-medium"
-                  : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+              className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                filter === "mine" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
               }`}
             >
               My Jobs
@@ -415,10 +290,8 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
             <button
               type="button"
               onClick={() => setFilter("all")}
-              className={`flex-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
-                filter === "all"
-                  ? "bg-[rgba(91,134,153,0.1)] text-slate-tile font-medium"
-                  : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+              className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                filter === "all" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
               }`}
             >
               All Jobs
@@ -432,43 +305,42 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-2 py-1.5 font-sans text-[13px] border bg-white text-slate-tile placeholder:text-[rgba(59,88,100,0.40)] focus:outline-none focus:border-stone-blue"
-          style={{ borderColor: "rgba(59,88,100,0.15)" }}
+          className="w-full px-2 py-1 text-xs border border-brand-border bg-white text-cream placeholder:text-cream-dim/50 focus:outline-none focus:border-teal"
         />
+
+        {/* Sort */}
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortKey)}
+          className="w-full px-2 py-1 text-[10px] border border-brand-border bg-white text-cream-dim focus:outline-none focus:border-teal"
+        >
+          <option value="alpha">A-Z</option>
+          <option value="status">Status</option>
+          <option value="recent">Recent</option>
+        </select>
       </div>
 
       {/* Selected job details */}
       {selectedJob && (
-        <div
-          className="p-3 border-b bg-[rgba(91,134,153,0.1)]"
-          style={{ borderColor: "rgba(59,88,100,0.15)" }}
-        >
-          <p className="text-[13px] font-sans font-medium text-slate-tile truncate">
-            {selectedJob.name}
-          </p>
+        <div className="p-3 border-b border-brand-border bg-teal/5">
+          <p className="text-sm font-medium text-cream truncate">{selectedJob.name}</p>
           <div className="flex items-center gap-1.5 mt-1">
-            <span
-              className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`}
-            />
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(59,88,100,0.70)]">
+            <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`} />
+            <span className="text-[10px] uppercase tracking-wider text-cream-dim">
               {statusLabel(selectedJob.status)}
             </span>
           </div>
           {selectedJob.client_name && (
-            <p className="text-[11px] font-sans text-[rgba(59,88,100,0.55)] mt-1.5 truncate">
-              {selectedJob.client_name}
-            </p>
+            <p className="text-[11px] text-cream-dim mt-1.5 truncate">{selectedJob.client_name}</p>
           )}
           {selectedJob.address && (
-            <p className="text-[11px] font-sans text-[rgba(59,88,100,0.55)] mt-0.5 truncate">
-              {selectedJob.address}
-            </p>
+            <p className="text-[11px] text-cream-dim mt-0.5 truncate">{selectedJob.address}</p>
           )}
           <div className="flex items-center gap-2 mt-2">
             {selectedJob.client_email && (
               <a
                 href={`mailto:${selectedJob.client_email}`}
-                className="font-mono text-[10px] tracking-[0.12em] uppercase text-stone-blue hover:underline"
+                className="text-[10px] text-teal hover:underline"
                 title="Email client"
               >
                 Email
@@ -479,7 +351,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedJob.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-[10px] tracking-[0.12em] uppercase text-stone-blue hover:underline"
+                className="text-[10px] text-teal hover:underline"
                 title="View on map"
               >
                 Map
@@ -493,52 +365,31 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
       <div className="flex-1 overflow-y-auto">
         <Link
           href="/jobs"
-          className="block px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(59,88,100,0.55)] hover:text-slate-tile border-b transition-colors"
-          style={{ borderColor: "rgba(59,88,100,0.08)" }}
+          className="block px-3 py-2 text-[10px] uppercase tracking-[0.08em] text-cream-dim hover:text-cream border-b border-brand-border/50"
         >
           All {filtered.length} Job{filtered.length !== 1 ? "s" : ""}
         </Link>
         {loading ? (
           <div className="p-4 text-center">
-            <div className="w-5 h-5 border-2 border-stone-blue/30 border-t-stone-blue rounded-full animate-spin mx-auto" />
+            <div className="w-5 h-5 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
           </div>
         ) : otherJobs.length === 0 ? (
-          <p className="p-3 text-[13px] font-sans text-[rgba(59,88,100,0.55)] text-center">
+          <p className="p-3 text-xs text-cream-dim text-center">
             {search ? "No matches" : "No other jobs"}
           </p>
         ) : (
-          otherJobs.map((j) => {
-            const active = j.id === currentJobId;
-            return (
-              <Link
-                key={j.id}
-                href={jobHref(j.id)}
-                className={`flex items-center gap-2 px-3 py-2 font-sans text-[13px] text-slate-tile transition-colors border-b ${
-                  active
-                    ? "bg-[rgba(91,134,153,0.1)] border-l-2 border-l-stone-blue"
-                    : "hover:bg-[rgba(91,134,153,0.06)]"
-                }`}
-                style={{ borderBottomColor: "rgba(59,88,100,0.08)" }}
-                title={j.address ?? j.name}
-              >
-                <span
-                  className={`shrink-0 inline-block w-1.5 h-1.5 rounded-full ${statusDot(j.status)}`}
-                />
-                <span className="truncate">{j.name}</span>
-              </Link>
-            );
-          })
+          otherJobs.map((j) => (
+            <Link
+              key={j.id}
+              href={jobHref(j.id)}
+              className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-brand-surface/50 border-b border-brand-border/30"
+              title={j.address ?? j.name}
+            >
+              <span className={`shrink-0 inline-block w-1.5 h-1.5 rounded-full ${statusDot(j.status)}`} />
+              <span className="truncate text-cream text-[13px]">{j.name}</span>
+            </Link>
+          ))
         )}
-      </div>
-
-      {/* Job count footer */}
-      <div
-        className="px-3 py-2 border-t"
-        style={{ borderColor: "rgba(59,88,100,0.15)" }}
-      >
-        <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">
-          {filtered.length} Job{filtered.length !== 1 ? "s" : ""}
-        </span>
       </div>
     </aside>
   );

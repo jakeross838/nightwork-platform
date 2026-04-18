@@ -197,7 +197,7 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
       <div className="mt-5">
         <span className="font-display text-4xl text-cream">{plan.price}</span>
         {plan.key !== "enterprise" && plan.price !== "$0" && (
-          <span className="text-cream-dim text-sm font-sans"> /mo</span>
+          <span className="text-cream-dim text-sm font-body"> /mo</span>
         )}
       </div>
       <dl className="mt-6 space-y-2 text-sm">
