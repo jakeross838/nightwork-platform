@@ -144,7 +144,7 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
         />
         <div className="mb-4">
           <h2 className="font-display text-2xl text-slate-tile">{job.name}</h2>
-          <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">{job.address ?? "No address"}</p>
+          <p className="text-sm text-tertiary mt-1">{job.address ?? "No address"}</p>
         </div>
         <JobTabs jobId={job.id} active="invoices" />
         <JobFinancialBar jobId={job.id} />
@@ -155,32 +155,32 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
             placeholder="Search vendor or invoice number…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-[200px] px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+            className="flex-1 min-w-[200px] px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+            className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
           >
             <option value="all">All statuses</option>
             {statuses.map((s) => (
               <option key={s} value={s}>{formatStatus(s)}</option>
             ))}
           </select>
-          <p className="text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
+          <p className="text-[11px] text-tertiary uppercase tracking-wider">
             {totals.count} · {formatCents(totals.sum)}
           </p>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="bg-white border border-[rgba(59,88,100,0.15)] p-12 text-center">
-            <p className="text-[rgba(59,88,100,0.55)] text-sm">No invoices match the current filters.</p>
+          <div className="bg-white border border-border-def p-12 text-center">
+            <p className="text-tertiary text-sm">No invoices match the current filters.</p>
           </div>
         ) : (
-          <div className="bg-white border border-[rgba(59,88,100,0.15)] overflow-x-auto">
+          <div className="bg-white border border-border-def overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] bg-[rgba(91,134,153,0.06)]/50">
+                <tr className="border-b border-border-def text-[11px] uppercase tracking-wider text-tertiary bg-bg-sub/50">
                   <th className="text-left px-3 py-3 font-medium">Date</th>
                   <th className="text-left px-3 py-3 font-medium">Vendor</th>
                   <th className="text-left px-3 py-3 font-medium">Inv #</th>
@@ -195,20 +195,20 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
                   return (
                     <tr
                       key={inv.id}
-                      className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.06)]/40 cursor-pointer"
+                      className="border-b border-border-sub last:border-0 hover:bg-bg-sub/40 cursor-pointer"
                       onClick={() => router.push(`/invoices/${inv.id}`)}
                     >
-                      <td className="px-3 py-2 text-[rgba(59,88,100,0.70)]">{formatDate(inv.invoice_date)}</td>
+                      <td className="px-3 py-2 text-secondary">{formatDate(inv.invoice_date)}</td>
                       <td className="px-3 py-2 text-slate-tile">
                         <span className="inline-flex items-center gap-1.5">
                           {vendor}
                           {inv.document_type === "receipt" && (
-                            <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-medium bg-transparent text-[rgba(59,88,100,0.55)] border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+                            <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-medium bg-transparent text-tertiary border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
                           )}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-[rgba(59,88,100,0.70)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
-                      <td className="px-3 py-2 text-[rgba(59,88,100,0.70)] text-xs">
+                      <td className="px-3 py-2 text-secondary font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                      <td className="px-3 py-2 text-secondary text-xs">
                         {inv.cost_codes ? `${inv.cost_codes.code} ${inv.cost_codes.description}` : "—"}
                       </td>
                       <td className="px-3 py-2 text-right text-slate-tile tabular-nums">{formatCents(inv.total_amount)}</td>
@@ -230,7 +230,7 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
           </div>
         )}
 
-        <p className="mt-4 text-[11px] text-[rgba(59,88,100,0.55)]">
+        <p className="mt-4 text-[11px] text-tertiary">
           <Link href={`/invoices?jobId=${job.id}`} className="text-stone-blue hover:underline">
             Open in All Invoices →
           </Link>

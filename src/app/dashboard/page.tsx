@@ -118,13 +118,13 @@ export default function Dashboard() {
             {firstName ? `Welcome, ${firstName}` : brandName}
           </h1>
           {tagline && (
-            <p className="mt-1 text-[13px] text-[rgba(59,88,100,0.55)]">{tagline}</p>
+            <p className="mt-1 text-[13px] text-tertiary">{tagline}</p>
           )}
         </div>
 
         {/* Top row — 4 KPI cells with 1px hairline gaps */}
         <section className="mb-6 animate-fade-up stagger-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[rgba(59,88,100,0.15)] border border-[rgba(59,88,100,0.15)]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-bg-mut border border-border-def">
             {loading || !data ? (
               <>
                 <SkeletonStatCard />
@@ -175,14 +175,14 @@ export default function Dashboard() {
               message="Nothing needs your attention right now. New action items will appear here as data flows in."
             />
           ) : (
-            <div className="border border-[rgba(59,88,100,0.15)] bg-white">
+            <div className="border border-border-def bg-white">
               <ul>
                 {data.attention.items.map((item, i) => (
                   <AttentionRow key={`${item.kind}-${i}`} item={item} />
                 ))}
               </ul>
               {data.attention.total > data.attention.items.length && (
-                <div className="border-t border-[rgba(59,88,100,0.15)] px-4 py-3 text-center">
+                <div className="border-t border-border-def px-4 py-3 text-center">
                   <Link href="/invoices/queue" className="font-mono text-[10px] tracking-[0.12em] uppercase text-stone-blue hover:underline">
                     View all {data.attention.total} items
                   </Link>
@@ -206,13 +206,13 @@ export default function Dashboard() {
                 message="Actions will appear here as your team uses the system."
               />
             ) : (
-              <div className="border border-[rgba(59,88,100,0.15)] bg-white">
+              <div className="border border-border-def bg-white">
                 <ul>
                   {data.activity.map((entry) => (
                     <ActivityRow key={entry.id} entry={entry} />
                   ))}
                 </ul>
-                <div className="border-t border-[rgba(59,88,100,0.15)] px-4 py-3 text-center">
+                <div className="border-t border-border-def px-4 py-3 text-center">
                   <Link href="/settings/admin" className="font-mono text-[10px] tracking-[0.12em] uppercase text-stone-blue hover:underline">
                     View all activity
                   </Link>
@@ -255,10 +255,10 @@ function MetricCard({
   return (
     <Link
       href={href}
-      className="group block p-5 bg-white hover:bg-[rgba(91,134,153,0.04)] transition-colors"
+      className="group block p-5 bg-white hover:bg-bg-sub transition-colors"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)] leading-tight">
+        <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary leading-tight">
           {label}
         </span>
         {badge && (
@@ -287,9 +287,9 @@ function MetricCard({
 // ---------- Section Header (eyebrow pattern) ----------
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-[rgba(59,88,100,0.15)]">
-      <span className="font-mono text-[11px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)] font-medium">{title}</span>
-      {subtitle && <span className="font-mono text-[10px] tracking-[0.12em] text-[rgba(59,88,100,0.40)]">{subtitle}</span>}
+    <div className="flex items-baseline justify-between mb-3 pb-2 border-b border-border-def">
+      <span className="font-mono text-[11px] tracking-[0.14em] uppercase text-tertiary font-medium">{title}</span>
+      {subtitle && <span className="font-mono text-[10px] tracking-[0.12em] text-muted">{subtitle}</span>}
     </div>
   );
 }
@@ -299,16 +299,16 @@ const SEV_STYLES: Record<AttentionItem["severity"], { dot: string; label: string
   critical: { dot: "bg-nw-danger", label: "text-nw-danger" },
   high: { dot: "bg-nw-warn", label: "text-nw-warn" },
   medium: { dot: "bg-nw-warn", label: "text-nw-warn" },
-  low: { dot: "bg-[rgba(59,88,100,0.40)]", label: "text-[rgba(59,88,100,0.55)]" },
+  low: { dot: "bg-[rgba(59,88,100,0.40)]", label: "text-tertiary" },
 };
 
 function AttentionRow({ item }: { item: AttentionItem }) {
   const sev = SEV_STYLES[item.severity];
   return (
-    <li className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
+    <li className="border-b border-border-sub last:border-0">
       <Link
         href={item.href}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-[rgba(91,134,153,0.04)] transition-colors"
+        className="flex items-center gap-3 px-4 py-3 hover:bg-bg-sub transition-colors"
       >
         <span className={`shrink-0 inline-block w-2 h-2 rounded-full ${sev.dot}`} aria-hidden="true" />
         <div className="flex-1 min-w-0">
@@ -320,10 +320,10 @@ function AttentionRow({ item }: { item: AttentionItem }) {
               </span>
             )}
           </div>
-          <p className="text-[12px] text-[rgba(59,88,100,0.55)] mt-0.5 truncate">{item.description}</p>
+          <p className="text-[12px] text-tertiary mt-0.5 truncate">{item.description}</p>
         </div>
         <svg
-          className="shrink-0 w-4 h-4 text-[rgba(59,88,100,0.40)]"
+          className="shrink-0 w-4 h-4 text-muted"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -342,8 +342,8 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
   const entityLabel = describeEntity(entry.entity_type, entry.details);
   const summary = `${entry.user_name ?? "System"} ${verb} ${entityLabel}${entry.job_name ? ` on ${entry.job_name}` : ""}`;
   const content = (
-    <div className="flex items-start gap-3 px-4 py-2.5 hover:bg-[rgba(91,134,153,0.04)] transition-colors">
-      <span className="shrink-0 mt-1.5 font-mono text-[10px] text-[rgba(59,88,100,0.40)] min-w-[48px]">
+    <div className="flex items-start gap-3 px-4 py-2.5 hover:bg-bg-sub transition-colors">
+      <span className="shrink-0 mt-1.5 font-mono text-[10px] text-muted min-w-[48px]">
         {formatRelativeTime(entry.created_at)}
       </span>
       <div className="flex-1 min-w-0">
@@ -352,7 +352,7 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
     </div>
   );
   return (
-    <li className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
+    <li className="border-b border-border-sub last:border-0">
       {entry.link_href ? <Link href={entry.link_href}>{content}</Link> : content}
     </li>
   );
@@ -421,10 +421,10 @@ function CashFlowPanel({ cashFlow }: { cashFlow: DashboardData["cashFlow"] }) {
   const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
 
   return (
-    <div className="border border-[rgba(59,88,100,0.15)] bg-white p-5 space-y-5">
+    <div className="border border-border-def bg-white p-5 space-y-5">
       {/* This month */}
       <div>
-        <h3 className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)] mb-2">This month</h3>
+        <h3 className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary mb-2">This month</h3>
         <div className="grid grid-cols-3 gap-3">
           <NumStat label="Invoiced" value={formatMoney(cashFlow.monthInvoiced)} href="/invoices" />
           <NumStat label="Paid" value={formatMoney(cashFlow.monthPaid)} href="/invoices/payments" />
@@ -439,13 +439,13 @@ function CashFlowPanel({ cashFlow }: { cashFlow: DashboardData["cashFlow"] }) {
       {/* Outstanding aging breakdown */}
       <div>
         <div className="flex items-baseline justify-between mb-2">
-          <h3 className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Outstanding</h3>
+          <h3 className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary">Outstanding</h3>
           <span className="font-mono text-[13px] text-slate-tile tabular-nums">
             {formatMoney(cashFlow.outstandingTotal)}
           </span>
         </div>
         {/* Stacked horizontal bar */}
-        <div className="flex h-[5px] w-full overflow-hidden bg-[rgba(59,88,100,0.1)]">
+        <div className="flex h-[5px] w-full overflow-hidden bg-bg-mut">
           {pct(cashFlow.aging.current) > 0 && (
             <div
               className="bg-nw-success"
@@ -484,9 +484,9 @@ function CashFlowPanel({ cashFlow }: { cashFlow: DashboardData["cashFlow"] }) {
       </div>
 
       {/* Upcoming */}
-      <div className="pt-4 border-t border-[rgba(59,88,100,0.15)]">
+      <div className="pt-4 border-t border-border-def">
         <div className="flex items-baseline justify-between">
-          <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Upcoming (open POs)</span>
+          <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary">Upcoming (open POs)</span>
           <Link
             href="/jobs"
             className="font-mono text-[13px] text-slate-tile tabular-nums hover:text-stone-blue transition-colors"
@@ -512,7 +512,7 @@ function NumStat({
 }) {
   const inner = (
     <>
-      <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">{label}</p>
+      <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary">{label}</p>
       <p className={`mt-1 font-mono text-[15px] tabular-nums ${negative ? "text-nw-danger" : "text-slate-tile"}`}>
         {value}
       </p>
@@ -533,7 +533,7 @@ function AgeChip({ color, label, value }: { color: string; label: string; value:
     <div className="flex items-center gap-2">
       <span className={`inline-block w-2 h-2 ${color}`} />
       <div>
-        <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">{label}</p>
+        <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary">{label}</p>
         <p className="font-mono text-[12px] tabular-nums text-slate-tile">{formatMoney(value)}</p>
       </div>
     </div>

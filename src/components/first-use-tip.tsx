@@ -28,11 +28,11 @@ export default function FirstUseTip({
   return (
     <div className="mb-4 border border-stone-blue/30 bg-slate-deep/5 px-4 py-3 flex items-start gap-3">
       <span className="text-stone-blue text-sm mt-0.5 shrink-0">i</span>
-      <div className="flex-1 text-sm text-[rgba(59,88,100,0.70)]">{children}</div>
+      <div className="flex-1 text-sm text-secondary">{children}</div>
       <button
         type="button"
         onClick={dismiss}
-        className="text-xs text-[rgba(59,88,100,0.55)] hover:text-slate-tile shrink-0"
+        className="text-xs text-tertiary hover:text-slate-tile shrink-0"
       >
         Dismiss
       </button>

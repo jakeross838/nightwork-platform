@@ -238,17 +238,17 @@ export default function DrawDetailPage() {
     <AppShell>
 
       {/* Sub-header */}
-      <div className="border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/50 px-6 py-5 print:hidden">
+      <div className="border-b border-border-def bg-bg-sub/50 px-6 py-5 print:hidden">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4 flex-wrap">
             <button
               onClick={() => router.push("/draws")}
-              className="text-[rgba(59,88,100,0.55)] hover:text-stone-blue transition-colors text-sm"
+              className="text-tertiary hover:text-stone-blue transition-colors text-sm"
             >
               &larr; Draws
             </button>
             <h1 className="font-display text-xl text-slate-tile">
-              {draw.jobs?.name} <span className="text-[rgba(59,88,100,0.55)]">&mdash;</span> Draw #{draw.draw_number}
+              {draw.jobs?.name} <span className="text-tertiary">&mdash;</span> Draw #{draw.draw_number}
               {draw.revision_number > 0 && (
                 <span className="text-nw-warn ml-1">Rev {draw.revision_number}</span>
               )}
@@ -265,7 +265,7 @@ export default function DrawDetailPage() {
           <div className="flex items-center gap-2 flex-wrap print:hidden">
             <button
               onClick={() => window.print()}
-              className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
+              className="px-4 py-2 border border-border-def text-slate-tile hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
               aria-label="Print this draw"
             >
               Print
@@ -278,7 +278,7 @@ export default function DrawDetailPage() {
                   a.download = "";
                   a.click();
                 }}
-                className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 border border-border-def text-slate-tile hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
               >
                 Export to Excel
               </button>
@@ -440,7 +440,7 @@ export default function DrawDetailPage() {
                   <G702Row num="1" label="Original Contract Sum" value={draw.original_contract_sum} />
                   <G702Row num="2" label="Net Change Orders" value={draw.net_change_orders} />
                   <G702Row num="3" label="Contract Sum to Date" value={draw.contract_sum_to_date} bold />
-                  <div className="border-t border-[rgba(59,88,100,0.15)] my-1" />
+                  <div className="border-t border-border-def my-1" />
                   <G702Row num="4" label="Total Completed to Date" value={draw.total_completed_to_date} />
                   <G702Row num="5a" label="Retainage on Completed" value={draw.retainage_on_completed} sub />
                   <G702Row num="5b" label="Retainage on Stored" value={draw.retainage_on_stored} sub />
@@ -452,7 +452,7 @@ export default function DrawDetailPage() {
                   />
                   <G702Row num="7" label="Less Previous Certificates" value={draw.less_previous_certificates} />
                   <G702Row num="8" label="Current Payment Due" value={draw.current_payment_due} bold highlight />
-                  <div className="border-t border-[rgba(59,88,100,0.15)] my-1" />
+                  <div className="border-t border-border-def my-1" />
                   <G702Row num="9" label="Balance + Retainage" value={draw.balance_to_finish} />
                 </div>
               </div>
@@ -461,34 +461,34 @@ export default function DrawDetailPage() {
                 <p className="section-label">Details</p>
                 <div className="mt-5 space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-[rgba(59,88,100,0.55)]">Application #</span>
+                    <span className="text-tertiary">Application #</span>
                     <span className="text-slate-tile">
                       {draw.application_number ?? draw.draw_number}
                       {draw.revision_number > 0 ? ` Rev ${draw.revision_number}` : ""}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[rgba(59,88,100,0.55)]">Period</span>
+                    <span className="text-tertiary">Period</span>
                     <span className="text-slate-tile">
                       {formatDate(draw.period_start)} — {formatDate(draw.period_end)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[rgba(59,88,100,0.55)]">App Date</span>
+                    <span className="text-tertiary">App Date</span>
                     <span className="text-slate-tile">{formatDate(draw.application_date)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[rgba(59,88,100,0.55)]">Retainage %</span>
+                    <span className="text-tertiary">Retainage %</span>
                     <span className="text-slate-tile">
                       {draw.retainage_percent.toFixed(1)}%{draw.is_final && " (released)"}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[rgba(59,88,100,0.55)]">Owner</span>
+                    <span className="text-tertiary">Owner</span>
                     <span className="text-slate-tile">{draw.jobs?.client_name ?? "—"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[rgba(59,88,100,0.55)]">Invoices</span>
+                    <span className="text-tertiary">Invoices</span>
                     <span className="text-slate-tile">{draw.invoices?.length ?? 0}</span>
                   </div>
                 </div>
@@ -499,7 +499,7 @@ export default function DrawDetailPage() {
           {/* Right column with tabs */}
           <div className="xl:col-span-3 min-w-0">
             <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 mb-4">
-              <div className="flex gap-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-1 w-fit whitespace-nowrap">
+              <div className="flex gap-1 bg-bg-sub border border-border-def p-1 w-fit whitespace-nowrap">
                 <TabButton active={activeTab === "detail"} onClick={() => setActiveTab("detail")}>
                   Detail
                 </TabButton>
@@ -582,10 +582,10 @@ export default function DrawDetailPage() {
                 budget on the Budget tab for accurate G703 math.
               </div>
             )}
-            <div className="mt-5 overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+            <div className="mt-5 overflow-x-auto border border-border-def">
               <table className="w-full min-w-[1100px] text-sm">
                 <thead>
-                  <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+                  <tr className="bg-bg-sub text-left">
                     <Th sticky>A — Item</Th>
                     <Th>B — Description</Th>
                     <Th right>C — Scheduled Value</Th>
@@ -599,8 +599,8 @@ export default function DrawDetailPage() {
                 </thead>
                 <tbody>
                   {baseRows.length > 0 && (
-                    <tr className="bg-[rgba(91,134,153,0.06)]/40 border-t border-[rgba(59,88,100,0.15)]">
-                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-semibold">
+                    <tr className="bg-bg-sub/40 border-t border-border-def">
+                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-tertiary font-semibold">
                         Base Contract
                       </td>
                     </tr>
@@ -620,7 +620,7 @@ export default function DrawDetailPage() {
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-[rgba(59,88,100,0.15)]-light bg-[rgba(91,134,153,0.06)]">
+                  <tr className="border-t border-border-def-light bg-bg-sub">
                     <td colSpan={2} className="py-3 px-4 text-slate-tile font-medium">
                       Grand Total
                     </td>
@@ -628,7 +628,7 @@ export default function DrawDetailPage() {
                       {formatCents(totals.scheduled)}
                     </td>
                     <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
-                      {totals.previous > 0 ? formatCents(totals.previous) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
+                      {totals.previous > 0 ? formatCents(totals.previous) : <span className="text-tertiary">—</span>}
                     </td>
                     <td className="py-3 px-4 text-stone-blue text-right font-display font-medium">
                       {formatCents(totals.thisPeriod)}
@@ -636,7 +636,7 @@ export default function DrawDetailPage() {
                     <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                       {formatCents(totals.totalToDate)}
                     </td>
-                    <td className="py-3 px-4 text-[rgba(59,88,100,0.55)] text-right">
+                    <td className="py-3 px-4 text-tertiary text-right">
                       {totals.scheduled > 0
                         ? `${((totals.totalToDate / totals.scheduled) * 100).toFixed(1)}%`
                         : "—"}
@@ -666,14 +666,14 @@ export default function DrawDetailPage() {
                 )}
               </div>
               {draw.lien_releases.length === 0 ? (
-                <div className="border border-[rgba(59,88,100,0.15)] px-4 py-4 text-sm text-[rgba(59,88,100,0.55)]">
+                <div className="border border-border-def px-4 py-4 text-sm text-tertiary">
                   No lien releases yet. They will auto-generate when this draw is submitted.
                 </div>
               ) : (
-                <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+                <div className="overflow-x-auto border border-border-def">
                   <table className="w-full min-w-[700px] text-sm">
                     <thead>
-                      <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+                      <tr className="bg-bg-sub text-left">
                         <Th>Vendor</Th>
                         <Th>Type</Th>
                         <Th right>Amount</Th>
@@ -684,9 +684,9 @@ export default function DrawDetailPage() {
                     </thead>
                     <tbody>
                       {draw.lien_releases.map((lr) => (
-                        <tr key={lr.id} className="border-t border-[rgba(59,88,100,0.08)]">
+                        <tr key={lr.id} className="border-t border-border-sub">
                           <td className="py-3 px-4 text-slate-tile">{lr.vendors?.name ?? "—"}</td>
-                          <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">
+                          <td className="py-3 px-4 text-secondary text-xs">
                             {formatReleaseType(lr.release_type)}
                           </td>
                           <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
@@ -697,14 +697,14 @@ export default function DrawDetailPage() {
                               {formatReleaseStatus(lr.status)}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(lr.through_date)}</td>
-                          <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">
+                          <td className="py-3 px-4 text-secondary text-xs">{formatDate(lr.through_date)}</td>
+                          <td className="py-3 px-4 text-secondary text-xs">
                             {lr.document_url ? (
                               <a href={lr.document_url} target="_blank" rel="noreferrer" className="text-stone-blue hover:underline">
                                 View
                               </a>
                             ) : (
-                              <span className="text-[rgba(59,88,100,0.55)]">—</span>
+                              <span className="text-tertiary">—</span>
                             )}
                           </td>
                         </tr>
@@ -719,10 +719,10 @@ export default function DrawDetailPage() {
             {draw.invoices && draw.invoices.length > 0 && (
               <div className="mt-8">
                 <p className="section-label">Included Invoices</p>
-                <div className="mt-3 overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+                <div className="mt-3 overflow-x-auto border border-border-def">
                   <table className="w-full min-w-[500px] text-sm">
                     <thead>
-                      <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+                      <tr className="bg-bg-sub text-left">
                         <Th>Vendor</Th>
                         <Th>Invoice #</Th>
                         <Th right>Amount</Th>
@@ -733,11 +733,11 @@ export default function DrawDetailPage() {
                       {draw.invoices.map((inv) => (
                         <tr
                           key={inv.id}
-                          className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                          className="border-t border-border-sub hover:bg-brand-elevated/50 cursor-pointer transition-colors"
                           onClick={() => (window.location.href = `/invoices/${inv.id}`)}
                         >
                           <td className="py-3 px-4 text-slate-tile">{inv.vendor_name_raw ?? "Unknown"}</td>
-                          <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">
+                          <td className="py-3 px-4 text-secondary font-mono text-xs">
                             {inv.invoice_number ?? "—"}
                           </td>
                           <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
@@ -777,7 +777,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`px-4 py-2 text-sm font-medium transition-colors ${
-        active ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+        active ? "bg-brand-elevated text-slate-tile" : "text-tertiary hover:text-slate-tile"
       }`}
     >
       {children}
@@ -800,7 +800,7 @@ function Th({
     <th
       className={`py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
-      } ${sticky ? "sticky left-0 bg-[rgba(91,134,153,0.06)] z-10" : ""}`}
+      } ${sticky ? "sticky left-0 bg-bg-sub z-10" : ""}`}
     >
       {children}
     </th>
@@ -832,7 +832,7 @@ function G703RowView({
   const highlight = row.this_period > 0 ? "bg-slate-deep/5" : stripe;
   const codeColor = co ? "text-nw-warn" : "text-stone-blue";
   return (
-    <tr className={`border-t border-[rgba(59,88,100,0.08)] ${highlight}`}>
+    <tr className={`border-t border-border-sub ${highlight}`}>
       <td className={`py-3 px-4 ${codeColor} font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-white"}`}>
         {row.code}
       </td>
@@ -849,26 +849,26 @@ function G703RowView({
         )}
       </td>
       <td className="py-3 px-4 text-slate-tile text-right">
-        {row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
+        {row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-tertiary">—</span>}
       </td>
       <td className="py-3 px-4 text-right font-medium">
         {row.this_period > 0 ? (
           <span className="text-stone-blue">{formatCents(row.this_period)}</span>
         ) : (
-          <span className="text-[rgba(59,88,100,0.55)]">—</span>
+          <span className="text-tertiary">—</span>
         )}
       </td>
       <td className="py-3 px-4 text-slate-tile text-right">
-        {row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
+        {row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-tertiary">—</span>}
       </td>
-      <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-right">
-        {row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
+      <td className="py-3 px-4 text-secondary text-right">
+        {row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-tertiary">—</span>}
       </td>
       <td className="py-3 px-4 text-right">
         {row.retainage > 0 ? (
           <span className="text-nw-warn">{formatCents(row.retainage)}</span>
         ) : (
-          <span className="text-[rgba(59,88,100,0.55)]">—</span>
+          <span className="text-tertiary">—</span>
         )}
       </td>
       <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-slate-tile"}`}>
@@ -886,22 +886,22 @@ function badgeClass(status: string): string {
   if (status === "draft" || status === "pm_review")
     return "bg-transparent text-nw-warn border border-nw-warn";
   if (status === "void") return "bg-transparent text-nw-danger border border-nw-danger";
-  return "bg-transparent text-[rgba(59,88,100,0.70)] border border-[rgba(59,88,100,0.15)]-light";
+  return "bg-transparent text-secondary border border-border-def-light";
 }
 
 function paymentBadge(status: string | null): string {
   if (status === "paid") return "bg-transparent text-nw-success border border-nw-success";
   if (status === "scheduled") return "bg-transparent text-stone-blue border border-stone-blue";
   if (status === "partial") return "bg-transparent text-nw-warn border border-nw-warn";
-  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
+  return "bg-transparent text-tertiary border border-border-def-light";
 }
 
 function releaseBadge(status: string): string {
   if (status === "received") return "bg-transparent text-nw-success border border-nw-success";
   if (status === "pending") return "bg-transparent text-nw-warn border border-nw-warn";
   if (status === "waived" || status === "not_required")
-    return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
-  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
+    return "bg-transparent text-tertiary border border-border-def-light";
+  return "bg-transparent text-tertiary border border-border-def-light";
 }
 
 function formatReleaseType(t: string): string {
@@ -947,11 +947,11 @@ function G702Row({
     <div className={`flex items-center justify-between ${sub ? "pl-4 opacity-70" : ""}`}>
       <div className="flex items-center gap-2">
         {num ? (
-          <span className="text-[rgba(59,88,100,0.55)] text-[11px] font-mono w-6">{num}</span>
+          <span className="text-tertiary text-[11px] font-mono w-6">{num}</span>
         ) : (
           <span className="w-6" />
         )}
-        <span className={`text-xs ${bold ? "text-slate-tile font-medium" : "text-[rgba(59,88,100,0.70)]"}`}>{label}</span>
+        <span className={`text-xs ${bold ? "text-slate-tile font-medium" : "text-secondary"}`}>{label}</span>
       </div>
       <span
         className={`font-display text-sm ${

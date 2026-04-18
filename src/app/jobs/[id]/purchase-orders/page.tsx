@@ -31,11 +31,11 @@ interface PurchaseOrder {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "text-[rgba(59,88,100,0.55)] border-cream-dim/40",
+  draft: "text-tertiary border-cream-dim/40",
   issued: "text-nw-success border-nw-success/40",
   partially_invoiced: "text-nw-warn border-nw-warn/40",
   fully_invoiced: "text-stone-blue border-stone-blue/40",
-  closed: "text-[rgba(59,88,100,0.70)] border-[rgba(59,88,100,0.15)]",
+  closed: "text-secondary border-border-def",
   void: "text-nw-danger border-nw-danger/40 line-through",
 };
 
@@ -145,7 +145,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
             <h2 className="font-display text-2xl text-slate-tile">{job.name}</h2>
-            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">{job.address ?? "No address"}</p>
+            <p className="text-sm text-tertiary mt-1">{job.address ?? "No address"}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
@@ -187,10 +187,10 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
             primaryAction={{ label: "+ Create PO", href: `/jobs/${job.id}/purchase-orders/new` }}
           />
         ) : (
-          <div className="bg-white border border-[rgba(59,88,100,0.15)] overflow-x-auto">
+          <div className="bg-white border border-border-def overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
+                <tr className="border-b border-border-def text-[11px] uppercase tracking-wider text-tertiary">
                   <th className="text-left px-4 py-3 font-medium">PO #</th>
                   <th className="text-left px-4 py-3 font-medium">Vendor</th>
                   <th className="text-left px-4 py-3 font-medium">Cost Code</th>
@@ -207,17 +207,17 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
                   const remaining = po.amount - po.invoiced_total;
                   const over = remaining < 0;
                   return (
-                    <tr key={po.id} className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.06)]/40">
+                    <tr key={po.id} className="border-b border-border-sub last:border-0 hover:bg-bg-sub/40">
                       <td className="px-4 py-3 font-mono text-slate-tile">
                         <Link href={`/purchase-orders/${po.id}`} className="text-stone-blue hover:underline">
                           {po.po_number ?? "—"}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-slate-tile">{po.vendors?.name ?? <span className="text-[rgba(59,88,100,0.55)]">—</span>}</td>
-                      <td className="px-4 py-3 text-[rgba(59,88,100,0.70)] font-mono text-xs">{po.budget_lines?.cost_codes?.code ?? "—"}</td>
-                      <td className="px-4 py-3 text-[rgba(59,88,100,0.70)] max-w-md truncate">{po.description ?? "—"}</td>
+                      <td className="px-4 py-3 text-slate-tile">{po.vendors?.name ?? <span className="text-tertiary">—</span>}</td>
+                      <td className="px-4 py-3 text-secondary font-mono text-xs">{po.budget_lines?.cost_codes?.code ?? "—"}</td>
+                      <td className="px-4 py-3 text-secondary max-w-md truncate">{po.description ?? "—"}</td>
                       <td className="px-4 py-3 text-right text-slate-tile tabular-nums">{formatCents(po.amount)}</td>
-                      <td className="px-4 py-3 text-right text-[rgba(59,88,100,0.70)] tabular-nums">{formatCents(po.invoiced_total)}</td>
+                      <td className="px-4 py-3 text-right text-secondary tabular-nums">{formatCents(po.invoiced_total)}</td>
                       <td className={`px-4 py-3 text-right tabular-nums font-medium ${over ? "text-nw-danger" : "text-nw-success"}`}>
                         {formatCents(remaining)}
                       </td>
@@ -227,7 +227,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
                         </span>
                         <StaleBadge status={po.status} issuedDate={po.issued_date} invoicedTotal={po.invoiced_total} />
                         {po.issued_date && (
-                          <p className="text-[10px] text-[rgba(59,88,100,0.55)] mt-0.5">Issued {formatDate(po.issued_date)}</p>
+                          <p className="text-[10px] text-tertiary mt-0.5">Issued {formatDate(po.issued_date)}</p>
                         )}
                         {po.amount > 0 && remaining >= 0 && remaining / po.amount < 0.10 && po.status !== "void" && po.status !== "closed" && (
                           <p className="text-[10px] text-nw-warn mt-0.5">90%+ consumed</p>
@@ -263,8 +263,8 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`border p-4 ${highlight ? "border-stone-blue bg-slate-deep-muted" : "border-[rgba(59,88,100,0.15)] bg-white"}`}>
-      <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
+    <div className={`border p-4 ${highlight ? "border-stone-blue bg-slate-deep-muted" : "border-border-def bg-white"}`}>
+      <p className="text-[11px] uppercase tracking-wider text-tertiary font-medium">{label}</p>
       <p className="text-lg text-slate-tile mt-1 tabular-nums">{value}</p>
     </div>
   );
@@ -280,7 +280,7 @@ function PoActions({
   onStatus: (status: string, note?: string) => void;
 }) {
   if (po.status === "void" || po.status === "fully_invoiced" || po.status === "closed") {
-    return <span className="text-[11px] text-[rgba(59,88,100,0.55)]">—</span>;
+    return <span className="text-[11px] text-tertiary">—</span>;
   }
   return (
     <div className="flex items-center justify-end gap-2">
@@ -297,7 +297,7 @@ function PoActions({
         <button
           disabled={busy}
           onClick={() => onStatus("closed")}
-          className="px-3 py-1 text-xs border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)] hover:text-slate-tile disabled:opacity-50 transition-colors"
+          className="px-3 py-1 text-xs border border-border-def text-tertiary hover:text-slate-tile disabled:opacity-50 transition-colors"
         >
           Close
         </button>
@@ -323,7 +323,7 @@ function StaleBadge({ status, issuedDate, invoicedTotal }: { status: string; iss
   if (status === "draft") {
     const created = issuedDate ? new Date(issuedDate).getTime() : 0;
     if (created > 0 && now - created > 14 * 24 * 60 * 60 * 1000) {
-      return <span className="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-cream-dim/40 text-[rgba(59,88,100,0.55)]">Draft 14d+</span>;
+      return <span className="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-cream-dim/40 text-tertiary">Draft 14d+</span>;
     }
     return null;
   }

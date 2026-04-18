@@ -50,12 +50,12 @@ export default async function SignupPage({
           <h1 className="font-display text-[40px] font-medium tracking-[-0.02em] text-slate-deep leading-[1.1] mb-2">
             Create your account.
           </h1>
-          <p className="font-sans text-[14.5px] leading-relaxed mb-2" style={{ color: "rgba(59,88,100,0.75)" }}>
+          <p className="font-sans text-[14.5px] leading-relaxed mb-2" style={{ color: "var(--text-secondary)" }}>
             14-day free trial. No credit card required.
           </p>
 
           {plan && (
-            <p className="inline-block px-3 py-1 border border-[rgba(59,88,100,0.25)] font-mono text-[10px] tracking-[0.12em] uppercase text-gulf-blue mb-6">
+            <p className="inline-block px-3 py-1 border border-border-str font-mono text-[10px] tracking-[0.12em] uppercase text-gulf-blue mb-6">
               Selected plan: {plan}
             </p>
           )}
@@ -65,24 +65,24 @@ export default async function SignupPage({
 
           {/* OR divider */}
           <div className="flex items-center gap-4 my-6">
-            <span className="flex-1 h-px bg-[rgba(59,88,100,0.15)]" />
-            <span className="font-mono text-[10px] tracking-[0.12em] uppercase" style={{ color: "rgba(59,88,100,0.4)" }}>
+            <span className="flex-1 h-px bg-bg-mut" />
+            <span className="font-mono text-[10px] tracking-[0.12em] uppercase" style={{ color: "var(--text-muted)" }}>
               or
             </span>
-            <span className="flex-1 h-px bg-[rgba(59,88,100,0.15)]" />
+            <span className="flex-1 h-px bg-bg-mut" />
           </div>
 
           {/* Secondary CTA */}
           <Link
             href="/login"
-            className="block w-full py-3 text-center font-mono text-[11px] tracking-[0.14em] uppercase border border-[rgba(59,88,100,0.3)] text-slate-deep bg-transparent hover:border-stone-blue hover:text-stone-blue transition-colors"
+            className="block w-full py-3 text-center font-mono text-[11px] tracking-[0.14em] uppercase border border-border-str text-slate-deep bg-transparent hover:border-stone-blue hover:text-stone-blue transition-colors"
           >
             Sign In Instead
           </Link>
         </div>
 
         {/* Footer */}
-        <p className="font-mono text-[10px] tracking-[0.12em] uppercase mt-8 max-w-[420px] mx-auto w-full" style={{ color: "rgba(59,88,100,0.4)" }}>
+        <p className="font-mono text-[10px] tracking-[0.12em] uppercase mt-8 max-w-[420px] mx-auto w-full" style={{ color: "var(--text-muted)" }}>
           &copy; {new Date().getFullYear()} Nightwork &middot; Built by
           builders
         </p>
@@ -134,19 +134,19 @@ export default async function SignupPage({
               <p className="font-display text-[14px] font-medium text-white-sand">
                 Andrew Ross
               </p>
-              <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-[rgba(203,216,219,0.6)]">
+              <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-oceanside/60">
                 Director of Pre-Construction
               </p>
             </div>
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-3 gap-6 pt-8 border-t border-[rgba(203,216,219,0.15)]">
+          <div className="grid grid-cols-3 gap-6 pt-8 border-t border-oceanside/15">
             <div>
               <p className="font-display text-[28px] font-medium text-white-sand tracking-tight">
                 3x
               </p>
-              <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(203,216,219,0.5)] mt-1">
+              <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-oceanside/50 mt-1">
                 Faster Approvals
               </p>
             </div>
@@ -154,7 +154,7 @@ export default async function SignupPage({
               <p className="font-display text-[28px] font-medium text-white-sand tracking-tight">
                 0
               </p>
-              <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(203,216,219,0.5)] mt-1">
+              <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-oceanside/50 mt-1">
                 Paper Invoices
               </p>
             </div>
@@ -162,7 +162,7 @@ export default async function SignupPage({
               <p className="font-display text-[28px] font-medium text-white-sand tracking-tight">
                 1
               </p>
-              <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(203,216,219,0.5)] mt-1">
+              <p className="font-mono text-[9px] tracking-[0.14em] uppercase text-oceanside/50 mt-1">
                 Data Entry Point
               </p>
             </div>

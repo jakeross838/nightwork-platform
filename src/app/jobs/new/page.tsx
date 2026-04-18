@@ -68,7 +68,7 @@ export default function NewJobPage() {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
         <h2 className="font-display text-2xl text-slate-tile">Access denied</h2>
-        <p className="mt-2 text-sm text-[rgba(59,88,100,0.55)]">
+        <p className="mt-2 text-sm text-tertiary">
           Jobs management is restricted to administrators.
         </p>
       </main>
@@ -128,14 +128,14 @@ export default function NewJobPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="font-display text-2xl text-slate-tile">New Job</h2>
-            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">Create a new construction project</p>
+            <p className="text-sm text-tertiary mt-1">Create a new construction project</p>
           </div>
-          <Link href="/jobs" className="text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile underline-offset-4 hover:underline">
+          <Link href="/jobs" className="text-sm text-tertiary hover:text-slate-tile underline-offset-4 hover:underline">
             Cancel
           </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-[rgba(59,88,100,0.15)] p-6">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-border-def p-6">
           <Section title="Project">
             <Field label="Name *">
               <input
@@ -272,10 +272,10 @@ export default function NewJobPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-[rgba(59,88,100,0.15)]">
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-border-def">
             <Link
               href="/jobs"
-              className="px-4 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
+              className="px-4 py-2 text-sm text-tertiary hover:text-slate-tile transition-colors"
             >
               Cancel
             </Link>
@@ -311,7 +311,7 @@ export default function NewJobPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-3 pb-2 border-b border-[rgba(59,88,100,0.15)]">
+      <h3 className="text-[11px] font-medium text-tertiary uppercase tracking-wider mb-3 pb-2 border-b border-border-def">
         {title}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
@@ -322,7 +322,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <label className={`flex flex-col gap-1 ${full ? "md:col-span-2" : ""}`}>
-      <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-medium text-tertiary uppercase tracking-wider">{label}</span>
       {children}
     </label>
   );

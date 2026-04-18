@@ -26,13 +26,13 @@ export default async function Root() {
       {/* Hero */}
       <section className="px-6 pt-20 pb-24 bg-white-sand">
         <div className="max-w-[1100px] mx-auto text-center">
-          <span className="inline-block px-3 py-1 border border-[rgba(59,88,100,0.15)] text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] mb-6">
+          <span className="inline-block px-3 py-1 border border-border-def text-[10px] tracking-[0.12em] uppercase text-tertiary mb-6">
             Built for Custom Home Builders
           </span>
           <h1 className="font-display text-5xl md:text-6xl text-slate-tile tracking-tight leading-[1.05] max-w-4xl mx-auto">
             You build homes. Nightwork runs your business.
           </h1>
-          <p className="mt-6 text-lg md:text-xl text-[rgba(59,88,100,0.70)] max-w-2xl mx-auto">
+          <p className="mt-6 text-lg md:text-xl text-secondary max-w-2xl mx-auto">
             Nightwork makes building lightwork.
           </p>
           <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
@@ -44,20 +44,20 @@ export default async function Root() {
             </Link>
             <Link
               href="/pricing"
-              className="px-6 py-3 border border-[rgba(59,88,100,0.15)] text-slate-tile text-[13px] tracking-[0.12em] uppercase font-medium hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+              className="px-6 py-3 border border-border-def text-slate-tile text-[13px] tracking-[0.12em] uppercase font-medium hover:bg-bg-sub transition-colors"
             >
               See Pricing
             </Link>
           </div>
-          <p className="mt-4 text-xs text-[rgba(59,88,100,0.55)]">No credit card required · 14-day free trial</p>
+          <p className="mt-4 text-xs text-tertiary">No credit card required · 14-day free trial</p>
         </div>
       </section>
 
       {/* Features */}
-      <section className="px-6 py-20 bg-white border-y border-[rgba(59,88,100,0.15)]">
+      <section className="px-6 py-20 bg-white border-y border-border-def">
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-16">
-            <span className="text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">Capabilities</span>
+            <span className="text-[10px] tracking-[0.12em] uppercase text-tertiary">Capabilities</span>
             <h2 className="mt-2 font-display text-3xl md:text-4xl text-slate-tile tracking-tight">
               Built around how builders actually work
             </h2>
@@ -83,7 +83,7 @@ export default async function Root() {
       <section className="px-6 py-20">
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-16">
-            <span className="text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">Workflow</span>
+            <span className="text-[10px] tracking-[0.12em] uppercase text-tertiary">Workflow</span>
             <h2 className="mt-2 font-display text-3xl md:text-4xl text-slate-tile tracking-tight">
               Four steps from invoice to draw
             </h2>
@@ -98,10 +98,10 @@ export default async function Root() {
       </section>
 
       {/* Pricing preview */}
-      <section className="px-6 py-20 bg-[rgba(91,134,153,0.06)] border-t border-[rgba(59,88,100,0.15)]">
+      <section className="px-6 py-20 bg-bg-sub border-t border-border-def">
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-12">
-            <span className="text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">Pricing</span>
+            <span className="text-[10px] tracking-[0.12em] uppercase text-tertiary">Pricing</span>
             <h2 className="mt-2 font-display text-3xl md:text-4xl text-slate-tile tracking-tight">
               Priced for every stage
             </h2>
@@ -129,9 +129,9 @@ export default async function Root() {
 
 function FeatureCard({ title, body }: { title: string; body: string }) {
   return (
-    <div className="p-6 border border-[rgba(59,88,100,0.15)] bg-white">
+    <div className="p-6 border border-border-def bg-white">
       <h3 className="font-display text-lg text-slate-tile">{title}</h3>
-      <p className="mt-3 text-sm text-[rgba(59,88,100,0.70)] leading-relaxed">{body}</p>
+      <p className="mt-3 text-sm text-secondary leading-relaxed">{body}</p>
     </div>
   );
 }
@@ -143,14 +143,14 @@ function Step({ n, title, body }: { n: number; title: string; body: string }) {
         <span className="font-display text-3xl text-stone-blue">0{n}</span>
         <h3 className="font-display text-lg text-slate-tile">{title}</h3>
       </div>
-      <p className="text-sm text-[rgba(59,88,100,0.70)] leading-relaxed">{body}</p>
+      <p className="text-sm text-secondary leading-relaxed">{body}</p>
     </li>
   );
 }
 
 function PricePreview({ name, price, tagline, highlight }: { name: string; price: string; tagline: string; highlight?: boolean }) {
   return (
-    <div className={`p-6 border bg-white ${highlight ? "border-stone-blue shadow-[0_8px_24px_-12px_rgba(63,88,98,0.25)]" : "border-[rgba(59,88,100,0.15)]"}`}>
+    <div className={`p-6 border bg-white ${highlight ? "border-stone-blue shadow-[0_8px_24px_-12px_rgba(63,88,98,0.25)]" : "border-border-def"}`}>
       {highlight && (
         <span className="inline-block px-2 py-0.5 bg-slate-deep text-white text-[10px] tracking-[0.12em] uppercase mb-3">
           Most Popular
@@ -159,9 +159,9 @@ function PricePreview({ name, price, tagline, highlight }: { name: string; price
       <h3 className="font-display text-xl text-slate-tile">{name}</h3>
       <p className="mt-4 font-display text-4xl text-slate-tile">
         {price}
-        <span className="text-sm text-[rgba(59,88,100,0.55)] font-sans">/mo</span>
+        <span className="text-sm text-tertiary font-sans">/mo</span>
       </p>
-      <p className="mt-3 text-sm text-[rgba(59,88,100,0.70)]">{tagline}</p>
+      <p className="mt-3 text-sm text-secondary">{tagline}</p>
     </div>
   );
 }

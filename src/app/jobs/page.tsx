@@ -53,7 +53,7 @@ const HEALTH_LABEL: Record<Health, string> = {
 function StatusBadge({ status }: { status: JobStatus }) {
   const map: Record<JobStatus, string> = {
     active: "text-nw-success border-nw-success",
-    complete: "text-[rgba(59,88,100,0.55)] border-[rgba(59,88,100,0.30)]",
+    complete: "text-tertiary border-border-str",
     warranty: "text-nw-warn border-nw-warn",
     cancelled: "text-nw-danger border-nw-danger",
   };
@@ -158,12 +158,12 @@ export default function JobsPage() {
     return (
       <main className="max-w-[1180px] mx-auto px-6 py-16 text-center">
         <h2 className="font-display text-[22px] font-medium text-slate-tile">Access denied</h2>
-        <p className="mt-2 text-[13px] text-[rgba(59,88,100,0.55)]">
+        <p className="mt-2 text-[13px] text-tertiary">
           Jobs management is restricted to administrators.
         </p>
         <Link
           href="/"
-          className="inline-block mt-6 px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:border-stone-blue transition-colors font-mono text-[11px] tracking-[0.12em] uppercase"
+          className="inline-block mt-6 px-4 py-2 border border-border-def text-slate-tile hover:border-stone-blue transition-colors font-mono text-[11px] tracking-[0.12em] uppercase"
         >
           Return home
         </Link>
@@ -177,7 +177,7 @@ export default function JobsPage() {
         <div className="flex items-center justify-between mb-5 flex-wrap gap-4">
           <div>
             <h2 className="font-display text-[22px] font-medium tracking-[-0.01em] text-slate-tile">Jobs</h2>
-            <p className="text-[13px] text-[rgba(59,88,100,0.55)] mt-0.5">
+            <p className="text-[13px] text-tertiary mt-0.5">
               {loading
                 ? "Loading..."
                 : `${filtered.length} ${filtered.length === 1 ? "job" : "jobs"}${statusFilter !== "all" ? ` (${statusFilter})` : ""}`}
@@ -201,12 +201,12 @@ export default function JobsPage() {
             placeholder="Search by name, address, or client..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-3 py-2 bg-white border border-[rgba(59,88,100,0.15)] text-[14px] font-sans text-slate-tile placeholder:text-[rgba(59,88,100,0.40)] focus:border-stone-blue focus:outline-none"
+            className="flex-1 px-3 py-2 bg-white border border-border-def text-[14px] font-sans text-slate-tile placeholder:text-muted focus:border-stone-blue focus:outline-none"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="px-3 py-2 bg-white border border-[rgba(59,88,100,0.15)] text-[14px] font-sans text-slate-tile focus:border-stone-blue focus:outline-none"
+            className="px-3 py-2 bg-white border border-border-def text-[14px] font-sans text-slate-tile focus:border-stone-blue focus:outline-none"
           >
             <option value="active">Active</option>
             <option value="complete">Complete</option>
@@ -217,7 +217,7 @@ export default function JobsPage() {
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className="px-3 py-2 bg-white border border-[rgba(59,88,100,0.15)] text-[14px] font-sans text-slate-tile focus:border-stone-blue focus:outline-none"
+            className="px-3 py-2 bg-white border border-border-def text-[14px] font-sans text-slate-tile focus:border-stone-blue focus:outline-none"
             aria-label="Sort jobs"
           >
             <option value="health">Sort: Health (worst first)</option>
@@ -229,7 +229,7 @@ export default function JobsPage() {
 
         {/* Health legend */}
         {!loading && jobs.length > 0 && (
-          <div className="flex items-center gap-4 mb-4 font-mono text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">
+          <div className="flex items-center gap-4 mb-4 font-mono text-[10px] tracking-[0.12em] uppercase text-tertiary">
             <span className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${HEALTH_DOT.green}`} /> Green: on track
             </span>
@@ -272,7 +272,7 @@ export default function JobsPage() {
                 <Link
                   key={j.id}
                   href={`/jobs/${j.id}`}
-                  className="block border border-[rgba(59,88,100,0.15)] bg-white p-4 active:bg-[rgba(91,134,153,0.04)] transition-colors"
+                  className="block border border-border-def bg-white p-4 active:bg-bg-sub transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <span className="mt-1.5">
@@ -282,39 +282,39 @@ export default function JobsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="text-[14px] text-slate-tile font-medium truncate">{j.name}</div>
-                          <div className="text-[12px] text-[rgba(59,88,100,0.55)] truncate">{j.address ?? "\u2014"}</div>
+                          <div className="text-[12px] text-tertiary truncate">{j.address ?? "\u2014"}</div>
                         </div>
                         <StatusBadge status={j.status} />
                       </div>
-                      <div className="mt-2 text-[12px] text-[rgba(59,88,100,0.55)]">
+                      <div className="mt-2 text-[12px] text-tertiary">
                         <span>{j.client_name ?? "\u2014"}</span>
-                        <span className="text-[rgba(59,88,100,0.40)]"> \u00b7 PM: {j.pm_name ?? "\u2014"}</span>
+                        <span className="text-muted"> \u00b7 PM: {j.pm_name ?? "\u2014"}</span>
                       </div>
                       <div className="mt-3 grid grid-cols-3 gap-2">
                         <div>
-                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Complete</div>
+                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary">Complete</div>
                           <div className="font-mono text-[12px] text-slate-tile tabular-nums">{formatPercent(j.pct_complete)}</div>
                         </div>
                         <div>
-                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Budget Used</div>
+                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary">Budget Used</div>
                           <div className={`font-mono text-[12px] tabular-nums ${j.budget_used_pct > 100 ? "text-nw-danger" : "text-slate-tile"}`}>
                             {formatPercent(j.budget_used_pct)}
                           </div>
                         </div>
                         <div>
-                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">Open Invoices</div>
+                          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-tertiary">Open Invoices</div>
                           <div className="font-mono text-[12px] tabular-nums">
                             {j.open_invoices > 0 ? (
                               <span className={j.oldest_invoice_days >= 7 ? "text-nw-danger" : "text-nw-warn"}>
                                 {j.open_invoices}
                               </span>
                             ) : (
-                              <span className="text-[rgba(59,88,100,0.40)]">\u2014</span>
+                              <span className="text-muted">\u2014</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="mt-2 font-mono text-[10px] tracking-[0.08em] text-[rgba(59,88,100,0.55)]">
+                      <div className="mt-2 font-mono text-[10px] tracking-[0.08em] text-tertiary">
                         {j.last_activity_at ? `Active ${formatRelativeTime(j.last_activity_at)}` : `Contract ${formatDate(j.contract_date)}`}
                       </div>
                     </div>
@@ -324,25 +324,25 @@ export default function JobsPage() {
             </div>
 
             {/* Desktop table view (>= md) */}
-            <div className="hidden md:block border border-[rgba(59,88,100,0.15)] bg-white overflow-x-auto">
+            <div className="hidden md:block border border-border-def bg-white overflow-x-auto">
               <table className="w-full text-[13px]">
                 <thead>
-                  <tr className="border-b border-[rgba(59,88,100,0.15)]">
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium w-8" aria-label="Health"></th>
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Name</th>
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Client / PM</th>
-                    <th className="text-right px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">% Complete</th>
-                    <th className="text-right px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Budget Used</th>
-                    <th className="text-center px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Open Inv.</th>
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Last Activity</th>
-                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">Status</th>
+                  <tr className="border-b border-border-def">
+                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-tertiary font-medium w-8" aria-label="Health"></th>
+                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-tertiary font-medium">Name</th>
+                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-tertiary font-medium">Client / PM</th>
+                    <th className="text-right px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-tertiary font-medium">% Complete</th>
+                    <th className="text-right px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-tertiary font-medium">Budget Used</th>
+                    <th className="text-center px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-tertiary font-medium">Open Inv.</th>
+                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-tertiary font-medium">Last Activity</th>
+                    <th className="text-left px-3 py-2.5 font-mono text-[9px] tracking-[0.12em] uppercase text-tertiary font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((j) => (
                     <tr
                       key={j.id}
-                      className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.04)] cursor-pointer transition-colors"
+                      className="border-b border-border-sub last:border-0 hover:bg-bg-sub cursor-pointer transition-colors"
                       onClick={() => router.push(`/jobs/${j.id}`)}
                     >
                       <td className="px-3 py-3">
@@ -350,11 +350,11 @@ export default function JobsPage() {
                       </td>
                       <td className="px-3 py-3">
                         <div className="text-slate-tile font-medium">{j.name}</div>
-                        <div className="text-[12px] text-[rgba(59,88,100,0.55)]">{j.address ?? "\u2014"}</div>
+                        <div className="text-[12px] text-tertiary">{j.address ?? "\u2014"}</div>
                       </td>
-                      <td className="px-3 py-3 text-[rgba(59,88,100,0.70)]">
+                      <td className="px-3 py-3 text-secondary">
                         <div>{j.client_name ?? "\u2014"}</div>
-                        <div className="text-[12px] text-[rgba(59,88,100,0.55)]">PM: {j.pm_name ?? "\u2014"}</div>
+                        <div className="text-[12px] text-tertiary">PM: {j.pm_name ?? "\u2014"}</div>
                       </td>
                       <td className="px-3 py-3 text-right font-mono text-[12px] text-slate-tile tabular-nums">
                         {formatPercent(j.pct_complete)}
@@ -363,7 +363,7 @@ export default function JobsPage() {
                         <span className={`text-[12px] ${j.budget_used_pct > 100 ? "text-nw-danger" : "text-slate-tile"}`}>
                           {formatPercent(j.budget_used_pct)}
                         </span>
-                        <div className="text-[10px] text-[rgba(59,88,100,0.55)]">
+                        <div className="text-[10px] text-tertiary">
                           {formatCents(j.invoiced_total)} / {formatCents(j.budget_total)}
                         </div>
                       </td>
@@ -375,10 +375,10 @@ export default function JobsPage() {
                             {j.open_invoices}
                           </span>
                         ) : (
-                          <span className="text-[rgba(59,88,100,0.40)] text-[12px]">\u2014</span>
+                          <span className="text-muted text-[12px]">\u2014</span>
                         )}
                       </td>
-                      <td className="px-3 py-3 text-[rgba(59,88,100,0.55)] text-[12px]">
+                      <td className="px-3 py-3 text-tertiary text-[12px]">
                         {j.last_activity_at ? formatRelativeTime(j.last_activity_at) : formatDate(j.contract_date)}
                       </td>
                       <td className="px-3 py-3"><StatusBadge status={j.status} /></td>

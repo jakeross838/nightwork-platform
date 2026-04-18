@@ -106,9 +106,9 @@ export default function NotificationBell({ userId, className }: { userId: string
       </button>
 
       {open && (
-        <div className="fixed sm:absolute right-0 sm:right-0 top-14 sm:top-full sm:mt-1 left-0 sm:left-auto mx-2 sm:mx-0 sm:w-[360px] max-h-[70vh] sm:max-h-[520px] overflow-hidden flex flex-col bg-white border border-[rgba(59,88,100,0.15)] shadow-2xl z-50">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/60">
-            <p className="text-[11px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] font-medium">
+        <div className="fixed sm:absolute right-0 sm:right-0 top-14 sm:top-full sm:mt-1 left-0 sm:left-auto mx-2 sm:mx-0 sm:w-[360px] max-h-[70vh] sm:max-h-[520px] overflow-hidden flex flex-col bg-white border border-border-def shadow-2xl z-50">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border-def bg-bg-sub/60">
+            <p className="text-[11px] tracking-[0.12em] uppercase text-tertiary font-medium">
               Notifications
             </p>
             {unreadCount > 0 && (
@@ -123,8 +123,8 @@ export default function NotificationBell({ userId, className }: { userId: string
           <div className="flex-1 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="px-4 py-12 text-center">
-                <p className="text-sm text-[rgba(59,88,100,0.55)]">No notifications yet</p>
-                <p className="mt-1 text-xs text-[rgba(59,88,100,0.55)]/70">
+                <p className="text-sm text-tertiary">No notifications yet</p>
+                <p className="mt-1 text-xs text-tertiary/70">
                   You&apos;ll see updates here when invoices and draws move forward.
                 </p>
               </div>
@@ -133,7 +133,7 @@ export default function NotificationBell({ userId, className }: { userId: string
                 {notifications.map((n) => {
                   const inner = (
                     <div
-                      className={`px-4 py-3 flex gap-3 hover:bg-[rgba(91,134,153,0.06)]/60 transition-colors ${
+                      className={`px-4 py-3 flex gap-3 hover:bg-bg-sub/60 transition-colors ${
                         n.read ? "" : "bg-slate-deep/5"
                       }`}
                     >
@@ -148,11 +148,11 @@ export default function NotificationBell({ userId, className }: { userId: string
                           {n.title}
                         </p>
                         {n.body && (
-                          <p className="mt-0.5 text-xs text-[rgba(59,88,100,0.70)] line-clamp-2">
+                          <p className="mt-0.5 text-xs text-secondary line-clamp-2">
                             {n.body}
                           </p>
                         )}
-                        <p className="mt-1 text-[11px] text-[rgba(59,88,100,0.55)]">
+                        <p className="mt-1 text-[11px] text-tertiary">
                           {timeAgo(n.created_at)}
                         </p>
                       </div>

@@ -67,7 +67,7 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
   }
   if (!data) {
     return (
-      <div className="border border-[rgba(59,88,100,0.15)] p-6 text-center text-[rgba(59,88,100,0.55)] text-sm">
+      <div className="border border-border-def p-6 text-center text-tertiary text-sm">
         No comparison data available.
       </div>
     );
@@ -75,9 +75,9 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
 
   if (!data.prior) {
     return (
-      <div className="border border-[rgba(59,88,100,0.15)] p-8 text-center">
+      <div className="border border-border-def p-8 text-center">
         <p className="text-slate-tile font-display">First draw for this job</p>
-        <p className="text-[rgba(59,88,100,0.55)] text-sm mt-1">
+        <p className="text-tertiary text-sm mt-1">
           No previous draw exists yet — comparison becomes available starting with Draw #2.
         </p>
       </div>
@@ -112,8 +112,8 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
           invoiceCount={data.current.invoice_count}
           highlight
         />
-        <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4">
-          <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">
+        <div className="bg-white border border-border-def p-4">
+          <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider">
             Delta
           </p>
           <p
@@ -124,15 +124,15 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
             {totalDelta > 0 ? "+" : ""}
             {formatCents(totalDelta)}
           </p>
-          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">vs previous draw amount</p>
+          <p className="text-xs text-tertiary mt-1">vs previous draw amount</p>
         </div>
       </div>
 
       {/* Per-line comparison */}
-      <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+      <div className="overflow-x-auto border border-border-def">
         <table className="w-full min-w-[900px] text-sm">
           <thead>
-            <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+            <tr className="bg-bg-sub text-left">
               <Th>Code</Th>
               <Th>Description</Th>
               <Th right>Scheduled</Th>
@@ -156,7 +156,7 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
             ))}
             {data.lines.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-6 text-center text-[rgba(59,88,100,0.55)] text-xs">
+                <td colSpan={8} className="py-6 text-center text-tertiary text-xs">
                   No line activity to compare.
                 </td>
               </tr>
@@ -170,9 +170,9 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
 
 function SectionRow({ label, co }: { label: string; co?: boolean }) {
   return (
-    <tr className={co ? "bg-nw-warn/10" : "bg-[rgba(91,134,153,0.06)]/40"}>
+    <tr className={co ? "bg-nw-warn/10" : "bg-bg-sub/40"}>
       <td colSpan={8} className={`py-1.5 px-3 text-[10px] uppercase tracking-wider font-semibold ${
-        co ? "text-nw-warn" : "text-[rgba(59,88,100,0.55)]"
+        co ? "text-nw-warn" : "text-tertiary"
       }`}>
         {label}
       </td>
@@ -182,7 +182,7 @@ function SectionRow({ label, co }: { label: string; co?: boolean }) {
 
 function CompareRow({ line, co }: { line: CompareLine; co?: boolean }) {
   const deltaCol =
-    line.delta > 0 ? "text-nw-success" : line.delta < 0 ? "text-nw-danger" : "text-[rgba(59,88,100,0.55)]";
+    line.delta > 0 ? "text-nw-success" : line.delta < 0 ? "text-nw-danger" : "text-tertiary";
   const flagBadges: { text: string; cls: string }[] = [];
   if (line.new_line) flagBadges.push({ text: "NEW", cls: "border-stone-blue text-stone-blue" });
   if (line.large_swing)
@@ -191,7 +191,7 @@ function CompareRow({ line, co }: { line: CompareLine; co?: boolean }) {
     flagBadges.push({ text: "REVERSED", cls: "border-nw-danger text-nw-danger" });
 
   return (
-    <tr className={`border-t border-[rgba(59,88,100,0.08)] ${line.large_swing ? "bg-nw-warn/5" : ""}`}>
+    <tr className={`border-t border-border-sub ${line.large_swing ? "bg-nw-warn/5" : ""}`}>
       <td className={`py-2 px-3 font-mono text-xs font-bold ${co ? "text-nw-warn" : "text-stone-blue"}`}>
         {line.code}
       </td>
@@ -200,16 +200,16 @@ function CompareRow({ line, co }: { line: CompareLine; co?: boolean }) {
         {line.scheduled_value > 0 ? formatCents(line.scheduled_value) : "—"}
       </td>
       <td className="py-2 px-3 text-right text-slate-tile">
-        {line.previous_period > 0 ? formatCents(line.previous_period) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
+        {line.previous_period > 0 ? formatCents(line.previous_period) : <span className="text-tertiary">—</span>}
       </td>
       <td className="py-2 px-3 text-right text-slate-tile">
-        {line.current_period > 0 ? formatCents(line.current_period) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
+        {line.current_period > 0 ? formatCents(line.current_period) : <span className="text-tertiary">—</span>}
       </td>
       <td className={`py-2 px-3 text-right font-display ${deltaCol}`}>
         {line.delta > 0 ? "+" : ""}
         {formatCents(line.delta)}
       </td>
-      <td className="py-2 px-3 text-right text-[rgba(59,88,100,0.70)] text-xs">
+      <td className="py-2 px-3 text-right text-secondary text-xs">
         {line.prior_cumulative_pct.toFixed(1)}% → {line.cumulative_pct.toFixed(1)}%
       </td>
       <td className="py-2 px-3">
@@ -245,14 +245,14 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`bg-white border ${highlight ? "border-stone-blue/40" : "border-[rgba(59,88,100,0.15)]"} p-4`}
+      className={`bg-white border ${highlight ? "border-stone-blue/40" : "border-border-def"} p-4`}
     >
-      <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
-      <p className="text-xs text-[rgba(59,88,100,0.70)] mt-1">{period}</p>
+      <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider">{label}</p>
+      <p className="text-xs text-secondary mt-1">{period}</p>
       <p className={`text-2xl font-display font-medium mt-2 ${highlight ? "text-nw-warn" : "text-slate-tile"}`}>
         {formatCents(amount)}
       </p>
-      <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">
+      <p className="text-xs text-tertiary mt-1">
         {invoiceCount} invoice{invoiceCount === 1 ? "" : "s"} · {formatCents(completed)} completed
       </p>
     </div>

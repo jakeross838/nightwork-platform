@@ -696,11 +696,11 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-2xl text-slate-tile">{job.name}</h2>
-            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">{job.address ?? "No address"}</p>
+            <p className="text-sm text-tertiary mt-1">{job.address ?? "No address"}</p>
           </div>
           <button
             onClick={() => window.print()}
-            className="px-3 py-1.5 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated text-xs uppercase tracking-[0.06em] transition-colors print:hidden"
+            className="px-3 py-1.5 border border-border-def text-slate-tile hover:bg-brand-elevated text-xs uppercase tracking-[0.06em] transition-colors print:hidden"
             aria-label="Print this budget"
           >
             Print
@@ -715,25 +715,25 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         {showCompareStats && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <div className="border border-nw-success/40 bg-nw-success/5 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">
+              <p className="text-[10px] uppercase tracking-wider text-tertiary font-medium">
                 Under Budget
               </p>
               <p className="text-base text-slate-tile tabular-nums font-display mt-1">
                 {compareStats.underCount} line{compareStats.underCount === 1 ? "" : "s"}
-                <span className="text-[rgba(59,88,100,0.55)]"> · </span>
+                <span className="text-tertiary"> · </span>
                 <span className="text-nw-success">{formatCents(compareStats.savings)}</span>
-                <span className="text-[rgba(59,88,100,0.55)]"> savings</span>
+                <span className="text-tertiary"> savings</span>
               </p>
             </div>
             <div className="border border-nw-danger/40 bg-nw-danger/5 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">
+              <p className="text-[10px] uppercase tracking-wider text-tertiary font-medium">
                 Over Budget
               </p>
               <p className="text-base text-slate-tile tabular-nums font-display mt-1">
                 {compareStats.overCount} line{compareStats.overCount === 1 ? "" : "s"}
-                <span className="text-[rgba(59,88,100,0.55)]"> · </span>
+                <span className="text-tertiary"> · </span>
                 <span className="text-nw-danger">{formatCents(compareStats.overage)}</span>
-                <span className="text-[rgba(59,88,100,0.55)]"> overage</span>
+                <span className="text-tertiary"> overage</span>
               </p>
             </div>
           </div>
@@ -757,10 +757,10 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search code, description, category…"
-                  className="w-full pl-8 pr-2 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder:text-[rgba(59,88,100,0.55)] focus:outline-none focus:border-stone-blue"
+                  className="w-full pl-8 pr-2 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile placeholder:text-tertiary focus:outline-none focus:border-stone-blue"
                 />
                 <svg
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgba(59,88,100,0.55)]"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -778,7 +778,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="px-2 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                  className="px-2 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                   aria-label="Filter by category"
                 >
                   <option value="">All categories</option>
@@ -791,7 +791,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                  className="px-2 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                  className="px-2 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                   aria-label="Filter by status"
                 >
                   {(Object.keys(STATUS_FILTER_LABELS) as StatusFilter[]).map((k) => (
@@ -811,14 +811,14 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                 Active only
               </label>
 
-              <span className="block text-[12px] text-[rgba(59,88,100,0.55)] tabular-nums">
+              <span className="block text-[12px] text-tertiary tabular-nums">
                 Showing {filteredRows.length} of {rows.length} line
                 {rows.length === 1 ? "" : "s"}
                 {filtersActive && (
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="ml-3 text-[12px] text-[rgba(59,88,100,0.55)] hover:text-slate-tile underline underline-offset-2"
+                    className="ml-3 text-[12px] text-tertiary hover:text-slate-tile underline underline-offset-2"
                   >
                     Clear all filters
                   </button>
@@ -832,7 +832,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   className={`text-[12px] px-3 py-2 border transition-colors ${
                     viewMode === "compare"
                       ? "bg-slate-deep text-white border-stone-blue"
-                      : "border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-[rgba(91,134,153,0.06)]"
+                      : "border-border-def text-slate-tile hover:bg-bg-sub"
                   }`}
                   aria-pressed={viewMode === "compare"}
                   title="Toggle owner-meeting comparison view"
@@ -843,7 +843,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   type="button"
                   onClick={handleExport}
                   disabled={exporting}
-                  className="text-[12px] px-3 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-[rgba(91,134,153,0.06)] disabled:opacity-60 transition-colors"
+                  className="text-[12px] px-3 py-2 border border-border-def text-slate-tile hover:bg-bg-sub disabled:opacity-60 transition-colors"
                   title="Download budget as Excel (.xlsx)"
                 >
                   {exporting ? "Exporting…" : "Export Excel"}
@@ -853,14 +853,14 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                     <button
                       type="button"
                       onClick={collapseAll}
-                      className="text-[12px] px-3 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+                      className="text-[12px] px-3 py-2 border border-border-def text-slate-tile hover:bg-bg-sub transition-colors"
                     >
                       Collapse All
                     </button>
                     <button
                       type="button"
                       onClick={expandAll}
-                      className="text-[12px] px-3 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+                      className="text-[12px] px-3 py-2 border border-border-def text-slate-tile hover:bg-bg-sub transition-colors"
                     >
                       Expand All
                     </button>
@@ -878,11 +878,11 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
             {viewMode === "compare" ? (
               <CompareTable rows={filteredRows} />
             ) : (
-              <div className="bg-white border border-[rgba(59,88,100,0.15)] overflow-x-auto">
+              <div className="bg-white border border-border-def overflow-x-auto">
                 <table className="w-full min-w-[1100px] text-sm">
                   <thead>
-                    <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] bg-[rgba(91,134,153,0.06)]/50">
-                      <th className="text-left px-3 py-3 font-medium sticky left-0 bg-[rgba(91,134,153,0.06)]/90 z-10">Code</th>
+                    <tr className="border-b border-border-def text-[11px] uppercase tracking-wider text-tertiary bg-bg-sub/50">
+                      <th className="text-left px-3 py-3 font-medium sticky left-0 bg-bg-sub/90 z-10">Code</th>
                       <th className="text-left px-3 py-3 font-medium">Description</th>
                       <th className="text-right px-3 py-3 font-medium">Original</th>
                       <th className="text-right px-3 py-3 font-medium">CO +/-</th>
@@ -949,8 +949,8 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                         />
                       );
                     })}
-                    <tr className="border-t-2 border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] font-medium">
-                      <td colSpan={2} className="px-3 py-3 text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium sticky left-0 bg-[rgba(91,134,153,0.06)] z-[1]">
+                    <tr className="border-t-2 border-border-def bg-bg-sub font-medium">
+                      <td colSpan={2} className="px-3 py-3 text-[11px] uppercase tracking-wider text-tertiary font-medium sticky left-0 bg-bg-sub z-[1]">
                         Project Totals
                       </td>
                       <td className="px-3 py-3 text-right text-slate-tile tabular-nums font-display">{formatCents(grandTotals.original)}</td>
@@ -964,7 +964,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                       <td className="px-3 py-3 text-right text-slate-tile tabular-nums font-display">
                         {formatCents(grandTotals.invoiced_with_po + grandTotals.invoiced_without_po)}
                       </td>
-                      <td className="px-3 py-3 text-right text-[rgba(59,88,100,0.70)] tabular-nums">
+                      <td className="px-3 py-3 text-right text-secondary tabular-nums">
                         {formatCents(Math.max(0, grandTotals.committed - grandTotals.invoiced_with_po))}
                       </td>
                       <td className="px-3 py-3 text-right text-slate-tile tabular-nums">
@@ -1003,7 +1003,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
               </div>
             )}
 
-            <p className="mt-4 text-[11px] text-[rgba(59,88,100,0.55)]">
+            <p className="mt-4 text-[11px] text-tertiary">
               Double-click Original to edit. Click Committed / Invoiced / CO / description to
               drill in. Calculated columns are read-only.
             </p>
@@ -1022,7 +1022,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
 
       {readOnlyToast && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-3 py-2 bg-white border border-[rgba(59,88,100,0.15)] text-[12px] text-slate-tile shadow-lg"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-3 py-2 bg-white border border-border-def text-[12px] text-slate-tile shadow-lg"
           role="status"
         >
           {readOnlyToast}
@@ -1108,12 +1108,12 @@ function CategoryBlock({
     <>
       {/* Category header row */}
       <tr
-        className="border-b border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/80 cursor-pointer hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+        className="border-b border-border-def bg-bg-sub/80 cursor-pointer hover:bg-bg-sub transition-colors"
         onClick={onToggle}
       >
         <td
           colSpan={2}
-          className="px-3 py-2 text-[12px] font-semibold uppercase tracking-wider text-slate-tile sticky left-0 bg-[rgba(91,134,153,0.06)] z-[1]"
+          className="px-3 py-2 text-[12px] font-semibold uppercase tracking-wider text-slate-tile sticky left-0 bg-bg-sub z-[1]"
         >
           <span className="inline-flex items-center gap-2">
             <svg
@@ -1127,7 +1127,7 @@ function CategoryBlock({
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
             {category}
-            <span className="text-[10px] text-[rgba(59,88,100,0.55)] font-normal normal-case tracking-normal">
+            <span className="text-[10px] text-tertiary font-normal normal-case tracking-normal">
               ({rowCount} {rowCount === 1 ? "line" : "lines"})
             </span>
           </span>
@@ -1147,7 +1147,7 @@ function CategoryBlock({
         <td className="px-3 py-2 text-right text-slate-tile tabular-nums text-[12px] font-semibold">
           {formatCents(subtotals.invoiced)}
         </td>
-        <td className="px-3 py-2 text-right text-[rgba(59,88,100,0.70)] tabular-nums text-[12px] font-semibold">
+        <td className="px-3 py-2 text-right text-secondary tabular-nums text-[12px] font-semibold">
           {subtotals.remainingPo > 0 ? formatCents(subtotals.remainingPo) : "—"}
         </td>
         <td
@@ -1199,10 +1199,10 @@ function CategoryBlock({
           return (
             <tr
               key={r.id}
-              className={`border-b border-[rgba(59,88,100,0.08)] last:border-0 ${rowBg}`}
+              className={`border-b border-border-sub last:border-0 ${rowBg}`}
             >
               <td className={`px-3 py-2 font-mono text-slate-tile text-xs sticky left-0 z-[1] ${stickyBg}`}>{r.code}</td>
-              <td className="px-3 py-2 text-[rgba(59,88,100,0.70)]">
+              <td className="px-3 py-2 text-secondary">
                 <button
                   type="button"
                   onClick={() => onDrill(r.id, r.code, r.description, "full")}
@@ -1229,7 +1229,7 @@ function CategoryBlock({
               </td>
               {/* CO +/- — read-only, but clickable → drill */}
               <td
-                className={`px-3 py-2 text-right tabular-nums ${r.approved_cos ? "" : "text-[rgba(59,88,100,0.55)]"}`}
+                className={`px-3 py-2 text-right tabular-nums ${r.approved_cos ? "" : "text-tertiary"}`}
               >
                 {r.approved_cos ? (
                   <button
@@ -1243,7 +1243,7 @@ function CategoryBlock({
                   <button
                     type="button"
                     onClick={() => onShowReadOnlyTip("CO +/−")}
-                    className="text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
+                    className="text-tertiary hover:text-slate-tile transition-colors"
                     title="Calculated automatically from approved COs"
                   >
                     —
@@ -1272,7 +1272,7 @@ function CategoryBlock({
                   <button
                     type="button"
                     onClick={() => onShowReadOnlyTip("Committed")}
-                    className="text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
+                    className="text-tertiary hover:text-slate-tile transition-colors"
                     title="Calculated automatically from open POs"
                   >
                     —
@@ -1302,11 +1302,11 @@ function CategoryBlock({
               </td>
               {/* Remaining PO — read-only */}
               <td
-                className="px-3 py-2 text-right text-[rgba(59,88,100,0.70)] tabular-nums"
+                className="px-3 py-2 text-right text-secondary tabular-nums"
                 onClick={() => onShowReadOnlyTip("Remaining PO")}
                 title="Calculated automatically (Committed − Invoiced on POs)"
               >
-                {remainingPo > 0 ? formatCents(remainingPo) : <span className="text-[rgba(59,88,100,0.55)]">—</span>}
+                {remainingPo > 0 ? formatCents(remainingPo) : <span className="text-tertiary">—</span>}
               </td>
               {/* Uncommitted — read-only */}
               <td
@@ -1346,13 +1346,13 @@ function CategoryBlock({
 
       {/* Add-line row */}
       {!isCollapsed && (
-        <tr className="border-b border-[rgba(59,88,100,0.08)] bg-white/50">
+        <tr className="border-b border-border-sub bg-white/50">
           <td className="px-3 py-1.5" colSpan={11}>
             {!isAdding ? (
               <button
                 type="button"
                 onClick={onBeginAdd}
-                className="inline-flex items-center gap-1 text-[12px] text-[rgba(59,88,100,0.55)] hover:text-stone-blue transition-colors"
+                className="inline-flex items-center gap-1 text-[12px] text-tertiary hover:text-stone-blue transition-colors"
               >
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -1365,7 +1365,7 @@ function CategoryBlock({
                   autoFocus
                   value={addLineCostCode}
                   onChange={(e) => setAddLineCostCode(e.target.value)}
-                  className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-stone-blue text-sm text-slate-tile focus:outline-none"
+                  className="px-2 py-1 bg-bg-sub border border-stone-blue text-sm text-slate-tile focus:outline-none"
                   aria-label="Cost code"
                   disabled={addLineBusy}
                 >
@@ -1392,7 +1392,7 @@ function CategoryBlock({
                     }
                   }}
                   placeholder="0.00"
-                  className="w-28 px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-stone-blue text-sm text-slate-tile text-right tabular-nums focus:outline-none"
+                  className="w-28 px-2 py-1 bg-bg-sub border border-stone-blue text-sm text-slate-tile text-right tabular-nums focus:outline-none"
                   aria-label="Original amount"
                   disabled={addLineBusy}
                 />
@@ -1408,7 +1408,7 @@ function CategoryBlock({
                   type="button"
                   onClick={onCancelAdd}
                   disabled={addLineBusy}
-                  className="text-[12px] px-2 py-1 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+                  className="text-[12px] px-2 py-1 border border-border-def text-slate-tile hover:bg-bg-sub transition-colors"
                 >
                   Cancel
                 </button>
@@ -1428,11 +1428,11 @@ function CompareTable({ rows }: { rows: BudgetRow[] }) {
   // Simplified layout for the owner-meeting view: 7 columns, full-row
   // background color based on variance band.
   return (
-    <div className="bg-white border border-[rgba(59,88,100,0.15)] overflow-x-auto">
+    <div className="bg-white border border-border-def overflow-x-auto">
       <table className="w-full min-w-[700px] text-sm">
         <thead>
-          <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] bg-[rgba(91,134,153,0.06)]/50">
-            <th className="text-left px-3 py-3 font-medium sticky left-0 bg-[rgba(91,134,153,0.06)]/90 z-10">Code</th>
+          <tr className="border-b border-border-def text-[11px] uppercase tracking-wider text-tertiary bg-bg-sub/50">
+            <th className="text-left px-3 py-3 font-medium sticky left-0 bg-bg-sub/90 z-10">Code</th>
             <th className="text-left px-3 py-3 font-medium">Description</th>
             <th className="text-right px-3 py-3 font-medium">Original</th>
             <th className="text-right px-3 py-3 font-medium">Revised</th>
@@ -1476,11 +1476,11 @@ function CompareTable({ rows }: { rows: BudgetRow[] }) {
                   : "text-slate-tile";
 
             return (
-              <tr key={r.id} className={`border-b border-[rgba(59,88,100,0.08)] last:border-0 ${rowBg}`}>
+              <tr key={r.id} className={`border-b border-border-sub last:border-0 ${rowBg}`}>
                 <td className={`px-3 py-2 font-mono text-slate-tile text-xs sticky left-0 z-[1] ${stickyBg}`}>
                   {r.code}
                 </td>
-                <td className="px-3 py-2 text-[rgba(59,88,100,0.70)]">{r.description}</td>
+                <td className="px-3 py-2 text-secondary">{r.description}</td>
                 <td className="px-3 py-2 text-right text-slate-tile tabular-nums">
                   {formatCents(r.original_estimate)}
                 </td>

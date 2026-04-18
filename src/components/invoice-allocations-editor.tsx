@@ -112,17 +112,17 @@ export default function InvoiceAllocationsEditor({
   }
 
   if (loading) {
-    return <div className="text-xs text-[rgba(59,88,100,0.55)] py-2">Loading allocations...</div>;
+    return <div className="text-xs text-tertiary py-2">Loading allocations...</div>;
   }
 
   const canEdit = !readOnly && !locked;
 
   return (
-    <div className="mt-3 border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/30 p-3">
+    <div className="mt-3 border border-border-def bg-bg-sub/30 p-3">
       <div className="flex items-center justify-between mb-2">
         <div>
           <h4 className="text-sm font-medium text-slate-tile">Allocations</h4>
-          <p className="text-[11px] text-[rgba(59,88,100,0.55)]">
+          <p className="text-[11px] text-tertiary">
             Split this invoice across multiple cost codes. Sum must equal the invoice total.
             {autoCreated && " (Auto-created from invoice-level cost code \u2014 edit to split.)"}
           </p>
@@ -146,7 +146,7 @@ export default function InvoiceAllocationsEditor({
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] border-b border-[rgba(59,88,100,0.15)]">
+          <tr className="text-left text-[11px] uppercase tracking-wider text-tertiary border-b border-border-def">
             <th className="py-1 pr-2">Cost code</th>
             <th className="py-1 pr-2">Description</th>
             <th className="py-1 pr-2 text-right">Amount ($)</th>
@@ -155,7 +155,7 @@ export default function InvoiceAllocationsEditor({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
+            <tr key={i} className="border-b border-border-sub last:border-0">
               <td className="py-1 pr-2">
                 <select
                   className={`input text-xs${!r.cost_code_id ? " border-nw-danger/60" : ""}`}
@@ -206,14 +206,14 @@ export default function InvoiceAllocationsEditor({
           ))}
         </tbody>
         <tfoot>
-          <tr className="border-t-2 border-[rgba(59,88,100,0.15)]">
-            <td className="py-1 pr-2 text-[11px] text-[rgba(59,88,100,0.55)] uppercase tracking-wider">Total</td>
+          <tr className="border-t-2 border-border-def">
+            <td className="py-1 pr-2 text-[11px] text-tertiary uppercase tracking-wider">Total</td>
             <td />
             <td className="py-1 pr-2 text-right font-medium">
               <span className={balanced ? "text-stone-blue" : "text-nw-danger"}>
                 {formatCents(sum)}
               </span>
-              <span className="text-[rgba(59,88,100,0.55)]"> / {formatCents(invoiceTotalCents)}</span>
+              <span className="text-tertiary"> / {formatCents(invoiceTotalCents)}</span>
             </td>
             <td />
           </tr>

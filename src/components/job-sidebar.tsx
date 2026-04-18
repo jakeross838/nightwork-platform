@@ -178,13 +178,13 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
         >
           {/* JOBS label + sort toggle */}
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.70)] font-medium">
+            <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-secondary font-medium">
               Jobs
             </span>
             <button
               type="button"
               onClick={cycleSort}
-              className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
+              className="font-mono text-[10px] tracking-[0.14em] uppercase text-tertiary hover:text-slate-tile transition-colors"
             >
               {SORT_LABELS[sort]}
             </button>
@@ -210,8 +210,8 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
                 onClick={() => setFilter("mine")}
                 className={`flex-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
                   filter === "mine"
-                    ? "bg-[rgba(91,134,153,0.1)] text-slate-tile font-medium"
-                    : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+                    ? "bg-stone-blue/10 text-slate-tile font-medium"
+                    : "text-tertiary hover:text-slate-tile"
                 }`}
               >
                 My Jobs
@@ -221,8 +221,8 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
                 onClick={() => setFilter("all")}
                 className={`flex-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
                   filter === "all"
-                    ? "bg-[rgba(91,134,153,0.1)] text-slate-tile font-medium"
-                    : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+                    ? "bg-stone-blue/10 text-slate-tile font-medium"
+                    : "text-tertiary hover:text-slate-tile"
                 }`}
               >
                 All Jobs
@@ -235,7 +235,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-2 py-1.5 font-sans text-[13px] border bg-white text-slate-tile placeholder:text-[rgba(59,88,100,0.40)] focus:outline-none focus:border-stone-blue"
+            className="w-full px-2 py-1.5 font-sans text-[13px] border bg-white text-slate-tile placeholder:text-muted focus:outline-none focus:border-stone-blue"
             style={{ borderColor: "rgba(59,88,100,0.15)" }}
           />
         </div>
@@ -243,7 +243,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
         {/* Selected job detail */}
         {selectedJob && (
           <div
-            className="px-3 py-3 border-b bg-[rgba(91,134,153,0.1)]"
+            className="px-3 py-3 border-b bg-stone-blue/10"
             style={{ borderColor: "rgba(59,88,100,0.15)" }}
           >
             <p className="text-[13px] font-sans font-medium text-slate-tile">
@@ -253,7 +253,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
               <span
                 className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`}
               />
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(59,88,100,0.70)]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-secondary">
                 {statusLabel(selectedJob.status)}
               </span>
             </div>
@@ -267,7 +267,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
               <div className="w-5 h-5 border-2 border-stone-blue/30 border-t-stone-blue rounded-full animate-spin mx-auto" />
             </div>
           ) : otherJobs.length === 0 ? (
-            <p className="p-3 text-[13px] font-sans text-[rgba(59,88,100,0.55)] text-center">
+            <p className="p-3 text-[13px] font-sans text-tertiary text-center">
               {search ? "No matches" : "No jobs"}
             </p>
           ) : (
@@ -275,7 +275,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
               <Link
                 key={j.id}
                 href={jobHref(j.id)}
-                className="flex items-center gap-2 px-3 py-2.5 font-sans text-[13px] text-slate-tile transition-colors hover:bg-[rgba(91,134,153,0.06)] border-b"
+                className="flex items-center gap-2 px-3 py-2.5 font-sans text-[13px] text-slate-tile transition-colors hover:bg-bg-sub border-b"
                 style={{ borderColor: "rgba(59,88,100,0.08)" }}
                 title={j.address ?? j.name}
               >
@@ -293,7 +293,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
           className="px-3 py-2 border-t"
           style={{ borderColor: "rgba(59,88,100,0.15)" }}
         >
-          <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">
+          <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-tertiary">
             {filtered.length} Job{filtered.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -310,7 +310,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
       >
         <button
           onClick={toggleCollapse}
-          className="w-8 h-8 flex items-center justify-center text-[rgba(59,88,100,0.55)] hover:text-slate-tile hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-tertiary hover:text-slate-tile hover:bg-bg-sub transition-colors"
           title="Expand sidebar"
           aria-label="Expand sidebar"
         >
@@ -327,8 +327,8 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
                 href={jobHref(j.id)}
                 className={`block w-full py-2 px-1 text-center transition-colors ${
                   active
-                    ? "bg-[rgba(91,134,153,0.1)] border-l-2 border-l-stone-blue"
-                    : "hover:bg-[rgba(91,134,153,0.06)]"
+                    ? "bg-stone-blue/10 border-l-2 border-l-stone-blue"
+                    : "hover:bg-bg-sub"
                 }`}
                 title={j.name}
               >
@@ -340,7 +340,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
           })}
         </div>
         {/* Job count at bottom */}
-        <span className="font-mono text-[10px] text-[rgba(59,88,100,0.55)]">
+        <span className="font-mono text-[10px] text-tertiary">
           {filtered.length}
         </span>
       </aside>
@@ -361,13 +361,13 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
         {/* JOBS label + sort toggle + collapse */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.70)] font-medium">
+            <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-secondary font-medium">
               Jobs
             </span>
             <button
               type="button"
               onClick={cycleSort}
-              className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.40)] hover:text-slate-tile transition-colors"
+              className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted hover:text-slate-tile transition-colors"
               title={`Sort: ${SORT_LABELS[sort]}`}
             >
               {SORT_LABELS[sort]}
@@ -375,7 +375,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
           </div>
           <button
             onClick={toggleCollapse}
-            className="w-6 h-6 flex items-center justify-center text-[rgba(59,88,100,0.55)] hover:text-slate-tile transition-colors"
+            className="w-6 h-6 flex items-center justify-center text-tertiary hover:text-slate-tile transition-colors"
             title="Collapse sidebar"
             aria-label="Collapse sidebar"
           >
@@ -406,8 +406,8 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
               onClick={() => setFilter("mine")}
               className={`flex-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
                 filter === "mine"
-                  ? "bg-[rgba(91,134,153,0.1)] text-slate-tile font-medium"
-                  : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+                  ? "bg-stone-blue/10 text-slate-tile font-medium"
+                  : "text-tertiary hover:text-slate-tile"
               }`}
             >
               My Jobs
@@ -417,8 +417,8 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
               onClick={() => setFilter("all")}
               className={`flex-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
                 filter === "all"
-                  ? "bg-[rgba(91,134,153,0.1)] text-slate-tile font-medium"
-                  : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+                  ? "bg-stone-blue/10 text-slate-tile font-medium"
+                  : "text-tertiary hover:text-slate-tile"
               }`}
             >
               All Jobs
@@ -432,7 +432,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-2 py-1.5 font-sans text-[13px] border bg-white text-slate-tile placeholder:text-[rgba(59,88,100,0.40)] focus:outline-none focus:border-stone-blue"
+          className="w-full px-2 py-1.5 font-sans text-[13px] border bg-white text-slate-tile placeholder:text-muted focus:outline-none focus:border-stone-blue"
           style={{ borderColor: "rgba(59,88,100,0.15)" }}
         />
       </div>
@@ -440,7 +440,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
       {/* Selected job details */}
       {selectedJob && (
         <div
-          className="p-3 border-b bg-[rgba(91,134,153,0.1)]"
+          className="p-3 border-b bg-stone-blue/10"
           style={{ borderColor: "rgba(59,88,100,0.15)" }}
         >
           <p className="text-[13px] font-sans font-medium text-slate-tile truncate">
@@ -450,17 +450,17 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
             <span
               className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`}
             />
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(59,88,100,0.70)]">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-secondary">
               {statusLabel(selectedJob.status)}
             </span>
           </div>
           {selectedJob.client_name && (
-            <p className="text-[11px] font-sans text-[rgba(59,88,100,0.55)] mt-1.5 truncate">
+            <p className="text-[11px] font-sans text-tertiary mt-1.5 truncate">
               {selectedJob.client_name}
             </p>
           )}
           {selectedJob.address && (
-            <p className="text-[11px] font-sans text-[rgba(59,88,100,0.55)] mt-0.5 truncate">
+            <p className="text-[11px] font-sans text-tertiary mt-0.5 truncate">
               {selectedJob.address}
             </p>
           )}
@@ -493,7 +493,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
       <div className="flex-1 overflow-y-auto">
         <Link
           href="/jobs"
-          className="block px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[rgba(59,88,100,0.55)] hover:text-slate-tile border-b transition-colors"
+          className="block px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-tertiary hover:text-slate-tile border-b transition-colors"
           style={{ borderColor: "rgba(59,88,100,0.08)" }}
         >
           All {filtered.length} Job{filtered.length !== 1 ? "s" : ""}
@@ -503,7 +503,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
             <div className="w-5 h-5 border-2 border-stone-blue/30 border-t-stone-blue rounded-full animate-spin mx-auto" />
           </div>
         ) : otherJobs.length === 0 ? (
-          <p className="p-3 text-[13px] font-sans text-[rgba(59,88,100,0.55)] text-center">
+          <p className="p-3 text-[13px] font-sans text-tertiary text-center">
             {search ? "No matches" : "No other jobs"}
           </p>
         ) : (
@@ -515,8 +515,8 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
                 href={jobHref(j.id)}
                 className={`flex items-center gap-2 px-3 py-2 font-sans text-[13px] text-slate-tile transition-colors border-b ${
                   active
-                    ? "bg-[rgba(91,134,153,0.1)] border-l-2 border-l-stone-blue"
-                    : "hover:bg-[rgba(91,134,153,0.06)]"
+                    ? "bg-stone-blue/10 border-l-2 border-l-stone-blue"
+                    : "hover:bg-bg-sub"
                 }`}
                 style={{ borderBottomColor: "rgba(59,88,100,0.08)" }}
                 title={j.address ?? j.name}
@@ -536,7 +536,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
         className="px-3 py-2 border-t"
         style={{ borderColor: "rgba(59,88,100,0.15)" }}
       >
-        <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[rgba(59,88,100,0.55)]">
+        <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-tertiary">
           {filtered.length} Job{filtered.length !== 1 ? "s" : ""}
         </span>
       </div>

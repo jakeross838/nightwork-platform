@@ -290,11 +290,11 @@ export default function JobOverviewCards({
             <MiniStat label="Revised" value={formatCents(revisedContract)} strong />
           </div>
           <div className="mt-4">
-            <div className="flex items-center justify-between text-[11px] text-[rgba(59,88,100,0.55)]">
+            <div className="flex items-center justify-between text-[11px] text-tertiary">
               <span>% Complete</span>
               <span className="text-slate-tile font-display">{percentComplete.toFixed(1)}%</span>
             </div>
-            <div className="mt-1.5 h-2 bg-[rgba(91,134,153,0.06)] overflow-hidden">
+            <div className="mt-1.5 h-2 bg-bg-sub overflow-hidden">
               <div className="h-full bg-slate-deep transition-all" style={{ width: `${percentComplete}%` }} />
             </div>
           </div>
@@ -364,7 +364,7 @@ export default function JobOverviewCards({
         {activity === null ? (
           <Placeholder />
         ) : activity.length === 0 ? (
-          <p className="text-xs text-[rgba(59,88,100,0.55)]">No recent activity.</p>
+          <p className="text-xs text-tertiary">No recent activity.</p>
         ) : (
           <ul className="divide-y divide-brand-row-border">
             {activity.map((a) => (
@@ -372,16 +372,16 @@ export default function JobOverviewCards({
                 key={a.id}
                 className="py-2 flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 text-[12px]"
               >
-                <span className="text-[rgba(59,88,100,0.55)] tabular-nums shrink-0 sm:w-32">
+                <span className="text-tertiary tabular-nums shrink-0 sm:w-32">
                   {formatActivityTs(a.created_at)}
                 </span>
                 <span className="text-slate-tile flex-1 break-words">
                   <span className="font-medium">{formatEntityAction(a.entity_type, a.action)}</span>
                   {summarizeDetails(a.details) && (
-                    <span className="text-[rgba(59,88,100,0.55)]"> · {summarizeDetails(a.details)}</span>
+                    <span className="text-tertiary"> · {summarizeDetails(a.details)}</span>
                   )}
                 </span>
-                <span className="text-[rgba(59,88,100,0.55)] shrink-0">{a.user_name ?? "—"}</span>
+                <span className="text-tertiary shrink-0">{a.user_name ?? "—"}</span>
               </li>
             ))}
           </ul>
@@ -393,7 +393,7 @@ export default function JobOverviewCards({
         {payments === null ? (
           <Placeholder />
         ) : payments.length === 0 ? (
-          <p className="text-xs text-[rgba(59,88,100,0.55)]">No scheduled payments in the next 30 days.</p>
+          <p className="text-xs text-tertiary">No scheduled payments in the next 30 days.</p>
         ) : (
           <ul className="divide-y divide-brand-row-border">
             {payments.map((p) => (
@@ -405,10 +405,10 @@ export default function JobOverviewCards({
                   {p.vendor_name ?? p.vendor_name_raw ?? "—"}
                 </span>
                 <span className="flex items-center justify-between gap-3 sm:gap-3">
-                  <span className="text-[rgba(59,88,100,0.55)] tabular-nums sm:w-24 sm:text-right">
+                  <span className="text-tertiary tabular-nums sm:w-24 sm:text-right">
                     {formatCents(p.total_amount)}
                   </span>
-                  <span className="text-[rgba(59,88,100,0.55)] tabular-nums sm:w-28 sm:text-right">
+                  <span className="text-tertiary tabular-nums sm:w-28 sm:text-right">
                     {formatDate(p.scheduled_payment_date)}
                   </span>
                 </span>
@@ -431,7 +431,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-white border border-[rgba(59,88,100,0.15)] p-5">
+    <section className="bg-white border border-border-def p-5">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-display text-base text-slate-tile">{title}</h3>
         {action}
@@ -468,7 +468,7 @@ function MiniStat({
         : "text-slate-tile";
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-tertiary font-medium">{label}</p>
       <p className={`text-[13px] mt-0.5 tabular-nums font-display ${toneClass} ${strong ? "font-semibold" : ""}`}>
         {value}
       </p>
@@ -495,7 +495,7 @@ function HealthStat({
         : "text-slate-tile";
   const body = (
     <div>
-      <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-tertiary font-medium">{label}</p>
       <p className={`text-2xl mt-1 tabular-nums font-display ${toneClass}`}>{value}</p>
     </div>
   );
@@ -521,7 +521,7 @@ function OpenItemRow({
 }) {
   if (count === 0) {
     return (
-      <div className="flex items-center justify-between text-[12px] text-[rgba(59,88,100,0.55)] py-1">
+      <div className="flex items-center justify-between text-[12px] text-tertiary py-1">
         <span>{label}</span>
         <span className="tabular-nums">0</span>
       </div>
@@ -534,7 +534,7 @@ function OpenItemRow({
     >
       <span className="text-slate-tile">{label}</span>
       <span className="flex items-center gap-3 tabular-nums">
-        {amount && <span className="text-[rgba(59,88,100,0.55)]">{amount}</span>}
+        {amount && <span className="text-tertiary">{amount}</span>}
         <span className="text-slate-tile font-medium">{count}</span>
       </span>
     </Link>

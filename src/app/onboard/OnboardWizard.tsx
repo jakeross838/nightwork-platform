@@ -214,12 +214,12 @@ export default function OnboardWizard({
 
   return (
     <div className="min-h-screen bg-white-sand">
-      <header className="border-b border-[rgba(59,88,100,0.15)] bg-white">
+      <header className="border-b border-border-def bg-white">
         <div className="max-w-[900px] mx-auto px-6 py-4 flex items-center justify-between">
           <span className="font-display text-lg tracking-[0.12em] uppercase text-slate-tile">
             {PUBLIC_APP_NAME}
           </span>
-          <span className="text-xs text-[rgba(59,88,100,0.55)]">Welcome{userFullName ? `, ${userFullName.split(" ")[0]}` : ""}</span>
+          <span className="text-xs text-tertiary">Welcome{userFullName ? `, ${userFullName.split(" ")[0]}` : ""}</span>
         </div>
       </header>
 
@@ -237,13 +237,13 @@ export default function OnboardWizard({
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Company Name" value={company.name} onChange={(v) => setCompany({ ...company, name: v })} />
               <label className="block">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                   Builder Type
                 </span>
                 <select
                   value={company.builder_type ?? ""}
                   onChange={(e) => setCompany({ ...company, builder_type: e.target.value || null })}
-                  className="w-full px-3 py-2.5 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+                  className="w-full px-3 py-2.5 border border-border-def bg-white text-sm"
                 >
                   <option value="">Select…</option>
                   {BUILDER_TYPES.map((b) => (
@@ -263,9 +263,9 @@ export default function OnboardWizard({
             <Field label="Website" value={company.company_website ?? ""} onChange={(v) => setCompany({ ...company, company_website: v })} placeholder="https://example.com" />
 
             <div>
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">Logo (optional)</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">Logo (optional)</span>
               <div className="flex items-center gap-4">
-                <div className="h-14 w-36 flex items-center justify-center border border-[rgba(59,88,100,0.15)] bg-[var(--org-primary)]">
+                <div className="h-14 w-36 flex items-center justify-center border border-border-def bg-[var(--org-primary)]">
                   {company.logo_url ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={company.logo_url} alt="Logo" className="max-h-10 max-w-[130px] object-contain" />
@@ -297,7 +297,7 @@ export default function OnboardWizard({
               <PctField label="Default Deposit" value={deposit} onChange={setDeposit} help="Client deposit as share of contract sum." />
             </div>
             <div>
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-2">Payment Schedule</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-2">Payment Schedule</span>
               <div className="grid sm:grid-cols-2 gap-3">
                 {PAYMENT_OPTIONS.map((opt) => (
                   <button
@@ -307,11 +307,11 @@ export default function OnboardWizard({
                     className={`text-left p-4 border transition-colors ${
                       payment === opt.value
                         ? "border-stone-blue bg-slate-deep-muted"
-                        : "border-[rgba(59,88,100,0.15)] bg-white hover:bg-[rgba(91,134,153,0.06)]"
+                        : "border-border-def bg-white hover:bg-bg-sub"
                     }`}
                   >
                     <p className="font-display text-slate-tile">{opt.title}</p>
-                    <p className="mt-1 text-xs text-[rgba(59,88,100,0.70)]">{opt.detail}</p>
+                    <p className="mt-1 text-xs text-secondary">{opt.detail}</p>
                   </button>
                 ))}
               </div>
@@ -379,12 +379,12 @@ export default function OnboardWizard({
                     value={inv.email}
                     placeholder="teammate@company.com"
                     onChange={(e) => setInvites(invites.map((x, xi) => (xi === i ? { ...x, email: e.target.value } : x)))}
-                    className="px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+                    className="px-3 py-2 border border-border-def bg-white text-sm"
                   />
                   <select
                     value={inv.role}
                     onChange={(e) => setInvites(invites.map((x, xi) => (xi === i ? { ...x, role: e.target.value as InviteRow["role"] } : x)))}
-                    className="px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+                    className="px-3 py-2 border border-border-def bg-white text-sm"
                   >
                     <option value="pm">Project Manager</option>
                     <option value="accounting">Accounting</option>
@@ -393,7 +393,7 @@ export default function OnboardWizard({
                   <button
                     type="button"
                     onClick={() => setInvites(invites.filter((_, xi) => xi !== i))}
-                    className="px-2 text-[rgba(59,88,100,0.55)] text-sm hover:text-slate-tile"
+                    className="px-2 text-tertiary text-sm hover:text-slate-tile"
                   >
                     ×
                   </button>
@@ -442,7 +442,7 @@ export default function OnboardWizard({
                   type="button"
                   onClick={() => finish(false)}
                   disabled={busy}
-                  className="px-5 py-2.5 border border-[rgba(59,88,100,0.15)] text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
+                  className="px-5 py-2.5 border border-border-def text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
                 >
                   Skip — I&apos;ll do this later
                 </button>
@@ -487,12 +487,12 @@ function StepRail({ step }: { step: number }) {
                   ? "bg-slate-deep text-white"
                   : active
                   ? "border-2 border-stone-blue text-slate-tile"
-                  : "border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)]"
+                  : "border border-border-def text-tertiary"
               }`}
             >
               {done ? "✓" : num}
             </div>
-            <span className={`text-sm ${active ? "text-slate-tile font-medium" : "text-[rgba(59,88,100,0.55)]"}`}>{label}</span>
+            <span className={`text-sm ${active ? "text-slate-tile font-medium" : "text-tertiary"}`}>{label}</span>
             {i < steps.length - 1 && <span className="w-8 h-px bg-brand-border" />}
           </div>
         );
@@ -503,16 +503,16 @@ function StepRail({ step }: { step: number }) {
 
 function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6 md:p-8">
+    <section className="bg-white border border-border-def p-6 md:p-8">
       <h1 className="font-display text-2xl text-slate-tile">{title}</h1>
-      <p className="mt-1 text-sm text-[rgba(59,88,100,0.70)]">{subtitle}</p>
+      <p className="mt-1 text-sm text-secondary">{subtitle}</p>
       <div className="mt-6 space-y-4">{children}</div>
     </section>
   );
 }
 
 function NavFooter({ children }: { children: React.ReactNode }) {
-  return <div className="mt-6 pt-6 border-t border-[rgba(59,88,100,0.15)] flex items-center justify-between gap-3 flex-wrap">{children}</div>;
+  return <div className="mt-6 pt-6 border-t border-border-def flex items-center justify-between gap-3 flex-wrap">{children}</div>;
 }
 
 function BackBtn({ onClick }: { onClick: () => void }) {
@@ -520,7 +520,7 @@ function BackBtn({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="px-4 py-2.5 text-[13px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.70)] hover:text-slate-tile"
+      className="px-4 py-2.5 text-[13px] tracking-[0.08em] uppercase text-secondary hover:text-slate-tile"
     >
       ← Back
     </button>
@@ -542,13 +542,13 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">{label}</span>
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2.5 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+        className="w-full px-3 py-2.5 border border-border-def bg-white text-sm"
       />
     </label>
   );
@@ -569,16 +569,16 @@ function CurrencyField({
   const display = value ? Number(value).toLocaleString("en-US") : "";
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">{label}</span>
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">{label}</span>
       <div className="flex items-stretch">
-        <span className="flex items-center px-3 border border-r-0 border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-[rgba(59,88,100,0.55)] text-sm">$</span>
+        <span className="flex items-center px-3 border border-r-0 border-border-def bg-bg-sub text-tertiary text-sm">$</span>
         <input
           type="text"
           inputMode="numeric"
           value={display}
           onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, ""))}
           placeholder={placeholder}
-          className="w-full px-3 py-2.5 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+          className="w-full px-3 py-2.5 border border-border-def bg-white text-sm"
         />
       </div>
     </label>
@@ -588,7 +588,7 @@ function CurrencyField({
 function PctField({ label, value, onChange, help }: { label: string; value: number; onChange: (v: number) => void; help: string }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">{label}</span>
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -597,11 +597,11 @@ function PctField({ label, value, onChange, help }: { label: string; value: numb
           step="0.1"
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-3 py-2.5 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+          className="w-full px-3 py-2.5 border border-border-def bg-white text-sm"
         />
-        <span className="text-[rgba(59,88,100,0.55)] text-sm">%</span>
+        <span className="text-tertiary text-sm">%</span>
       </div>
-      <p className="mt-1 text-xs text-[rgba(59,88,100,0.55)]">{help}</p>
+      <p className="mt-1 text-xs text-tertiary">{help}</p>
     </label>
   );
 }
@@ -626,11 +626,11 @@ function ChoiceCard({
       className={`group text-left p-5 border flex flex-col transition-colors ${
         selected
           ? "border-stone-blue bg-slate-deep-muted"
-          : "border-[rgba(59,88,100,0.15)] bg-white hover:border-stone-blue hover:bg-stone-blue-muted/40"
+          : "border-border-def bg-white hover:border-stone-blue hover:bg-stone-blue-muted/40"
       }`}
     >
       <h3 className="font-display text-lg text-slate-tile">{title}</h3>
-      <p className="mt-2 text-sm text-[rgba(59,88,100,0.70)] flex-1">{subtitle}</p>
+      <p className="mt-2 text-sm text-secondary flex-1">{subtitle}</p>
       <span
         style={{
           color: "#3F5B62",

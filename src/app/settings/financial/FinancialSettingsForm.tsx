@@ -87,13 +87,13 @@ export default function FinancialSettingsForm({ org }: Props) {
 
       <Section title="Payment Schedule">
         <label className="block">
-          <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+          <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
             Schedule Type
           </span>
           <select
             value={scheduleType}
             onChange={(e) => setScheduleType(e.target.value as PaymentScheduleType)}
-            className="w-full px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+            className="w-full px-3 py-2 border border-border-def bg-white text-sm"
           >
             {Object.entries(SCHEDULE_LABELS).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
@@ -148,7 +148,7 @@ export default function FinancialSettingsForm({ org }: Props) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border border-[rgba(59,88,100,0.15)] bg-white p-5">
+    <section className="border border-border-def bg-white p-5">
       <h2 className="section-label">{title}</h2>
       <div className="space-y-3">{children}</div>
     </section>
@@ -168,7 +168,7 @@ function PctField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">{label}</span>
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -177,11 +177,11 @@ function PctField({
           step="0.01"
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+          className="w-full px-3 py-2 border border-border-def bg-white text-sm"
         />
-        <span className="text-[rgba(59,88,100,0.55)] text-sm">%</span>
+        <span className="text-tertiary text-sm">%</span>
       </div>
-      {help && <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">{help}</p>}
+      {help && <p className="text-xs text-tertiary mt-1">{help}</p>}
     </label>
   );
 }
@@ -203,16 +203,16 @@ function IntField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">{label}</span>
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">{label}</span>
       <input
         type="number"
         min={min}
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
+        className="w-full px-3 py-2 border border-border-def bg-white text-sm"
       />
-      {help && <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">{help}</p>}
+      {help && <p className="text-xs text-tertiary mt-1">{help}</p>}
     </label>
   );
 }

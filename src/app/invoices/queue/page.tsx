@@ -94,7 +94,7 @@ type StatusFilter = "pending" | "held" | "denied" | "kicked_back" | "info_reques
 type AmountRange = "all" | "0-5k" | "5k-25k" | "25k-100k" | "100k+";
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
- if (!active) return <span className="ml-1 text-[rgba(59,88,100,0.55)]">&#8597;</span>;
+ if (!active) return <span className="ml-1 text-tertiary">&#8597;</span>;
  return <span className="ml-1 text-stone-blue">{dir === "asc" ? "\u2191" : "\u2193"}</span>;
 }
 
@@ -708,7 +708,7 @@ export default function QueuePage() {
  <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
  <div>
  <h2 className="font-display text-2xl text-slate-tile">PM Queue</h2>
- <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
+ <p className="text-sm text-tertiary mt-1">
  {isFiltered
  ? `Showing ${filtered.length} of ${invoices.length} invoice${invoices.length !== 1 ? "s" : ""}`
  : `${filtered.length} invoice${filtered.length !== 1 ? "s" : ""} pending PM review`}
@@ -733,7 +733,7 @@ export default function QueuePage() {
  {/* Search */}
  <div className="relative flex-1">
  <svg
- className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgba(59,88,100,0.55)]"
+ className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary"
  fill="none"
  viewBox="0 0 24 24"
  stroke="currentColor"
@@ -750,12 +750,12 @@ export default function QueuePage() {
  value={search}
  onChange={(e) => setSearch(e.target.value)}
  placeholder="Search vendor or invoice #..."
- className="w-full pl-9 pr-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none"
+ className="w-full pl-9 pr-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none"
  />
  {search && (
  <button
  onClick={() => setSearch("")}
- className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+ className="absolute right-3 top-1/2 -translate-y-1/2 text-tertiary hover:text-slate-tile"
  >
  <svg
  className="w-4 h-4"
@@ -778,7 +778,7 @@ export default function QueuePage() {
  <select
  value={jobFilter}
  onChange={(e) => setJobFilter(e.target.value)}
- className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-48"
+ className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-48"
  >
  <option value="">All Jobs</option>
  {jobNames.map((name) => (
@@ -792,7 +792,7 @@ export default function QueuePage() {
  <select
  value={pmFilter}
  onChange={(e) => setPmFilter(e.target.value)}
- className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-48"
+ className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-48"
  >
  <option value="">All PMs</option>
  <option value="__unassigned__">Unassigned</option>
@@ -809,7 +809,7 @@ export default function QueuePage() {
  onChange={(e) =>
  setConfidenceFilter(e.target.value as ConfidenceFilter)
  }
- className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-40"
+ className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-40"
  >
  <option value="all">All Confidence</option>
  <option value="high">High (&ge;85%)</option>
@@ -823,7 +823,7 @@ export default function QueuePage() {
  <div className="flex items-center gap-3">
  <button
  onClick={() => setShowMoreFilters((v) => !v)}
- className="flex items-center gap-1.5 px-3 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors"
+ className="flex items-center gap-1.5 px-3 py-2 text-sm text-tertiary hover:text-slate-tile border border-border-def hover:border-border-def-light transition-colors"
  >
  <svg
  className={`w-4 h-4 transition-transform ${showMoreFilters ? "rotate-180" : ""}`}
@@ -850,7 +850,7 @@ export default function QueuePage() {
  {isFiltered && (
  <button
  onClick={clearAllFilters}
- className="px-3 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors whitespace-nowrap"
+ className="px-3 py-2 text-sm text-tertiary hover:text-slate-tile border border-border-def hover:border-border-def-light transition-colors whitespace-nowrap"
  >
  Clear filters
  </button>
@@ -865,7 +865,7 @@ export default function QueuePage() {
  onChange={(e) =>
  setStatusFilter(e.target.value as StatusFilter)
  }
- className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-44"
+ className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-44"
  >
  <option value="pending">Pending Review</option>
  <option value="needs_attention">Needs Attention</option>
@@ -882,7 +882,7 @@ export default function QueuePage() {
  onChange={(e) =>
  setAmountRange(e.target.value as AmountRange)
  }
- className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-40"
+ className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-40"
  >
  <option value="all">All Amounts</option>
  <option value="0-5k">$0 - $5K</option>
@@ -893,27 +893,27 @@ export default function QueuePage() {
 
  {/* Date range start */}
  <div className="flex items-center gap-2">
- <label className="text-xs text-[rgba(59,88,100,0.55)] whitespace-nowrap">
+ <label className="text-xs text-tertiary whitespace-nowrap">
  From
  </label>
  <input
  type="date"
  value={dateStart}
  onChange={(e) => setDateStart(e.target.value)}
- className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+ className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
  />
  </div>
 
  {/* Date range end */}
  <div className="flex items-center gap-2">
- <label className="text-xs text-[rgba(59,88,100,0.55)] whitespace-nowrap">
+ <label className="text-xs text-tertiary whitespace-nowrap">
  To
  </label>
  <input
  type="date"
  value={dateEnd}
  onChange={(e) => setDateEnd(e.target.value)}
- className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+ className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
  />
  </div>
  </div>
@@ -923,7 +923,7 @@ export default function QueuePage() {
  {/* No results after filtering */}
  {filtered.length === 0 && (
  <div className="text-center py-16 animate-fade-up">
- <p className="text-[rgba(59,88,100,0.70)] text-sm">
+ <p className="text-secondary text-sm">
  No invoices match your filters
  </p>
  <button
@@ -942,7 +942,7 @@ export default function QueuePage() {
  {filtered.map((inv, i) => (
  <div
  key={inv.id}
- className={`bg-white border p-4 cursor-pointer active:opacity-80 transition-all duration-300 animate-fade-up ${selectedIds.has(inv.id) ? "border-stone-blue/60 bg-slate-deep/5" : "border-[rgba(59,88,100,0.15)]"} ${animatingOutIds.has(inv.id) ? "opacity-0 scale-95" : ""}`}
+ className={`bg-white border p-4 cursor-pointer active:opacity-80 transition-all duration-300 animate-fade-up ${selectedIds.has(inv.id) ? "border-stone-blue/60 bg-slate-deep/5" : "border-border-def"} ${animatingOutIds.has(inv.id) ? "opacity-0 scale-95" : ""}`}
  style={{ animationDelay: `${0.05 + i * 0.03}s` }}
  onClick={() =>
  (window.location.href = `/invoices/${inv.id}`)
@@ -952,7 +952,7 @@ export default function QueuePage() {
  <span className="text-slate-tile font-medium text-base inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-[rgba(59,88,100,0.55)] border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-tertiary border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
  )}
  </span>
  <div className="flex items-center gap-2">
@@ -984,7 +984,7 @@ export default function QueuePage() {
  ) : inv.document_category === "overhead" ? (
  <OverheadBadge />
  ) : (
- <span className="text-[rgba(59,88,100,0.55)] text-xs">
+ <span className="text-tertiary text-xs">
  Unmatched
  </span>
  )}
@@ -1003,7 +1003,7 @@ export default function QueuePage() {
  else if (d >= 30) badge = { label: "30d+", style: { backgroundColor: "#EAB308", color: "#1F2937", borderColor: "#CA8A04" } };
  return (
  <>
- <span className={`text-sm font-medium ${d > 5 ? "text-nw-danger" : d > 2 ? "text-nw-warn" : "text-[rgba(59,88,100,0.55)]"}`}>
+ <span className={`text-sm font-medium ${d > 5 ? "text-nw-danger" : d > 2 ? "text-nw-warn" : "text-tertiary"}`}>
  {d}d
  </span>
  {badge && (
@@ -1017,8 +1017,8 @@ export default function QueuePage() {
  </div>
  </div>
  {/* PM name + invoice details */}
- <div className="flex items-center gap-2 mt-2 text-xs text-[rgba(59,88,100,0.70)]">
- <span className={inv.assigned_pm ? "text-[rgba(59,88,100,0.70)]" : "text-[rgba(59,88,100,0.55)]"}>
+ <div className="flex items-center gap-2 mt-2 text-xs text-secondary">
+ <span className={inv.assigned_pm ? "text-secondary" : "text-tertiary"}>
  {inv.assigned_pm?.full_name ?? "Unassigned"}
  </span>
  {(inv.invoice_number || inv.invoice_date) && (
@@ -1067,13 +1067,13 @@ export default function QueuePage() {
  )}
  {/* Quick Approve — mobile card */}
  {isQuickApproveEligible(inv) && (
- <div className="mt-3 pt-3 border-t border-[rgba(59,88,100,0.15)]/60">
+ <div className="mt-3 pt-3 border-t border-border-def/60">
  {quickApproveConfirmId === inv.id ? (
  <div
  className="flex items-center justify-between gap-2"
  onClick={(e) => e.stopPropagation()}
  >
- <span className="text-xs text-[rgba(59,88,100,0.55)] truncate">
+ <span className="text-xs text-tertiary truncate">
  Approve {inv.vendor_name_raw ?? "invoice"} {formatCents(inv.total_amount)}
  {inv.jobs?.name ? ` to ${inv.jobs.name}` : ""}?
  </span>
@@ -1086,7 +1086,7 @@ export default function QueuePage() {
  }}
  disabled={quickApproveProcessingId === inv.id}
  aria-label="Cancel quick approve"
- className="px-2 py-1 text-sm text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]"
+ className="px-2 py-1 text-sm text-tertiary border border-border-def"
  >
  &#10007;
  </button>
@@ -1123,10 +1123,10 @@ export default function QueuePage() {
  </div>
 
  {/* Desktop table layout */}
- <div className={`hidden md:block overflow-x-auto border border-[rgba(59,88,100,0.15)] animate-fade-up ${selectedIds.size > 0 ? "mb-20" : ""}`}>
+ <div className={`hidden md:block overflow-x-auto border border-border-def animate-fade-up ${selectedIds.size > 0 ? "mb-20" : ""}`}>
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+ <tr className="bg-bg-sub text-left">
  {batchEnabled && (
  <th className="py-3 px-3 w-10">
  <input
@@ -1212,7 +1212,7 @@ export default function QueuePage() {
  {filtered.map((inv) => (
  <tr
  key={inv.id}
- className={`border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 cursor-pointer transition-all duration-300 ${selectedIds.has(inv.id) ? "bg-slate-deep/5" : ""} ${animatingOutIds.has(inv.id) ? "opacity-0" : ""}`}
+ className={`border-t border-border-sub hover:bg-brand-elevated/50 cursor-pointer transition-all duration-300 ${selectedIds.has(inv.id) ? "bg-slate-deep/5" : ""} ${animatingOutIds.has(inv.id) ? "opacity-0" : ""}`}
  onClick={() =>
  (window.location.href = `/invoices/${inv.id}`)
  }
@@ -1232,7 +1232,7 @@ export default function QueuePage() {
  <td className="py-4 px-5 text-slate-tile font-medium">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-[rgba(59,88,100,0.55)] border border-cream-dim/40 text-[10px] font-medium uppercase tracking-wide">Receipt</span>
+ <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-tertiary border border-cream-dim/40 text-[10px] font-medium uppercase tracking-wide">Receipt</span>
  )}
  {inv.status === "pm_held" && (
  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-nw-warn border border-nw-warn text-[10px] font-medium">
@@ -1256,12 +1256,12 @@ export default function QueuePage() {
  )}
  <MissingDataBadges inv={inv} />
  </td>
- <td className="py-4 px-5 text-[rgba(59,88,100,0.70)] font-mono text-xs">
+ <td className="py-4 px-5 text-secondary font-mono text-xs">
  {inv.invoice_number ?? (
  <span className="text-nw-danger">No #</span>
  )}
  </td>
- <td className="py-4 px-5 text-[rgba(59,88,100,0.70)]">
+ <td className="py-4 px-5 text-secondary">
  {inv.invoice_date ? (
  formatDate(inv.invoice_date)
  ) : (
@@ -1276,15 +1276,15 @@ export default function QueuePage() {
  ) : inv.document_category === "overhead" ? (
  <OverheadBadge />
  ) : (
- <span className="text-[rgba(59,88,100,0.55)]">Unmatched</span>
+ <span className="text-tertiary">Unmatched</span>
  )}
  </td>
  <td className="py-4 px-5">
  <span
  className={
  inv.assigned_pm
- ? "text-[rgba(59,88,100,0.70)] text-sm"
- : "text-[rgba(59,88,100,0.55)] text-sm"
+ ? "text-secondary text-sm"
+ : "text-tertiary text-sm"
  }
  >
  {inv.assigned_pm?.full_name ?? "Unassigned"}
@@ -1309,7 +1309,7 @@ export default function QueuePage() {
  else if (d >= 30) badge = { label: "30d+", style: { backgroundColor: "#EAB308", color: "#1F2937", borderColor: "#CA8A04" } };
  return (
  <div className="flex items-center justify-end gap-1.5">
- <span className={`text-sm font-medium ${d > 5 ? "text-nw-danger" : d > 2 ? "text-nw-warn" : "text-[rgba(59,88,100,0.55)]"}`}>
+ <span className={`text-sm font-medium ${d > 5 ? "text-nw-danger" : d > 2 ? "text-nw-warn" : "text-tertiary"}`}>
  {d}d
  </span>
  {badge && (
@@ -1330,7 +1330,7 @@ export default function QueuePage() {
  type="button"
  onClick={() => setQuickApproveConfirmId(null)}
  disabled={quickApproveProcessingId === inv.id}
- className="px-2 py-1 text-sm text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)] hover:text-slate-tile"
+ className="px-2 py-1 text-sm text-tertiary border border-border-def hover:text-slate-tile"
  aria-label="Cancel quick approve"
  >
  &#10007;
@@ -1368,18 +1368,18 @@ export default function QueuePage() {
  )}
  {/* Floating batch action bar */}
  {batchEnabled && selectedIds.size > 0 && (
- <div className="fixed bottom-0 left-0 right-0 z-50 bg-[rgba(91,134,153,0.06)]/95 backdrop-blur-sm border-t border-[rgba(59,88,100,0.15)] px-4 py-3 animate-fade-up">
+ <div className="fixed bottom-0 left-0 right-0 z-50 bg-bg-sub/95 backdrop-blur-sm border-t border-border-def px-4 py-3 animate-fade-up">
  <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
  <div className="flex items-baseline justify-between sm:justify-start gap-3">
  <span className="text-sm text-slate-tile font-medium">
  {selectedIds.size} selected
  </span>
- <span className="text-xs text-[rgba(59,88,100,0.55)]">
+ <span className="text-xs text-tertiary">
  Total: <span className="text-slate-tile font-medium font-display">{formatCents(selectedTotalCents)}</span>
  </span>
  <button
  onClick={() => setSelectedIds(new Set())}
- className="sm:hidden text-xs text-[rgba(59,88,100,0.55)] hover:text-slate-tile underline underline-offset-2"
+ className="sm:hidden text-xs text-tertiary hover:text-slate-tile underline underline-offset-2"
  >
  Clear
  </button>
@@ -1387,7 +1387,7 @@ export default function QueuePage() {
  <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-2">
  <button
  onClick={() => setSelectedIds(new Set())}
- className="hidden sm:inline-flex px-3 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors items-center justify-center"
+ className="hidden sm:inline-flex px-3 py-2 text-sm text-tertiary hover:text-slate-tile border border-border-def hover:border-border-def-light transition-colors items-center justify-center"
  >
  Clear Selection
  </button>
@@ -1431,22 +1431,22 @@ export default function QueuePage() {
  {/* Hold Note Modal */}
  {showHoldNoteModal && (
  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-md animate-fade-up">
+ <div className="bg-white border border-border-def p-6 w-full max-w-md animate-fade-up">
  <h3 className="font-display text-lg text-slate-tile mb-1">Batch Hold</h3>
- <p className="text-sm text-[rgba(59,88,100,0.55)] mb-4">
+ <p className="text-sm text-tertiary mb-4">
  Hold {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""}. Add a note explaining why.
  </p>
  <textarea
  value={holdNote}
  onChange={(e) => setHoldNote(e.target.value)}
  placeholder="Add a note (required)..."
- className="w-full h-24 px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none"
+ className="w-full h-24 px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none"
  autoFocus
  />
  <div className="flex gap-2 mt-4">
  <button
  onClick={() => setShowHoldNoteModal(false)}
- className="flex-1 px-4 py-2.5 text-sm text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)] hover:text-slate-tile hover:border-[rgba(59,88,100,0.15)]-light transition-colors"
+ className="flex-1 px-4 py-2.5 text-sm text-tertiary border border-border-def hover:text-slate-tile hover:border-border-def-light transition-colors"
  >
  Cancel
  </button>
@@ -1465,22 +1465,22 @@ export default function QueuePage() {
  {/* Deny Note Modal */}
  {showDenyNoteModal && (
  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-md animate-fade-up">
+ <div className="bg-white border border-border-def p-6 w-full max-w-md animate-fade-up">
  <h3 className="font-display text-lg text-slate-tile mb-1">Batch Deny</h3>
- <p className="text-sm text-[rgba(59,88,100,0.55)] mb-4">
+ <p className="text-sm text-tertiary mb-4">
  Deny {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""}. A reason is required and will apply to each.
  </p>
  <textarea
  value={denyNote}
  onChange={(e) => setDenyNote(e.target.value)}
  placeholder="Reason for denial (required)..."
- className="w-full h-24 px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none"
+ className="w-full h-24 px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none resize-none"
  autoFocus
  />
  <div className="flex gap-2 mt-4">
  <button
  onClick={() => setShowDenyNoteModal(false)}
- className="flex-1 px-4 py-2.5 text-sm text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)] hover:text-slate-tile hover:border-[rgba(59,88,100,0.15)]-light transition-colors"
+ className="flex-1 px-4 py-2.5 text-sm text-tertiary border border-border-def hover:text-slate-tile hover:border-border-def-light transition-colors"
  >
  Cancel
  </button>
@@ -1499,13 +1499,13 @@ export default function QueuePage() {
  {/* Approve Confirmation Modal */}
  {showApproveConfirm && (
  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
- <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6 w-full max-w-xl animate-fade-up">
+ <div className="bg-white border border-border-def p-6 w-full max-w-xl animate-fade-up">
  <h3 className="font-display text-lg text-slate-tile mb-1">
  {approvalExcluded.length === 0
  ? `Approve ${approvalEligible.length} invoice${approvalEligible.length !== 1 ? "s" : ""}?`
  : `${approvalEligible.length} of ${approvalEligible.length + approvalExcluded.length} invoices can be batch approved`}
  </h3>
- <p className="text-sm text-[rgba(59,88,100,0.55)] mb-4">
+ <p className="text-sm text-tertiary mb-4">
  {approvalEligible.length > 0 && (
  <>Total: <span className="text-slate-tile font-display font-medium">{formatCents(approvalEligible.reduce((s, i) => s + i.total_amount, 0))}</span></>
  )}
@@ -1513,14 +1513,14 @@ export default function QueuePage() {
 
  {approvalEligible.length > 0 && (
  <div className="mb-4">
- <div className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-2">Will be approved</div>
+ <div className="text-[11px] tracking-[0.08em] uppercase text-tertiary mb-2">Will be approved</div>
  <div className="max-h-48 overflow-y-auto space-y-1.5">
  {approvalEligible.map((inv) => (
- <div key={inv.id} className="flex items-center justify-between px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm">
+ <div key={inv.id} className="flex items-center justify-between px-3 py-2 bg-bg-sub border border-border-def text-sm">
  <div className="min-w-0 truncate">
  <span className="text-slate-tile">{inv.vendor_name_raw ?? "Unknown"}</span>
  {inv.jobs?.name && (
- <span className="ml-2 text-[rgba(59,88,100,0.55)] text-xs">{inv.jobs.name}</span>
+ <span className="ml-2 text-tertiary text-xs">{inv.jobs.name}</span>
  )}
  </div>
  <span className="text-slate-tile font-display ml-2 shrink-0">{formatCents(inv.total_amount)}</span>
@@ -1540,7 +1540,7 @@ export default function QueuePage() {
  <div key={invoice.id} className="px-3 py-2 bg-nw-danger-muted border border-nw-danger/40 text-sm">
  <div className="flex items-center justify-between gap-2">
  <span className="text-slate-tile truncate">{invoice.vendor_name_raw ?? "Unknown"}</span>
- <span className="text-[rgba(59,88,100,0.55)] font-display text-xs shrink-0">{formatCents(invoice.total_amount)}</span>
+ <span className="text-tertiary font-display text-xs shrink-0">{formatCents(invoice.total_amount)}</span>
  </div>
  <div className="text-xs text-nw-danger mt-1">
  {reasons.join(" · ")}
@@ -1548,7 +1548,7 @@ export default function QueuePage() {
  </div>
  ))}
  </div>
- <p className="text-xs text-[rgba(59,88,100,0.55)] mt-2">
+ <p className="text-xs text-tertiary mt-2">
  Open these invoices individually to fix the issues, then try again.
  </p>
  </div>
@@ -1557,7 +1557,7 @@ export default function QueuePage() {
  <div className="flex gap-2 mt-4">
  <button
  onClick={() => setShowApproveConfirm(false)}
- className="flex-1 px-4 py-2.5 text-sm text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)] hover:text-slate-tile hover:border-[rgba(59,88,100,0.15)]-light transition-colors"
+ className="flex-1 px-4 py-2.5 text-sm text-tertiary border border-border-def hover:text-slate-tile hover:border-border-def-light transition-colors"
  >
  Cancel
  </button>

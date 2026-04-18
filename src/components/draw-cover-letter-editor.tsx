@@ -91,10 +91,10 @@ export default function DrawCoverLetterEditor({
 
   return (
     <div className="space-y-4 animate-fade-up">
-      <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="bg-white border border-border-def p-4 flex items-center justify-between gap-3 flex-wrap">
         <div>
           <p className="font-display text-slate-tile">Cover Letter</p>
-          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">
+          <p className="text-xs text-tertiary mt-0.5">
             {generated
               ? "Generated from template — edit below to customize."
               : "Custom edit saved for this draw."}{" "}
@@ -108,7 +108,7 @@ export default function DrawCoverLetterEditor({
           <button
             onClick={regenerate}
             disabled={busy || saving}
-            className="px-3 py-1.5 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)] hover:text-slate-tile text-xs"
+            className="px-3 py-1.5 border border-border-def text-tertiary hover:text-slate-tile text-xs"
           >
             {busy ? "Regenerating…" : "Regenerate from template"}
           </button>
@@ -127,10 +127,10 @@ export default function DrawCoverLetterEditor({
         onChange={(e) => setBody(e.target.value)}
         rows={22}
         spellCheck
-        className="w-full px-4 py-3 bg-white border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile font-mono leading-relaxed focus:border-stone-blue focus:outline-none whitespace-pre-wrap"
+        className="w-full px-4 py-3 bg-white border border-border-def text-sm text-slate-tile font-mono leading-relaxed focus:border-stone-blue focus:outline-none whitespace-pre-wrap"
       />
 
-      <p className="text-xs text-[rgba(59,88,100,0.55)]">
+      <p className="text-xs text-tertiary">
         Tip: edit the template at <a href="/settings/workflow" className="text-stone-blue hover:underline">Settings → Workflow</a> to change the default for all future draws.
       </p>
     </div>

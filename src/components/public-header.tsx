@@ -3,7 +3,7 @@ import { PUBLIC_APP_NAME } from "@/lib/org/public";
 
 export default function PublicHeader() {
   return (
-    <header className="border-b border-[rgba(59,88,100,0.15)] bg-white/90 backdrop-blur-sm sticky top-0 z-40">
+    <header className="border-b border-border-def bg-white/90 backdrop-blur-sm sticky top-0 z-40">
       <div className="max-w-[1200px] mx-auto px-6 py-3 flex items-center justify-between">
         <Link href="/" className="font-display text-lg tracking-[0.12em] uppercase text-slate-tile">
           {PUBLIC_APP_NAME}
@@ -11,13 +11,13 @@ export default function PublicHeader() {
         <nav className="flex items-center gap-2">
           <Link
             href="/pricing"
-            className="hidden sm:inline-block px-3 py-1.5 text-[13px] text-[rgba(59,88,100,0.70)] hover:text-slate-tile"
+            className="hidden sm:inline-block px-3 py-1.5 text-[13px] text-secondary hover:text-slate-tile"
           >
             Pricing
           </Link>
           <Link
             href="/login"
-            className="px-3 py-1.5 text-[13px] text-[rgba(59,88,100,0.70)] hover:text-slate-tile"
+            className="px-3 py-1.5 text-[13px] text-secondary hover:text-slate-tile"
           >
             Sign In
           </Link>

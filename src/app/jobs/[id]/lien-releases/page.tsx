@@ -136,7 +136,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
           ]}
         />
         <h2 className="font-display text-2xl text-slate-tile mb-2">{job?.name} — Lien Releases</h2>
-        <p className="text-sm text-[rgba(59,88,100,0.55)] mb-6">
+        <p className="text-sm text-tertiary mb-6">
           Track conditional and unconditional waivers for every vendor on every draw.
         </p>
         <JobTabs jobId={params.id} active="draws" />
@@ -154,7 +154,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               <select
                 value={drawFilter}
                 onChange={(e) => setDrawFilter(e.target.value)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="">All Draws</option>
                 {draws.map((d) => (
@@ -167,7 +167,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               <select
                 value={vendorFilter}
                 onChange={(e) => setVendorFilter(e.target.value)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="">All Vendors</option>
                 {vendors.map((v) => (
@@ -179,7 +179,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as (typeof STATUSES)[number])}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -199,24 +199,24 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               <button
                 onClick={() => bulk("waive")}
                 disabled={pendingIds.length === 0 || bulkBusy}
-                className="px-3 py-2 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)] hover:text-slate-tile disabled:opacity-40 text-sm font-medium transition-colors"
+                className="px-3 py-2 border border-border-def text-tertiary hover:text-slate-tile disabled:opacity-40 text-sm font-medium transition-colors"
               >
                 Waive {pendingIds.length}
               </button>
             </div>
 
             {filtered.length === 0 ? (
-              <div className="border border-[rgba(59,88,100,0.15)] p-10 text-center">
+              <div className="border border-border-def p-10 text-center">
                 <p className="text-slate-tile font-display">No lien releases yet</p>
-                <p className="text-[rgba(59,88,100,0.55)] text-sm mt-1">
+                <p className="text-tertiary text-sm mt-1">
                   They auto-generate when a draw is submitted for approval.
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+              <div className="overflow-x-auto border border-border-def">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+                    <tr className="bg-bg-sub text-left">
                       <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Vendor</th>
                       <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Draw</th>
                       <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Type</th>
@@ -230,12 +230,12 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
                   </thead>
                   <tbody>
                     {filtered.map((r) => (
-                      <tr key={r.id} className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/30 transition-colors">
+                      <tr key={r.id} className="border-t border-border-sub hover:bg-brand-elevated/30 transition-colors">
                         <td className="py-3 px-4 text-slate-tile">{r.vendors?.name ?? "—"}</td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)]">
+                        <td className="py-3 px-4 text-secondary">
                           {r.draws ? `Draw #${r.draws.draw_number}${r.draws.revision_number > 0 ? ` Rev ${r.draws.revision_number}` : ""}` : "—"}
                         </td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{humanType(r.release_type)}</td>
+                        <td className="py-3 px-4 text-secondary text-xs">{humanType(r.release_type)}</td>
                         <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                           {r.amount != null ? formatCents(r.amount) : "—"}
                         </td>
@@ -247,8 +247,8 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
                         <td className="py-3 px-4">
                           <PaymentStatusBadge summary={r.payment_summary} />
                         </td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(r.through_date)}</td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">
+                        <td className="py-3 px-4 text-secondary text-xs">{formatDate(r.through_date)}</td>
+                        <td className="py-3 px-4 text-secondary text-xs">
                           {r.document_url ? (
                             <span className="inline-flex items-center gap-1.5">
                               <svg className="w-3.5 h-3.5 text-nw-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -319,9 +319,9 @@ function EditModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={onClose}>
-      <div className="bg-white border border-[rgba(59,88,100,0.15)] max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white border border-border-def max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
         <h3 className="font-display text-lg text-slate-tile mb-1">Edit Lien Release</h3>
-        <p className="text-sm text-[rgba(59,88,100,0.55)] mb-4">
+        <p className="text-sm text-tertiary mb-4">
           {release.vendors?.name ?? "Vendor"} — {release.draws ? `Draw #${release.draws.draw_number}` : "—"}
         </p>
         <div className="space-y-3">
@@ -386,7 +386,7 @@ function EditModal({
           </Field>
         </div>
         <div className="mt-5 flex items-center justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-[rgba(59,88,100,0.55)] hover:text-slate-tile text-sm">
+          <button onClick={onClose} className="px-4 py-2 text-tertiary hover:text-slate-tile text-sm">
             Cancel
           </button>
           <button
@@ -428,7 +428,7 @@ function EditModal({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-1 block">{label}</span>
+      <span className="text-[11px] font-medium text-tertiary uppercase tracking-wider mb-1 block">{label}</span>
       {children}
     </label>
   );
@@ -448,7 +448,7 @@ function humanStatus(s: string): string {
 function badgeFor(status: string): string {
   if (status === "received") return "bg-transparent text-nw-success border border-nw-success";
   if (status === "pending") return "bg-transparent text-nw-warn border border-nw-warn";
-  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
+  return "bg-transparent text-tertiary border border-border-def-light";
 }
 
 function PaymentStatusBadge({
@@ -457,7 +457,7 @@ function PaymentStatusBadge({
   summary: LienRelease["payment_summary"];
 }) {
   if (!summary || summary.total_count === 0) {
-    return <span className="text-[rgba(59,88,100,0.55)] text-xs">—</span>;
+    return <span className="text-tertiary text-xs">—</span>;
   }
   const { paid_count, total_count } = summary;
   if (paid_count === total_count) {
@@ -469,7 +469,7 @@ function PaymentStatusBadge({
   }
   if (paid_count === 0) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-[rgba(59,88,100,0.15)]-light text-[rgba(59,88,100,0.55)]">
+      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-border-def-light text-tertiary">
         Unpaid 0/{total_count}
       </span>
     );

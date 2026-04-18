@@ -130,10 +130,10 @@ export default function GettingStartedChecklist() {
   }
 
   return (
-    <aside className="w-full max-w-[420px] mx-auto mt-8 mb-0 text-left border border-[rgba(59,88,100,0.15)] bg-white p-5">
+    <aside className="w-full max-w-[420px] mx-auto mt-8 mb-0 text-left border border-border-def bg-white p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <p className="text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">Getting Started</p>
+          <p className="text-[10px] tracking-[0.12em] uppercase text-tertiary">Getting Started</p>
           <h2 className="font-display text-lg text-slate-tile mt-0.5">
             {done} of {total} complete
           </h2>
@@ -141,21 +141,21 @@ export default function GettingStartedChecklist() {
         <button
           type="button"
           onClick={dismiss}
-          className="text-xs text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+          className="text-xs text-tertiary hover:text-slate-tile"
           title="Hide checklist"
         >
           Hide
         </button>
       </div>
-      <div className="h-1 w-full bg-[rgba(91,134,153,0.06)] mb-4">
+      <div className="h-1 w-full bg-bg-sub mb-4">
         <div
           className="h-full bg-slate-deep transition-all"
           style={{ width: `${(done / total) * 100}%` }}
         />
       </div>
       {done === 0 && !sampleLoaded && (
-        <div className="mb-4 pb-4 border-b border-[rgba(59,88,100,0.15)]">
-          <p className="text-xs text-[rgba(59,88,100,0.70)] mb-2">
+        <div className="mb-4 pb-4 border-b border-border-def">
+          <p className="text-xs text-secondary mb-2">
             Want to see how it works? Load a demo project with realistic data.
           </p>
           <button
@@ -172,7 +172,7 @@ export default function GettingStartedChecklist() {
         </div>
       )}
       {sampleLoaded && (
-        <div className="mb-4 pb-4 border-b border-[rgba(59,88,100,0.15)]">
+        <div className="mb-4 pb-4 border-b border-border-def">
           <p className="text-xs text-nw-success">
             Sample project loaded! Refresh the page to see it in your dashboard.
           </p>
@@ -183,13 +183,13 @@ export default function GettingStartedChecklist() {
           <li key={it.label}>
             <Link
               href={it.href}
-              className={`flex items-center gap-3 px-2 py-1.5 text-sm hover:bg-[rgba(91,134,153,0.06)] ${
-                it.done ? "text-[rgba(59,88,100,0.55)] line-through" : "text-slate-tile"
+              className={`flex items-center gap-3 px-2 py-1.5 text-sm hover:bg-bg-sub ${
+                it.done ? "text-tertiary line-through" : "text-slate-tile"
               }`}
             >
               <span
                 className={`w-4 h-4 flex items-center justify-center text-[10px] border ${
-                  it.done ? "bg-slate-deep border-stone-blue text-white" : "border-[rgba(59,88,100,0.15)]"
+                  it.done ? "bg-slate-deep border-stone-blue text-white" : "border-border-def"
                 }`}
               >
                 {it.done ? "✓" : ""}

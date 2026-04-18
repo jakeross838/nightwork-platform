@@ -92,7 +92,7 @@ export default function EditableCell({
         title="Tap to edit (or double-click)"
       >
         <span className="tabular-nums pr-4">{format(value)}</span>
-        <span className="absolute right-1 top-1/2 -translate-y-1/2 opacity-100 md:opacity-0 md:group-hover:opacity-100 text-[rgba(59,88,100,0.55)] pointer-events-none">
+        <span className="absolute right-1 top-1/2 -translate-y-1/2 opacity-100 md:opacity-0 md:group-hover:opacity-100 text-tertiary pointer-events-none">
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 013.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>
@@ -128,7 +128,7 @@ export default function EditableCell({
         disabled={busy}
         placeholder={placeholder}
         aria-label={ariaLabel ?? "Cell input"}
-        className={`px-1 py-0.5 text-[13px] bg-[rgba(91,134,153,0.06)] border border-stone-blue text-slate-tile focus:outline-none focus:ring-1 focus:ring-teal tabular-nums ${
+        className={`px-1 py-0.5 text-[13px] bg-bg-sub border border-stone-blue text-slate-tile focus:outline-none focus:ring-1 focus:ring-teal tabular-nums ${
           alignRight ? "text-right" : "text-left"
         } w-full`}
       />

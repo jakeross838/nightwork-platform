@@ -55,7 +55,7 @@ export default function AdminSidebar({ role }: { role: Role }) {
           if (visible.length === 0) return null;
           return (
             <div key={group.title}>
-              <p className="text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)] mb-2 px-3">
+              <p className="text-[10px] tracking-[0.12em] uppercase text-tertiary mb-2 px-3">
                 {group.title}
               </p>
               <ul className="space-y-0.5">
@@ -67,8 +67,8 @@ export default function AdminSidebar({ role }: { role: Role }) {
                         href={item.href}
                         className={`block px-3 py-1.5 text-sm transition-colors ${
                           active
-                            ? "text-slate-tile font-medium bg-[rgba(91,134,153,0.06)] border-l-2 border-stone-blue"
-                            : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile hover:bg-[rgba(91,134,153,0.06)]/50"
+                            ? "text-slate-tile font-medium bg-bg-sub border-l-2 border-stone-blue"
+                            : "text-tertiary hover:text-slate-tile hover:bg-bg-sub/50"
                         }`}
                       >
                         {item.label}
@@ -91,7 +91,7 @@ export function AdminMobileNav({ role }: { role: Role }) {
 
   return (
     <nav
-      className="flex gap-1 md:hidden overflow-x-auto -mx-4 px-4 whitespace-nowrap border-b border-[rgba(59,88,100,0.15)] mb-4"
+      className="flex gap-1 md:hidden overflow-x-auto -mx-4 px-4 whitespace-nowrap border-b border-border-def mb-4"
       aria-label="Admin sections"
     >
       {allItems.map((item) => {
@@ -103,7 +103,7 @@ export function AdminMobileNav({ role }: { role: Role }) {
             className={`shrink-0 px-3 py-2 text-xs tracking-[0.04em] transition-colors border-b-2 -mb-px ${
               active
                 ? "border-stone-blue text-slate-tile font-medium"
-                : "border-transparent text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+                : "border-transparent text-tertiary hover:text-slate-tile"
             }`}
           >
             {item.label}

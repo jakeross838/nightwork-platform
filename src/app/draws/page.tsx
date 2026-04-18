@@ -60,7 +60,7 @@ export default function DrawsPage() {
  <div className="flex items-center justify-between mb-6">
  <div>
  <h2 className="font-display text-2xl text-slate-tile">Draws</h2>
- <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">AIA G702/G703 pay applications</p>
+ <p className="text-sm text-tertiary mt-1">AIA G702/G703 pay applications</p>
  </div>
  <Link href="/draws/new"
  className="px-4 py-2 bg-slate-deep hover:bg-slate-deeper text-brand-bg text-sm font-medium transition-colors">
@@ -85,12 +85,12 @@ export default function DrawsPage() {
  <span className="inline-flex items-center px-2.5 py-0.5 bg-transparent text-nw-warn border border-nw-warn text-sm font-medium">
  {job?.name ?? "Unknown Job"}
  </span>
- <span className="text-xs text-[rgba(59,88,100,0.55)]">{job?.address}</span>
+ <span className="text-xs text-tertiary">{job?.address}</span>
  </div>
- <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+ <div className="overflow-x-auto border border-border-def">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+ <tr className="bg-bg-sub text-left">
  <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Draw #</th>
  <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Period</th>
  <th className="py-3 px-5 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Application Date</th>
@@ -101,14 +101,14 @@ export default function DrawsPage() {
  <tbody>
  {jobDraws.map((d) => (
  <tr key={d.id}
- className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+ className="border-t border-border-sub hover:bg-brand-elevated/50 cursor-pointer transition-colors"
  onClick={() => window.location.href = `/draws/${d.id}`}>
  <td className="py-4 px-5 text-slate-tile font-display font-medium">
  #{d.draw_number}
  {d.revision_number > 0 && <span className="text-nw-warn ml-1 text-xs">Rev {d.revision_number}</span>}
  </td>
- <td className="py-4 px-5 text-[rgba(59,88,100,0.70)]">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
- <td className="py-4 px-5 text-[rgba(59,88,100,0.70)]">{formatDate(d.application_date)}</td>
+ <td className="py-4 px-5 text-secondary">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
+ <td className="py-4 px-5 text-secondary">{formatDate(d.application_date)}</td>
  <td className="py-4 px-5">
  <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${drawBadgeOutline(d.status)}`}>
  {formatStatus(d.status)}

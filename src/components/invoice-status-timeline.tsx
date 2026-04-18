@@ -115,9 +115,9 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
   }, [history]);
 
   return (
-    <div className="border border-[rgba(59,88,100,0.15)] bg-white p-4">
+    <div className="border border-border-def bg-white p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider brass-underline">
+        <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider brass-underline">
           Status Timeline
         </p>
       </div>
@@ -133,7 +133,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                   className={`absolute top-[11px] left-0 right-1/2 h-px ${
                     stage.isPast || stage.isCurrent
                       ? "bg-slate-deep"
-                      : "border-t border-dashed border-[rgba(59,88,100,0.15)]"
+                      : "border-t border-dashed border-border-def"
                   }`}
                   style={
                     !stage.isPast && !stage.isCurrent
@@ -148,7 +148,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                   className={`absolute top-[11px] left-1/2 right-0 h-px ${
                     stage.isPast
                       ? "bg-slate-deep"
-                      : "border-t border-dashed border-[rgba(59,88,100,0.15)]"
+                      : "border-t border-dashed border-border-def"
                   }`}
                   style={
                     !stage.isPast
@@ -158,10 +158,10 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                 />
               )}
               <TimelineDot stage={stage} userNames={userNames} />
-              <div className="mt-2 text-[10px] text-center text-[rgba(59,88,100,0.55)] leading-tight px-1">
+              <div className="mt-2 text-[10px] text-center text-tertiary leading-tight px-1">
                 {stage.label}
                 {stage.entry?.when ? (
-                  <div className="mt-0.5 text-[9px] text-[rgba(59,88,100,0.55)]/70">
+                  <div className="mt-0.5 text-[9px] text-tertiary/70">
                     {formatDateTime(String(stage.entry.when))}
                   </div>
                 ) : null}
@@ -172,7 +172,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
 
         {/* Branch indicators */}
         {branches.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-[rgba(59,88,100,0.15)] flex flex-wrap gap-2">
+          <div className="mt-4 pt-3 border-t border-border-def flex flex-wrap gap-2">
             {branches.map((b, i) => {
               const ns = String(b.new_status ?? "");
               const color = BRANCH_COLORS[ns] ?? "bg-brand-border";
@@ -199,7 +199,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
               {i < stages.length - 1 && (
                 <div
                   className={`absolute left-[7px] top-4 bottom-0 w-px ${
-                    stage.isPast ? "bg-slate-deep" : "border-l border-dashed border-[rgba(59,88,100,0.15)]"
+                    stage.isPast ? "bg-slate-deep" : "border-l border-dashed border-border-def"
                   }`}
                   style={
                     !stage.isPast
@@ -212,17 +212,17 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                 <TimelineDot stage={stage} userNames={userNames} />
               </div>
               <div className="text-xs">
-                <p className={`font-medium ${stage.isCurrent ? "text-slate-tile" : stage.isPast ? "text-[rgba(59,88,100,0.70)]" : "text-[rgba(59,88,100,0.55)]"}`}>
+                <p className={`font-medium ${stage.isCurrent ? "text-slate-tile" : stage.isPast ? "text-secondary" : "text-tertiary"}`}>
                   {stage.label}
                 </p>
                 {stage.entry?.when ? (
-                  <p className="text-[rgba(59,88,100,0.55)] text-[10px] mt-0.5">
+                  <p className="text-tertiary text-[10px] mt-0.5">
                     {formatDateTime(String(stage.entry.when))}
                     {stage.entry.who ? ` — ${formatWho(String(stage.entry.who), userNames)}` : ""}
                   </p>
                 ) : null}
                 {stage.entry?.note ? (
-                  <p className="text-[rgba(59,88,100,0.55)]/80 mt-1 italic text-[10px] leading-relaxed">
+                  <p className="text-tertiary/80 mt-1 italic text-[10px] leading-relaxed">
                     {String(stage.entry.note)}
                   </p>
                 ) : null}
@@ -231,7 +231,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
           ))}
         </div>
         {branches.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-[rgba(59,88,100,0.15)] space-y-1.5">
+          <div className="mt-3 pt-3 border-t border-border-def space-y-1.5">
             {branches.map((b, i) => {
               const ns = String(b.new_status ?? "");
               const color = BRANCH_COLORS[ns] ?? "bg-brand-border";
@@ -272,7 +272,7 @@ function TimelineDot({
     ? `${base} border-2 border-white shadow`
     : stage.isPast
       ? `${base} border border-white/80`
-      : "bg-transparent border-2 border-[rgba(59,88,100,0.15)]";
+      : "bg-transparent border-2 border-border-def";
   return (
     <div
       className="relative"
@@ -281,16 +281,16 @@ function TimelineDot({
     >
       <div className={`${size} ${fill} rounded-full z-10`} />
       {hovered && stage.entry && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 bg-white-sand/95 border border-[rgba(59,88,100,0.15)] p-2 text-[11px] text-slate-tile min-w-[180px] shadow-lg pointer-events-none">
+        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 bg-white-sand/95 border border-border-def p-2 text-[11px] text-slate-tile min-w-[180px] shadow-lg pointer-events-none">
           <p className="font-medium">{stage.label}</p>
           {stage.entry.when ? (
-            <p className="text-[rgba(59,88,100,0.55)] mt-0.5">
+            <p className="text-tertiary mt-0.5">
               {formatDateTime(String(stage.entry.when))}
               {stage.entry.who ? ` — ${formatWho(String(stage.entry.who), userNames)}` : ""}
             </p>
           ) : null}
           {stage.entry.note ? (
-            <p className="text-[rgba(59,88,100,0.55)]/80 mt-1 italic leading-relaxed">
+            <p className="text-tertiary/80 mt-1 italic leading-relaxed">
               {String(stage.entry.note)}
             </p>
           ) : null}

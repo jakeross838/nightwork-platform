@@ -441,7 +441,7 @@ export default function JobInternalBillingsPage({
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
             <h2 className="font-display text-2xl text-slate-tile">{job.name}</h2>
-            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
+            <p className="text-sm text-tertiary mt-1">
               {job.address ?? "No address"}
             </p>
           </div>
@@ -459,25 +459,25 @@ export default function JobInternalBillingsPage({
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div className="border border-[rgba(59,88,100,0.15)] bg-white p-4">
-            <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">
+          <div className="border border-border-def bg-white p-4">
+            <p className="text-[11px] uppercase tracking-wider text-tertiary font-medium">
               Total Unbilled
             </p>
             <p className="text-xl font-display text-slate-tile mt-1 tabular-nums">
               {formatCents(totalUnbilled)}
             </p>
-            <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-0.5">
+            <p className="text-[11px] text-tertiary mt-0.5">
               Draft billings not yet attached to a draw
             </p>
           </div>
-          <div className="border border-[rgba(59,88,100,0.15)] bg-white p-4">
-            <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">
+          <div className="border border-border-def bg-white p-4">
+            <p className="text-[11px] uppercase tracking-wider text-tertiary font-medium">
               Billed Total
             </p>
             <p className="text-xl font-display text-slate-tile mt-1 tabular-nums">
               {formatCents(billedTotal)}
             </p>
-            <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-0.5">
+            <p className="text-[11px] text-tertiary mt-0.5">
               Attached, billed, or paid
             </p>
           </div>
@@ -485,8 +485,8 @@ export default function JobInternalBillingsPage({
 
         {/* Add / Edit Form */}
         {showForm && (
-          <div className="border border-[rgba(59,88,100,0.15)] bg-white p-4 mb-6 space-y-4">
-            <h3 className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] font-medium">
+          <div className="border border-border-def bg-white p-4 mb-6 space-y-4">
+            <h3 className="text-[11px] tracking-[0.08em] uppercase text-tertiary font-medium">
               {editingId ? "Edit Billing" : "New Billing"}
             </h3>
 
@@ -497,13 +497,13 @@ export default function JobInternalBillingsPage({
             <div className="grid sm:grid-cols-2 gap-3">
               {/* Billing Type */}
               <label className="block">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                   Billing Type
                 </span>
                 <select
                   value={form.billing_type_id}
                   onChange={(e) => handleTypeChange(e.target.value)}
-                  className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                  className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                   disabled={saving}
                 >
                   <option value="">-- Select type --</option>
@@ -517,7 +517,7 @@ export default function JobInternalBillingsPage({
 
               {/* Cost Code */}
               <label className="block">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                   Cost Code
                 </span>
                 <select
@@ -525,7 +525,7 @@ export default function JobInternalBillingsPage({
                   onChange={(e) =>
                     setForm((p) => ({ ...p, cost_code_id: e.target.value }))
                   }
-                  className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                  className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                   disabled={saving}
                 >
                   <option value="">-- None --</option>
@@ -540,7 +540,7 @@ export default function JobInternalBillingsPage({
               {/* Adaptive fields based on calculation method */}
               {selectedType?.calculation_method === "fixed" && (
                 <label className="block">
-                  <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                  <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                     Amount ($)
                   </span>
                   <input
@@ -555,11 +555,11 @@ export default function JobInternalBillingsPage({
                       }))
                     }
                     placeholder="4000.00"
-                    className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                    className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                     disabled={saving}
                   />
                   {selectedType.default_quantity_unit && (
-                    <span className="text-[10px] text-[rgba(59,88,100,0.55)] mt-1 block">
+                    <span className="text-[10px] text-tertiary mt-1 block">
                       Unit: {selectedType.default_quantity_unit}
                     </span>
                   )}
@@ -569,7 +569,7 @@ export default function JobInternalBillingsPage({
               {selectedType?.calculation_method === "rate_x_quantity" && (
                 <>
                   <label className="block">
-                    <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                    <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                       Rate ($
                       {selectedType.default_quantity_unit
                         ? ` / ${selectedType.default_quantity_unit}`
@@ -588,12 +588,12 @@ export default function JobInternalBillingsPage({
                         }))
                       }
                       placeholder="35.00"
-                      className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                      className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                       disabled={saving}
                     />
                   </label>
                   <label className="block">
-                    <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                    <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                       Quantity
                     </span>
                     <input
@@ -605,7 +605,7 @@ export default function JobInternalBillingsPage({
                         setForm((p) => ({ ...p, quantity: e.target.value }))
                       }
                       placeholder="40"
-                      className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                      className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                       disabled={saving}
                     />
                   </label>
@@ -614,11 +614,11 @@ export default function JobInternalBillingsPage({
                     <p className="text-sm text-slate-tile tabular-nums">
                       {computedTotal != null ? (
                         <>
-                          <span className="text-[rgba(59,88,100,0.55)]">Total: </span>
+                          <span className="text-tertiary">Total: </span>
                           <span className="text-stone-blue font-medium font-display">
                             {formatCents(computedTotal)}
                           </span>
-                          <span className="text-[rgba(59,88,100,0.55)] text-xs ml-2">
+                          <span className="text-tertiary text-xs ml-2">
                             ({form.rate_dollars || "0"} x {form.quantity || "0"}
                             {selectedType.default_quantity_unit
                               ? ` ${selectedType.default_quantity_unit}s`
@@ -627,7 +627,7 @@ export default function JobInternalBillingsPage({
                           </span>
                         </>
                       ) : (
-                        <span className="text-[rgba(59,88,100,0.55)] text-xs">
+                        <span className="text-tertiary text-xs">
                           Enter rate and quantity to see total
                         </span>
                       )}
@@ -639,7 +639,7 @@ export default function JobInternalBillingsPage({
               {selectedType?.calculation_method === "percentage" && (
                 <div className="sm:col-span-2">
                   <label className="block">
-                    <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                    <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                       Percentage
                     </span>
                     <input
@@ -652,11 +652,11 @@ export default function JobInternalBillingsPage({
                         setForm((p) => ({ ...p, percentage: e.target.value }))
                       }
                       placeholder="18"
-                      className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                      className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                       disabled={saving}
                     />
                   </label>
-                  <p className="text-[10px] text-[rgba(59,88,100,0.55)] mt-1">
+                  <p className="text-[10px] text-tertiary mt-1">
                     Enter as whole number (e.g. 18 for 18%). Amount calculated
                     when attached to a draw.
                   </p>
@@ -665,7 +665,7 @@ export default function JobInternalBillingsPage({
 
               {selectedType?.calculation_method === "manual" && (
                 <label className="block">
-                  <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                  <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                     Amount ($)
                   </span>
                   <input
@@ -680,7 +680,7 @@ export default function JobInternalBillingsPage({
                       }))
                     }
                     placeholder="0.00"
-                    className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                    className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                     disabled={saving}
                   />
                 </label>
@@ -688,7 +688,7 @@ export default function JobInternalBillingsPage({
 
               {/* Description */}
               <label className="block sm:col-span-2">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                   Description
                 </span>
                 <textarea
@@ -697,14 +697,14 @@ export default function JobInternalBillingsPage({
                   onChange={(e) =>
                     setForm((p) => ({ ...p, description: e.target.value }))
                   }
-                  className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                  className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                   disabled={saving}
                 />
               </label>
 
               {/* Period */}
               <label className="block">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                   Period Start
                 </span>
                 <input
@@ -713,12 +713,12 @@ export default function JobInternalBillingsPage({
                   onChange={(e) =>
                     setForm((p) => ({ ...p, period_start: e.target.value }))
                   }
-                  className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                  className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                   disabled={saving}
                 />
               </label>
               <label className="block">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                   Period End
                 </span>
                 <input
@@ -727,14 +727,14 @@ export default function JobInternalBillingsPage({
                   onChange={(e) =>
                     setForm((p) => ({ ...p, period_end: e.target.value }))
                   }
-                  className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                  className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                   disabled={saving}
                 />
               </label>
 
               {/* Notes */}
               <label className="block sm:col-span-2">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
                   Notes
                 </span>
                 <textarea
@@ -743,7 +743,7 @@ export default function JobInternalBillingsPage({
                   onChange={(e) =>
                     setForm((p) => ({ ...p, notes: e.target.value }))
                   }
-                  className="w-full border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
+                  className="w-full border border-border-def bg-bg-sub text-slate-tile text-sm px-3 py-2 focus:outline-none focus:border-stone-blue"
                   disabled={saving}
                 />
               </label>
@@ -766,7 +766,7 @@ export default function JobInternalBillingsPage({
                 type="button"
                 onClick={cancelForm}
                 disabled={saving}
-                className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile text-sm hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+                className="px-4 py-2 border border-border-def text-slate-tile text-sm hover:bg-bg-sub transition-colors"
               >
                 Cancel
               </button>
@@ -783,10 +783,10 @@ export default function JobInternalBillingsPage({
             primaryAction={{ label: "+ Add Billing", onClick: openAdd }}
           />
         ) : billings.length > 0 ? (
-          <div className="bg-white border border-[rgba(59,88,100,0.15)] overflow-x-auto">
+          <div className="bg-white border border-border-def overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] bg-[rgba(91,134,153,0.06)]/50">
+                <tr className="border-b border-border-def text-[11px] uppercase tracking-wider text-tertiary bg-bg-sub/50">
                   <th className="text-left px-4 py-3 font-medium">Type</th>
                   <th className="text-left px-4 py-3 font-medium">
                     Description
@@ -806,12 +806,12 @@ export default function JobInternalBillingsPage({
                   return (
                     <tr
                       key={b.id}
-                      className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.06)]/40 transition-colors"
+                      className="border-b border-border-sub last:border-0 hover:bg-bg-sub/40 transition-colors"
                     >
                       <td className="px-4 py-3 text-slate-tile font-medium">
                         {b.internal_billing_types?.name ?? "\u2014"}
                       </td>
-                      <td className="px-4 py-3 text-[rgba(59,88,100,0.70)]">
+                      <td className="px-4 py-3 text-secondary">
                         {b.description || "\u2014"}
                       </td>
                       <td className="px-4 py-3">
@@ -828,7 +828,7 @@ export default function JobInternalBillingsPage({
                             : "\u2014"
                           : formatCents(b.amount_cents)}
                       </td>
-                      <td className="px-4 py-3 text-[rgba(59,88,100,0.70)] text-xs">
+                      <td className="px-4 py-3 text-secondary text-xs">
                         {formatPeriod(b.period_start, b.period_end)}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -850,7 +850,7 @@ export default function JobInternalBillingsPage({
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-[rgba(59,88,100,0.55)]">\u2014</span>
+                          <span className="text-xs text-tertiary">\u2014</span>
                         )}
                       </td>
                     </tr>
@@ -861,7 +861,7 @@ export default function JobInternalBillingsPage({
           </div>
         ) : null}
 
-        <p className="mt-4 text-[11px] text-[rgba(59,88,100,0.55)]">
+        <p className="mt-4 text-[11px] text-tertiary">
           {billings.length} billing{billings.length !== 1 ? "s" : ""} total.
           Percentage billings are computed when attached to a draw.
         </p>

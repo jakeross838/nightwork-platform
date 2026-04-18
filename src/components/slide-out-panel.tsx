@@ -60,19 +60,19 @@ export default function SlideOutPanel({
       />
       {/* Panel */}
       <aside
-        className={`w-full ${widthClass} bg-white border-l border-[rgba(59,88,100,0.15)] shadow-2xl flex flex-col animate-slide-in-right`}
+        className={`w-full ${widthClass} bg-white border-l border-border-def shadow-2xl flex flex-col animate-slide-in-right`}
       >
-        <header className="flex items-start justify-between gap-3 p-5 border-b border-[rgba(59,88,100,0.15)]">
+        <header className="flex items-start justify-between gap-3 p-5 border-b border-border-def">
           <div className="min-w-0">
             <h2 className="font-display text-lg text-slate-tile truncate">{title}</h2>
             {subtitle && (
-              <p className="mt-0.5 text-xs text-[rgba(59,88,100,0.55)] truncate">{subtitle}</p>
+              <p className="mt-0.5 text-xs text-tertiary truncate">{subtitle}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 w-8 h-8 flex items-center justify-center text-[rgba(59,88,100,0.55)] hover:text-slate-tile hover:bg-[rgba(91,134,153,0.06)] transition-colors"
+            className="shrink-0 w-8 h-8 flex items-center justify-center text-tertiary hover:text-slate-tile hover:bg-bg-sub transition-colors"
             aria-label="Close"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

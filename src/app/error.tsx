@@ -19,14 +19,14 @@ export default function RouteError({
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="max-w-md text-center border border-[rgba(59,88,100,0.15)] bg-white p-8">
+      <div className="max-w-md text-center border border-border-def bg-white p-8">
         <p className="text-[11px] tracking-[0.08em] uppercase text-nw-danger">
           Something went wrong
         </p>
         <h1 className="font-display text-2xl text-slate-tile mt-2">
           We hit an unexpected error
         </h1>
-        <p className="text-sm text-[rgba(59,88,100,0.55)] mt-3">
+        <p className="text-sm text-tertiary mt-3">
           Refresh the page, or return to the home screen. If this keeps happening,
           report it with a screenshot so we can fix it.
         </p>
@@ -46,7 +46,7 @@ export default function RouteError({
           </button>
           <Link
             href="/"
-            className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:border-stone-blue text-sm font-medium transition-colors"
+            className="px-4 py-2 border border-border-def text-slate-tile hover:border-stone-blue text-sm font-medium transition-colors"
           >
             Go home
           </Link>

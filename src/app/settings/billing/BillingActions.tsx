@@ -86,7 +86,7 @@ export default function BillingActions(props: Props) {
             type="button"
             onClick={openPortal}
             disabled={busy}
-            className="px-4 py-2.5 border border-[rgba(59,88,100,0.15)] text-[13px] tracking-[0.08em] uppercase hover:bg-[rgba(91,134,153,0.06)] disabled:opacity-60"
+            className="px-4 py-2.5 border border-border-def text-[13px] tracking-[0.08em] uppercase hover:bg-bg-sub disabled:opacity-60"
           >
             Cancel Subscription
           </button>
@@ -110,7 +110,7 @@ export default function BillingActions(props: Props) {
       {comingSoon && (
         <span
           role="status"
-          className="text-xs text-[rgba(59,88,100,0.70)] border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] px-2 py-1"
+          className="text-xs text-secondary border border-border-def bg-bg-sub px-2 py-1"
         >
           {comingSoon}
         </span>

@@ -190,7 +190,7 @@ export default function PaymentsPage() {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
             <h2 className="font-display text-2xl text-slate-tile">Payment Tracking</h2>
-            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
+            <p className="text-sm text-tertiary mt-1">
               Schedule payments, mark invoices paid, and keep the aging report honest.
             </p>
           </div>
@@ -210,11 +210,11 @@ export default function PaymentsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-1 w-fit">
+        <div className="flex gap-1 mb-5 bg-bg-sub border border-border-def p-1 w-fit">
           <button
             onClick={() => setTab("tracking")}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "tracking" ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+              tab === "tracking" ? "bg-brand-elevated text-slate-tile" : "text-tertiary hover:text-slate-tile"
             }`}
           >
             Tracking
@@ -222,7 +222,7 @@ export default function PaymentsPage() {
           <button
             onClick={() => setTab("batch")}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "batch" ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+              tab === "batch" ? "bg-brand-elevated text-slate-tile" : "text-tertiary hover:text-slate-tile"
             }`}
           >
             Batch Payments
@@ -230,7 +230,7 @@ export default function PaymentsPage() {
           <button
             onClick={() => setTab("aging")}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              tab === "aging" ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
+              tab === "aging" ? "bg-brand-elevated text-slate-tile" : "text-tertiary hover:text-slate-tile"
             }`}
           >
             Aging Report
@@ -250,7 +250,7 @@ export default function PaymentsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="all">All Payment Status</option>
                 <option value="unpaid">Unpaid</option>
@@ -261,7 +261,7 @@ export default function PaymentsPage() {
               <select
                 value={jobFilter}
                 onChange={(e) => setJobFilter(e.target.value)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="">All Jobs</option>
                 {jobOptions.map((j) => (
@@ -273,7 +273,7 @@ export default function PaymentsPage() {
               <select
                 value={vendorFilter}
                 onChange={(e) => setVendorFilter(e.target.value)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
               >
                 <option value="">All Vendors</option>
                 {vendorOptions.map((v) => (
@@ -286,14 +286,14 @@ export default function PaymentsPage() {
                 type="date"
                 value={dateStart}
                 onChange={(e) => setDateStart(e.target.value)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
                 placeholder="From"
               />
               <input
                 type="date"
                 value={dateEnd}
                 onChange={(e) => setDateEnd(e.target.value)}
-                className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
+                className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none"
                 placeholder="To"
               />
             </div>
@@ -307,12 +307,12 @@ export default function PaymentsPage() {
                   type="date"
                   value={payDate}
                   onChange={(e) => setPayDate(e.target.value)}
-                  className="px-2 py-1.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile"
+                  className="px-2 py-1.5 bg-bg-sub border border-border-def text-sm text-slate-tile"
                 />
                 <select
                   value={payMethod}
                   onChange={(e) => setPayMethod(e.target.value as typeof payMethod)}
-                  className="px-2 py-1.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile"
+                  className="px-2 py-1.5 bg-bg-sub border border-border-def text-sm text-slate-tile"
                 >
                   <option value="check">Check</option>
                   <option value="ach">ACH</option>
@@ -337,14 +337,14 @@ export default function PaymentsPage() {
             )}
 
             {filtered.length === 0 ? (
-              <div className="border border-[rgba(59,88,100,0.15)] p-10 text-center text-[rgba(59,88,100,0.55)] text-sm">
+              <div className="border border-border-def p-10 text-center text-tertiary text-sm">
                 No invoices match your filters.
               </div>
             ) : (
-              <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+              <div className="overflow-x-auto border border-border-def">
                 <table className="w-full min-w-[1100px] text-sm">
                   <thead>
-                    <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+                    <tr className="bg-bg-sub text-left">
                       <th className="py-3 px-4 w-10">
                         <input
                           type="checkbox"
@@ -366,7 +366,7 @@ export default function PaymentsPage() {
                   </thead>
                   <tbody>
                     {filtered.map((inv) => (
-                      <tr key={inv.id} className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/40 transition-colors">
+                      <tr key={inv.id} className="border-t border-border-sub hover:bg-brand-elevated/40 transition-colors">
                         <td className="py-3 px-4">
                           <input
                             type="checkbox"
@@ -378,10 +378,10 @@ export default function PaymentsPage() {
                         <td className="py-3 px-4 text-slate-tile cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
                           {inv.vendor_name_raw ?? "Unknown"}
                         </td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">
+                        <td className="py-3 px-4 text-secondary font-mono text-xs">
                           {inv.invoice_number ?? "—"}
                         </td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{inv.jobs?.name ?? "—"}</td>
+                        <td className="py-3 px-4 text-secondary text-xs">{inv.jobs?.name ?? "—"}</td>
                         <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                           {formatCents(inv.total_amount)}
                           {inv.payment_status === "partial" && (
@@ -395,10 +395,10 @@ export default function PaymentsPage() {
                             {inv.payment_status}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(inv.scheduled_payment_date)}</td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(inv.payment_date)}</td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{inv.payment_method ?? "—"}</td>
-                        <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs font-mono">{inv.payment_reference ?? "—"}</td>
+                        <td className="py-3 px-4 text-secondary text-xs">{formatDate(inv.scheduled_payment_date)}</td>
+                        <td className="py-3 px-4 text-secondary text-xs">{formatDate(inv.payment_date)}</td>
+                        <td className="py-3 px-4 text-secondary text-xs">{inv.payment_method ?? "—"}</td>
+                        <td className="py-3 px-4 text-secondary text-xs font-mono">{inv.payment_reference ?? "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -417,14 +417,14 @@ export default function PaymentsPage() {
             </div>
             {(["31_60", "61_90", "90_plus"] as AgingBucket[]).map((b) => (
               <div key={b}>
-                <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-2 mt-4">
+                <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider mb-2 mt-4">
                   {b.replace("_", "–")} Days — {aging[b].count} invoice(s) — {formatCents(aging[b].amount)}
                 </p>
                 {aging[b].rows.length > 0 && (
-                  <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
+                  <div className="overflow-x-auto border border-border-def">
                     <table className="w-full min-w-[700px] text-sm">
                       <thead>
-                        <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+                        <tr className="bg-bg-sub text-left">
                           <Th>Vendor</Th>
                           <Th>Invoice #</Th>
                           <Th>Received</Th>
@@ -441,10 +441,10 @@ export default function PaymentsPage() {
                             : 0;
                           const color = b === "90_plus" ? "text-nw-danger" : "text-nw-warn";
                           return (
-                            <tr key={inv.id} className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/30 cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
+                            <tr key={inv.id} className="border-t border-border-sub hover:bg-brand-elevated/30 cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
                               <td className="py-3 px-4 text-slate-tile">{inv.vendor_name_raw ?? "Unknown"}</td>
-                              <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
-                              <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(ref)}</td>
+                              <td className="py-3 px-4 text-secondary font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                              <td className="py-3 px-4 text-secondary text-xs">{formatDate(ref)}</td>
                               <td className={`py-3 px-4 ${color} text-xs font-medium`}>{days} days</td>
                               <td className="py-3 px-4 text-slate-tile text-right font-display font-medium">
                                 {formatCents(inv.total_amount)}
@@ -490,12 +490,12 @@ function Card({
   danger?: boolean;
 }) {
   return (
-    <div className={`bg-white border ${danger ? "border-nw-danger/40" : "border-[rgba(59,88,100,0.15)]"} px-4 py-3`}>
-      <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
+    <div className={`bg-white border ${danger ? "border-nw-danger/40" : "border-border-def"} px-4 py-3`}>
+      <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider">{label}</p>
       <p className={`text-xl font-display font-medium mt-1 ${danger ? "text-nw-danger" : "text-slate-tile"}`}>
         {value}
       </p>
-      {sub && <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-tertiary mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -514,12 +514,12 @@ function AgingCard({
   danger?: boolean;
 }) {
   const color = danger ? "status-danger" : warn ? "brass" : "cream";
-  const borderColor = danger ? "border-nw-danger/40" : warn ? "border-nw-warn/40" : "border-[rgba(59,88,100,0.15)]";
+  const borderColor = danger ? "border-nw-danger/40" : warn ? "border-nw-warn/40" : "border-border-def";
   return (
     <div className={`bg-white border ${borderColor} px-4 py-3`}>
-      <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
+      <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider">{label}</p>
       <p className={`text-xl font-display font-medium mt-1 text-${color}`}>{formatCents(amount)}</p>
-      <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">{count} invoice(s)</p>
+      <p className="text-xs text-tertiary mt-0.5">{count} invoice(s)</p>
     </div>
   );
 }
@@ -528,5 +528,5 @@ function payStatusBadge(s: string): string {
   if (s === "paid") return "bg-transparent text-nw-success border border-nw-success";
   if (s === "scheduled") return "bg-transparent text-stone-blue border border-stone-blue";
   if (s === "partial") return "bg-transparent text-nw-warn border border-nw-warn";
-  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
+  return "bg-transparent text-tertiary border border-border-def-light";
 }

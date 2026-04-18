@@ -36,8 +36,8 @@ export default function JobActivityPage({ params }: { params: { id: string } }) 
         <JobTabs jobId={params.id} active="activity" />
         <JobFinancialBar jobId={params.id} />
 
-        <div className="bg-white border border-[rgba(59,88,100,0.15)] p-8 text-center">
-          <p className="text-sm text-[rgba(59,88,100,0.55)]">
+        <div className="bg-white border border-border-def p-8 text-center">
+          <p className="text-sm text-tertiary">
             Activity log coming soon. Will show CO approvals, invoice status
             changes, draw submissions, and team notes for this job.
           </p>
