@@ -156,10 +156,26 @@ export async function POST(request: NextRequest) {
 
     // Link invoices to the draw (status stays qa_approved until submit).
     if (invoice_ids.length > 0) {
-      await supabase
+      const { data: linked, error: linkErr } = await supabase
         .from("invoices")
         .update({ draw_id: draw.id })
-        .in("id", invoice_ids);
+        .in("id", invoice_ids)
+        .select("id");
+      if (linkErr) {
+        return NextResponse.json(
+          { error: `Failed to link invoices: ${linkErr.message}` },
+          { status: 500 }
+        );
+      }
+      if (!linked || linked.length !== invoice_ids.length) {
+        return NextResponse.json(
+          {
+            error: `Expected to link ${invoice_ids.length} invoices but only ${linked?.length ?? 0} updated. Check permissions or invoice status.`,
+            draw_id: draw.id,
+          },
+          { status: 500 }
+        );
+      }
     }
 
     await logActivity({
