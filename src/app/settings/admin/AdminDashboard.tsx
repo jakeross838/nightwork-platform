@@ -114,11 +114,11 @@ export default function AdminDashboard() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <section className="bg-white border border-border-def p-6">
+          <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider">Integrity Check</h3>
-                <p className="text-[11px] text-tertiary mt-1">
+                <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">
                   Audits budget lines, purchase orders, and job contracts against recomputed totals from source data.
                 </p>
               </div>
@@ -150,14 +150,14 @@ export default function AdminDashboard() {
                       ? <span className="text-nw-success">✓ 0 mismatches found</span>
                       : <span className="text-nw-danger">{report.mismatches.length} mismatch(es)</span>}
                   </p>
-                  <p className="text-[10px] text-tertiary">{formatDateTime(report.ran_at)}</p>
+                  <p className="text-[10px] text-[rgba(59,88,100,0.55)]">{formatDateTime(report.ran_at)}</p>
                 </div>
                 {report.mismatches.length > 0 && (
                   <>
-                    <div className="max-h-72 overflow-y-auto border border-border-def">
+                    <div className="max-h-72 overflow-y-auto border border-[rgba(59,88,100,0.15)]">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="bg-bg-sub/50 border-b border-border-def text-[10px] uppercase tracking-wider text-tertiary">
+                          <tr className="bg-[rgba(91,134,153,0.06)]/50 border-b border-[rgba(59,88,100,0.15)] text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
                             <th className="text-left px-2 py-1 font-medium">Entity</th>
                             <th className="text-left px-2 py-1 font-medium">Field</th>
                             <th className="text-right px-2 py-1 font-medium">Stored</th>
@@ -167,12 +167,12 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody>
                           {report.mismatches.map((m, i) => (
-                            <tr key={i} className="border-b border-border-sub last:border-0">
+                            <tr key={i} className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
                               <td className="px-2 py-1 text-slate-tile">
-                                <span className="text-[10px] uppercase tracking-wider text-tertiary mr-1">{m.entity_type}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] mr-1">{m.entity_type}</span>
                                 {m.label}
                               </td>
-                              <td className="px-2 py-1 text-secondary">{m.field}</td>
+                              <td className="px-2 py-1 text-[rgba(59,88,100,0.70)]">{m.field}</td>
                               <td className="px-2 py-1 text-right tabular-nums text-slate-tile">{formatCents(m.stored_value)}</td>
                               <td className="px-2 py-1 text-right tabular-nums text-slate-tile">{formatCents(m.calculated_value)}</td>
                               <td className={`px-2 py-1 text-right tabular-nums font-medium ${m.delta < 0 ? "text-nw-danger" : "text-nw-success"}`}>
@@ -196,28 +196,28 @@ export default function AdminDashboard() {
             )}
           </section>
 
-          <section className="bg-white border border-border-def p-6">
+          <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6">
             <div className="mb-3">
               <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider">Recent Activity</h3>
-              <p className="text-[11px] text-tertiary mt-1">
+              <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">
                 Last 40 entries from the activity log. Status changes, deletions, and blocked actions are captured here.
               </p>
             </div>
             {activity.length === 0 ? (
-              <p className="text-xs text-tertiary py-4">No activity recorded yet.</p>
+              <p className="text-xs text-[rgba(59,88,100,0.55)] py-4">No activity recorded yet.</p>
             ) : (
               <div className="max-h-[440px] overflow-y-auto divide-y divide-brand-row-border">
                 {activity.map((a) => (
                   <div key={a.id} className="py-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-tile">
-                        <span className="text-[10px] uppercase tracking-wider text-tertiary mr-1.5">{a.entity_type}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] mr-1.5">{a.entity_type}</span>
                         <ActivityBadge action={a.action} />
                       </span>
-                      <span className="text-[10px] text-tertiary">{formatDateTime(a.created_at)}</span>
+                      <span className="text-[10px] text-[rgba(59,88,100,0.55)]">{formatDateTime(a.created_at)}</span>
                     </div>
                     {a.details && (
-                      <p className="text-[11px] text-secondary mt-0.5 truncate">
+                      <p className="text-[11px] text-[rgba(59,88,100,0.70)] mt-0.5 truncate">
                         {describeDetails(a.action, a.details)}
                       </p>
                     )}
@@ -236,11 +236,11 @@ export default function AdminDashboard() {
           </section>
         </div>
 
-        <section className="bg-white border border-border-def p-6 mt-6">
+        <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6 mt-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider">Sample Data</h3>
-              <p className="text-[11px] text-tertiary mt-1">
+              <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-1">
                 Remove the demo project and all associated records (invoices, budget lines, POs, draws).
               </p>
             </div>
@@ -279,8 +279,8 @@ export default function AdminDashboard() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border border-border-def bg-bg-sub/30 p-3">
-      <p className="text-[10px] uppercase tracking-wider text-tertiary">{label}</p>
+    <div className="border border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)]/30 p-3">
+      <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">{label}</p>
       <p className="text-lg text-slate-tile mt-1 tabular-nums">{value}</p>
     </div>
   );
@@ -289,7 +289,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 function ActivityBadge({ action }: { action: string }) {
   const colors: Record<string, string> = {
     created: "text-nw-success border-nw-success/40",
-    updated: "text-secondary border-border-def",
+    updated: "text-[rgba(59,88,100,0.70)] border-[rgba(59,88,100,0.15)]",
     status_changed: "text-stone-blue border-stone-blue/40",
     deleted: "text-nw-danger border-nw-danger/40",
     delete_blocked: "text-nw-warn border-nw-warn/40",
@@ -298,10 +298,10 @@ function ActivityBadge({ action }: { action: string }) {
     merged: "text-nw-warn border-nw-warn/40",
     approved: "text-nw-success border-nw-success/40",
     denied: "text-nw-danger border-nw-danger/40",
-    recomputed: "text-secondary border-border-def",
-    imported: "text-secondary border-border-def",
+    recomputed: "text-[rgba(59,88,100,0.70)] border-[rgba(59,88,100,0.15)]",
+    imported: "text-[rgba(59,88,100,0.70)] border-[rgba(59,88,100,0.15)]",
   };
-  const cls = colors[action] ?? "text-secondary border-border-def";
+  const cls = colors[action] ?? "text-[rgba(59,88,100,0.70)] border-[rgba(59,88,100,0.15)]";
   return (
     <span className={`inline-block px-1.5 py-0.5 text-[10px] uppercase tracking-wider border ${cls}`}>
       {action.replace(/_/g, " ")}

@@ -54,16 +54,6 @@ const config: Config = {
         "nw-warn": "#C98A3B",
         "nw-success": "#4A8A6F",
         "nw-danger": "#B0554E",
-        // Semantic opacity variants (Tailwind can't parse commas in arbitrary rgba)
-        "secondary": "var(--text-secondary)",
-        "tertiary": "var(--text-tertiary)",
-        "muted": "var(--text-muted)",
-        "accent": "var(--text-accent)",
-        "border-def": "var(--border-default)",
-        "border-sub": "var(--border-subtle)",
-        "border-str": "var(--border-strong)",
-        "bg-sub": "var(--bg-subtle)",
-        "bg-mut": "var(--bg-muted)",
       },
       fontFamily: {
         display: ["var(--font-display)", "Space Grotesk", "sans-serif"],

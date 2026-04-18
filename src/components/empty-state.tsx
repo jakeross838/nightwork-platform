@@ -24,14 +24,14 @@ export default function EmptyState({
   secondaryAction,
   variant = "default",
 }: EmptyStateProps) {
-  const iconColor = variant === "success" ? "text-nw-success" : "text-tertiary";
+  const iconColor = variant === "success" ? "text-nw-success" : "text-[rgba(59,88,100,0.55)]";
   return (
-    <div className="text-center py-16 px-6 border border-dashed border-border-def bg-white">
+    <div className="text-center py-16 px-6 border border-dashed border-[rgba(59,88,100,0.15)] bg-white">
       <div className={`inline-flex items-center justify-center w-12 h-12 ${iconColor}`}>
         {icon ?? <DefaultEmptyIcon />}
       </div>
       <h3 className="mt-4 text-slate-tile font-display text-lg">{title}</h3>
-      <p className="mt-1 text-tertiary text-sm max-w-md mx-auto">{message}</p>
+      <p className="mt-1 text-[rgba(59,88,100,0.55)] text-sm max-w-md mx-auto">{message}</p>
       {(primaryAction || secondaryAction) && (
         <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
           {primaryAction && <ActionButton {...primaryAction} variant="primary" />}
@@ -56,7 +56,7 @@ function ActionButton({
   const cls =
     variant === "primary"
       ? "px-4 py-2 bg-slate-deep text-white text-sm hover:bg-slate-deeper transition-colors"
-      : "px-4 py-2 border border-border-def bg-white text-slate-tile text-sm hover:border-stone-blue/60 transition-colors";
+      : "px-4 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-slate-tile text-sm hover:border-stone-blue/60 transition-colors";
   if (href) {
     return (
       <Link href={href} className={cls}>

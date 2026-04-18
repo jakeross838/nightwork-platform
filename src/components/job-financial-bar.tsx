@@ -98,7 +98,7 @@ export default function JobFinancialBar({
 
   return (
     <div
-      className="sticky top-[56px] z-30 -mx-4 md:-mx-6 px-4 md:px-6 py-2.5 bg-white border-b border-border-def mb-4"
+      className="sticky top-[56px] z-30 -mx-4 md:-mx-6 px-4 md:px-6 py-2.5 bg-white border-b border-[rgba(59,88,100,0.15)] mb-4"
       aria-label="Job financial summary"
     >
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 md:gap-4 text-[11px]">
@@ -111,9 +111,9 @@ export default function JobFinancialBar({
         <Cell label="Revised Contract" value={data ? formatCents(data.revised_contract) : "—"} strong />
         <Cell label="Billed to Date" value={data ? formatCents(data.billed_to_date) : "—"} />
         <div className="flex flex-col gap-1">
-          <p className="text-[10px] uppercase tracking-wider text-tertiary font-medium">% Complete</p>
+          <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">% Complete</p>
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-bg-sub overflow-hidden">
+            <div className="flex-1 h-1.5 bg-[rgba(91,134,153,0.06)] overflow-hidden">
               <div
                 className="h-full bg-slate-deep"
                 style={{ width: `${data?.percent_complete ?? 0}%` }}
@@ -153,7 +153,7 @@ function Cell({
         : "text-slate-tile";
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="text-[10px] uppercase tracking-wider text-tertiary font-medium">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
       <p
         className={`text-[13px] tabular-nums font-display ${toneClass} ${
           strong ? "font-semibold" : ""

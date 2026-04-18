@@ -124,16 +124,16 @@ const ALL_STATUSES = [
 const statusBadgeColor = statusBadgeOutline;
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
- if (!active) return <span className="ml-1 text-tertiary">↕</span>;
+ if (!active) return <span className="ml-1 text-[rgba(59,88,100,0.55)]">↕</span>;
  return <span className="ml-1 text-stone-blue">{dir === "asc" ? "↑" : "↓"}</span>;
 }
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
  return (
- <div className="bg-white border border-border-def px-4 py-3">
- <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider">{label}</p>
+ <div className="bg-white border border-[rgba(59,88,100,0.15)] px-4 py-3">
+ <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</p>
  <p className="text-xl font-display font-medium text-slate-tile mt-1">{value}</p>
- {sub && <p className="text-xs text-tertiary mt-0.5">{sub}</p>}
+ {sub && <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">{sub}</p>}
  </div>
  );
 }
@@ -387,7 +387,7 @@ export default function AllInvoicesPage() {
  <div className="flex items-center justify-between mb-6">
  <div>
  <h2 className="font-display text-2xl text-slate-tile">Invoices</h2>
- <p className="text-sm text-tertiary mt-1">
+ <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
  {activeTab === "all"
  ? (isFiltered ? `Showing ${filtered.length} of ${invoices.length} invoices` : `${invoices.length} total invoices`)
  : `${paymentInvoices.length} invoices ready for payment`}
@@ -396,7 +396,7 @@ export default function AllInvoicesPage() {
  <div className="flex items-center gap-2">
  <button
  onClick={() => setImportOpen(true)}
- className="px-4 py-2 border border-border-def text-tertiary hover:text-slate-tile hover:bg-bg-sub text-sm font-medium transition-colors flex items-center gap-2"
+ className="px-4 py-2 border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.55)] hover:text-slate-tile hover:bg-[rgba(91,134,153,0.06)] text-sm font-medium transition-colors flex items-center gap-2"
  >
  Import CSV
  </button>
@@ -413,18 +413,18 @@ export default function AllInvoicesPage() {
  </div>
 
  {/* Tabs */}
- <div className="flex gap-1 mb-6 bg-bg-sub border border-border-def p-1 w-fit">
+ <div className="flex gap-1 mb-6 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] p-1 w-fit">
  <button
  onClick={() => setActiveTab("all")}
  className={`px-4 py-2 text-sm font-medium transition-colors ${
- activeTab === "all" ? "bg-brand-elevated text-slate-tile" : "text-tertiary hover:text-slate-tile"
+ activeTab === "all" ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
  }`}>
  All Invoices
  </button>
  <button
  onClick={() => setActiveTab("payment")}
  className={`px-4 py-2 text-sm font-medium transition-colors ${
- activeTab === "payment" ? "bg-brand-elevated text-slate-tile" : "text-tertiary hover:text-slate-tile"
+ activeTab === "payment" ? "bg-brand-elevated text-slate-tile" : "text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
  }`}>
  Payment Tracking
  {paymentInvoices.length > 0 && (
@@ -460,31 +460,31 @@ export default function AllInvoicesPage() {
  {/* Primary filters */}
  <div className="flex flex-col md:flex-row gap-3 mb-3">
  <div className="relative flex-1">
- <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[rgba(59,88,100,0.55)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
  </svg>
  <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
  placeholder="Search vendor or invoice #..."
- className="w-full pl-9 pr-8 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none" />
+ className="w-full pl-9 pr-8 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile placeholder-cream-dim focus:border-stone-blue focus:outline-none" />
  {search && (
- <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-tertiary hover:text-slate-tile">
+ <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgba(59,88,100,0.55)] hover:text-slate-tile">
  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
  </button>
  )}
  </div>
  <select value={jobFilter} onChange={(e) => setJobFilter(e.target.value)}
- className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-48">
+ className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-48">
  <option value="">All Jobs</option>
  {jobNames.map(n => <option key={n} value={n}>{n}</option>)}
  </select>
  <select value={pmFilter} onChange={(e) => setPmFilter(e.target.value)}
- className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-44">
+ className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-44">
  <option value="">All PMs</option>
  <option value="__unassigned__">Unassigned</option>
  {pmUsers.map(u => <option key={u.id} value={u.id}>{u.full_name}</option>)}
  </select>
  <select value={confidenceFilter} onChange={(e) => setConfidenceFilter(e.target.value as ConfidenceFilter)}
- className="px-3 py-2.5 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-40">
+ className="px-3 py-2.5 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none md:w-40">
  <option value="all">All Confidence</option>
  <option value="high">High (≥85%)</option>
  <option value="medium">Medium (70–84%)</option>
@@ -495,7 +495,7 @@ export default function AllInvoicesPage() {
  {/* More Filters toggle */}
  <div className="flex items-center gap-3 mb-5">
  <button onClick={() => setShowMoreFilters(!showMoreFilters)}
- className="flex items-center gap-1.5 px-3 py-2 text-sm text-tertiary hover:text-slate-tile border border-border-def hover:border-border-def-light transition-colors">
+ className="flex items-center gap-1.5 px-3 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors">
  <svg className={`w-4 h-4 transition-transform ${showMoreFilters ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
  </svg>
@@ -508,7 +508,7 @@ export default function AllInvoicesPage() {
  </button>
  {isFiltered && (
  <button onClick={clearAllFilters}
- className="px-3 py-2 text-sm text-tertiary hover:text-slate-tile border border-border-def hover:border-border-def-light transition-colors">
+ className="px-3 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile border border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light transition-colors">
  Clear all filters
  </button>
  )}
@@ -516,15 +516,15 @@ export default function AllInvoicesPage() {
 
  {/* Advanced filters */}
  {showMoreFilters && (
- <div className="mb-5 p-4 bg-bg-sub/50 border border-border-def space-y-4 animate-fade-up">
+ <div className="mb-5 p-4 bg-[rgba(91,134,153,0.06)]/50 border border-[rgba(59,88,100,0.15)] space-y-4 animate-fade-up">
  {/* Status multi-select */}
  <div>
- <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider mb-2">Status</p>
+ <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-2">Status</p>
  <div className="flex flex-wrap gap-2">
  {ALL_STATUSES.map(s => (
  <button key={s} onClick={() => toggleStatus(s)}
  className={`px-2.5 py-1 text-xs border transition-colors ${
- statusFilters.has(s) ? statusBadgeColor(s) + " font-medium" : "text-tertiary border-border-def hover:border-border-def-light"
+ statusFilters.has(s) ? statusBadgeColor(s) + " font-medium" : "text-[rgba(59,88,100,0.55)] border-[rgba(59,88,100,0.15)] hover:border-[rgba(59,88,100,0.15)]-light"
  }`}>
  {formatStatus(s)}
  </button>
@@ -534,9 +534,9 @@ export default function AllInvoicesPage() {
  <div className="flex flex-col md:flex-row gap-4">
  {/* Amount range */}
  <div>
- <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider mb-2">Amount Range</p>
+ <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-2">Amount Range</p>
  <select value={amountRange} onChange={(e) => setAmountRange(e.target.value as AmountRange)}
- className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none">
+ className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none">
  <option value="all">All</option>
  <option value="0-5k">$0 – $5K</option>
  <option value="5k-25k">$5K – $25K</option>
@@ -546,13 +546,13 @@ export default function AllInvoicesPage() {
  </div>
  {/* Date range */}
  <div>
- <p className="text-[11px] font-medium text-tertiary uppercase tracking-wider mb-2">Invoice Date Range</p>
+ <p className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider mb-2">Invoice Date Range</p>
  <div className="flex items-center gap-2">
  <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)}
- className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none" />
- <span className="text-tertiary text-sm">to</span>
+ className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none" />
+ <span className="text-[rgba(59,88,100,0.55)] text-sm">to</span>
  <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)}
- className="px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile focus:border-stone-blue focus:outline-none" />
+ className="px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:border-stone-blue focus:outline-none" />
  </div>
  </div>
  </div>
@@ -570,11 +570,11 @@ export default function AllInvoicesPage() {
  )}
 
  {filtered.length > 0 && (
- <div className="overflow-x-auto border border-border-def animate-fade-up">
+ <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)] animate-fade-up">
  <table className="w-full min-w-[1100px] text-sm">
  <thead>
- <tr className="bg-bg-sub text-left">
- <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider cursor-pointer select-none hover:text-stone-blue transition-colors sticky left-0 bg-bg-sub z-10" onClick={() => toggleSort("vendor")}>
+ <tr className="bg-[rgba(91,134,153,0.06)] text-left">
+ <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider cursor-pointer select-none hover:text-stone-blue transition-colors sticky left-0 bg-[rgba(91,134,153,0.06)] z-10" onClick={() => toggleSort("vendor")}>
  Vendor<SortArrow active={sortKey === "vendor"} dir={sortDir} />
  </th>
  <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Inv #</th>
@@ -601,7 +601,7 @@ export default function AllInvoicesPage() {
  <tbody>
  {filtered.map((inv) => (
  <tr key={inv.id}
- className="group border-t border-border-sub hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+ className="group border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 cursor-pointer transition-colors"
  onClick={() => {
  const reviewable = ["pm_review", "ai_processed"].includes(inv.status);
  window.location.href = reviewable ? `/invoices/${inv.id}` : `/invoices/${inv.id}`;
@@ -610,7 +610,7 @@ export default function AllInvoicesPage() {
  <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-tertiary border border-cream-dim/40 uppercase tracking-wide">
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-[rgba(59,88,100,0.55)] border border-cream-dim/40 uppercase tracking-wide">
  Receipt
  </span>
  )}
@@ -621,14 +621,14 @@ export default function AllInvoicesPage() {
  )}
  </span>
  </td>
- <td className="py-3 px-4 text-secondary font-mono text-xs">
+ <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">
  {inv.invoice_number ?? (
  <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-nw-warn border border-nw-warn uppercase tracking-wide">
  No Invoice #
  </span>
  )}
  </td>
- <td className="py-3 px-4 text-secondary">
+ <td className="py-3 px-4 text-[rgba(59,88,100,0.70)]">
  {inv.invoice_date ? (
  formatDate(inv.invoice_date)
  ) : (
@@ -646,10 +646,10 @@ export default function AllInvoicesPage() {
   style={{ color: "var(--color-warning, #E65100)", borderColor: "var(--color-warning, #E65100)" }}
  >Overhead</span>
  ) : (
- <span className="text-tertiary">—</span>
+ <span className="text-[rgba(59,88,100,0.55)]">—</span>
  )}
  </td>
- <td className="py-3 px-4 text-secondary text-xs">
+ <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">
  {inv.line_item_cost_codes && inv.line_item_cost_codes.length > 1 ? (
  <span
  className="inline-flex items-center px-2 py-0.5 bg-transparent text-stone-blue border border-stone-blue text-xs font-medium"
@@ -662,7 +662,7 @@ export default function AllInvoicesPage() {
  ) : inv.cost_codes ? (
  <span>{inv.cost_codes.code}</span>
  ) : (
- <span className="text-tertiary">—</span>
+ <span className="text-[rgba(59,88,100,0.55)]">—</span>
  )}
  </td>
  <td className="py-3 px-4 text-slate-tile text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
@@ -678,12 +678,12 @@ export default function AllInvoicesPage() {
  )}
  </div>
  </td>
- <td className="py-3 px-4 text-secondary text-xs">{inv.assigned_pm?.full_name ?? <span className="text-tertiary">—</span>}</td>
+ <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{inv.assigned_pm?.full_name ?? <span className="text-[rgba(59,88,100,0.55)]">—</span>}</td>
  <td className="py-3 px-4 text-right">
  {(() => {
  // Paid (or voided) invoices don't age — render a dash, no badge, no days text.
  if (!isUnpaidInvoice(inv)) {
- return <span className="text-tertiary">&mdash;</span>;
+ return <span className="text-[rgba(59,88,100,0.55)]">&mdash;</span>;
  }
  const days = daysOutstanding(inv.received_date);
  const badge = agingBadge(days);
@@ -699,11 +699,11 @@ export default function AllInvoicesPage() {
  );
  }
  return (
- <span className="text-xs text-secondary tabular-nums">{days}d</span>
+ <span className="text-xs text-[rgba(59,88,100,0.70)] tabular-nums">{days}d</span>
  );
  })()}
  </td>
- <td className="py-3 px-4 text-secondary text-xs">{formatDate(inv.payment_date)}</td>
+ <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(inv.payment_date)}</td>
  </tr>
  ))}
  </tbody>
@@ -729,14 +729,14 @@ export default function AllInvoicesPage() {
  <h3 className="text-sm font-medium text-slate-tile">
  {dateKey === "No Date" ? "No Payment Date" : formatDate(dateKey)}
  </h3>
- <span className="text-[11px] text-tertiary bg-bg-sub px-2 py-0.5 border border-border-def">
+ <span className="text-[11px] text-[rgba(59,88,100,0.55)] bg-[rgba(91,134,153,0.06)] px-2 py-0.5 border border-[rgba(59,88,100,0.15)]">
  {group.length} invoice{group.length !== 1 ? "s" : ""} &mdash; {formatCents(group.reduce((s, inv) => s + inv.total_amount, 0))}
  </span>
  </div>
- <div className="overflow-x-auto border border-border-def">
+ <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-bg-sub text-left">
+ <tr className="bg-[rgba(91,134,153,0.06)] text-left">
  <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Vendor</th>
  <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider">Inv #</th>
  <th className="py-3 px-4 text-[11px] text-slate-tile font-bold uppercase tracking-wider text-right">Amount</th>
@@ -748,24 +748,24 @@ export default function AllInvoicesPage() {
  </thead>
  <tbody>
  {group.map((inv) => (
- <tr key={inv.id} className="border-t border-border-sub hover:bg-brand-elevated/50 transition-colors">
+ <tr key={inv.id} className="border-t border-[rgba(59,88,100,0.08)] hover:bg-brand-elevated/50 transition-colors">
  <td className="py-3 px-4 text-slate-tile font-medium cursor-pointer hover:text-stone-blue transition-colors"
  onClick={() => window.location.href = `/invoices/${inv.id}`}>
  <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-tertiary border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-[rgba(59,88,100,0.55)] border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
  )}
  </span>
  </td>
- <td className="py-3 px-4 text-secondary font-mono text-xs">{inv.invoice_number ?? <span className="text-tertiary">&mdash;</span>}</td>
+ <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] font-mono text-xs">{inv.invoice_number ?? <span className="text-[rgba(59,88,100,0.55)]">&mdash;</span>}</td>
  <td className="py-3 px-4 text-slate-tile text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
  <td className="py-3 px-4">
  <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${statusBadgeColor(inv.status)}`}>
  {formatStatus(inv.status)}
  </span>
  </td>
- <td className="py-3 px-4 text-secondary text-xs">{formatDate(inv.payment_date)}</td>
+ <td className="py-3 px-4 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(inv.payment_date)}</td>
  <td className="py-3 px-4">
  {editingCheckId === inv.id ? (
  <input
@@ -775,14 +775,14 @@ export default function AllInvoicesPage() {
  onBlur={() => handleInlineCheckSave(inv.id, editingCheckValue)}
  onKeyDown={(e) => { if (e.key === "Enter") handleInlineCheckSave(inv.id, editingCheckValue); if (e.key === "Escape") setEditingCheckId(null); }}
  autoFocus
- className="w-24 px-2 py-1 bg-bg-sub border border-stone-blue text-xs text-slate-tile focus:outline-none"
+ className="w-24 px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-stone-blue text-xs text-slate-tile focus:outline-none"
  />
  ) : (
  <button
  onClick={(e) => { e.stopPropagation(); setEditingCheckId(inv.id); setEditingCheckValue(inv.check_number ?? ""); }}
- className="px-2 py-1 text-xs text-secondary hover:text-slate-tile hover:bg-bg-sub transition-colors min-w-[60px] text-left"
+ className="px-2 py-1 text-xs text-[rgba(59,88,100,0.70)] hover:text-slate-tile hover:bg-[rgba(91,134,153,0.06)] transition-colors min-w-[60px] text-left"
  disabled={savingInline === inv.id}>
- {savingInline === inv.id ? "..." : (inv.check_number || <span className="text-tertiary italic">Add #</span>)}
+ {savingInline === inv.id ? "..." : (inv.check_number || <span className="text-[rgba(59,88,100,0.55)] italic">Add #</span>)}
  </button>
  )}
  </td>

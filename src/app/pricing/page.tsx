@@ -132,11 +132,11 @@ export default async function PricingPage() {
 
       <section className="px-6 pt-16 pb-8">
         <div className="max-w-[1200px] mx-auto text-center">
-          <span className="text-[10px] tracking-[0.12em] uppercase text-tertiary">Plans</span>
+          <span className="text-[10px] tracking-[0.12em] uppercase text-[rgba(59,88,100,0.55)]">Plans</span>
           <h1 className="mt-2 font-display text-4xl md:text-5xl text-slate-tile tracking-tight">
             Pricing that scales with your jobs
           </h1>
-          <p className="mt-4 text-secondary max-w-2xl mx-auto">
+          <p className="mt-4 text-[rgba(59,88,100,0.70)] max-w-2xl mx-auto">
             Start free. Upgrade when your portfolio grows. Every plan includes unlimited draws and cost codes — you only pay for users and AI volume.
           </p>
         </div>
@@ -150,14 +150,14 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 bg-bg-sub border-y border-border-def">
+      <section className="px-6 py-16 bg-[rgba(91,134,153,0.06)] border-y border-[rgba(59,88,100,0.15)]">
         <div className="max-w-[820px] mx-auto">
           <h2 className="font-display text-2xl text-slate-tile mb-6">Frequently asked</h2>
-          <div className="divide-y divide-brand-border border-y border-border-def">
+          <div className="divide-y divide-brand-border border-y border-[rgba(59,88,100,0.15)]">
             {FAQ.map((f) => (
               <div key={f.q} className="py-5">
                 <p className="font-medium text-slate-tile text-[15px]">{f.q}</p>
-                <p className="mt-2 text-sm text-secondary leading-relaxed">{f.a}</p>
+                <p className="mt-2 text-sm text-[rgba(59,88,100,0.70)] leading-relaxed">{f.a}</p>
               </div>
             ))}
           </div>
@@ -179,12 +179,12 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
   const buttonClass =
     plan.highlight
       ? "bg-slate-deep text-white hover:bg-slate-deeper"
-      : "border border-border-def text-slate-tile hover:bg-bg-sub";
+      : "border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-[rgba(91,134,153,0.06)]";
 
   return (
     <div
       className={`flex flex-col p-6 border bg-white ${
-        plan.highlight ? "border-stone-blue shadow-[0_12px_32px_-16px_rgba(63,88,98,0.35)]" : "border-border-def"
+        plan.highlight ? "border-stone-blue shadow-[0_12px_32px_-16px_rgba(63,88,98,0.35)]" : "border-[rgba(59,88,100,0.15)]"
       }`}
     >
       {plan.highlight && (
@@ -193,11 +193,11 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
         </span>
       )}
       <h2 className="font-display text-xl text-slate-tile">{plan.name}</h2>
-      <p className="mt-3 text-sm text-secondary h-10">{plan.blurb}</p>
+      <p className="mt-3 text-sm text-[rgba(59,88,100,0.70)] h-10">{plan.blurb}</p>
       <div className="mt-5">
         <span className="font-display text-4xl text-slate-tile">{plan.price}</span>
         {plan.key !== "enterprise" && plan.price !== "$0" && (
-          <span className="text-tertiary text-sm font-sans"> /mo</span>
+          <span className="text-[rgba(59,88,100,0.55)] text-sm font-sans"> /mo</span>
         )}
       </div>
       <dl className="mt-6 space-y-2 text-sm">
@@ -206,7 +206,7 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
         <SpecRow label="Storage" value={plan.storage} />
         <SpecRow label="Jobs" value={plan.jobs} />
       </dl>
-      <ul className="mt-6 space-y-2 text-sm text-secondary flex-1">
+      <ul className="mt-6 space-y-2 text-sm text-[rgba(59,88,100,0.70)] flex-1">
         {plan.features.map((f) => (
           <li key={f} className="flex gap-2">
             <span className="text-stone-blue mt-0.5">✓</span>
@@ -217,7 +217,7 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
       {isContact ? (
         <a
           href={plan.ctaHref}
-          className="mt-8 block text-center px-4 py-3 border border-border-def text-[13px] tracking-[0.08em] uppercase hover:bg-bg-sub"
+          className="mt-8 block text-center px-4 py-3 border border-[rgba(59,88,100,0.15)] text-[13px] tracking-[0.08em] uppercase hover:bg-[rgba(91,134,153,0.06)]"
         >
           {plan.cta}
         </a>
@@ -241,8 +241,8 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
 
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4 border-b border-border-def/70 pb-1.5">
-      <dt className="text-[11px] tracking-[0.08em] uppercase text-tertiary">{label}</dt>
+    <div className="flex justify-between gap-4 border-b border-[rgba(59,88,100,0.15)]/70 pb-1.5">
+      <dt className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)]">{label}</dt>
       <dd className="text-slate-tile text-sm">{value}</dd>
     </div>
   );

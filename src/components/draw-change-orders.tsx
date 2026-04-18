@@ -112,7 +112,7 @@ export default function DrawChangeOrders({
     return (
       <section className="mt-6">
         <h3 className="font-display text-lg text-slate-tile mb-2">Change orders</h3>
-        <div className="text-sm text-tertiary">Loading…</div>
+        <div className="text-sm text-[rgba(59,88,100,0.55)]">Loading…</div>
       </section>
     );
   }
@@ -122,7 +122,7 @@ export default function DrawChangeOrders({
     return (
       <section className="mt-6">
         <h3 className="font-display text-lg text-slate-tile mb-2">Change orders</h3>
-        <p className="text-sm text-tertiary">
+        <p className="text-sm text-[rgba(59,88,100,0.55)]">
           No approved change orders for this job yet.
         </p>
       </section>
@@ -145,13 +145,13 @@ export default function DrawChangeOrders({
       </header>
 
       {attached.length > 0 && (
-        <div className="border border-border-def bg-white overflow-hidden mb-4">
-          <div className="px-3 py-2 bg-bg-sub/60 text-[11px] uppercase tracking-wider text-tertiary">
+        <div className="border border-[rgba(59,88,100,0.15)] bg-white overflow-hidden mb-4">
+          <div className="px-3 py-2 bg-[rgba(91,134,153,0.06)]/60 text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
             On this draw
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-tertiary border-b border-border-def">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] border-b border-[rgba(59,88,100,0.15)]">
                 <th className="px-3 py-1.5">PCCO #</th>
                 <th className="px-3 py-1.5">Description</th>
                 <th className="px-3 py-1.5 text-right">Amount</th>
@@ -165,15 +165,15 @@ export default function DrawChangeOrders({
                 const co = a.change_orders;
                 if (!co) return null;
                 return (
-                  <tr key={a.id} className="border-b border-border-sub last:border-0">
+                  <tr key={a.id} className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
                     <td className="px-3 py-2 text-slate-tile">#{co.pcco_number}</td>
-                    <td className="px-3 py-2 text-tertiary">
+                    <td className="px-3 py-2 text-[rgba(59,88,100,0.55)]">
                       {co.title ?? co.description ?? "—"}
                     </td>
-                    <td className="px-3 py-2 text-right text-tertiary tabular-nums">
+                    <td className="px-3 py-2 text-right text-[rgba(59,88,100,0.55)] tabular-nums">
                       {formatCents(co.amount)}
                     </td>
-                    <td className="px-3 py-2 text-right text-tertiary tabular-nums">
+                    <td className="px-3 py-2 text-right text-[rgba(59,88,100,0.55)] tabular-nums">
                       {formatCents(co.gc_fee_amount)} ({Math.round(Number(co.gc_fee_rate) * 100)}%)
                     </td>
                     <td className="px-3 py-2 text-right text-slate-tile tabular-nums font-medium">
@@ -198,13 +198,13 @@ export default function DrawChangeOrders({
       )}
 
       {editable && available.length > 0 && (
-        <div className="border border-border-def bg-white overflow-hidden">
-          <div className="px-3 py-2 bg-bg-sub/60 text-[11px] uppercase tracking-wider text-tertiary">
+        <div className="border border-[rgba(59,88,100,0.15)] bg-white overflow-hidden">
+          <div className="px-3 py-2 bg-[rgba(91,134,153,0.06)]/60 text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
             Available to attach (approved, not yet on any draw)
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-tertiary border-b border-border-def">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] border-b border-[rgba(59,88,100,0.15)]">
                 <th className="px-3 py-1.5 w-8" />
                 <th className="px-3 py-1.5">PCCO #</th>
                 <th className="px-3 py-1.5">Description</th>
@@ -215,7 +215,7 @@ export default function DrawChangeOrders({
             </thead>
             <tbody>
               {available.map((co) => (
-                <tr key={co.id} className="border-b border-border-sub last:border-0">
+                <tr key={co.id} className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
                   <td className="px-3 py-2">
                     <input
                       type="checkbox"
@@ -224,13 +224,13 @@ export default function DrawChangeOrders({
                     />
                   </td>
                   <td className="px-3 py-2 text-slate-tile">#{co.pcco_number}</td>
-                  <td className="px-3 py-2 text-tertiary">
+                  <td className="px-3 py-2 text-[rgba(59,88,100,0.55)]">
                     {co.title ?? co.description ?? "—"}
                   </td>
-                  <td className="px-3 py-2 text-right text-tertiary tabular-nums">
+                  <td className="px-3 py-2 text-right text-[rgba(59,88,100,0.55)] tabular-nums">
                     {formatCents(co.amount)}
                   </td>
-                  <td className="px-3 py-2 text-right text-tertiary tabular-nums">
+                  <td className="px-3 py-2 text-right text-[rgba(59,88,100,0.55)] tabular-nums">
                     {formatCents(co.gc_fee_amount)} ({Math.round(Number(co.gc_fee_rate) * 100)}%)
                   </td>
                   <td className="px-3 py-2 text-right text-slate-tile tabular-nums">

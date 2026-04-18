@@ -39,7 +39,7 @@ interface CoLine {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "text-tertiary border-cream-dim/40",
+  draft: "text-[rgba(59,88,100,0.55)] border-cream-dim/40",
   pending: "text-nw-warn border-nw-warn/40",
   pending_approval: "text-nw-warn border-nw-warn/40",
   approved: "text-nw-success border-nw-success/40",
@@ -148,9 +148,9 @@ export default function ChangeOrderDetailPage() {
 
         <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
           <div>
-            <p className="text-xs text-tertiary uppercase tracking-wider">PCCO #{co.pcco_number}</p>
+            <p className="text-xs text-[rgba(59,88,100,0.55)] uppercase tracking-wider">PCCO #{co.pcco_number}</p>
             <h2 className="font-display text-2xl text-slate-tile">{co.title ?? co.description ?? "Untitled CO"}</h2>
-            <p className="text-sm text-tertiary mt-1">
+            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
               {co.jobs?.name} · {co.co_type === "owner" ? "Owner Change Order (contract)" : "Internal (budget only)"}
             </p>
           </div>
@@ -160,20 +160,20 @@ export default function ChangeOrderDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="border border-border-def bg-white p-4">
-            <p className="text-[11px] uppercase tracking-wider text-tertiary">Base Amount</p>
+          <div className="border border-[rgba(59,88,100,0.15)] bg-white p-4">
+            <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">Base Amount</p>
             <p className="text-lg text-slate-tile tabular-nums mt-1">{formatCents(co.amount)}</p>
           </div>
-          <div className="border border-border-def bg-white p-4">
-            <p className="text-[11px] uppercase tracking-wider text-tertiary">GC Fee ({(co.gc_fee_rate * 100).toFixed(1)}%)</p>
+          <div className="border border-[rgba(59,88,100,0.15)] bg-white p-4">
+            <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">GC Fee ({(co.gc_fee_rate * 100).toFixed(1)}%)</p>
             <p className="text-lg text-slate-tile tabular-nums mt-1">{formatCents(co.gc_fee_amount)}</p>
           </div>
           <div className="border border-stone-blue bg-slate-deep-muted p-4">
-            <p className="text-[11px] uppercase tracking-wider text-tertiary">Total with Fee</p>
+            <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">Total with Fee</p>
             <p className="text-xl text-slate-tile tabular-nums mt-1 font-display">{formatCents(co.total_with_fee)}</p>
           </div>
-          <div className="border border-border-def bg-white p-4">
-            <p className="text-[11px] uppercase tracking-wider text-tertiary">Days Added</p>
+          <div className="border border-[rgba(59,88,100,0.15)] bg-white p-4">
+            <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">Days Added</p>
             <p className="text-lg text-slate-tile mt-1">{co.estimated_days_added ?? 0}</p>
           </div>
         </div>
@@ -193,22 +193,22 @@ export default function ChangeOrderDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             {co.description && (
-              <div className="bg-white border border-border-def p-5">
+              <div className="bg-white border border-[rgba(59,88,100,0.15)] p-5">
                 <h3 className="text-sm font-medium text-slate-tile mb-2 uppercase tracking-wider">Description</h3>
-                <p className="text-sm text-secondary whitespace-pre-wrap">{co.description}</p>
+                <p className="text-sm text-[rgba(59,88,100,0.70)] whitespace-pre-wrap">{co.description}</p>
               </div>
             )}
 
-            <div className="bg-white border border-border-def">
-              <div className="border-b border-border-def px-5 py-3">
+            <div className="bg-white border border-[rgba(59,88,100,0.15)]">
+              <div className="border-b border-[rgba(59,88,100,0.15)] px-5 py-3">
                 <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider">Budget Line Allocations</h3>
               </div>
               {lines.length === 0 ? (
-                <p className="text-sm text-tertiary p-5">No line allocations — contract-only CO.</p>
+                <p className="text-sm text-[rgba(59,88,100,0.55)] p-5">No line allocations — contract-only CO.</p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border-def text-[11px] uppercase tracking-wider text-tertiary">
+                    <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
                       <th className="text-left px-4 py-2 font-medium">Budget Line</th>
                       <th className="text-left px-4 py-2 font-medium">Description</th>
                       <th className="text-right px-4 py-2 font-medium">Amount</th>
@@ -216,21 +216,21 @@ export default function ChangeOrderDetailPage() {
                   </thead>
                   <tbody>
                     {lines.map((l) => (
-                      <tr key={l.id} className="border-b border-border-sub last:border-0">
+                      <tr key={l.id} className="border-b border-[rgba(59,88,100,0.08)] last:border-0">
                         <td className="px-4 py-2 text-slate-tile font-mono text-xs">
                           {l.budget_lines?.cost_codes?.code ?? l.cost_code ?? "—"}
                           {l.budget_lines?.cost_codes?.description && (
-                            <span className="ml-2 text-secondary font-sans normal-case">{l.budget_lines.cost_codes.description}</span>
+                            <span className="ml-2 text-[rgba(59,88,100,0.70)] font-sans normal-case">{l.budget_lines.cost_codes.description}</span>
                           )}
                         </td>
-                        <td className="px-4 py-2 text-secondary">{l.description ?? "—"}</td>
+                        <td className="px-4 py-2 text-[rgba(59,88,100,0.70)]">{l.description ?? "—"}</td>
                         <td className={`px-4 py-2 text-right tabular-nums ${l.amount < 0 ? "text-nw-danger" : l.amount > 0 ? "text-nw-success" : "text-slate-tile"}`}>
                           {formatCents(l.amount)}
                         </td>
                       </tr>
                     ))}
-                    <tr className="border-t-2 border-border-def bg-bg-sub font-medium">
-                      <td colSpan={2} className="px-4 py-2 text-[11px] uppercase tracking-wider text-tertiary">Total</td>
+                    <tr className="border-t-2 border-[rgba(59,88,100,0.15)] bg-[rgba(91,134,153,0.06)] font-medium">
+                      <td colSpan={2} className="px-4 py-2 text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">Total</td>
                       <td className="px-4 py-2 text-right text-slate-tile tabular-nums font-display">
                         {formatCents(lines.reduce((s, l) => s + l.amount, 0))}
                       </td>
@@ -241,19 +241,19 @@ export default function ChangeOrderDetailPage() {
             </div>
 
             {co.jobs && (co.status === "approved" || co.status === "executed") && (
-              <div className="bg-white border border-border-def p-5">
+              <div className="bg-white border border-[rgba(59,88,100,0.15)] p-5">
                 <h3 className="text-sm font-medium text-slate-tile mb-3 uppercase tracking-wider">Contract Impact</h3>
                 <dl className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <dt className="text-tertiary text-[11px] uppercase tracking-wider">Original Contract</dt>
+                    <dt className="text-[rgba(59,88,100,0.55)] text-[11px] uppercase tracking-wider">Original Contract</dt>
                     <dd className="text-slate-tile mt-0.5 tabular-nums">{formatCents(co.jobs.original_contract_amount)}</dd>
                   </div>
                   <div>
-                    <dt className="text-tertiary text-[11px] uppercase tracking-wider">After COs</dt>
+                    <dt className="text-[rgba(59,88,100,0.55)] text-[11px] uppercase tracking-wider">After COs</dt>
                     <dd className="text-slate-tile mt-0.5 tabular-nums">{formatCents(co.jobs.current_contract_amount)}</dd>
                   </div>
                   <div>
-                    <dt className="text-tertiary text-[11px] uppercase tracking-wider">This CO</dt>
+                    <dt className="text-[rgba(59,88,100,0.55)] text-[11px] uppercase tracking-wider">This CO</dt>
                     <dd className="text-stone-blue mt-0.5 tabular-nums font-medium">+{formatCents(co.amount)}</dd>
                   </div>
                 </dl>
@@ -262,7 +262,7 @@ export default function ChangeOrderDetailPage() {
           </div>
 
           <aside className="space-y-4">
-            <div className="bg-white border border-border-def p-4">
+            <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4">
               <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider mb-3">Actions</h3>
               <div className="flex flex-col gap-2">
                 {co.status === "draft" && (
@@ -325,15 +325,15 @@ export default function ChangeOrderDetailPage() {
               </div>
             </div>
 
-            <div className="bg-white border border-border-def p-4 text-sm">
+            <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4 text-sm">
               <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider mb-3">Dates</h3>
               <dl className="space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <dt className="text-tertiary">Submitted</dt>
+                  <dt className="text-[rgba(59,88,100,0.55)]">Submitted</dt>
                   <dd className="text-slate-tile">{co.submitted_date ? formatDate(co.submitted_date) : "—"}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-tertiary">Approved</dt>
+                  <dt className="text-[rgba(59,88,100,0.55)]">Approved</dt>
                   <dd className="text-slate-tile">{co.approved_date ? formatDate(co.approved_date) : "—"}</dd>
                 </div>
               </dl>
@@ -348,9 +348,9 @@ export default function ChangeOrderDetailPage() {
             </div>
 
             {co.status_history && co.status_history.length > 0 && (
-              <div className="bg-white border border-border-def p-4">
+              <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4">
                 <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider mb-3">History</h3>
-                <ul className="space-y-2 text-[11px] text-tertiary">
+                <ul className="space-y-2 text-[11px] text-[rgba(59,88,100,0.55)]">
                   {co.status_history.map((h, i) => (
                     <li key={i}>
                       <div>
@@ -360,7 +360,7 @@ export default function ChangeOrderDetailPage() {
                         </span>
                       </div>
                       <div>{formatDate(h.when)}</div>
-                      {h.note && <div className="text-secondary italic">{h.note}</div>}
+                      {h.note && <div className="text-[rgba(59,88,100,0.70)] italic">{h.note}</div>}
                     </li>
                   ))}
                 </ul>

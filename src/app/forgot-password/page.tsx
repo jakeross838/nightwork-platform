@@ -51,13 +51,13 @@ export default function ForgotPasswordPage() {
         <h1 className="font-display text-[40px] font-medium tracking-[-0.02em] text-slate-deep leading-[1.1] mb-2">
           Reset password.
         </h1>
-        <p className="font-sans text-[14.5px] leading-relaxed mb-8" style={{ color: "var(--text-secondary)" }}>
+        <p className="font-sans text-[14.5px] leading-relaxed mb-8" style={{ color: "rgba(59,88,100,0.75)" }}>
           Enter your email and we&apos;ll send you a link to reset your
           password.
         </p>
 
         {submitted ? (
-          <div className="border border-border-def bg-white p-8 text-center">
+          <div className="border border-[rgba(59,88,100,0.15)] bg-white p-8 text-center">
             <div
               className="w-12 h-12 mx-auto mb-4 flex items-center justify-center border-2 border-nw-success text-nw-success"
             >
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
             <p className="font-sans text-[14.5px] text-slate-deep mb-1">
               Check your email for a reset link.
             </p>
-            <p className="font-mono text-[10px] tracking-[0.08em]" style={{ color: "var(--text-tertiary)" }}>
+            <p className="font-mono text-[10px] tracking-[0.08em]" style={{ color: "rgba(59,88,100,0.55)" }}>
               If an account exists for that email, you&apos;ll receive
               instructions shortly.
             </p>
@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
               <label
                 htmlFor="reset-email"
                 className="font-mono text-[10px] tracking-[0.12em] uppercase"
-                style={{ color: "var(--text-secondary)" }}
+                style={{ color: "rgba(59,88,100,0.7)" }}
               >
                 Email Address
               </label>
@@ -128,22 +128,22 @@ export default function ForgotPasswordPage() {
         {/* Back to login */}
         <div className="mt-6">
           <div className="flex items-center gap-4 mb-6">
-            <span className="flex-1 h-px bg-bg-mut" />
-            <span className="font-mono text-[10px] tracking-[0.12em] uppercase" style={{ color: "var(--text-muted)" }}>
+            <span className="flex-1 h-px bg-[rgba(59,88,100,0.15)]" />
+            <span className="font-mono text-[10px] tracking-[0.12em] uppercase" style={{ color: "rgba(59,88,100,0.4)" }}>
               or
             </span>
-            <span className="flex-1 h-px bg-bg-mut" />
+            <span className="flex-1 h-px bg-[rgba(59,88,100,0.15)]" />
           </div>
           <Link
             href="/login"
-            className="block w-full py-3 text-center font-mono text-[11px] tracking-[0.14em] uppercase border border-border-str text-slate-deep bg-transparent hover:border-stone-blue hover:text-stone-blue transition-colors"
+            className="block w-full py-3 text-center font-mono text-[11px] tracking-[0.14em] uppercase border border-[rgba(59,88,100,0.3)] text-slate-deep bg-transparent hover:border-stone-blue hover:text-stone-blue transition-colors"
           >
             Back to Sign In
           </Link>
         </div>
 
         {/* Footer */}
-        <p className="font-mono text-[10px] tracking-[0.12em] uppercase mt-12" style={{ color: "var(--text-muted)" }}>
+        <p className="font-mono text-[10px] tracking-[0.12em] uppercase mt-12" style={{ color: "rgba(59,88,100,0.4)" }}>
           &copy; {new Date().getFullYear()} Nightwork &middot; Built by
           builders
         </p>

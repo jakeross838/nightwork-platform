@@ -28,7 +28,7 @@ export default function LoginForm() {
         <label
           htmlFor="email"
           className="font-mono text-[10px] tracking-[0.12em] uppercase"
-          style={{ color: "var(--text-secondary)" }}
+          style={{ color: "rgba(59,88,100,0.7)" }}
         >
           Email
         </label>
@@ -39,7 +39,7 @@ export default function LoginForm() {
           autoComplete="email"
           required
           placeholder="you@example.com"
-          className="w-full px-3.5 py-[13px] bg-white border border-border-str font-sans text-[14.5px] text-slate-tile placeholder:text-muted focus:outline-none transition-all duration-150 focus:border-stone-blue focus:shadow-[0_0_0_2px_rgba(91,134,153,0.12)]"
+          className="w-full px-3.5 py-[13px] bg-white border border-[rgba(59,88,100,0.25)] font-sans text-[14.5px] text-slate-tile placeholder:text-[rgba(59,88,100,0.4)] focus:outline-none transition-all duration-150 focus:border-stone-blue focus:shadow-[0_0_0_2px_rgba(91,134,153,0.12)]"
         />
       </div>
 
@@ -48,7 +48,7 @@ export default function LoginForm() {
         <label
           htmlFor="password"
           className="font-mono text-[10px] tracking-[0.12em] uppercase"
-          style={{ color: "var(--text-secondary)" }}
+          style={{ color: "rgba(59,88,100,0.7)" }}
         >
           Password
         </label>
@@ -59,13 +59,13 @@ export default function LoginForm() {
           autoComplete="current-password"
           required
           placeholder="Your password"
-          className="w-full px-3.5 py-[13px] bg-white border border-border-str font-sans text-[14.5px] text-slate-tile placeholder:text-muted focus:outline-none transition-all duration-150 focus:border-stone-blue focus:shadow-[0_0_0_2px_rgba(91,134,153,0.12)]"
+          className="w-full px-3.5 py-[13px] bg-white border border-[rgba(59,88,100,0.25)] font-sans text-[14.5px] text-slate-tile placeholder:text-[rgba(59,88,100,0.4)] focus:outline-none transition-all duration-150 focus:border-stone-blue focus:shadow-[0_0_0_2px_rgba(91,134,153,0.12)]"
         />
       </div>
 
       {/* Remember me + Forgot row */}
       <div className="flex items-center justify-between mb-5">
-        <label className="flex items-center gap-2 text-[13px] cursor-pointer" style={{ color: "var(--text-primary)" }}>
+        <label className="flex items-center gap-2 text-[13px] cursor-pointer" style={{ color: "rgba(59,88,100,0.8)" }}>
           <input
             type="checkbox"
             name="remember"

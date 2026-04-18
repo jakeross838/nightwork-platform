@@ -216,7 +216,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs items={[{ label: "Vendors", href: "/vendors" }, { label: vendor.name }]} />
         <h2 className="font-display text-2xl text-slate-tile mb-1">{vendor.name}</h2>
-        <p className="text-sm text-tertiary mb-6">Vendor Detail</p>
+        <p className="text-sm text-[rgba(59,88,100,0.55)] mb-6">Vendor Detail</p>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
           <Stat label="Invoices" value={String(stats.count)} />
@@ -228,7 +228,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
           />
         </div>
 
-        <section className="bg-white border border-border-def p-6 mb-6">
+        <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6 mb-6">
           <h3 className="font-display text-lg text-slate-tile mb-4">Vendor Info</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <EditField label="Name">
@@ -296,15 +296,15 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
           </div>
         </section>
 
-        <section className="bg-white border border-border-def p-6">
+        <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6">
           <h3 className="font-display text-lg text-slate-tile mb-4">Invoice History</h3>
           {invoices.length === 0 ? (
-            <p className="text-sm text-tertiary">No invoices from this vendor yet.</p>
+            <p className="text-sm text-[rgba(59,88,100,0.55)]">No invoices from this vendor yet.</p>
           ) : (
-            <div className="border border-border-def overflow-x-auto">
+            <div className="border border-[rgba(59,88,100,0.15)] overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border-def text-[11px] uppercase tracking-wider text-tertiary bg-bg-sub/50">
+                  <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] bg-[rgba(91,134,153,0.06)]/50">
                     <th className="text-left px-3 py-3 font-medium">Date</th>
                     <th className="text-left px-3 py-3 font-medium">Inv #</th>
                     <th className="text-left px-3 py-3 font-medium">Job</th>
@@ -317,13 +317,13 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                   {invoices.map((inv) => (
                     <tr
                       key={inv.id}
-                      className="border-b border-border-sub last:border-0 hover:bg-bg-sub/40 cursor-pointer"
+                      className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.06)]/40 cursor-pointer"
                       onClick={() => router.push(`/invoices/${inv.id}`)}
                     >
-                      <td className="px-3 py-2 text-secondary">{formatDate(inv.invoice_date)}</td>
-                      <td className="px-3 py-2 text-secondary font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                      <td className="px-3 py-2 text-[rgba(59,88,100,0.70)]">{formatDate(inv.invoice_date)}</td>
+                      <td className="px-3 py-2 text-[rgba(59,88,100,0.70)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
                       <td className="px-3 py-2 text-slate-tile">{inv.jobs?.name ?? "—"}</td>
-                      <td className="px-3 py-2 text-secondary text-xs">
+                      <td className="px-3 py-2 text-[rgba(59,88,100,0.70)] text-xs">
                         {inv.cost_codes ? `${inv.cost_codes.code} ${inv.cost_codes.description}` : "—"}
                       </td>
                       <td className="px-3 py-2 text-right text-slate-tile tabular-nums">{formatCents(inv.total_amount)}</td>
@@ -359,7 +359,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 function EditField({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <label className={`flex flex-col gap-1 ${full ? "md:col-span-2" : ""}`}>
-      <span className="text-[11px] font-medium text-tertiary uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-medium text-[rgba(59,88,100,0.55)] uppercase tracking-wider">{label}</span>
       {children}
     </label>
   );
@@ -367,8 +367,8 @@ function EditField({ label, children, full }: { label: string; children: React.R
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border border-border-def bg-white p-3">
-      <p className="text-[10px] uppercase tracking-wider text-tertiary font-medium">{label}</p>
+    <div className="border border-[rgba(59,88,100,0.15)] bg-white p-3">
+      <p className="text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
       <p className="text-sm mt-1 tabular-nums text-slate-tile font-medium truncate" title={value}>{value}</p>
     </div>
   );

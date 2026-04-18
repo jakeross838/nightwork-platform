@@ -38,7 +38,7 @@ interface ChangeOrder {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "text-tertiary border-cream-dim/40",
+  draft: "text-[rgba(59,88,100,0.55)] border-cream-dim/40",
   pending: "text-nw-warn border-nw-warn/40",
   pending_approval: "text-nw-warn border-nw-warn/40",
   approved: "text-nw-success border-nw-success/40",
@@ -157,7 +157,7 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
             <h2 className="font-display text-2xl text-slate-tile">{job.name}</h2>
-            <p className="text-sm text-tertiary mt-1">{job.address ?? "No address"}</p>
+            <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">{job.address ?? "No address"}</p>
           </div>
           <Link
             href={`/jobs/${job.id}/change-orders/new`}
@@ -190,10 +190,10 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
             primaryAction={{ label: "+ New Change Order", href: `/jobs/${job.id}/change-orders/new` }}
           />
         ) : (
-          <div className="bg-white border border-border-def overflow-x-auto">
+          <div className="bg-white border border-[rgba(59,88,100,0.15)] overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border-def text-[11px] uppercase tracking-wider text-tertiary">
+                <tr className="border-b border-[rgba(59,88,100,0.15)] text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
                   <th className="text-left px-4 py-3 font-medium">PCCO #</th>
                   <th className="text-left px-4 py-3 font-medium">Title</th>
                   <th className="text-left px-4 py-3 font-medium">Type</th>
@@ -206,7 +206,7 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
               </thead>
               <tbody>
                 {cos.map((co) => (
-                  <tr key={co.id} className="border-b border-border-sub last:border-0 hover:bg-bg-sub/40">
+                  <tr key={co.id} className="border-b border-[rgba(59,88,100,0.08)] last:border-0 hover:bg-[rgba(91,134,153,0.06)]/40">
                     <td className="px-4 py-3 font-mono text-slate-tile">
                       <Link href={`/change-orders/${co.id}`} className="text-stone-blue hover:underline">
                         #{co.pcco_number}
@@ -228,11 +228,11 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-secondary">
+                    <td className="px-4 py-3 text-[rgba(59,88,100,0.70)]">
                       {co.co_type === "owner" ? (
                         <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-stone-blue/40 text-stone-blue">Owner</span>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-border-def text-secondary">Internal</span>
+                        <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-[rgba(59,88,100,0.15)] text-[rgba(59,88,100,0.70)]">Internal</span>
                       )}
                     </td>
                     <td className={`px-4 py-3 text-right tabular-nums font-medium ${
@@ -245,8 +245,8 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
                         {STATUS_LABELS[co.status] ?? co.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-tertiary text-[11px]">{co.submitted_date ? formatDate(co.submitted_date) : "—"}</td>
-                    <td className="px-4 py-3 text-tertiary text-[11px]">{co.approved_date ? formatDate(co.approved_date) : "—"}</td>
+                    <td className="px-4 py-3 text-[rgba(59,88,100,0.55)] text-[11px]">{co.submitted_date ? formatDate(co.submitted_date) : "—"}</td>
+                    <td className="px-4 py-3 text-[rgba(59,88,100,0.55)] text-[11px]">{co.approved_date ? formatDate(co.approved_date) : "—"}</td>
                     <td className="px-4 py-3 text-right">
                       <CoActions
                         co={co}
@@ -267,8 +267,8 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`border p-4 ${highlight ? "border-stone-blue bg-slate-deep-muted" : "border-border-def bg-white"}`}>
-      <p className="text-[11px] uppercase tracking-wider text-tertiary font-medium">{label}</p>
+    <div className={`border p-4 ${highlight ? "border-stone-blue bg-slate-deep-muted" : "border-[rgba(59,88,100,0.15)] bg-white"}`}>
+      <p className="text-[11px] uppercase tracking-wider text-[rgba(59,88,100,0.55)] font-medium">{label}</p>
       <p className="text-lg text-slate-tile mt-1 tabular-nums">{value}</p>
     </div>
   );
@@ -301,7 +301,7 @@ function CoActions({
         </button>
       );
     }
-    return <span className="text-[11px] text-tertiary">—</span>;
+    return <span className="text-[11px] text-[rgba(59,88,100,0.55)]">—</span>;
   }
 
   return (

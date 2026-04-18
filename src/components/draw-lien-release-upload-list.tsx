@@ -104,10 +104,10 @@ export default function DrawLienReleaseUploadList({
 
   return (
     <div className="space-y-4 animate-fade-up">
-      <div className="bg-white border border-border-def p-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="bg-white border border-[rgba(59,88,100,0.15)] p-4 flex items-center justify-between gap-3 flex-wrap">
         <div>
           <p className="font-display text-slate-tile">Lien Release Documents</p>
-          <p className="text-xs text-tertiary mt-0.5">
+          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5">
             Upload signed waivers per vendor. Required for draw approval when{" "}
             <Link className="text-stone-blue hover:underline" href="/settings/workflow">
               workflow setting
@@ -154,14 +154,14 @@ export default function DrawLienReleaseUploadList({
       )}
 
       {releases.length === 0 ? (
-        <div className="border border-border-def p-6 text-center text-tertiary text-sm">
+        <div className="border border-[rgba(59,88,100,0.15)] p-6 text-center text-[rgba(59,88,100,0.55)] text-sm">
           No lien releases yet. They auto-generate when this draw is submitted.
         </div>
       ) : (
-        <div className="overflow-x-auto border border-border-def">
+        <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
           <table className="w-full min-w-[800px] text-sm">
             <thead>
-              <tr className="bg-bg-sub text-left">
+              <tr className="bg-[rgba(91,134,153,0.06)] text-left">
                 <Th>Vendor</Th>
                 <Th>Type</Th>
                 <Th right>Amount</Th>
@@ -177,9 +177,9 @@ export default function DrawLienReleaseUploadList({
                 const required = r.status === "pending" || r.status === "received";
                 const missing = required && !has;
                 return (
-                  <tr key={r.id} className="border-t border-border-sub">
+                  <tr key={r.id} className="border-t border-[rgba(59,88,100,0.08)]">
                     <td className="py-2.5 px-3 text-slate-tile">{r.vendors?.name ?? "—"}</td>
-                    <td className="py-2.5 px-3 text-secondary text-xs">
+                    <td className="py-2.5 px-3 text-[rgba(59,88,100,0.70)] text-xs">
                       {humanReleaseType(r.release_type)}
                     </td>
                     <td className="py-2.5 px-3 text-slate-tile text-right font-display">
@@ -190,7 +190,7 @@ export default function DrawLienReleaseUploadList({
                         {r.status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-secondary text-xs">{formatDate(r.through_date)}</td>
+                    <td className="py-2.5 px-3 text-[rgba(59,88,100,0.70)] text-xs">{formatDate(r.through_date)}</td>
                     <td className="py-2.5 px-3">
                       {has ? (
                         <span className="inline-flex items-center gap-1.5 text-nw-success">
@@ -209,7 +209,7 @@ export default function DrawLienReleaseUploadList({
                           <span className="text-xs">Missing</span>
                         </span>
                       ) : (
-                        <span className="text-tertiary text-xs">—</span>
+                        <span className="text-[rgba(59,88,100,0.55)] text-xs">—</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-right">
@@ -228,7 +228,7 @@ export default function DrawLienReleaseUploadList({
                       <button
                         onClick={() => fileInputs.current[r.id]?.click()}
                         disabled={busyId === r.id}
-                        className="px-2.5 py-1 border border-border-def text-slate-tile hover:bg-brand-elevated disabled:opacity-50 text-xs"
+                        className="px-2.5 py-1 border border-[rgba(59,88,100,0.15)] text-slate-tile hover:bg-brand-elevated disabled:opacity-50 text-xs"
                       >
                         {busyId === r.id ? "Uploading…" : has ? "Replace" : "Upload"}
                       </button>
@@ -259,7 +259,7 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
 function badge(status: string): string {
   if (status === "received") return "bg-transparent text-nw-success border border-nw-success";
   if (status === "pending") return "bg-transparent text-nw-warn border border-nw-warn";
-  return "bg-transparent text-tertiary border border-border-def-light";
+  return "bg-transparent text-[rgba(59,88,100,0.55)] border border-[rgba(59,88,100,0.15)]-light";
 }
 
 function humanReleaseType(t: string): string {

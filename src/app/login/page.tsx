@@ -44,7 +44,7 @@ export default async function LoginPage() {
           {/* Subtitle */}
           <p
             className="font-sans text-[14.5px] leading-relaxed mb-8"
-            style={{ color: "var(--text-secondary)" }}
+            style={{ color: "rgba(59,88,100,0.75)" }}
           >
             Sign in to review your project status, approve draws, and
             message your build team.
@@ -54,28 +54,28 @@ export default async function LoginPage() {
 
           {/* OR divider */}
           <div className="flex items-center gap-3.5 my-5">
-            <span className="flex-1 h-px bg-slate-tile/20" />
+            <span className="flex-1 h-px bg-[rgba(59,88,100,0.2)]" />
             <span
               className="font-mono text-[10px] tracking-[0.12em] uppercase"
-              style={{ color: "var(--text-muted)" }}
+              style={{ color: "rgba(59,88,100,0.45)" }}
             >
               OR
             </span>
-            <span className="flex-1 h-px bg-slate-tile/20" />
+            <span className="flex-1 h-px bg-[rgba(59,88,100,0.2)]" />
           </div>
 
           {/* Secondary CTA — ghost button */}
           <a
             href="/signup"
-            className="block w-full py-3.5 text-center font-mono text-[11px] tracking-[0.12em] uppercase border border-border-str text-slate-tile bg-transparent hover:border-stone-blue hover:text-stone-blue transition-all duration-150"
+            className="block w-full py-3.5 text-center font-mono text-[11px] tracking-[0.12em] uppercase border border-[rgba(59,88,100,0.3)] text-slate-tile bg-transparent hover:border-stone-blue hover:text-stone-blue transition-all duration-150"
           >
             Create an Account
           </a>
 
           {/* Help section */}
           <div
-            className="mt-7 pt-5 border-t border-border-def text-[13px] leading-relaxed"
-            style={{ color: "var(--text-secondary)" }}
+            className="mt-7 pt-5 border-t border-[rgba(59,88,100,0.15)] text-[13px] leading-relaxed"
+            style={{ color: "rgba(59,88,100,0.65)" }}
           >
             Trouble accessing your project?{" "}
             <a
@@ -97,7 +97,7 @@ export default async function LoginPage() {
         {/* Footer */}
         <div
           className="flex justify-between items-center mt-auto pt-10 font-mono text-[10px] tracking-[0.12em] uppercase"
-          style={{ color: "var(--text-tertiary)" }}
+          style={{ color: "rgba(59,88,100,0.5)" }}
         >
           <span>Nightwork &middot; Makes Building Lightwork</span>
           <span>SOC 2 &middot; Audit Logged</span>
@@ -126,7 +126,7 @@ export default async function LoginPage() {
         />
 
         {/* Top bar — system status */}
-        <div className="relative z-10 flex justify-between items-center font-mono text-[10px] tracking-[0.14em] text-white-sand/60">
+        <div className="relative z-10 flex justify-between items-center font-mono text-[10px] tracking-[0.14em] text-[rgba(247,245,236,0.6)]">
           <span className="flex items-center">
             <span
               className="inline-block w-1.5 h-1.5 mr-1.5"
@@ -185,7 +185,7 @@ export default async function LoginPage() {
         </div>
 
         {/* Stats row */}
-        <div className="relative z-10 grid grid-cols-3 gap-6 pt-8 mt-12 border-t border-white-sand/12">
+        <div className="relative z-10 grid grid-cols-3 gap-6 pt-8 mt-12 border-t border-[rgba(247,245,236,0.12)]">
           <div>
             <p
               className="font-mono text-[9px] tracking-[0.14em] uppercase mb-1.5"

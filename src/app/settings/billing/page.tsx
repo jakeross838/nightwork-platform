@@ -133,14 +133,14 @@ export default async function BillingSettingsPage({
         </Banner>
       )}
 
-      <section className="bg-white border border-border-def p-6">
+      <section className="bg-white border border-[rgba(59,88,100,0.15)] p-6">
         <div className="flex items-baseline justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] tracking-[0.08em] uppercase text-tertiary">Current Plan</p>
+            <p className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)]">Current Plan</p>
             <h2 className="mt-1 font-display text-3xl text-slate-tile">{planName}</h2>
-            <p className="mt-1 text-sm text-secondary">
+            <p className="mt-1 text-sm text-[rgba(59,88,100,0.70)]">
               {PLAN_MONTHLY_PRICE[planSlug]}
-              {planSlug !== "free_trial" && <span className="text-tertiary">/mo</span>}
+              {planSlug !== "free_trial" && <span className="text-[rgba(59,88,100,0.55)]">/mo</span>}
             </p>
           </div>
           <StatusBadge status={org.subscription_status} />
@@ -171,7 +171,7 @@ export default async function BillingSettingsPage({
           <Row label="Stripe customer" value={org.stripe_customer_id ?? "—"} />
         </dl>
 
-        <div className="mt-6 pt-6 border-t border-border-def">
+        <div className="mt-6 pt-6 border-t border-[rgba(59,88,100,0.15)]">
           <BillingActions
             hasCustomer={Boolean(org.stripe_customer_id)}
             hasActiveSub={Boolean(currentSub)}
@@ -184,7 +184,7 @@ export default async function BillingSettingsPage({
       {onTrial && !currentSub && (
         <section className="bg-slate-deep-muted border border-stone-blue p-6">
           <h3 className="font-display text-lg text-slate-tile">Upgrade when you&apos;re ready</h3>
-          <p className="mt-2 text-sm text-secondary">
+          <p className="mt-2 text-sm text-[rgba(59,88,100,0.70)]">
             {trialDaysLeft !== null
               ? `You have ${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left on your trial.`
               : "Your trial is active."}{" "}
@@ -244,7 +244,7 @@ function capitalize(s: string): string {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <>
-      <dt className="text-[11px] tracking-[0.08em] uppercase text-tertiary">{label}</dt>
+      <dt className="text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)]">{label}</dt>
       <dd className="text-slate-tile break-all">{value}</dd>
     </>
   );
@@ -257,7 +257,7 @@ function StatusBadge({ status }: { status: string }) {
     past_due: "bg-nw-warn-muted text-nw-warn border-nw-warn",
     cancelled: "bg-nw-danger-muted text-nw-danger border-nw-danger",
   } as const;
-  const cls = (styles as Record<string, string>)[status] ?? "bg-bg-sub text-secondary border-border-def";
+  const cls = (styles as Record<string, string>)[status] ?? "bg-[rgba(91,134,153,0.06)] text-[rgba(59,88,100,0.70)] border-[rgba(59,88,100,0.15)]";
   return (
     <span className={`px-2.5 py-1 border text-[11px] tracking-[0.08em] uppercase ${cls}`}>
       {formatStatus(status)}

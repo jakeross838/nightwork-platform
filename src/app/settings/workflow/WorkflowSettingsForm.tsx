@@ -251,7 +251,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
         />
         <div className="py-3">
           <p className="text-sm text-slate-tile font-medium">Draw cover letter template</p>
-          <p className="text-xs text-tertiary mt-0.5 mb-2">
+          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-0.5 mb-2">
             Used as the body of the auto-generated cover letter. Leave blank to use the built-in
             default. Placeholders: <code className="text-stone-blue">{"{{job_name}}"}</code>,{" "}
             <code className="text-stone-blue">{"{{job_address}}"}</code>,{" "}
@@ -270,7 +270,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
             onChange={(e) => patch("cover_letter_template", e.target.value)}
             rows={10}
             placeholder="Leave blank to use the built-in default template."
-            className="w-full px-3 py-2 bg-bg-sub border border-border-def text-sm text-slate-tile font-mono focus:border-stone-blue focus:outline-none"
+            className="w-full px-3 py-2 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile font-mono focus:border-stone-blue focus:outline-none"
           />
         </div>
       </Section>
@@ -281,7 +281,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
       >
         <div className="py-3 space-y-4">
           <label className="block">
-            <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
+            <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
               Max batch size
             </span>
             <input
@@ -290,34 +290,34 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
               max={200}
               value={form.import_max_batch_size}
               onChange={(e) => patch("import_max_batch_size", Math.max(1, Math.min(200, Number(e.target.value) || 50)))}
-              className="w-32 px-3 py-2 border border-border-def bg-white text-sm"
+              className="w-32 px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
             />
-            <p className="text-xs text-tertiary mt-1">
+            <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">
               Largest number of files a single upload can contain (1–200). Default 50.
             </p>
           </label>
 
           <label className="block">
-            <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
+            <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
               Default PM for unmatched jobs
             </span>
             <select
               value={form.import_default_pm_id}
               onChange={(e) => patch("import_default_pm_id", e.target.value)}
-              className="w-full max-w-sm px-3 py-2 border border-border-def bg-white text-sm"
+              className="w-full max-w-sm px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
             >
               <option value="">— None (leave unassigned) —</option>
               {pms.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <p className="text-xs text-tertiary mt-1">
+            <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">
               When bulk import can&apos;t match an invoice to a job, assign this PM so they can review. Nullable — leave blank to require explicit assignment.
             </p>
           </label>
 
           <label className="block">
-            <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
+            <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
               Auto-route confidence threshold (%)
             </span>
             <input
@@ -326,9 +326,9 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
               max={100}
               value={form.import_auto_route_threshold}
               onChange={(e) => patch("import_auto_route_threshold", Math.max(0, Math.min(100, Number(e.target.value) || 85)))}
-              className="w-32 px-3 py-2 border border-border-def bg-white text-sm"
+              className="w-32 px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
             />
-            <p className="text-xs text-tertiary mt-1">
+            <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">
               Confidence above this routes to <strong>PM Review</strong>; below routes to <strong>Accounting QA</strong>. <strong>Never auto-approves</strong> — every invoice is reviewed by a human before it enters a draw.
             </p>
           </label>
@@ -336,7 +336,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
       </Section>
 
       <div
-        className={`sticky bottom-0 -mx-4 px-4 md:-mx-6 md:px-6 py-4 bg-white-sand/95 backdrop-blur border-t border-border-def flex items-center gap-3 transition-opacity ${
+        className={`sticky bottom-0 -mx-4 px-4 md:-mx-6 md:px-6 py-4 bg-white-sand/95 backdrop-blur border-t border-[rgba(59,88,100,0.15)] flex items-center gap-3 transition-opacity ${
           dirty || message ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
@@ -352,7 +352,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
           <button
             type="button"
             onClick={() => setForm(initial)}
-            className="px-3 py-2 text-sm text-tertiary hover:text-slate-tile"
+            className="px-3 py-2 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
           >
             Discard
           </button>
@@ -381,11 +381,11 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border border-border-def bg-white p-6">
+    <section className="border border-[rgba(59,88,100,0.15)] bg-white p-6">
       <header className="mb-4">
         <h2 className="section-label">{title}</h2>
         {subtitle && (
-          <p className="text-xs text-tertiary mt-1">{subtitle}</p>
+          <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">{subtitle}</p>
         )}
       </header>
       <div className="divide-y divide-brand-border/60">{children}</div>
@@ -415,7 +415,7 @@ function Toggle({
     >
       <span className="flex-1 min-w-0">
         <span className="block text-sm text-slate-tile font-medium">{label}</span>
-        <span className="block text-xs text-tertiary mt-0.5 leading-relaxed">
+        <span className="block text-xs text-[rgba(59,88,100,0.55)] mt-0.5 leading-relaxed">
           {description}
         </span>
       </span>
@@ -424,7 +424,7 @@ function Toggle({
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors border mt-0.5 ${
           checked
             ? "bg-[var(--org-primary)] border-[var(--org-primary)]"
-            : "bg-brand-border/40 border-border-def"
+            : "bg-brand-border/40 border-[rgba(59,88,100,0.15)]"
         }`}
       >
         <span
@@ -460,13 +460,13 @@ function DropdownField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-tertiary mb-1">
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-[rgba(59,88,100,0.55)] mb-1">
         {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-border-def bg-white text-sm"
+        className="w-full px-3 py-2 border border-[rgba(59,88,100,0.15)] bg-white text-sm"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -474,7 +474,7 @@ function DropdownField({
           </option>
         ))}
       </select>
-      {help && <p className="text-xs text-tertiary mt-1">{help}</p>}
+      {help && <p className="text-xs text-[rgba(59,88,100,0.55)] mt-1">{help}</p>}
     </label>
   );
 }

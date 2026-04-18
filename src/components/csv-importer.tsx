@@ -183,11 +183,11 @@ export default function CsvImporter({
   }
 
   return (
-    <div className="bg-white border border-border-def p-6">
+    <div className="bg-white border border-[rgba(59,88,100,0.15)] p-6">
       {step === "upload" && (
         <div>
           <div
-            className="border-2 border-dashed border-border-def p-10 text-center hover:border-stone-blue transition-colors cursor-pointer"
+            className="border-2 border-dashed border-[rgba(59,88,100,0.15)] p-10 text-center hover:border-stone-blue transition-colors cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); }}
             onDrop={(e) => {
@@ -197,7 +197,7 @@ export default function CsvImporter({
             }}
           >
             <p className="text-slate-tile text-sm">Drop a .csv or .xlsx file, or click to choose</p>
-            {hint && <p className="text-[11px] text-tertiary mt-2">{hint}</p>}
+            {hint && <p className="text-[11px] text-[rgba(59,88,100,0.55)] mt-2">{hint}</p>}
             <input
               ref={fileInputRef}
               type="file"
@@ -220,11 +220,11 @@ export default function CsvImporter({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider">Map Columns</h3>
-              <p className="text-[11px] text-tertiary">{fileName} · {rows.length} rows detected</p>
+              <p className="text-[11px] text-[rgba(59,88,100,0.55)]">{fileName} · {rows.length} rows detected</p>
             </div>
             <button
               onClick={reset}
-              className="text-[11px] text-tertiary hover:text-slate-tile"
+              className="text-[11px] text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
             >
               ← Change file
             </button>
@@ -233,13 +233,13 @@ export default function CsvImporter({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             {fields.map((f) => (
               <div key={f.key} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                <div className="text-sm text-tertiary text-right">
+                <div className="text-sm text-[rgba(59,88,100,0.55)] text-right">
                   {f.label}
                   {f.required && <span className="text-nw-danger">*</span>}
                 </div>
-                <span className="text-tertiary">→</span>
+                <span className="text-[rgba(59,88,100,0.55)]">→</span>
                 <select
-                  className="px-2 py-1 bg-bg-sub border border-border-def text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
+                  className="px-2 py-1 bg-[rgba(91,134,153,0.06)] border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile focus:outline-none focus:border-stone-blue"
                   value={mapping[f.key] ?? ""}
                   onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
                 >
@@ -282,22 +282,22 @@ export default function CsvImporter({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-medium text-slate-tile uppercase tracking-wider">Preview</h3>
-              <p className="text-[11px] text-tertiary">
+              <p className="text-[11px] text-[rgba(59,88,100,0.55)]">
                 First {preview.length} of {rows.length} rows · validation {rowValidationErrors.filter((e) => e).length > 0 ? "errors below" : "passed"}
               </p>
             </div>
             <button
               onClick={() => setStep("map")}
-              className="text-[11px] text-tertiary hover:text-slate-tile"
+              className="text-[11px] text-[rgba(59,88,100,0.55)] hover:text-slate-tile"
             >
               ← Back to mapping
             </button>
           </div>
 
-          <div className="overflow-x-auto border border-border-def">
+          <div className="overflow-x-auto border border-[rgba(59,88,100,0.15)]">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-bg-sub/50 border-b border-border-def text-[10px] uppercase tracking-wider text-tertiary">
+                <tr className="bg-[rgba(91,134,153,0.06)]/50 border-b border-[rgba(59,88,100,0.15)] text-[10px] uppercase tracking-wider text-[rgba(59,88,100,0.55)]">
                   <th className="text-left px-2 py-1.5 font-medium">#</th>
                   {fields.map((f) => (
                     <th key={f.key} className="text-left px-2 py-1.5 font-medium">{f.label}</th>
@@ -307,10 +307,10 @@ export default function CsvImporter({
               </thead>
               <tbody>
                 {preview.map((r, i) => (
-                  <tr key={i} className={`border-b border-border-sub last:border-0 ${rowValidationErrors[i] ? "bg-nw-danger/10" : ""}`}>
-                    <td className="px-2 py-1 text-tertiary">{i + 1}</td>
+                  <tr key={i} className={`border-b border-[rgba(59,88,100,0.08)] last:border-0 ${rowValidationErrors[i] ? "bg-nw-danger/10" : ""}`}>
+                    <td className="px-2 py-1 text-[rgba(59,88,100,0.55)]">{i + 1}</td>
                     {fields.map((f) => (
-                      <td key={f.key} className="px-2 py-1 text-slate-tile">{r[f.key] || <span className="text-tertiary">—</span>}</td>
+                      <td key={f.key} className="px-2 py-1 text-slate-tile">{r[f.key] || <span className="text-[rgba(59,88,100,0.55)]">—</span>}</td>
                     ))}
                     <td className="px-2 py-1 text-[11px]">
                       {rowValidationErrors[i] ? (
@@ -342,12 +342,12 @@ export default function CsvImporter({
       {step === "done" && (
         <div className="text-center py-6">
           <p className="text-nw-success text-lg">Import complete</p>
-          <p className="text-sm text-tertiary mt-1">
+          <p className="text-sm text-[rgba(59,88,100,0.55)] mt-1">
             Imported {result?.imported ?? rows.length} rows.
           </p>
           <button
             onClick={reset}
-            className="mt-4 px-4 py-2 border border-border-def text-sm text-slate-tile hover:bg-bg-sub transition-colors"
+            className="mt-4 px-4 py-2 border border-[rgba(59,88,100,0.15)] text-sm text-slate-tile hover:bg-[rgba(91,134,153,0.06)] transition-colors"
           >
             Import another file
           </button>

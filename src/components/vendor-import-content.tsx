@@ -28,7 +28,7 @@ export default function VendorImportPageContent() {
           ]}
         />
         <h2 className="font-display text-2xl text-slate-tile mb-3">Import Vendors</h2>
-        <p className="text-sm text-tertiary mb-6">
+        <p className="text-sm text-[rgba(59,88,100,0.55)] mb-6">
           Upload a CSV or Excel file with vendor info. Existing vendors (case-insensitive name match) will be updated; new names become new vendors.
           <Link href="/vendors" className="text-stone-blue hover:underline ml-2">Back to vendors</Link>
         </p>

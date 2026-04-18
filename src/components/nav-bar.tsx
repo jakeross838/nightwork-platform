@@ -44,7 +44,7 @@ const ROLE_LABEL: Record<UserRole, string> = {
 
 function RoleBadge({ role }: { role: UserRole }) {
   return (
-    <span className="px-1.5 py-0.5 font-mono text-[9px] font-medium tracking-[0.12em] uppercase border border-white-sand/25 text-white-sand/80">
+    <span className="px-1.5 py-0.5 font-mono text-[9px] font-medium tracking-[0.12em] uppercase border border-[rgba(247,245,236,0.25)] text-[rgba(247,245,236,0.8)]">
       {ROLE_LABEL[role]}
     </span>
   );
@@ -101,12 +101,12 @@ function NavLink({
       } ${
         active
           ? "text-white-sand"
-          : "text-white-sand/65 hover:text-white-sand"
+          : "text-[rgba(247,245,236,0.65)] hover:text-white-sand"
       }`}
     >
       {label}
       {count != null && count > 0 && (
-        <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-white-sand/25 text-white-sand font-mono text-[9px] font-medium tracking-[0.12em] bg-transparent">
+        <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border border-[rgba(247,245,236,0.25)] text-white-sand font-mono text-[9px] font-medium tracking-[0.12em] bg-transparent">
           {count}
         </span>
       )}
@@ -192,7 +192,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
     <>
     <header
       ref={menuRef}
-      className="h-[60px] bg-slate-deep border-b border-white-sand/8 sticky top-0 z-40"
+      className="h-[60px] bg-slate-deep border-b border-[rgba(247,245,236,0.08)] sticky top-0 z-40"
     >
       <div className="max-w-[1600px] mx-auto px-7 h-full flex items-center justify-between gap-7">
         {/* Logo area */}
@@ -227,11 +227,11 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           )}
           {show.operations && (
             <span
-              className="relative flex items-center gap-1.5 px-3.5 h-[60px] font-sans text-[13px] font-medium text-white-sand/25 cursor-default select-none"
+              className="relative flex items-center gap-1.5 px-3.5 h-[60px] font-sans text-[13px] font-medium text-[rgba(247,245,236,0.25)] cursor-default select-none"
               title="Coming soon"
             >
               Operations
-              <span className="px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase border border-white-sand/15 text-white-sand/25">
+              <span className="px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase border border-[rgba(247,245,236,0.15)] text-[rgba(247,245,236,0.25)]">
                 SOON
               </span>
             </span>
@@ -246,7 +246,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           {profile && <NotificationBell userId={profile.id} />}
           {profile && (
             <div className="flex items-center gap-2.5">
-              <span className="font-sans text-[13px] font-medium text-white-sand/80">
+              <span className="font-sans text-[13px] font-medium text-[rgba(247,245,236,0.8)]">
                 {firstNameOf(profile.full_name)}
               </span>
               <RoleBadge role={profile.role} />
@@ -254,7 +254,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           )}
           <form action={logoutAction}>
             <button type="submit"
-              className="font-sans text-[13px] px-2 py-1 text-white-sand/65 hover:text-white-sand transition-colors hover:underline underline-offset-4">
+              className="font-sans text-[13px] px-2 py-1 text-[rgba(247,245,236,0.65)] hover:text-white-sand transition-colors hover:underline underline-offset-4">
               Sign Out
             </button>
           </form>
@@ -264,7 +264,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
         <div className="flex md:hidden items-center gap-1">
           {onToggleSidebar && (
             <button type="button" onClick={onToggleSidebar}
-              className="flex items-center justify-center w-10 h-10 text-white-sand/65 hover:text-white-sand transition-colors"
+              className="flex items-center justify-center w-10 h-10 text-[rgba(247,245,236,0.65)] hover:text-white-sand transition-colors"
               aria-label="Open job sidebar">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
@@ -273,7 +273,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           )}
           {profile && <NotificationBell userId={profile.id} />}
           <button type="button" onClick={() => setMobileOpen((p) => !p)}
-            className="flex items-center justify-center w-10 h-10 text-white-sand/65 hover:text-white-sand transition-colors relative"
+            className="flex items-center justify-center w-10 h-10 text-[rgba(247,245,236,0.65)] hover:text-white-sand transition-colors relative"
             aria-label="Toggle menu" aria-expanded={mobileOpen}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               {mobileOpen ? (
@@ -288,11 +288,11 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <nav className="md:hidden bg-slate-deep border-b border-white-sand/8 px-4 pb-3 pt-1 flex flex-col gap-1">
+        <nav className="md:hidden bg-slate-deep border-b border-[rgba(247,245,236,0.08)] px-4 pb-3 pt-1 flex flex-col gap-1">
           {profile && (
-            <div className="flex items-center justify-between py-2 px-4 border-b border-white-sand/8 mb-1">
+            <div className="flex items-center justify-between py-2 px-4 border-b border-[rgba(247,245,236,0.08)] mb-1">
               <div className="flex items-center gap-2.5">
-                <span className="font-sans text-[13px] font-medium text-white-sand/80">
+                <span className="font-sans text-[13px] font-medium text-[rgba(247,245,236,0.8)]">
                   {firstNameOf(profile.full_name)}
                 </span>
                 <RoleBadge role={profile.role} />
@@ -302,16 +302,16 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           {show.dashboard && <NavLink href="/dashboard" label="Dashboard" active={isDashboardActive} mobile onClick={closeMobile} />}
           {show.financial && <NavLink href="/financial" label="Financial" active={isFinancialActive} mobile onClick={closeMobile} />}
           {show.operations && (
-            <span className="flex items-center gap-2 py-3 px-4 font-sans text-[13px] font-medium text-white-sand/25">
+            <span className="flex items-center gap-2 py-3 px-4 font-sans text-[13px] font-medium text-[rgba(247,245,236,0.25)]">
               Operations
-              <span className="px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase border border-white-sand/15 text-white-sand/25">
+              <span className="px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase border border-[rgba(247,245,236,0.15)] text-[rgba(247,245,236,0.25)]">
                 SOON
               </span>
             </span>
           )}
           {show.admin && <NavLink href="/admin" label="Admin" active={isAdminActive} mobile onClick={closeMobile} />}
           <form action={logoutAction} className="mt-1">
-            <button type="submit" className="w-full text-left py-3 px-4 font-sans text-[13px] text-white-sand/65 hover:text-white-sand transition-colors hover:underline underline-offset-4">
+            <button type="submit" className="w-full text-left py-3 px-4 font-sans text-[13px] text-[rgba(247,245,236,0.65)] hover:text-white-sand transition-colors hover:underline underline-offset-4">
               Sign Out
             </button>
           </form>

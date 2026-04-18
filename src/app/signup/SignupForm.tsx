@@ -38,7 +38,7 @@ export default function SignupForm({ plan }: { plan: string | null }) {
 
       <SubmitButton />
 
-      <p className="font-mono text-[10px] tracking-[0.08em] text-center leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+      <p className="font-mono text-[10px] tracking-[0.08em] text-center leading-relaxed" style={{ color: "rgba(59,88,100,0.5)" }}>
         By creating an account, you agree to our Terms of Service and Privacy
         Policy.
       </p>
@@ -62,7 +62,7 @@ function Field({
       <label
         htmlFor={name}
         className="font-mono text-[10px] tracking-[0.12em] uppercase"
-        style={{ color: "var(--text-secondary)" }}
+        style={{ color: "rgba(59,88,100,0.7)" }}
       >
         {label}
       </label>
@@ -85,7 +85,7 @@ function Field({
         }}
       />
       {hint && (
-        <span className="font-mono text-[9px] tracking-[0.08em]" style={{ color: "var(--text-muted)" }}>
+        <span className="font-mono text-[9px] tracking-[0.08em]" style={{ color: "rgba(59,88,100,0.45)" }}>
           {hint}
         </span>
       )}

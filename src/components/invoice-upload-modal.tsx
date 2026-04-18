@@ -55,11 +55,11 @@ export default function InvoiceUploadModal({
   return createPortal(
     <div className="fixed inset-0 z-50 bg-white-sand flex flex-col animate-fade-in">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-border-def shrink-0">
+      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-[rgba(59,88,100,0.15)] shrink-0">
         <h2 className="font-display text-lg text-slate-tile">Upload Invoices</h2>
         <button
           onClick={onClose}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-tertiary hover:text-slate-tile border border-border-def hover:bg-brand-elevated transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[rgba(59,88,100,0.55)] hover:text-slate-tile border border-[rgba(59,88,100,0.15)] hover:bg-brand-elevated transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
