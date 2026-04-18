@@ -52,39 +52,42 @@ Should be a single migration: 00039_owner_rls_audit.sql.
 **Recommended timing:** Before deploy to nightwork.build. Not
 blocking dev work.
 
-## F-003: invoices.draw_id is 1:1 (no history)
+## F-003: CLOSED — Not a bug, matches real workflow
 **Discovered:** Phase D D1 (invoice allocations salvage)
-**File:** src/app/api/invoices/[id]/allocations/route.ts (lock check)
-**Issue:** invoice.draw_id is a single FK. It tracks only the
-invoice's current draw attachment, not historical linkage. If an
-invoice is removed from Draw #1 (paid) and added to Draw #2
-(draft), the lock check only sees Draw #2's status and wouldn't
-block edits that could corrupt Draw #1's historical G702.
-**Impact:** Low for MVP (invoices rarely move between draws).
-Could surface as data integrity issue in production once dogfooding
-reveals the workflow.
-**Severity:** Low now, medium if/when invoice-reassignment workflow
-becomes common.
-**Recommended fix:** Either (a) change invoice.draw_id to a
-many-to-many via invoice_draw_history table, or (b) make invoices
-immutable once attached to a submitted draw (cleaner — no edit
-UI at all for attached invoices).
+**Updated:** 2026-04-18
+**Original concern:** invoices.draw_id is 1:1, no historical
+linkage — if a vendor invoice needs to span multiple draws it
+can't.
 
-## F-004: Internal billings assumed single-draw
+**Resolution:** Investigation confirmed this matches Ross
+Built's actual cost-plus workflow. Vendor invoices arrive for
+period work and get billed in full on that period's draw.
+Diane does not split single vendor invoices across pay apps.
+invoice_allocations handles cost-code splitting within a
+single draw (the real need). Draw status progression
+(draft → submitted → approved → locked → paid) handles
+lock-check concerns about moving invoices between draws.
+
+**Status: CLOSED — data model correctly reflects workflow.**
+
+## F-004: CLOSED — Not a bug, matches workflow
 **Discovered:** Phase D recompute helper review
-**File:** src/lib/recompute-percentage-billings.ts (line ~96)
-**Assumption:** total_to_date = this_period for internal billing
-lines. This holds because internal billings are modeled as one-shot
-charges on a specific draw (previous_applications = 0 by construction).
-**Risk:** If the product ever supports multi-draw recurring billings
-(e.g. Supervision that spans 3 draws), this logic will silently write
-wrong cumulative values. The billing would show this_period correctly
-on each draw but total_to_date would be reset to this_period each
-time instead of accumulating.
-**Severity:** Low today. Medium if recurring billing workflow ships.
-**Recommended fix:** When multi-draw billings are supported, compute
-total_to_date as: SUM(this_period) across all non-deleted draws this
-internal_billing has touched, up to and including current draw.
+**Updated:** 2026-04-18
+**Original concern:** Internal billings assumed single-draw;
+cumulative billings across draws might break.
+
+**Resolution:** Investigation confirmed internal billings are
+inherently per-draw by design. Each billing type (Contractor
+Fee percentage, Supervision flat, General Labor flat)
+recalculates fresh per draw — not a cumulative line that spans
+draws. A new internal_billings row + draw_line_item is created
+per draw attach. The total_to_date = this_period assumption
+correctly models this (per-draw snapshot, not cumulative
+tracker). Cross-draw cumulative math happens via
+nonBudgetLineThisPeriodForDraw + lessPreviousCertificatesForJob
+at the draw level, not the billing level.
+
+**Status: CLOSED — data model correctly reflects workflow.**
 
 ## F-005: Phase D workflows verified at unit level, some not E2E tested
 **Discovered:** Phase D completion
