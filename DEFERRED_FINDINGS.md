@@ -233,40 +233,39 @@ during dogfooding.
 
 **Status: FIXED.**
 
-## F-009: Two separate caches for "approved COs total" on a job
+## F-009: FIXED — DB trigger auto-maintains approved_cos_total (Path B)
 **Discovered:** Visual audit 2026-04-17 (post-Phase-E)
-**Impact:** `jobs.approved_cos_total` cache column is read by the
-job-level UI (financial bar, overview cards, change orders tab
-stat card, budget export, overview API). It is maintained by
-`recalcJobContract()` which fires on PATCH /api/change-orders/[id].
-Any path that modifies change_orders rows OUTSIDE that endpoint
-(seeds, imports, direct SQL, bulk ops) leaves the cache stale.
+**Fixed:** 2026-04-18
 
-Separately, draw-calc uses `netChangeOrdersForJob()` (live query)
-which is immune to this staleness.
+**Approach:** Path B from original finding. DB trigger
+`co_cache_trigger` on change_orders INSERT/UPDATE/DELETE
+automatically refreshes `jobs.approved_cos_total` and
+`jobs.current_contract_amount`. Cache is now immune to
+discipline drift — any path that modifies change_orders
+(imports, bulk ops, direct SQL, future integrations) triggers
+the recompute.
 
-**Observed:** Phase E's pay-app import populated PCCO #17 without
-firing recalcJobContract. Result: draws showed Net COs correctly
-at $3,902.26 (PCCO #17 total_with_fee) but the job header showed
-$0.00 for approved_cos_total. Manual recalcJobContract call fixed
-the cache.
+**Bonus fix:** Trigger uses `total_with_fee` (includes GC fees).
+The old `trg_change_orders_status_sync` and `recalcJobContract()`
+both used `SUM(amount)` which excluded GC fees — a pre-existing
+bug where Dewberry showed $3,307 instead of $3,902.26.
 
-**Severity:** Low for normal UI flows. Medium for any feature
-that creates/modifies COs outside the PATCH endpoint (imports,
-bulk ops, migrations, future integrations).
+**Changes:**
+- Migration: `00042_co_cache_trigger.sql`
+- New function: `app_private.refresh_approved_cos_total(job_id)`
+- New trigger: `co_cache_trigger` (AFTER INSERT/UPDATE/DELETE)
+- Updated: `trg_change_orders_status_sync` — removed its
+  job-cache logic (kept budget_line co_adjustments recomputation)
+- Removed: explicit `recalcJobContract()` call from PATCH
+  /api/change-orders/[id] (now redundant)
+- Retained: `recalcJobContract()` in src/lib/recalc.ts for
+  explicit one-off reconciliation (recalcAllForJob uses it)
+- One-time backfill of all existing jobs' caches
 
-**Remediation options:**
-- A: Fire recalcJobContract() at the end of every bulk operation
-  that touches change_orders (cheap, adds discipline).
-- B: Add a DB trigger on change_orders INSERT/UPDATE/DELETE that
-  recomputes the cache automatically (most robust).
-- C: Remove the cache, compute live everywhere via
-  netChangeOrdersForJob() — single source of truth (biggest
-  refactor; affects 6 UI read sites).
+**Verified:** Dewberry cache stays correct through status flips
+(approved 390226 → draft 0 → approved 390226).
 
-**Recommendation:** B for medium-term (safe and automatic). A as
-short-term discipline for imports. C eventually, when consolidating
-the calc layer.
+**Status: FIXED.**
 
 ## F-012: Job sidebar fetches all jobs, filters client-side
 **Discovered:** 2026-04-17 during Phase 4 validation
