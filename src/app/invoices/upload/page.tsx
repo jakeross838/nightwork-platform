@@ -6,7 +6,7 @@ import {
  formatDollars, confidenceColor, confidenceLabel,
  formatInvoiceType, formatFlag, formatDocumentType, formatDate,
 } from "@/lib/utils/format";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 
 type ParseStep = "uploading" | "analyzing" | "extracting" | "matching" | "complete";
 
@@ -557,8 +557,7 @@ export default function UploadPage() {
  const parsedUnsaved = files.filter((f) => f.status === "done" && f.result && !f.saved);
 
  return (
- <div className="min-h-screen">
- <NavBar />
+ <AppShell>
 
  {/* Sub-header with Save All */}
  {parsedUnsaved.length > 1 && (
@@ -743,6 +742,6 @@ export default function UploadPage() {
  saving={duplicateSaving}
  />
  )}
- </div>
+ </AppShell>
  );
 }

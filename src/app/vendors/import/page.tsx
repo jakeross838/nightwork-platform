@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import Breadcrumbs from "@/components/breadcrumbs";
 import CsvImporter from "@/components/csv-importer";
 import { supabase } from "@/lib/supabase/client";
@@ -20,8 +20,7 @@ export default function VendorImportPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
@@ -58,6 +57,6 @@ export default function VendorImportPage() {
           }}
         />
       </main>
-    </div>
+    </AppShell>
   );
 }

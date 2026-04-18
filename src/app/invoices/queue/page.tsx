@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, confidenceColor, daysAgo, formatDate } from "@/lib/utils/format";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
@@ -701,8 +701,7 @@ export default function QueuePage() {
  }, [filtered, selectedIds]);
 
  return (
- <div className="min-h-screen">
- <NavBar />
+ <AppShell>
 
  <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
  <FinancialViewTabs active="queue" />
@@ -1578,6 +1577,6 @@ export default function QueuePage() {
  </div>
  )}
  </main>
- </div>
+ </AppShell>
  );
 }

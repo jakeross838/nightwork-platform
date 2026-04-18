@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import Breadcrumbs from "@/components/breadcrumbs";
 import DrawCompareView from "@/components/draw-compare-view";
 import DrawCoverLetterEditor from "@/components/draw-cover-letter-editor";
@@ -158,22 +158,20 @@ export default function DrawDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
+      <AppShell>
         <div className="flex items-center justify-center py-32">
           <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" />
         </div>
-      </div>
+      </AppShell>
     );
   }
   if (!draw) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
+      <AppShell>
         <div className="flex items-center justify-center py-32">
           <p className="text-status-danger font-display text-lg">Draw not found</p>
         </div>
-      </div>
+      </AppShell>
     );
   }
 
@@ -237,8 +235,7 @@ export default function DrawDetailPage() {
   const isLocked = ["locked", "paid", "void"].includes(draw.status);
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
 
       {/* Sub-header */}
       <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-5 print:hidden">
@@ -763,7 +760,7 @@ export default function DrawDetailPage() {
           </div>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }
 

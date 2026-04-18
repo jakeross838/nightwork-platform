@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
@@ -211,8 +211,7 @@ export default function BulkLienReleasesPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <FinancialViewTabs active="liens" />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
@@ -419,7 +418,7 @@ export default function BulkLienReleasesPage() {
           </>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }
 

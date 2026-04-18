@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import { useOrgBranding } from "@/components/org-branding-provider";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
 import GettingStartedChecklist from "@/components/getting-started-checklist";
@@ -110,8 +110,7 @@ export default function Dashboard() {
   const isAdminLike = role === "admin" || role === "owner";
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <NavBar />
+    <AppShell>
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-6 py-8">
         {/* Header */}
         <div className="mb-8 animate-fade-up">
@@ -235,7 +234,7 @@ export default function Dashboard() {
 
         {isAdminLike && <GettingStartedChecklist />}
       </main>
-    </div>
+    </AppShell>
   );
 }
 

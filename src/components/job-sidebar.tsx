@@ -37,7 +37,7 @@ function statusLabel(status: string): string {
   return status;
 }
 
-export default function JobSidebar() {
+export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
   const pathname = usePathname();
   const [jobs, setJobs] = useState<SidebarJob[]>([]);
   const [role, setRole] = useState<UserRole | null>(null);
@@ -149,6 +149,65 @@ export default function JobSidebar() {
   function jobHref(jobId: string): string {
     if (currentTab) return `/jobs/${jobId}/${currentTab}`;
     return `/jobs/${jobId}`;
+  }
+
+  // Mobile mode: render job list inline for the drawer (no collapse, no aside wrapper)
+  if (mobile) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-3 space-y-2">
+          {canCreateJob && (
+            <Link
+              href="/jobs/new"
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 text-[11px] tracking-[0.06em] uppercase font-medium border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
+            >
+              + New Job
+            </Link>
+          )}
+          {role === "pm" && (
+            <div className="flex gap-1 bg-brand-surface border border-brand-border p-0.5">
+              <button type="button" onClick={() => setFilter("mine")}
+                className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                  filter === "mine" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+                }`}>My Jobs</button>
+              <button type="button" onClick={() => setFilter("all")}
+                className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                  filter === "all" ? "bg-white text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+                }`}>All Jobs</button>
+            </div>
+          )}
+          <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-2 py-1.5 text-xs border border-brand-border bg-white text-cream placeholder:text-cream-dim/50 focus:outline-none focus:border-teal" />
+        </div>
+        {selectedJob && (
+          <div className="px-3 pb-3 border-b border-brand-border bg-teal/5">
+            <p className="text-sm font-medium text-cream">{selectedJob.name}</p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`} />
+              <span className="text-[10px] uppercase tracking-wider text-cream-dim">{statusLabel(selectedJob.status)}</span>
+            </div>
+          </div>
+        )}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="p-4 text-center">
+              <div className="w-5 h-5 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+            </div>
+          ) : otherJobs.length === 0 ? (
+            <p className="p-3 text-xs text-cream-dim text-center">{search ? "No matches" : "No jobs"}</p>
+          ) : (
+            otherJobs.map((j) => (
+              <Link key={j.id} href={jobHref(j.id)}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-brand-surface/50 border-b border-brand-border/30"
+                title={j.address ?? j.name}>
+                <span className={`shrink-0 inline-block w-1.5 h-1.5 rounded-full ${statusDot(j.status)}`} />
+                <span className="truncate text-cream text-[13px]">{j.name}</span>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
+    );
   }
 
   // Collapsed rail

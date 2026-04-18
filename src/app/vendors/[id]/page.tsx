@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import Breadcrumbs from "@/components/breadcrumbs";
 import CostCodeCombobox, { CostCodeOption } from "@/components/cost-code-combobox";
 import { supabase } from "@/lib/supabase/client";
@@ -192,30 +192,27 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
+      <AppShell>
         <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
           <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
         </main>
-      </div>
+      </AppShell>
     );
   }
   if (!vendor) {
     return (
-      <div className="min-h-screen">
-        <NavBar />
+      <AppShell>
         <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
           <p className="text-cream">Vendor not found</p>
           {loadError && <p className="text-status-danger text-xs mt-2">{loadError}</p>}
           <Link href="/vendors" className="text-teal hover:underline text-sm mt-3 inline-block">Back to vendors</Link>
         </main>
-      </div>
+      </AppShell>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <NavBar />
+    <AppShell>
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs items={[{ label: "Vendors", href: "/vendors" }, { label: vendor.name }]} />
         <h2 className="font-display text-2xl text-cream mb-1">{vendor.name}</h2>
@@ -355,7 +352,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
         }
         .input:focus { outline: none; border-color: var(--org-primary); }
       `}</style>
-    </div>
+    </AppShell>
   );
 }
 

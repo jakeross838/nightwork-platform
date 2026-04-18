@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDollars, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, formatWho, statusBadgeOutline } from "@/lib/utils/format";
-import NavBar from "@/components/nav-bar";
+import AppShell from "@/components/app-shell";
 import InvoiceFilePreview from "@/components/invoice-file-preview";
 import InvoiceStatusTimeline from "@/components/invoice-status-timeline";
 import InvoiceAllocationsEditor from "@/components/invoice-allocations-editor";
@@ -1074,8 +1074,7 @@ export default function InvoiceReviewPage() {
  };
 
  return (
- <div className="min-h-screen">
- <NavBar />
+ <AppShell>
 
  {/* Sub-header */}
  <div className="border-b border-brand-border bg-brand-surface/50 px-4 md:px-6 py-3 print:hidden">
@@ -2507,7 +2506,7 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  )}
- </div>
+ </AppShell>
  );
 }
 

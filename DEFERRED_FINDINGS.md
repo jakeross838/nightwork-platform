@@ -283,20 +283,23 @@ and sort still applied client-side (local UX, not data scale).
 
 **Status: FIXED.**
 
-## F-013: Job sidebar hidden on mobile, no alternative switcher
+## F-013: FIXED — Mobile drawer for sidebar
 **Discovered:** 2026-04-17 during Phase 4 validation
-**Impact:** The job-scoped sidebar is hidden below md breakpoint.
-Mobile users on job detail pages have no way to switch between
-jobs without navigating back to /jobs list.
+**Fixed:** 2026-04-18
 
-**Severity:** Medium. Affects PM workflows on phone — exactly
-the audience most likely to work from a job site.
+**Approach:** Sidebar component made responsive via new AppShell
+wrapper. Desktop renders as fixed 220px left column. Mobile
+wraps in drawer overlay triggered by hamburger in top nav. Same
+content, same data, same interaction. Auto-closes on route
+change.
 
-**Fix:** Implement mobile drawer pattern. Button in top nav
-(hamburger icon when on job-scoped route) opens full-screen
-drawer with same sidebar content.
+**Bundled change:** Shipped alongside removing the "Jobs" top
+nav entry and making the sidebar universal on authenticated
+pages (except admin/drill-down). Mobile drawer is essential to
+this model — without it, mobile users on non-job pages would
+have no way to access the job list.
 
-**Remediation effort:** 2-3 hours.
+**Status: FIXED.**
 
 ## F-014: PCCO #17 roofing CO work allocated to cost code instead of PCCO line
 **Discovered:** 2026-04-17 during F-006 analysis
