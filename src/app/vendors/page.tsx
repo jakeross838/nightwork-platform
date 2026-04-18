@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import AdminSidebar, { AdminMobileNav } from "@/components/admin-sidebar";
+import VendorImportModal from "@/components/vendor-import-modal";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
@@ -29,11 +31,14 @@ interface InvoiceAgg {
 type UserRole = "owner" | "admin" | "pm" | "accounting";
 
 export default function VendorsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [invoiceAgg, setInvoiceAgg] = useState<Record<string, InvoiceAgg>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [userRole, setUserRole] = useState<UserRole>("admin");
+  const [importOpen, setImportOpen] = useState(searchParams.get("action") === "import");
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -152,12 +157,12 @@ export default function VendorsPage() {
                 Merge {selected.size} Vendors
               </button>
             )}
-            <Link
-              href="/vendors/import"
+            <button
+              onClick={() => setImportOpen(true)}
               className="px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
             >
               Import Vendors
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -196,7 +201,7 @@ export default function VendorsPage() {
               icon={<EmptyIcons.Users />}
               title="No vendors yet"
               message="Vendors are created automatically when invoices are processed. You can also add or import vendors manually."
-              primaryAction={{ label: "Import Vendors", href: "/vendors/import" }}
+              primaryAction={{ label: "Import Vendors", onClick: () => setImportOpen(true) }}
             />
           )
         ) : (
@@ -311,6 +316,11 @@ export default function VendorsPage() {
           </div>
         </div>
       </main>
+    <VendorImportModal open={importOpen} onClose={() => {
+      setImportOpen(false);
+      if (searchParams.get("action")) router.replace("/vendors");
+      window.location.reload();
+    }} />
     </AppShell>
   );
 }

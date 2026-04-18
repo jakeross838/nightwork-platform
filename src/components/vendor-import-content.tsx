@@ -3,24 +3,23 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AppShell from "@/components/app-shell";
 import Breadcrumbs from "@/components/breadcrumbs";
 import CsvImporter from "@/components/csv-importer";
 import { supabase } from "@/lib/supabase/client";
 
-export default function VendorImportPage() {
+export default function VendorImportPageContent() {
   const router = useRouter();
 
   useEffect(() => {
     async function ensureAuth() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) router.replace("/login?redirect=/vendors/import");
+      if (!user) router.replace("/login?redirect=/vendors");
     }
     ensureAuth();
   }, [router]);
 
   return (
-    <AppShell>
+    <>
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
@@ -57,6 +56,6 @@ export default function VendorImportPage() {
           }}
         />
       </main>
-    </AppShell>
+    </>
   );
 }

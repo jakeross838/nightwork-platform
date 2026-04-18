@@ -104,7 +104,7 @@ export default function GettingStartedChecklist() {
     { label: "Cost codes loaded", href: "/settings/cost-codes", done: checks.costCodesLoaded },
     { label: "Team invited", href: "/settings/team", done: checks.teamInvited },
     { label: "First job created", href: "/jobs/new", done: checks.firstJobCreated },
-    { label: "First invoice uploaded", href: "/invoices/upload", done: checks.firstInvoiceUploaded },
+    { label: "First invoice uploaded", href: "/invoices?action=upload", done: checks.firstInvoiceUploaded },
     { label: "First draw generated", href: "/draws", done: checks.firstDrawGenerated },
   ];
 

@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
+import POImportModal from "@/components/po-import-modal";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
@@ -49,11 +50,13 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function PurchaseOrdersPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [job, setJob] = useState<Job | null>(null);
   const [pos, setPos] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(searchParams.get("action") === "import");
 
   async function reload() {
     const res = await fetch(`/api/jobs/${params.id}/purchase-orders`);
@@ -130,6 +133,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
   }
 
   return (
+    <>
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs
           items={[
@@ -144,12 +148,12 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
             <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Link
-              href={`/jobs/${job.id}/purchase-orders/import`}
+            <button
+              onClick={() => setImportOpen(true)}
               className="px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
             >
               Import POs
-            </Link>
+            </button>
             <Link
               href={`/jobs/${job.id}/purchase-orders/new`}
               className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-sm font-medium transition-colors"
@@ -244,6 +248,16 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
           </div>
         )}
       </main>
+      <POImportModal
+        open={importOpen}
+        jobId={params.id}
+        onClose={() => {
+          setImportOpen(false);
+          if (searchParams.get("action")) router.replace(`/jobs/${params.id}/purchase-orders`);
+          window.location.reload();
+        }}
+      />
+    </>
   );
 }
 

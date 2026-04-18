@@ -6,7 +6,7 @@ import {
  formatDollars, confidenceColor, confidenceLabel,
  formatInvoiceType, formatFlag, formatDocumentType, formatDate,
 } from "@/lib/utils/format";
-import AppShell from "@/components/app-shell";
+
 
 type ParseStep = "uploading" | "analyzing" | "extracting" | "matching" | "complete";
 
@@ -440,7 +440,13 @@ function DuplicateModal({
  );
 }
 
-export default function UploadPage() {
+/**
+ * Core upload UI — used both by the standalone /invoices/upload page
+ * and by InvoiceUploadModal (full-screen overlay from the invoices list).
+ * When `onSaved` is provided, it's called after each successful save
+ * so the caller can close the modal / refresh a list.
+ */
+export default function UploadContent() {
  const [files, setFiles] = useState<FileStatus[]>([]);
  const [isDragging, setIsDragging] = useState(false);
  const [savingAll, setSavingAll] = useState(false);
@@ -557,8 +563,7 @@ export default function UploadPage() {
  const parsedUnsaved = files.filter((f) => f.status === "done" && f.result && !f.saved);
 
  return (
- <AppShell>
-
+ <>
  {/* Sub-header with Save All */}
  {parsedUnsaved.length > 1 && (
  <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
@@ -742,6 +747,6 @@ export default function UploadPage() {
  saving={duplicateSaving}
  />
  )}
- </AppShell>
+ </>
  );
 }
