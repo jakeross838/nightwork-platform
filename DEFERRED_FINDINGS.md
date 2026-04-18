@@ -337,3 +337,20 @@ nearly correct.
 **Recommended timing:** When CO-invoice linking workflow is built.
 This is a product feature (linking invoices to COs for automatic
 PCCO line generation), not a one-off data fix.
+
+## F-015: Job sidebar fetches twice on mobile drawer open
+**Discovered:** 2026-04-18 during Phase B2 data-sharing audit
+**Impact:** On mobile, both the desktop `<JobSidebar />` (CSS-hidden
+but mounted) and the mobile drawer `<JobSidebar mobile />`
+(mounted only when drawer opens) each fetch user + jobs
+independently. Two API calls per mobile page load when the
+drawer is opened. Minor inefficiency.
+
+**Severity:** Low. Supabase query is fast, jobs count is small,
+drawer opens are infrequent.
+
+**Fix:** Lift sidebar data state into AppShell (or a SidebarDataContext),
+pass to both JobSidebar instances. Or render a single instance
+that CSS-morphs between sidebar and drawer layouts. Likely ~1 hour.
+
+**Recommended:** Defer until performance is a felt problem.
