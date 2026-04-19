@@ -11,6 +11,11 @@ import InvoiceStatusTimeline from "@/components/invoice-status-timeline";
 import InvoiceAllocationsEditor from "@/components/invoice-allocations-editor";
 import VendorContactPopover from "@/components/vendor-contact-popover";
 import Breadcrumbs from "@/components/breadcrumbs";
+import NwButton from "@/components/nw/Button";
+import NwBadge from "@/components/nw/Badge";
+import NwEyebrow from "@/components/nw/Eyebrow";
+import NwMoney from "@/components/nw/Money";
+import NwDataRow from "@/components/nw/DataRow";
 import { invoiceDisplayName } from "@/lib/invoices/display";
 import { toast } from "@/lib/utils/toast";
 
@@ -89,6 +94,10 @@ interface InvoiceData {
  assigned_pm: { id: string; full_name: string; role: string } | null;
  jobs: Job | null; vendors: { id: string; name: string; phone: string | null; email: string | null; address: string | null } | null; cost_codes: CostCode | null;
  pm_users?: { id: string; full_name: string }[];
+ // Linked draw — set when invoice has been pulled into a monthly pay app.
+ // Fetched separately in the page since /api/invoices/[id] uses select("*")
+ // and does not join the draws table.
+ draw_id: string | null;
 }
 
 // PM-edited shape for a line item — mirrors InvoiceLineItem but keeps
@@ -458,6 +467,10 @@ export default function InvoiceReviewPage() {
  // Cross-link to the "other side" of a partial split
  const [siblingInvoice, setSiblingInvoice] = useState<{ id: string; status: string; total_amount: number } | null>(null);
 
+ // Linked draw info (draw_number, status) — fetched separately because
+ // /api/invoices/[id] returns invoices.* without a join to draws.
+ const [drawInfo, setDrawInfo] = useState<{ id: string; draw_number: number; status: string } | null>(null);
+
  // Map of user_id → full_name for resolving status_history `who` UUIDs into
  // real names (so the sidebar shows "Bob Mozine" instead of "pm").
  const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
@@ -586,6 +599,23 @@ export default function InvoiceReviewPage() {
  }, [invoice?.status_history]);
 
  const refreshInvoice = () => fetchInvoice();
+
+ // Resolve the linked draw # whenever invoice.draw_id changes.
+ useEffect(() => {
+ const drawId = invoice?.draw_id;
+ if (!drawId) {
+ setDrawInfo(null);
+ return;
+ }
+ (async () => {
+ const { data } = await supabase
+ .from("draws")
+ .select("id, draw_number, status")
+ .eq("id", drawId)
+ .maybeSingle();
+ if (data) setDrawInfo(data as { id: string; draw_number: number; status: string });
+ })();
+ }, [invoice?.draw_id]);
 
  // Fetch lookups (cost codes with category + is_change_order)
  useEffect(() => {
@@ -1291,15 +1321,6 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  )}
- {/* Status timeline (Phase 8e) — always shown */}
- <div className="mb-4 animate-fade-up">
- <InvoiceStatusTimeline
- currentStatus={invoice.status}
- history={invoice.status_history ?? []}
- userNames={userNames}
- />
- </div>
-
  {/* Duplicate warning banner (Phase 8e) */}
  {invoice.is_potential_duplicate && invoice.duplicate_of && (
  <div className="mb-4 border border-brass/60 bg-brass/10 px-4 py-3 text-sm animate-fade-up">
@@ -1334,6 +1355,563 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  )}
+ {/* ════════════════════════════════════════════════════════════════
+       SHOWCASE — Slate Invoice Detail reference
+       Polished read-only header + two-column body + AI extraction
+       narrative + milestone status timeline. Workbench (full editing
+       UI) sits below the section divider.
+       ════════════════════════════════════════════════════════════════ */}
+ {(() => {
+   // Status → Badge variant mapping for the showcase header.
+   const statusBadgeVariant = (() => {
+     switch (invoice.status) {
+       case "qa_approved":
+       case "pm_approved":
+       case "paid":
+         return "success" as const;
+       case "pm_held":
+       case "qa_review":
+       case "qa_kicked_back":
+       case "info_requested":
+         return "warning" as const;
+       case "pm_denied":
+       case "void":
+         return "danger" as const;
+       case "pm_review":
+         return "info" as const;
+       case "pushed_to_qb":
+       case "in_draw":
+         return "accent" as const;
+       default:
+         return "neutral" as const;
+     }
+   })();
+
+   const isQaApproved = invoice.status === "qa_approved";
+   const vendorName = invoice.vendor_name_raw ?? invoice.vendors?.name ?? "Unknown vendor";
+   const projectName = invoice.jobs?.name ?? "—";
+   const receivedDate = invoice.received_date
+     ? formatDate(invoice.received_date)
+     : null;
+   const drawLabel = drawInfo
+     ? `Draw #${drawInfo.draw_number}${drawInfo.status === "submitted" || drawInfo.status === "paid" ? "" : ` (${drawInfo.status})`}`
+     : null;
+
+   // AI extraction narrative — composed from confidence_score and
+   // confidence_details (per-field confidences + auto_fills bools).
+   // Falls back to a simpler line when only the score is present.
+   const conf = invoice.confidence_details ?? {};
+   const fields = Object.entries(conf).filter(
+     ([k, v]) => k !== "auto_fills" && typeof v === "number"
+   );
+   const autoFillCount = autoFills
+     ? Object.values(autoFills).filter(Boolean).length
+     : 0;
+   const flagsRaw = (invoice.ai_raw_response?.flags as string[] | undefined) ?? [];
+   const aiNarrative = (() => {
+     const parts: string[] = [];
+     if (autoFillCount > 0) {
+       parts.push(`${autoFillCount} field${autoFillCount === 1 ? "" : "s"} auto-filled by Claude.`);
+     }
+     if (fields.length > 0) {
+       const avg = fields.reduce((s, [, v]) => s + (v as number), 0) / fields.length;
+       parts.push(
+         `Per-field confidence avg ${(avg * 100).toFixed(0)}% across ${fields.length} extracted field${fields.length === 1 ? "" : "s"}.`
+       );
+     }
+     if (flagsRaw.length > 0) {
+       parts.push(
+         `Flags raised: ${flagsRaw.map((f) => formatFlag(f)).join(", ")}.`
+       );
+     }
+     if (parts.length === 0) {
+       parts.push("Extracted by Claude. No additional metadata recorded.");
+     }
+     return parts.join(" ");
+   })();
+   const overallConfPct = (invoice.confidence_score * 100).toFixed(1);
+
+   // Aggregate line items into a read-only cost-code allocation summary.
+   // Matches the "alloc" table in the Slate reference.
+   const allocSummary = (() => {
+     const total = invoice.invoice_line_items.reduce((s, li) => s + li.amount_cents, 0);
+     const byCode = new Map<string, { code: string; description: string; amount: number; ccId: string | null }>();
+     for (const li of invoice.invoice_line_items) {
+       const cc = li.cost_codes;
+       const key = cc?.code ?? "unassigned";
+       const prev = byCode.get(key);
+       if (prev) {
+         prev.amount += li.amount_cents;
+       } else {
+         byCode.set(key, {
+           code: cc?.code ?? "—",
+           description: cc?.description ?? "Unassigned",
+           amount: li.amount_cents,
+           ccId: li.cost_code_id,
+         });
+       }
+     }
+     return Array.from(byCode.values()).map((row) => ({
+       ...row,
+       pct: total > 0 ? (row.amount / total) * 100 : 0,
+     }));
+   })();
+
+   return (
+     <div className="mb-10 animate-fade-up">
+       {/* ── Showcase header ── */}
+       <div className="mb-6">
+         <div
+           className="mb-3 text-[10px] uppercase"
+           style={{
+             fontFamily: "var(--font-jetbrains-mono)",
+             letterSpacing: "0.14em",
+             color: "var(--text-tertiary)",
+           }}
+         >
+           Home / Financial / Invoices /{" "}
+           <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+             #{invoice.invoice_number ?? "—"} · {vendorName}
+           </span>
+         </div>
+         <div className="flex items-end justify-between gap-5 flex-wrap">
+           <div className="min-w-0">
+             <h1
+               className="m-0 mb-1 flex items-center gap-3 flex-wrap"
+               style={{
+                 fontFamily: "var(--font-space-grotesk)",
+                 fontWeight: 500,
+                 fontSize: "30px",
+                 letterSpacing: "-0.02em",
+                 color: "var(--text-primary)",
+               }}
+             >
+               <span>Invoice #{invoice.invoice_number ?? "—"}</span>
+               <NwBadge variant={statusBadgeVariant}>{formatStatus(invoice.status)}</NwBadge>
+             </h1>
+             <p
+               className="text-[13px] m-0"
+               style={{ color: "var(--text-secondary)" }}
+             >
+               {vendorName} ·{" "}
+               <Link
+                 href={invoice.job_id ? `/jobs/${invoice.job_id}` : "#"}
+                 className="font-medium"
+                 style={{ color: "var(--nw-stone-blue)" }}
+               >
+                 {projectName}
+               </Link>
+               {receivedDate ? <> · Received {receivedDate}</> : null}
+               {drawLabel ? (
+                 <>
+                   {" · Assigned to "}
+                   <Link
+                     href={drawInfo ? `/draws/${drawInfo.id}` : "#"}
+                     className="font-medium"
+                     style={{ color: "var(--nw-stone-blue)" }}
+                   >
+                     {drawLabel}
+                   </Link>
+                 </>
+               ) : null}
+             </p>
+           </div>
+           <div className="flex items-center gap-2 flex-wrap">
+             {invoice.signed_file_url ? (
+               <a
+                 href={invoice.signed_file_url}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 download
+               >
+                 <NwButton variant="ghost" size="md">
+                   Download PDF
+                 </NwButton>
+               </a>
+             ) : null}
+             {isQaApproved ? (
+               <NwButton
+                 variant="primary"
+                 size="md"
+                 onClick={() => toast.info("QuickBooks integration coming soon")}
+               >
+                 Push to QuickBooks →
+               </NwButton>
+             ) : null}
+           </div>
+         </div>
+       </div>
+
+       {/* ── Showcase 2-col body ── */}
+       <div className="grid grid-cols-1 lg:grid-cols-5 gap-px" style={{ background: "var(--border-default)", border: "1px solid var(--border-default)" }}>
+         {/* LEFT: Source Document Card */}
+         <div
+           className="lg:col-span-3 p-5"
+           style={{ background: "var(--bg-card)" }}
+         >
+           <div className="flex items-center justify-between mb-4">
+             <h3
+               className="m-0"
+               style={{
+                 fontFamily: "var(--font-space-grotesk)",
+                 fontWeight: 500,
+                 fontSize: "15px",
+                 color: "var(--text-primary)",
+               }}
+             >
+               Source document
+             </h3>
+             {invoice.signed_file_url ? (
+               <a
+                 href={invoice.signed_file_url}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="text-[10px] uppercase"
+                 style={{
+                   fontFamily: "var(--font-jetbrains-mono)",
+                   letterSpacing: "0.12em",
+                   color: "var(--nw-stone-blue)",
+                 }}
+               >
+                 Open in new tab ↗
+               </a>
+             ) : null}
+           </div>
+           <div
+             className="relative"
+             style={{ background: "var(--nw-white-sand)", color: "var(--nw-slate-tile)" }}
+           >
+             <InvoiceFilePreview
+               invoiceId={invoice.id}
+               fileUrl={invoice.signed_file_url}
+               downloadUrl={invoice.signed_file_url}
+               fileName={invoiceDisplayName({
+                 vendor_name_raw: invoice.vendor_name_raw,
+                 invoice_number: invoice.invoice_number,
+                 jobs: invoice.jobs,
+               })}
+             />
+             {/* QA Approved stamp overlay (per Slate reference) */}
+             {isQaApproved ? (
+               <div
+                 className="pointer-events-none absolute bottom-6 right-6 px-3 py-1.5 border-2"
+                 style={{
+                   transform: "rotate(-8deg)",
+                   borderColor: "var(--nw-success)",
+                   color: "var(--nw-success)",
+                   fontFamily: "var(--font-jetbrains-mono)",
+                   letterSpacing: "0.14em",
+                   fontSize: "11px",
+                   fontWeight: 600,
+                   opacity: 0.7,
+                 }}
+               >
+                 QA APPROVED
+               </div>
+             ) : null}
+           </div>
+         </div>
+
+         {/* RIGHT: Inverse Card with metadata + read-only allocations */}
+         <div
+           className="lg:col-span-2 p-6"
+           style={{ background: "var(--nw-slate-deep)", color: "var(--nw-white-sand)" }}
+         >
+           <h3
+             className="m-0 mb-1"
+             style={{
+               fontFamily: "var(--font-space-grotesk)",
+               fontWeight: 500,
+               fontSize: "15px",
+               color: "var(--nw-white-sand)",
+             }}
+           >
+             Invoice details
+           </h3>
+           <div
+             className="mb-5 text-[9px] uppercase"
+             style={{
+               fontFamily: "var(--font-jetbrains-mono)",
+               letterSpacing: "0.14em",
+               color: "rgba(247,245,236,0.45)",
+             }}
+           >
+             System metadata · editable below
+           </div>
+
+           {/* Top row: total amount (large) */}
+           <div className="mb-6">
+             <div
+               className="text-[9px] uppercase mb-1"
+               style={{
+                 fontFamily: "var(--font-jetbrains-mono)",
+                 letterSpacing: "0.14em",
+                 color: "rgba(247,245,236,0.5)",
+               }}
+             >
+               Total amount
+             </div>
+             <div
+               style={{
+                 fontFamily: "var(--font-space-grotesk)",
+                 fontWeight: 600,
+                 fontSize: "28px",
+                 letterSpacing: "-0.02em",
+                 color: "var(--nw-white-sand)",
+                 fontVariantNumeric: "tabular-nums",
+               }}
+             >
+               <NwMoney
+                 cents={invoice.total_amount}
+                 size="xl"
+                 variant="emphasized"
+                 className="!text-[28px]"
+                 style={{ color: "var(--nw-white-sand)" }}
+               />
+             </div>
+           </div>
+
+           {/* DataRow grid */}
+           <div className="grid grid-cols-2 gap-x-5 gap-y-4 mb-6">
+             <NwDataRow
+               inverse
+               label="Vendor"
+               value={
+                 <Link
+                   href={invoice.vendor_id ? `/vendors/${invoice.vendor_id}` : "#"}
+                   style={{ color: "var(--nw-stone-blue)", textDecoration: "underline", textUnderlineOffset: "3px" }}
+                 >
+                   {vendorName} ↗
+                 </Link>
+               }
+             />
+             <NwDataRow
+               inverse
+               label="Project"
+               value={
+                 <Link
+                   href={invoice.job_id ? `/jobs/${invoice.job_id}` : "#"}
+                   style={{ color: "var(--nw-stone-blue)", textDecoration: "underline", textUnderlineOffset: "3px" }}
+                 >
+                   {projectName} ↗
+                 </Link>
+               }
+             />
+             <NwDataRow
+               inverse
+               label="Invoice date"
+               value={<span style={{ color: "var(--nw-white-sand)" }}>{invoice.invoice_date ? formatDate(invoice.invoice_date) : "—"}</span>}
+             />
+             <NwDataRow
+               inverse
+               label="Received"
+               value={<span style={{ color: "var(--nw-white-sand)" }}>{receivedDate ?? "—"}</span>}
+             />
+             <NwDataRow
+               inverse
+               label="Type"
+               value={<span style={{ color: "var(--nw-white-sand)" }}>{invoice.invoice_type ? formatStatus(invoice.invoice_type) : "—"}</span>}
+             />
+             <NwDataRow
+               inverse
+               label="Attached to draw"
+               value={
+                 drawInfo ? (
+                   <Link
+                     href={`/draws/${drawInfo.id}`}
+                     style={{ color: "var(--nw-stone-blue)", textDecoration: "underline", textUnderlineOffset: "3px" }}
+                   >
+                     {drawLabel} ↗
+                   </Link>
+                 ) : (
+                   <span style={{ color: "rgba(247,245,236,0.5)" }}>Not attached</span>
+                 )
+               }
+             />
+           </div>
+
+           {/* Cost code allocation summary (read-only — clickable rows scroll
+                to the editable allocations section in the workbench below). */}
+           {allocSummary.length > 0 ? (
+             <div
+               className="border"
+               style={{ borderColor: "rgba(247,245,236,0.1)", background: "var(--nw-slate-deeper)" }}
+             >
+               <table className="w-full" style={{ fontSize: "13px" }}>
+                 <thead>
+                   <tr>
+                     <th
+                       className="text-left px-3 py-2"
+                       style={{
+                         fontFamily: "var(--font-jetbrains-mono)",
+                         fontSize: "9px",
+                         letterSpacing: "0.12em",
+                         textTransform: "uppercase",
+                         color: "rgba(247,245,236,0.45)",
+                         fontWeight: 500,
+                         borderBottom: "1px solid rgba(247,245,236,0.08)",
+                       }}
+                     >
+                       Cost code allocation
+                     </th>
+                     <th
+                       className="text-right px-3 py-2"
+                       style={{
+                         fontFamily: "var(--font-jetbrains-mono)",
+                         fontSize: "9px",
+                         letterSpacing: "0.12em",
+                         textTransform: "uppercase",
+                         color: "rgba(247,245,236,0.45)",
+                         fontWeight: 500,
+                         borderBottom: "1px solid rgba(247,245,236,0.08)",
+                       }}
+                     >
+                       Allocated
+                     </th>
+                     <th
+                       className="text-right px-3 py-2"
+                       style={{
+                         fontFamily: "var(--font-jetbrains-mono)",
+                         fontSize: "9px",
+                         letterSpacing: "0.12em",
+                         textTransform: "uppercase",
+                         color: "rgba(247,245,236,0.45)",
+                         fontWeight: 500,
+                         borderBottom: "1px solid rgba(247,245,236,0.08)",
+                       }}
+                     >
+                       % of invoice
+                     </th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {allocSummary.map((row, i) => (
+                     <tr
+                       key={i}
+                       onClick={() => {
+                         const el = document.getElementById("workbench-allocations");
+                         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                       }}
+                       className="cursor-pointer hover:bg-white/[0.02]"
+                     >
+                       <td
+                         className="px-3 py-2.5"
+                         style={{
+                           color: "rgba(247,245,236,0.85)",
+                           borderBottom: "1px solid rgba(247,245,236,0.05)",
+                         }}
+                       >
+                         <span
+                           style={{
+                             fontFamily: "var(--font-jetbrains-mono)",
+                             fontSize: "11px",
+                             color: "var(--nw-stone-blue)",
+                             fontWeight: 600,
+                             marginRight: "8px",
+                           }}
+                         >
+                           {row.code}
+                         </span>
+                         {row.description}
+                       </td>
+                       <td
+                         className="px-3 py-2.5 text-right"
+                         style={{
+                           fontFamily: "var(--font-jetbrains-mono)",
+                           fontSize: "12px",
+                           color: "rgba(247,245,236,0.85)",
+                           fontVariantNumeric: "tabular-nums",
+                           borderBottom: "1px solid rgba(247,245,236,0.05)",
+                         }}
+                       >
+                         {formatCents(row.amount)}
+                       </td>
+                       <td
+                         className="px-3 py-2.5 text-right"
+                         style={{
+                           fontFamily: "var(--font-jetbrains-mono)",
+                           fontSize: "12px",
+                           color: "rgba(247,245,236,0.7)",
+                           fontVariantNumeric: "tabular-nums",
+                           borderBottom: "1px solid rgba(247,245,236,0.05)",
+                         }}
+                       >
+                         {row.pct.toFixed(1)}%
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+             </div>
+           ) : null}
+         </div>
+       </div>
+
+       {/* ── AI Extraction narrative panel ── */}
+       <div
+         className="mt-4 p-4 border"
+         style={{
+           background: "rgba(91,134,153,0.08)",
+           borderColor: "rgba(91,134,153,0.3)",
+         }}
+       >
+         <div className="flex items-center gap-2 mb-2">
+           <span
+             className="inline-block w-1.5 h-1.5"
+             style={{ background: "var(--nw-stone-blue)" }}
+             aria-hidden="true"
+           />
+           <NwEyebrow tone="accent">AI Extraction · {(invoice as { ai_model_used?: string }).ai_model_used ?? "Claude"}</NwEyebrow>
+         </div>
+         <p
+           className="m-0 text-[13px] leading-relaxed"
+           style={{ color: "var(--text-primary)" }}
+         >
+           {aiNarrative}
+         </p>
+         <div
+           className="mt-2 text-[11px]"
+           style={{
+             fontFamily: "var(--font-jetbrains-mono)",
+             letterSpacing: "0.04em",
+             color: "var(--text-tertiary)",
+           }}
+         >
+           CONFIDENCE{" "}
+           <b style={{ color: invoice.confidence_score >= 0.85 ? "var(--nw-success)" : invoice.confidence_score >= 0.7 ? "var(--nw-warn)" : "var(--nw-danger)" }}>
+             {overallConfPct}%
+           </b>
+           {(() => {
+             const model = (invoice as { ai_model_used?: string }).ai_model_used;
+             return model ? <> · MODEL {model.toUpperCase()}</> : null;
+           })()}
+         </div>
+       </div>
+
+       {/* ── Status timeline (milestone view) ── */}
+       <div className="mt-6">
+         <div className="mb-3">
+           <NwEyebrow tone="default">Status timeline · end-to-end audit</NwEyebrow>
+         </div>
+         <InvoiceStatusTimeline
+           currentStatus={invoice.status}
+           history={invoice.status_history ?? []}
+           userNames={userNames}
+         />
+       </div>
+     </div>
+   );
+ })()}
+
+ {/* ════════════════════════════════════════════════════════════════
+       SECTION DIVIDER — showcase ends, workbench begins
+       ════════════════════════════════════════════════════════════════ */}
+ <div className="my-10 flex items-center gap-4">
+   <div className="flex-1 h-px" style={{ background: "var(--border-default)" }} />
+   <NwEyebrow tone="muted">Workbench · internal tools</NwEyebrow>
+   <div className="flex-1 h-px" style={{ background: "var(--border-default)" }} />
+ </div>
+
  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
  {/* ── Left: Document Preview ── */}
  <div className="xl:col-span-1">
@@ -1452,14 +2030,18 @@ export default function InvoiceReviewPage() {
  aiFilled={!!autoFills?.cost_code_id} grouped placeholder="Search cost codes..." />
 
  {/* Phase D: invoice allocation splitter — persists per-line splits
-     separately from the invoice-level cost_code default. */}
+     separately from the invoice-level cost_code default. The id
+     `workbench-allocations` is a scroll target for the showcase
+     read-only allocation summary above (click any row to jump here). */}
  {invoice && invoice.total_amount != null && invoice.status !== "received" && (
-   <InvoiceAllocationsEditor
-     invoiceId={invoice.id}
-     invoiceTotalCents={invoice.total_amount}
-     costCodes={costCodes}
-     readOnly={!isReviewable}
-   />
+   <div id="workbench-allocations" className="scroll-mt-24">
+     <InvoiceAllocationsEditor
+       invoiceId={invoice.id}
+       invoiceTotalCents={invoice.total_amount}
+       costCodes={costCodes}
+       readOnly={!isReviewable}
+     />
+   </div>
  )}
 
  {purchaseOrders.length > 0 && (
