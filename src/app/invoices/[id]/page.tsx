@@ -1201,13 +1201,11 @@ export default function InvoiceReviewPage() {
  <div className="flex-1">
  <p className="text-sm font-medium text-status-danger">This invoice was denied</p>
  {denyInfo && <p className="text-sm text-status-danger/80 mt-0.5">{denyInfo}</p>}
- <button
- onClick={handleReopen}
- disabled={saving}
- className="mt-2 px-3 py-1.5 bg-brand-surface border border-brand-border hover:border-brand-border-light text-cream text-sm font-medium transition-colors disabled:opacity-50"
- >
- {saving ? "Reopening..." : "Reopen for Review"}
- </button>
+ <div className="mt-2">
+ <NwButton variant="secondary" size="sm" onClick={handleReopen} disabled={saving} loading={saving}>
+ Reopen for Review
+ </NwButton>
+ </div>
  </div>
  </div>
  </div>
@@ -1223,13 +1221,17 @@ export default function InvoiceReviewPage() {
  <div className="flex-1">
  <p className="text-sm font-medium text-yellow-400">Info Requested</p>
  <p className="text-sm text-yellow-400/80 mt-0.5">{infoRequestedInfo}</p>
- <button
+ <div className="mt-2">
+ <NwButton
+ variant="secondary"
+ size="sm"
  onClick={() => handleAction("info_received", "Info received — returning to PM review")}
  disabled={saving}
- className="mt-2 px-3 py-1.5 bg-brand-surface border border-brand-border hover:border-brand-border-light text-cream text-sm font-medium transition-colors disabled:opacity-50"
+ loading={saving}
  >
- {saving ? "Processing..." : "Info Received — Resume Review"}
- </button>
+ Info Received — Resume Review
+ </NwButton>
+ </div>
  </div>
  </div>
  </div>
@@ -2331,47 +2333,65 @@ export default function InvoiceReviewPage() {
  )}
  </div>
 
- {/* Actions — desktop only (mobile uses sticky bar below) */}
+ {/* Actions — desktop only (mobile uses sticky bar below).
+     Restyled with NwButton primitives. Approve uses primary; Partial /
+     Hold / Deny / Request Info follow the secondary / danger / ghost
+     pattern from the design system. */}
  {isReviewable && (
- <div className="hidden md:block border-t border-brand-border pt-6 space-y-3">
- <div className="flex gap-3">
- <button
+ <div className="hidden md:block border-t border-[var(--border-default)] pt-6 space-y-3">
+ <div className="mb-3">
+ <NwEyebrow tone="default">Actions</NwEyebrow>
+ </div>
+ <div className="flex gap-3 flex-wrap">
+ <NwButton
+ variant="primary"
+ size="lg"
  onClick={openApproveFlow}
  disabled={saving || !!approveDisabledReason}
+ loading={saving}
  title={approveDisabledReason ?? undefined}
- style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
- className={`flex-1 px-4 py-3 font-medium transition-all text-white ${
- approveDisabledReason
- ? "bg-gray-400 opacity-50 hover:bg-gray-400"
- : "bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
- }`}>
- {saving ? "Saving..." : "Approve"}
- </button>
- <button
+ className="flex-1 min-w-[120px]"
+ >
+ {saving ? "Saving" : "Approve"}
+ </NwButton>
+ <NwButton
+ variant="secondary"
+ size="lg"
  onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }}
  disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
  title={approveDisabledReason ?? (lineItems.length < 2 ? "Partial approval requires 2+ line items" : "Split this invoice into approved and held portions")}
- style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
- className={`flex-1 px-4 py-3 font-medium transition-all border-2 ${
- approveDisabledReason
- ? "bg-gray-100 border-gray-300 text-gray-400 opacity-60 hover:bg-gray-100 hover:text-gray-400"
- : "border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success"
- }`}>
+ className="flex-1 min-w-[120px]"
+ >
  Partial Approve
- </button>
- <button onClick={() => setShowNoteModal("hold")} disabled={saving}
- className="flex-1 px-4 py-3 bg-brass hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all">
+ </NwButton>
+ <NwButton
+ variant="secondary"
+ size="lg"
+ onClick={() => setShowNoteModal("hold")}
+ disabled={saving}
+ className="flex-1 min-w-[120px]"
+ >
  Hold
- </button>
- <button onClick={() => setShowNoteModal("deny")} disabled={saving}
- className="flex-1 px-4 py-3 bg-status-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
+ </NwButton>
+ <NwButton
+ variant="danger"
+ size="lg"
+ onClick={() => setShowNoteModal("deny")}
+ disabled={saving}
+ className="flex-1 min-w-[120px]"
+ >
  Deny
- </button>
+ </NwButton>
  </div>
- <button onClick={() => setShowRequestInfoModal(true)} disabled={saving}
- className="w-full px-4 py-2 border border-brand-border hover:border-brand-border-light text-cream-muted text-sm transition-colors">
+ <NwButton
+ variant="ghost"
+ size="md"
+ onClick={() => setShowRequestInfoModal(true)}
+ disabled={saving}
+ className="w-full"
+ >
  Request Info
- </button>
+ </NwButton>
  </div>
  )}
  </div>
@@ -2542,45 +2562,62 @@ export default function InvoiceReviewPage() {
 
  {/* ── Sticky Mobile Action Bar ── */}
  {isReviewable && (
- <div className="md:hidden fixed bottom-0 left-0 right-0 bg-brand-bg/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 z-30">
+ <div
+ className="md:hidden fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t px-4 py-3 z-30"
+ style={{
+ background: "color-mix(in srgb, var(--bg-page) 95%, transparent)",
+ borderColor: "var(--border-default)",
+ }}
+ >
  <div className="flex gap-2">
- <button
+ <NwButton
+ variant="primary"
+ size="md"
  onClick={openApproveFlow}
  disabled={saving || !!approveDisabledReason}
+ loading={saving}
  title={approveDisabledReason ?? undefined}
- style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
- className={`flex-1 px-2 py-3 font-medium transition-all text-white text-sm ${
- approveDisabledReason
- ? "bg-gray-400 opacity-50 hover:bg-gray-400"
- : "bg-status-success hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
- }`}>
- {saving ? "..." : "Approve"}
- </button>
- <button
+ className="flex-1"
+ >
+ Approve
+ </NwButton>
+ <NwButton
+ variant="secondary"
+ size="md"
  onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }}
  disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
- title={approveDisabledReason ?? undefined}
- style={approveDisabledReason ? { cursor: "not-allowed" } : undefined}
- className={`flex-1 px-2 py-3 font-medium transition-all text-sm border ${
- approveDisabledReason
- ? "bg-gray-100 border-gray-300 text-gray-400 opacity-60 hover:bg-gray-100 hover:text-gray-400"
- : "border-status-success text-status-success hover:bg-status-success hover:text-white disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-status-success"
- }`}>
+ className="flex-1"
+ >
  Partial
- </button>
- <button onClick={() => setShowNoteModal("hold")} disabled={saving}
- className="flex-1 px-2 py-3 bg-brass hover:brightness-110 disabled:opacity-50 text-brand-bg font-medium transition-all text-sm">
+ </NwButton>
+ <NwButton
+ variant="secondary"
+ size="md"
+ onClick={() => setShowNoteModal("hold")}
+ disabled={saving}
+ className="flex-1"
+ >
  Hold
- </button>
- <button onClick={() => setShowNoteModal("deny")} disabled={saving}
- className="flex-1 px-2 py-3 bg-status-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all text-sm">
+ </NwButton>
+ <NwButton
+ variant="danger"
+ size="md"
+ onClick={() => setShowNoteModal("deny")}
+ disabled={saving}
+ className="flex-1"
+ >
  Deny
- </button>
+ </NwButton>
  </div>
- <button onClick={() => setShowRequestInfoModal(true)} disabled={saving}
- className="w-full mt-2 px-3 py-2 border border-brand-border hover:border-brand-border-light text-cream-muted text-xs transition-colors">
+ <NwButton
+ variant="ghost"
+ size="sm"
+ onClick={() => setShowRequestInfoModal(true)}
+ disabled={saving}
+ className="w-full mt-2"
+ >
  Request Info
- </button>
+ </NwButton>
  </div>
  )}
 
@@ -2639,16 +2676,19 @@ export default function InvoiceReviewPage() {
  </div>
 
  <div className="flex gap-3 mt-5">
- <button
+ <NwButton
+ variant="primary"
+ size="md"
  onClick={() => { setShowApproveConfirm(false); handleAction("approve"); }}
  disabled={saving}
- className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 text-white font-medium disabled:opacity-50 transition-all">
+ loading={saving}
+ className="flex-1"
+ >
  {isCreditMemo ? "Confirm Credit Approval" : "Confirm Approval"}
- </button>
- <button onClick={() => setShowApproveConfirm(false)}
- className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ </NwButton>
+ <NwButton variant="ghost" size="md" onClick={() => setShowApproveConfirm(false)} className="flex-1">
  Cancel
- </button>
+ </NwButton>
  </div>
  </div>
  </div>
@@ -2711,14 +2751,14 @@ export default function InvoiceReviewPage() {
 
  <div className="flex flex-col gap-2 mt-5">
  {hasRed && (
- <button
- onClick={handleConvertToChangeOrder}
- className="w-full px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-all">
+ <NwButton variant="primary" size="md" onClick={handleConvertToChangeOrder} className="w-full">
  Convert to Change Order
- </button>
+ </NwButton>
  )}
  <div className="flex gap-3">
- <button
+ <NwButton
+ variant={hasRed ? "danger" : "primary"}
+ size="md"
  onClick={() => {
  if (!overBudgetNote.trim()) return;
  setShowOverBudgetModal(false);
@@ -2731,14 +2771,18 @@ export default function InvoiceReviewPage() {
  setOverBudgetNote("");
  }}
  disabled={!overBudgetNote.trim() || saving}
- className={`flex-1 px-4 py-2.5 font-medium disabled:opacity-50 transition-all ${hasRed ? "bg-status-danger text-white" : "bg-status-success text-white"} hover:brightness-110`}>
+ className="flex-1"
+ >
  {hasRed ? "Approve as Overage" : "Approve With Note"}
- </button>
- <button
+ </NwButton>
+ <NwButton
+ variant="ghost"
+ size="md"
  onClick={() => { setShowOverBudgetModal(false); setOverBudgetNote(""); }}
- className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ className="flex-1"
+ >
  Cancel
- </button>
+ </NwButton>
  </div>
  </div>
  </div>
@@ -2770,7 +2814,9 @@ export default function InvoiceReviewPage() {
  className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
  />
  <div className="flex gap-3 mt-5">
- <button
+ <NwButton
+ variant="primary"
+ size="md"
  onClick={() => {
  if (!amountGuardNote.trim()) return;
  setShowAmountGuard(false);
@@ -2778,13 +2824,13 @@ export default function InvoiceReviewPage() {
  setAmountGuardNote("");
  }}
  disabled={!amountGuardNote.trim() || saving}
- className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 text-white font-medium disabled:opacity-50 transition-all">
+ className="flex-1"
+ >
  Approve With Note
- </button>
- <button onClick={() => { setShowAmountGuard(false); setAmountGuardNote(""); }}
- className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ </NwButton>
+ <NwButton variant="ghost" size="md" onClick={() => { setShowAmountGuard(false); setAmountGuardNote(""); }} className="flex-1">
  Cancel
- </button>
+ </NwButton>
  </div>
  </div>
  </div>
@@ -2812,11 +2858,9 @@ export default function InvoiceReviewPage() {
  </li>
  ))}
  </ul>
- <button
- onClick={() => setShowMissingCoBlock(false)}
- className="w-full px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors">
+ <NwButton variant="primary" size="md" onClick={() => setShowMissingCoBlock(false)} className="w-full">
  Go Back and Fill In
- </button>
+ </NwButton>
  </div>
  </div>
  )}
@@ -2849,17 +2893,18 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  <div className="flex gap-3">
- <button
- onClick={() => setShowMissingFieldsBlock(false)}
- className="flex-1 px-4 py-2.5 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors">
+ <NwButton variant="primary" size="md" onClick={() => setShowMissingFieldsBlock(false)} className="flex-1">
  Go Back and Assign
- </button>
- <button
+ </NwButton>
+ <NwButton
+ variant="secondary"
+ size="md"
  onClick={() => { setShowMissingFieldsBlock(false); handleAction("hold", "Held — missing job or cost code assignment"); }}
  disabled={saving}
- className="flex-1 px-4 py-2.5 bg-brass hover:brightness-110 text-brand-bg font-medium disabled:opacity-50 transition-all">
+ className="flex-1"
+ >
  Hold Instead
- </button>
+ </NwButton>
  </div>
  </div>
  </div>
@@ -2900,7 +2945,9 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  <div className="flex gap-3 mt-5">
- <button
+ <NwButton
+ variant="primary"
+ size="md"
  onClick={() => {
  handleAction("request_info", `Info requested from ${infoRecipient}: ${infoQuestion.trim()}`);
  setShowRequestInfoModal(false);
@@ -2908,14 +2955,19 @@ export default function InvoiceReviewPage() {
  setInfoQuestion("");
  }}
  disabled={!infoRecipient || !infoQuestion.trim() || saving}
- className="flex-1 px-4 py-2.5 bg-brass hover:brightness-110 text-brand-bg font-medium disabled:opacity-50 transition-all">
- {saving ? "Sending..." : "Send Request"}
- </button>
- <button
+ loading={saving}
+ className="flex-1"
+ >
+ Send Request
+ </NwButton>
+ <NwButton
+ variant="ghost"
+ size="md"
  onClick={() => { setShowRequestInfoModal(false); setInfoRecipient(""); setInfoQuestion(""); }}
- className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ className="flex-1"
+ >
  Cancel
- </button>
+ </NwButton>
  </div>
  </div>
  </div>
@@ -2931,16 +2983,18 @@ export default function InvoiceReviewPage() {
  <textarea value={actionNote} onChange={(e) => setActionNote(e.target.value)} placeholder="Add a note (required)..."
  className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none" />
  <div className="flex gap-3 mt-4">
- <button
+ <NwButton
+ variant={showNoteModal === "hold" ? "secondary" : "danger"}
+ size="md"
  onClick={() => { if (actionNote.trim()) { handleAction(showNoteModal, actionNote.trim()); setShowNoteModal(null); setActionNote(""); } }}
  disabled={!actionNote.trim() || saving}
- className={`flex-1 px-4 py-2.5 font-medium disabled:opacity-50 transition-all ${showNoteModal === "hold" ? "bg-brass text-brand-bg" : "bg-status-danger text-white"}`}>
+ className="flex-1"
+ >
  {showNoteModal === "hold" ? "Hold" : "Deny"}
- </button>
- <button onClick={() => { setShowNoteModal(null); setActionNote(""); }}
- className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ </NwButton>
+ <NwButton variant="ghost" size="md" onClick={() => { setShowNoteModal(null); setActionNote(""); }} className="flex-1">
  Cancel
- </button>
+ </NwButton>
  </div>
  </div>
  </div>
@@ -3052,8 +3106,11 @@ export default function InvoiceReviewPage() {
  )}
 
  <div className="flex gap-3 mt-5 pt-4 border-t border-brand-border">
- <button
+ <NwButton
+ variant="primary"
+ size="md"
  disabled={partialSubmitting || partialApprovedIds.size === 0 || partialApprovedIds.size === lineItems.length || !partialNote.trim()}
+ loading={partialSubmitting}
  onClick={async () => {
  setPartialError(null);
  setPartialSubmitting(true);
@@ -3076,14 +3133,13 @@ export default function InvoiceReviewPage() {
  setPartialSubmitting(false);
  }
  }}
- className="flex-1 px-4 py-2.5 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all"
+ className="flex-1"
  >
- {partialSubmitting ? "Splitting…" : `Approve ${partialApprovedIds.size} line${partialApprovedIds.size !== 1 ? "s" : ""} & hold the rest`}
- </button>
- <button onClick={() => setShowPartialModal(false)}
- className="px-5 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ {partialSubmitting ? "Splitting" : `Approve ${partialApprovedIds.size} line${partialApprovedIds.size !== 1 ? "s" : ""} & hold the rest`}
+ </NwButton>
+ <NwButton variant="ghost" size="md" onClick={() => setShowPartialModal(false)}>
  Cancel
- </button>
+ </NwButton>
  </div>
  </div>
  </div>
@@ -3141,10 +3197,29 @@ function OverBudgetAlert({ severity, overage, pct, isAllowance }: {
 }
 
 function SidebarCard({ title, children }: { title: string; children: React.ReactNode }) {
+ // Uses semantic tokens via direct CSS vars so the card's surface +
+ // border swap with theme. Eyebrow is rendered with the standard
+ // JetBrains Mono tracked-uppercase pattern from the design system.
  return (
- <div className="bg-brand-card border border-brand-border p-5">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">{title}</p>
- <div className="mt-5">{children}</div>
+ <div
+ className="border p-5"
+ style={{
+ background: "var(--bg-card)",
+ borderColor: "var(--border-default)",
+ }}
+ >
+ <p
+ className="text-[10px] uppercase mb-4"
+ style={{
+ fontFamily: "var(--font-jetbrains-mono)",
+ letterSpacing: "0.14em",
+ color: "var(--text-tertiary)",
+ fontWeight: 500,
+ }}
+ >
+ {title}
+ </p>
+ <div>{children}</div>
  </div>
  );
 }
