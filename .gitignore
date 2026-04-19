@@ -37,7 +37,11 @@ yarn-error.log*
 next-env.d.ts
 
 # claude code / plugins
-.claude/
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/nightwork-design/
+!.claude/skills/nightwork-design/**
 .agents/
 skills-lock.json
 
