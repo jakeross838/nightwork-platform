@@ -70,9 +70,16 @@
    `<div data-theme="light">` always resolves light values, even when the
    page-level <html> element is in dark mode. Without this, the nested div
    would inherit the dark vars from html. Used by the side-by-side preview
-   on /nw-test. The :root selector keeps light as the default before the
-   cookie loads. */
+   on /nw-test.
+
+   Selector list pairs `:root[data-theme="light"]` (specificity (0,2,0) —
+   matches the dark block's pattern so it beats globals.css's
+   `@layer base { :root { … } }` which otherwise re-declares the same
+   tokens and wins on equal specificity by being declared later) with the
+   bare `:root` and `[data-theme="light"]` so the defaults apply before
+   the theme cookie loads and so nested divs scope correctly. */
 :root,
+:root[data-theme="light"],
 [data-theme="light"] {
   --bg-page:          var(--nw-white-sand);
   --bg-card:          #FFFFFF;
@@ -97,6 +104,13 @@
   --color-warning: var(--nw-warn);
   --color-error:   var(--nw-danger);
   --color-money:   var(--nw-slate-tile);
+
+  /* Part 2c — bridge legacy aliases so dark mode adapts.
+     bg-brand-card (Tailwind) → var(--color-white). text-cream-muted →
+     var(--text-body). Both were hardcoded in globals.css with no dark
+     override; route them through values that adapt per theme. */
+  --color-white: #FFFFFF;
+  --text-body:   var(--text-primary);
 }
 
 /* Dark theme — applied when <html data-theme="dark">. Inherits all raw
@@ -140,4 +154,12 @@
   --color-warning: var(--nw-warn);
   --color-error:   var(--nw-danger);
   --color-money:   var(--nw-white-sand);
+
+  /* Part 2c — bridge legacy aliases so dark mode adapts.
+     bg-brand-card (Tailwind) → var(--color-white). text-cream-muted →
+     var(--text-body). In dark, --color-white tracks --bg-card so
+     bg-brand-card surfaces resolve to the slate-deeper card color
+     instead of literal white. */
+  --color-white: var(--nw-slate-deeper);
+  --text-body:   var(--text-primary);
 }
