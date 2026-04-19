@@ -1,6 +1,10 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  // Activate `dark:*` utilities when <html data-theme="dark"> is set.
+  // Theme is server-rendered from the `nw_theme` cookie in layout.tsx
+  // and toggled on the client via ThemeProvider.
+  darkMode: ["class", '[data-theme="dark"]'],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",

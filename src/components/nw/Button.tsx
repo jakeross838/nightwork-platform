@@ -16,6 +16,12 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
 // with 0.12em tracking per design system. Variants follow Slate Invoice Detail
 // reference: primary = stone-blue, secondary = outlined slate, ghost = text only,
 // danger = danger color.
+//
+// Theme awareness: secondary and ghost use semantic CSS vars
+// (--text-primary, --border-strong, --bg-subtle) so they swap when
+// data-theme="dark" is set. Primary keeps stone-blue (it's a CTA, designed
+// to stand out on both backgrounds). Danger keeps the danger hue (also
+// readable on both per Slate refs).
 const SIZE_STYLES: Record<ButtonSize, string> = {
   sm: "h-[30px] px-3 text-[10px]",
   md: "h-[36px] px-4 text-[11px]",
@@ -28,12 +34,12 @@ const VARIANT_STYLES: Record<ButtonVariant, string> = {
     "hover:bg-nw-gulf-blue hover:border-nw-gulf-blue " +
     "disabled:bg-nw-stone-blue/40 disabled:border-nw-stone-blue/40 disabled:cursor-not-allowed",
   secondary:
-    "bg-transparent text-nw-slate-tile border border-nw-slate-tile/40 " +
-    "hover:border-nw-slate-tile hover:bg-nw-slate-tile/[0.04] " +
+    "bg-transparent text-[var(--text-primary)] border border-[var(--border-strong)] " +
+    "hover:border-[var(--text-primary)] hover:bg-[var(--bg-subtle)] " +
     "disabled:opacity-40 disabled:cursor-not-allowed",
   ghost:
-    "bg-transparent text-nw-slate-tile border border-transparent " +
-    "hover:bg-nw-slate-tile/[0.06] " +
+    "bg-transparent text-[var(--text-primary)] border border-transparent " +
+    "hover:bg-[var(--bg-subtle)] " +
     "disabled:opacity-40 disabled:cursor-not-allowed",
   danger:
     "bg-transparent text-nw-danger border border-nw-danger/60 " +

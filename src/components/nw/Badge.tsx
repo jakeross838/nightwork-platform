@@ -18,9 +18,13 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 // Bordered status pill — never filled (per non-negotiable #7).
 // Border + text share the color; background is transparent or a very subtle tint.
+//
+// Theme awareness: neutral uses semantic --text-primary so it adapts;
+// success/warning/danger/info/accent use raw nw-* hues which are designed
+// to read on both bgs (per Slate refs).
 const VARIANT_STYLES: Record<BadgeVariant, { color: string; tint: string }> = {
   neutral: {
-    color: "var(--nw-slate-tile)",
+    color: "var(--text-primary)",
     tint: "transparent",
   },
   success: {

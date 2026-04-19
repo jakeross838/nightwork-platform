@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConnectionBanner from "@/components/connection-banner";
 import { OrgBrandingProvider } from "@/components/org-branding-provider";
+import { ThemeProvider, type Theme } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/toast-provider";
 import KeyboardShortcutsProvider from "@/components/keyboard-shortcuts-provider";
 import { getOrgBranding } from "@/lib/org/branding";
@@ -75,8 +77,17 @@ export default async function RootLayout({
   const primary = branding?.primary_color ?? "#3F5862";
   const accent = branding?.accent_color ?? primary;
 
+  // Server-side theme read from cookie. Default = light. Setting data-theme
+  // on <html> at server-render time avoids a flash-of-wrong-theme on first paint.
+  const themeCookie = cookies().get("nw_theme")?.value;
+  const theme: Theme = themeCookie === "dark" ? "dark" : "light";
+
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
+    <html
+      lang="en"
+      data-theme={theme}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         <style
           // Per-org CSS vars override the defaults declared in globals.css.
@@ -87,14 +98,16 @@ export default async function RootLayout({
         />
       </head>
       <body className="grain antialiased">
-        <OrgBrandingProvider branding={branding}>
-          <ToastProvider>
-            <KeyboardShortcutsProvider>
-              <ConnectionBanner />
-              {children}
-            </KeyboardShortcutsProvider>
-          </ToastProvider>
-        </OrgBrandingProvider>
+        <ThemeProvider initialTheme={theme}>
+          <OrgBrandingProvider branding={branding}>
+            <ToastProvider>
+              <KeyboardShortcutsProvider>
+                <ConnectionBanner />
+                {children}
+              </KeyboardShortcutsProvider>
+            </ToastProvider>
+          </OrgBrandingProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
