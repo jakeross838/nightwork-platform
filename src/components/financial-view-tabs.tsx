@@ -27,20 +27,28 @@ export default function FinancialViewTabs({
   active: FinancialView;
 }) {
   return (
-    <div className="flex items-center gap-1 mb-5 border-b border-brand-border/50 overflow-x-auto">
+    <div
+      className="flex items-center gap-1 mb-5 overflow-x-auto"
+      style={{ borderBottom: "1px solid var(--border-default)" }}
+    >
       {TABS.map((tab) => {
         const isActive = tab.key === active;
         return (
           <Link
             key={tab.key}
             href={tab.href}
-            className={`relative px-3 py-2 text-xs tracking-[0.04em] font-medium transition-colors whitespace-nowrap ${
-              isActive ? "text-cream" : "text-cream-dim hover:text-cream"
-            }`}
+            className="relative px-3 py-2.5 text-[12px] font-medium transition-colors whitespace-nowrap"
+            style={{
+              color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
+              letterSpacing: "0.02em",
+            }}
           >
             {tab.label}
             {isActive && (
-              <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-teal" />
+              <span
+                className="absolute bottom-0 left-0 right-0 h-[2px]"
+                style={{ background: "var(--nw-stone-blue)" }}
+              />
             )}
           </Link>
         );

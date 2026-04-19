@@ -384,10 +384,31 @@ export default function AllInvoicesPage() {
  <AppShell>
  <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
  <FinancialViewTabs active="invoices" />
- <div className="flex items-center justify-between mb-6">
+ <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
  <div>
- <h2 className="font-display text-2xl text-cream">Invoices</h2>
- <p className="text-sm text-cream-dim mt-1">
+ <span
+ className="block mb-2 text-[10px] uppercase"
+ style={{
+ fontFamily: "var(--font-jetbrains-mono)",
+ letterSpacing: "0.14em",
+ color: "var(--text-tertiary)",
+ }}
+ >
+ Financial · Invoices
+ </span>
+ <h2
+ className="m-0"
+ style={{
+ fontFamily: "var(--font-space-grotesk)",
+ fontWeight: 500,
+ fontSize: "30px",
+ letterSpacing: "-0.02em",
+ color: "var(--text-primary)",
+ }}
+ >
+ Invoices
+ </h2>
+ <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
  {activeTab === "all"
  ? (isFiltered ? `Showing ${filtered.length} of ${invoices.length} invoices` : `${invoices.length} total invoices`)
  : `${paymentInvoices.length} invoices ready for payment`}
@@ -396,15 +417,29 @@ export default function AllInvoicesPage() {
  <div className="flex items-center gap-2">
  <button
  onClick={() => setImportOpen(true)}
- className="px-4 py-2 border border-brand-border text-cream-dim hover:text-cream hover:bg-brand-surface text-sm font-medium transition-colors flex items-center gap-2"
+ className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
+ style={{
+ fontFamily: "var(--font-jetbrains-mono)",
+ letterSpacing: "0.12em",
+ background: "transparent",
+ borderColor: "var(--border-strong)",
+ color: "var(--text-primary)",
+ }}
  >
  Import CSV
  </button>
  <button
  onClick={() => setUploadOpen(true)}
- className="px-4 py-2 bg-teal hover:bg-teal-hover text-brand-bg text-sm font-medium transition-colors flex items-center gap-2"
+ className="inline-flex items-center justify-center gap-2 h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
+ style={{
+ fontFamily: "var(--font-jetbrains-mono)",
+ letterSpacing: "0.12em",
+ background: "var(--nw-stone-blue)",
+ borderColor: "var(--nw-stone-blue)",
+ color: "var(--nw-white-sand)",
+ }}
  >
- <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
  </svg>
  Upload Invoice

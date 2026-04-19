@@ -143,23 +143,60 @@ export default function VendorsPage() {
         <div className="flex gap-8">
           <AdminSidebar role={userRole} />
           <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">Vendors</h2>
-            <p className="text-sm text-cream-dim mt-1">Click a vendor to view details &middot; select multiple to merge</p>
+            <span
+              className="block mb-2 text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Admin · Vendors
+            </span>
+            <h2
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "30px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              Vendors
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+              Click a vendor to view details &middot; select multiple to merge
+            </p>
           </div>
           <div className="flex items-center gap-2">
             {selected.size >= 2 && (
               <button
                 onClick={openMerge}
-                className="px-4 py-2 bg-brass hover:bg-brass/80 text-brand-bg text-sm font-medium transition-colors"
+                className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono)",
+                  letterSpacing: "0.12em",
+                  background: "var(--nw-warn)",
+                  borderColor: "var(--nw-warn)",
+                  color: "var(--nw-white-sand)",
+                }}
               >
                 Merge {selected.size} Vendors
               </button>
             )}
             <button
               onClick={() => setImportOpen(true)}
-              className="px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
+              className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.12em",
+                background: "transparent",
+                borderColor: "var(--nw-stone-blue)",
+                color: "var(--nw-stone-blue)",
+              }}
             >
               Import Vendors
             </button>
