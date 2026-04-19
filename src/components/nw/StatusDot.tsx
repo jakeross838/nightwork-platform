@@ -10,10 +10,13 @@ export interface StatusDotProps extends HTMLAttributes<HTMLSpanElement> {
   label?: string;
 }
 
+// Theme awareness: inactive switches to semantic --text-muted so it's
+// visible against both bgs. Active/pending/danger/info use fixed nw-* hues
+// — the dot is meant to be a consistent status signal.
 const VARIANT_COLORS: Record<StatusDotVariant, string> = {
   active: "var(--nw-success)",
   pending: "var(--nw-warn)",
-  inactive: "rgba(59, 88, 100, 0.35)",
+  inactive: "var(--text-muted)",
   danger: "var(--nw-danger)",
   info: "var(--nw-stone-blue)",
 };

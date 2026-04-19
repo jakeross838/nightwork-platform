@@ -18,11 +18,16 @@ export interface MoneyProps extends Omit<HTMLAttributes<HTMLSpanElement>, "prefi
   showCents?: boolean;
 }
 
+// Theme awareness: default + emphasized + muted use semantic tokens so the
+// number reads correctly on both bgs. Negative uses the fixed --nw-danger
+// hue (intentional signal regardless of theme). Emphasized resolves to the
+// same color as default but combines with the EMPHASIZED_WEIGHT bump below
+// — distinction comes from weight, not color, so it works in both modes.
 const VARIANT_COLORS: Record<MoneyVariant, string> = {
-  default: "var(--nw-slate-tile)",
+  default: "var(--color-money)",
   negative: "var(--nw-danger)",
-  emphasized: "var(--nw-slate-deep)",
-  muted: "rgba(59, 88, 100, 0.55)",
+  emphasized: "var(--text-primary)",
+  muted: "var(--text-tertiary)",
 };
 
 const SIZE_STYLES: Record<MoneySize, string> = {

@@ -18,9 +18,14 @@ export interface DataRowProps extends HTMLAttributes<HTMLDivElement> {
 //   <eyebrow label> on top
 //   <value> below (body or money)
 // "horizontal" layout puts label left, value right (used in audit / lien rails).
+//
+// Theme awareness: normal + emphasized resolve via --text-primary. Danger
+// keeps the fixed --nw-danger hue (intentional signal). When `inverse` is
+// true, the row is rendered on a slate-deep "dark island" Card variant
+// even when the page is in light mode, so we hardcode white-sand.
 const VARIANT_VALUE_COLORS: Record<DataRowVariant, string> = {
-  normal: "var(--nw-slate-tile)",
-  emphasized: "var(--nw-slate-deep)",
+  normal: "var(--text-primary)",
+  emphasized: "var(--text-primary)",
   danger: "var(--nw-danger)",
 };
 

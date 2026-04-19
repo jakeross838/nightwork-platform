@@ -10,13 +10,18 @@ export interface EyebrowProps extends HTMLAttributes<HTMLSpanElement> {
 
 // JetBrains Mono 10px UPPERCASE 0.14em — the single most-repeated motif in
 // the design system. Per skill rule #6: eyebrow appears above every section.
+//
+// Theme awareness: default + muted use semantic tokens so the eyebrow
+// reads correctly on both bgs. Colored tones (accent/warn/success/danger)
+// keep their nw-* hue — the design system uses these as a fixed signal
+// regardless of theme.
 const TONE_COLORS: Record<EyebrowTone, string> = {
-  default: "var(--nw-slate-tile)",
+  default: "var(--text-primary)",
   accent: "var(--nw-stone-blue)",
   warn: "var(--nw-warn)",
   success: "var(--nw-success)",
   danger: "var(--nw-danger)",
-  muted: "rgba(59, 88, 100, 0.55)",
+  muted: "var(--text-tertiary)",
 };
 
 export default function Eyebrow({
