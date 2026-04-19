@@ -1,7 +1,9 @@
-// Visual verification page for src/components/nw/* primitives.
+"use client";
+
+// Visual verification page for src/components/nw/* primitives + theme system.
 // Renders every variant in context. NOT linked from any nav — direct URL only.
-// This page exists for Part 2a sign-off and may be removed once the primitives
-// are adopted across the real product surfaces.
+// Adds a theme toggle and a side-by-side light/dark swatch grid so primitives
+// can be visually confirmed under both themes without leaving the page.
 
 import Badge from "@/components/nw/Badge";
 import Button from "@/components/nw/Button";
@@ -10,8 +12,8 @@ import DataRow from "@/components/nw/DataRow";
 import Eyebrow from "@/components/nw/Eyebrow";
 import Money from "@/components/nw/Money";
 import StatusDot from "@/components/nw/StatusDot";
-
-export const dynamic = "force-static";
+import { useTheme } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function Section({
   title,
@@ -28,7 +30,12 @@ function Section({
         {title}
       </Eyebrow>
       {description ? (
-        <p className="text-[13px] text-nw-slate-tile/70 mb-4 max-w-2xl">{description}</p>
+        <p
+          className="text-[13px] mb-4 max-w-2xl"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          {description}
+        </p>
       ) : null}
       <div>{children}</div>
     </section>
@@ -38,40 +45,152 @@ function Section({
 function SubLabel({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="block mb-3 text-[10px] uppercase text-nw-slate-tile/50"
-      style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em" }}
+      className="block mb-3 text-[10px] uppercase"
+      style={{
+        fontFamily: "var(--font-jetbrains-mono)",
+        letterSpacing: "0.14em",
+        color: "var(--text-tertiary)",
+      }}
     >
       {children}
     </span>
   );
 }
 
+// Renders all primitives inside a chosen theme scope. Used by the
+// "Light / Dark side-by-side" section. Wraps content in a div with
+// `data-theme={theme}` so the [data-theme="dark"] CSS block applies
+// locally without affecting the rest of the page.
+function PrimitiveShowcase({ theme }: { theme: "light" | "dark" }) {
+  return (
+    <div
+      data-theme={theme}
+      className="p-6 border"
+      style={{
+        background: "var(--bg-page)",
+        color: "var(--text-primary)",
+        borderColor: "var(--border-default)",
+      }}
+    >
+      <Eyebrow tone="accent" className="mb-4">
+        {theme} theme
+      </Eyebrow>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="primary" size="sm">Primary</Button>
+          <Button variant="secondary" size="sm">Secondary</Button>
+          <Button variant="ghost" size="sm">Ghost</Button>
+          <Button variant="danger" size="sm">Danger</Button>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="neutral">Received</Badge>
+          <Badge variant="info">PM Review</Badge>
+          <Badge variant="accent">Awaiting</Badge>
+          <Badge variant="success">Approved</Badge>
+          <Badge variant="warning">Pending</Badge>
+          <Badge variant="danger">Disputed</Badge>
+        </div>
+
+        <Card>
+          <Eyebrow className="mb-2">Card</Eyebrow>
+          <p className="text-[13px]">
+            Card surface — bg-card var swaps with theme. Body copy uses
+            text-primary.
+          </p>
+        </Card>
+
+        <div className="flex items-baseline gap-4 flex-wrap">
+          <Money cents={482000000} variant="emphasized" size="xl" />
+          <Money cents={-25000} signColor />
+          <Money cents={null} />
+        </div>
+
+        <div className="flex items-center gap-4 flex-wrap text-[13px]">
+          <span className="inline-flex items-center gap-2"><StatusDot variant="active" /> Active</span>
+          <span className="inline-flex items-center gap-2"><StatusDot variant="pending" /> Pending</span>
+          <span className="inline-flex items-center gap-2"><StatusDot variant="info" /> Info</span>
+          <span className="inline-flex items-center gap-2"><StatusDot variant="danger" /> Danger</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-5 gap-y-3 max-w-md">
+          <DataRow label="Vendor" value="Harborline Plumbing" />
+          <DataRow
+            label="Total"
+            value={<Money cents={1860000} variant="emphasized" size="lg" />}
+          />
+          <DataRow layout="horizontal" label="Net due" value={<Money cents={17503750} variant="emphasized" />} />
+          <DataRow layout="horizontal" label="Previous" value={<Money cents={-2890000} signColor />} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function NwTestPage() {
+  const { theme } = useTheme();
+
   return (
     <main
-      className="min-h-screen bg-nw-white-sand text-nw-slate-tile"
-      style={{ fontFamily: "var(--font-inter)" }}
+      className="min-h-screen"
+      style={{
+        background: "var(--bg-page)",
+        color: "var(--text-primary)",
+        fontFamily: "var(--font-inter)",
+      }}
     >
       <div className="mx-auto max-w-[1180px] px-8 py-10">
-        <header className="mb-12 pb-6 border-b border-[rgba(59,88,100,0.15)]">
-          <Eyebrow tone="accent" className="mb-3">
-            Slate Primitives · /nw-test
-          </Eyebrow>
-          <h1
-            className="text-[30px] text-nw-slate-deep mb-2"
-            style={{ fontFamily: "var(--font-space-grotesk)", letterSpacing: "-0.02em", fontWeight: 500 }}
-          >
-            Nightwork UI primitives
-          </h1>
-          <p className="text-[14px] text-nw-slate-tile/70 max-w-2xl">
-            Visual verification surface for shared Slate components. Available but
-            unused by any production page. Reference{" "}
-            <code className="text-[12px] bg-white px-1.5 py-0.5 border border-[rgba(59,88,100,0.15)]">
-              src/components/nw/
-            </code>
-            .
-          </p>
+        <header
+          className="mb-12 pb-6 border-b flex items-start justify-between gap-6"
+          style={{ borderColor: "var(--border-default)" }}
+        >
+          <div>
+            <Eyebrow tone="accent" className="mb-3">
+              Slate Primitives · /nw-test
+            </Eyebrow>
+            <h1
+              className="text-[30px] mb-2"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                letterSpacing: "-0.02em",
+                fontWeight: 500,
+                color: "var(--text-primary)",
+              }}
+            >
+              Nightwork UI primitives
+            </h1>
+            <p className="text-[14px] max-w-2xl" style={{ color: "var(--text-secondary)" }}>
+              Visual verification surface. Active theme:{" "}
+              <code
+                className="px-1.5 py-0.5 border text-[12px]"
+                style={{
+                  borderColor: "var(--border-default)",
+                  background: "var(--bg-card)",
+                  fontFamily: "var(--font-jetbrains-mono)",
+                }}
+              >
+                {theme}
+              </code>
+              . Toggle with the button on the right; choice persists via{" "}
+              <code style={{ fontFamily: "var(--font-jetbrains-mono)" }}>nw_theme</code> cookie.
+            </p>
+          </div>
+          <div className="shrink-0">
+            <ThemeToggle />
+          </div>
         </header>
+
+        {/* SIDE-BY-SIDE THEMES */}
+        <Section
+          title="Light / Dark side-by-side"
+          description="Both blocks render the same primitives — left forced light, right forced dark. Independent of the page-level toggle, so you can verify both themes simultaneously."
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <PrimitiveShowcase theme="light" />
+            <PrimitiveShowcase theme="dark" />
+          </div>
+        </Section>
 
         {/* BUTTON */}
         <Section title="Button" description="Primary, secondary, ghost, danger × sm/md/lg, plus disabled/loading.">
@@ -237,7 +356,7 @@ export default function NwTestPage() {
                     <tr><td className="py-1">Drywall</td><td className="py-1 text-right"><Money cents={11200000} /></td></tr>
                     <tr><td className="py-1">Plumbing</td><td className="py-1 text-right"><Money cents={13400000} /></td></tr>
                     <tr><td className="py-1">Electrical</td><td className="py-1 text-right"><Money cents={18600000} /></td></tr>
-                    <tr className="border-t border-[rgba(59,88,100,0.2)]">
+                    <tr style={{ borderTop: "1px solid var(--border-strong)" }}>
                       <td className="pt-2 font-medium">Total</td>
                       <td className="pt-2 text-right"><Money cents={73000000} variant="emphasized" /></td>
                     </tr>
