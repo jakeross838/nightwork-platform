@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nightwork · Sign in</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--slate-tile:#3B5864;--slate-deep:#1A2830;--slate-deeper:#0E171D;--stone-blue:#5B8699;--gulf-blue:#4E7A8C;--oceanside:#CBD8DB;--white-sand:#F7F5EC;--warn:#C98A3B}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100vh;font-family:"Inter",sans-serif}
+  .page{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+
+  /* LEFT — form */
+  .left{background:var(--white-sand);padding:48px 56px;display:flex;flex-direction:column;color:var(--slate-tile)}
+  .brand{display:flex;align-items:center;gap:14px;margin-bottom:auto}
+  .brand .w{font-family:"Space Grotesk";font-weight:600;font-size:22px;letter-spacing:-0.03em;color:var(--slate-tile)}
+  .brand .beam{width:70px;height:3px;background:linear-gradient(90deg,var(--stone-blue),transparent)}
+  .form-wrap{max-width:400px;width:100%;margin:auto 0}
+  .eyebrow{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gulf-blue);margin-bottom:14px}
+  h1{font-family:"Space Grotesk";font-weight:500;font-size:40px;letter-spacing:-0.025em;margin:0 0 10px;color:var(--slate-tile);line-height:1.1}
+  .sub{font-size:14.5px;color:rgba(59,88,100,0.75);margin-bottom:34px;line-height:1.5}
+
+  .field{margin-bottom:20px}
+  .field label{display:block;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(59,88,100,0.7);margin-bottom:8px}
+  .field input{width:100%;padding:13px 14px;background:#fff;border:1px solid rgba(59,88,100,0.25);font-family:inherit;font-size:14.5px;color:var(--slate-tile);outline:none;transition:border-color .15s}
+  .field input:focus{border-color:var(--stone-blue);box-shadow:0 0 0 2px rgba(91,134,153,0.12)}
+  .field input::placeholder{color:rgba(59,88,100,0.4)}
+
+  .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+  .remember{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(59,88,100,0.8);cursor:pointer}
+  .remember input{width:15px;height:15px;accent-color:var(--stone-blue)}
+  .forgot{font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gulf-blue);text-decoration:none}
+  .forgot:hover{text-decoration:underline}
+
+  .signin{width:100%;padding:14px;background:var(--slate-deep);color:var(--white-sand);border:none;font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;cursor:pointer;transition:background .15s}
+  .signin:hover{background:var(--slate-deeper)}
+
+  .divider{display:flex;align-items:center;gap:14px;margin:22px 0;color:rgba(59,88,100,0.45);font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:rgba(59,88,100,0.2)}
+
+  .magic{width:100%;padding:13px;background:transparent;color:var(--slate-tile);border:1px solid rgba(59,88,100,0.3);font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+  .magic:hover{border-color:var(--stone-blue);color:var(--stone-blue)}
+
+  .help{margin-top:30px;padding-top:22px;border-top:1px solid rgba(59,88,100,0.15);font-size:13px;color:rgba(59,88,100,0.65);line-height:1.6}
+  .help a{color:var(--gulf-blue);text-decoration:none}
+  .help a:hover{text-decoration:underline}
+
+  .footer{margin-top:auto;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;color:rgba(59,88,100,0.5);display:flex;justify-content:space-between;padding-top:40px}
+
+  /* RIGHT — testimonial / context */
+  .right{background:var(--slate-deep);color:var(--white-sand);padding:56px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+  .right::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 70% 20%,rgba(91,134,153,0.25),transparent 60%);pointer-events:none}
+  .right::after{content:"";position:absolute;bottom:-40%;right:-20%;width:80%;aspect-ratio:1;background:radial-gradient(circle,rgba(201,138,59,0.08) 0%,transparent 65%);pointer-events:none}
+  .r-top{display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;color:rgba(247,245,236,0.6);position:relative;z-index:2}
+  .r-top .dot{width:6px;height:6px;background:#4A8A6F;border-radius:50%;display:inline-block;margin-right:6px;box-shadow:0 0 6px #4A8A6F}
+
+  .quote{margin:auto 0;max-width:460px;position:relative;z-index:2}
+  .quote .mark{font-family:"Space Grotesk";font-size:96px;line-height:0.8;color:var(--stone-blue);margin-bottom:14px;opacity:0.6}
+  .quote p{font-family:"Space Grotesk";font-weight:400;font-size:26px;letter-spacing:-0.015em;line-height:1.35;color:var(--white-sand);margin:0 0 30px}
+  .quote .who{display:flex;align-items:center;gap:14px}
+  .quote .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--stone-blue),var(--oceanside));display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono";font-size:12px;font-weight:600;color:var(--slate-deep)}
+  .quote .n{font-size:14px;font-weight:500;color:var(--white-sand)}
+  .quote .r{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;color:rgba(247,245,236,0.55);margin-top:2px}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:50px;position:relative;z-index:2;padding-top:32px;border-top:1px solid rgba(247,245,236,0.12)}
+  .stat .l{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,236,0.5);margin-bottom:6px}
+  .stat .n{font-family:"Space Grotesk";font-weight:500;font-size:26px;letter-spacing:-0.02em;color:var(--white-sand)}
+
+  @media (max-width: 900px){.page{grid-template-columns:1fr}.right{display:none}}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="left">
+    <div class="brand">
+      <span class="w">nightwork</span>
+      <span class="beam"></span>
+    </div>
+
+    <div class="form-wrap">
+      <div class="eyebrow">OWNER PORTAL · ROSS BUILT</div>
+      <h1>Welcome back.</h1>
+      <div class="sub">Sign in to review your project status, approve draws, and message your build team.</div>
+
+      <form onsubmit="event.preventDefault();">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" value="david.hanlon@gmail.com" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" value="••••••••••••" placeholder="Your password">
+        </div>
+
+        <div class="row">
+          <label class="remember"><input type="checkbox" checked> Stay signed in</label>
+          <a href="#" class="forgot">Forgot? →</a>
+        </div>
+
+        <button type="submit" class="signin">Sign in →</button>
+
+        <div class="divider">OR</div>
+
+        <button type="button" class="magic">Email me a sign-in link</button>
+      </form>
+
+      <div class="help">
+        Trouble accessing your project? <a href="#">Email Jake</a> or call <b style="color:var(--slate-tile)">(941) 555-0172</b>.<br>
+        First time here? Your builder will send you an invite.
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>NIGHTWORK · MAKES BUILDING LIGHTWORK</span>
+      <span>SOC 2 · AUDIT LOGGED</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="r-top">
+      <span><span class="dot"></span>SYSTEM OPERATIONAL</span>
+      <span>POWERED BY NIGHTWORK</span>
+    </div>
+
+    <div class="quote">
+      <div class="mark">"</div>
+      <p>Before Nightwork, approving a draw meant three PDFs, two emails, and a phone call. Now I open my phone at the airport, see every invoice, and release $280k in two taps.</p>
+      <div class="who">
+        <div class="av">MC</div>
+        <div>
+          <div class="n">Marcus Crane</div>
+          <div class="r">OWNER · LONGBOAT KEY RESIDENCE · $6.2M BUILD</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="l">Active builds</div><div class="n">34</div></div>
+      <div class="stat"><div class="l">Draws approved</div><div class="n">$48M</div></div>
+      <div class="stat"><div class="l">Avg. approval</div><div class="n">18min</div></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

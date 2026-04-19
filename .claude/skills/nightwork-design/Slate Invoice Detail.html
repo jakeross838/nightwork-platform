@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nightwork · Invoice Detail</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--slate-tile:#3B5864;--slate-deep:#1A2830;--slate-deeper:#132028;--stone-blue:#5B8699;--gulf-blue:#4E7A8C;--oceanside:#CBD8DB;--white-sand:#F7F5EC;--success:#4A8A6F;--warn:#C98A3B;--danger:#B0554E}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--slate-deep);font-family:"Inter",sans-serif;color:var(--white-sand)}
+  .nav{display:flex;align-items:center;gap:22px;padding:0 32px;height:54px;background:var(--slate-deeper);border-bottom:1px solid rgba(247,245,236,0.08)}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo .w{font-family:"Space Grotesk";font-weight:600;font-size:18px;letter-spacing:-0.03em}
+  .nav ul{list-style:none;margin:0;padding:0;display:flex;gap:2px;flex:1;height:100%}
+  .nav ul li{display:flex;align-items:center;height:100%}
+  .nav ul li a{display:flex;align-items:center;height:100%;padding:0 14px;font-size:13px;color:rgba(247,245,236,0.65);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .nav ul li a.active{color:var(--white-sand);border-bottom-color:var(--stone-blue)}
+  .nav .right{display:flex;align-items:center;gap:12px}
+  .nav .role{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;border:1px solid rgba(247,245,236,0.25);padding:2px 6px}
+
+  .wrap{max-width:1280px;margin:0 auto;padding:28px 32px 60px}
+  .crumbs{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.4);margin-bottom:14px}
+  .crumbs b{color:rgba(247,245,236,0.85);font-weight:500}
+
+  .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:20px}
+  h1{font-family:"Space Grotesk";font-weight:500;font-size:30px;letter-spacing:-0.02em;margin:0 0 4px}
+  .head .sub{font-size:13px;color:rgba(247,245,236,0.55)}
+  .head .sub b{color:var(--stone-blue);font-weight:500}
+  .pill{display:inline-block;padding:3px 9px;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;border:1px solid;margin-left:10px;vertical-align:2px}
+  .pill.approved{color:var(--success);border-color:var(--success)}
+
+  .actions{display:flex;gap:10px}
+  .btn{padding:10px 16px;font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:500;border:none;cursor:pointer}
+  .btn.primary{background:var(--stone-blue);color:var(--white-sand)}
+  .btn.ghost{background:transparent;border:1px solid rgba(247,245,236,0.2);color:var(--white-sand)}
+  .btn.ghost:hover{border-color:var(--stone-blue);color:var(--stone-blue)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(247,245,236,0.08);border:1px solid rgba(247,245,236,0.08)}
+  .card{background:var(--slate-deep);padding:22px}
+  .card h3{font-family:"Space Grotesk";font-weight:500;font-size:15px;margin:0 0 2px}
+  .card .cs{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.45);margin-bottom:16px}
+
+  /* Invoice preview column */
+  .pdf{background:var(--slate-deeper);padding:22px}
+  .pdf h3{font-family:"Space Grotesk";font-weight:500;font-size:15px;margin:0 0 14px;display:flex;justify-content:space-between;align-items:center}
+  .pdf h3 span{font-family:"JetBrains Mono";font-size:10px;color:var(--stone-blue);letter-spacing:0.1em;cursor:pointer}
+  .paper{background:#F7F5EC;color:#1A2830;padding:32px 28px;min-height:560px;box-shadow:0 20px 40px rgba(0,0,0,0.4);font-family:"Inter",sans-serif;position:relative}
+  .paper .p-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;border-bottom:2px solid #3B5864;padding-bottom:14px}
+  .paper .p-top h4{font-family:"Space Grotesk";font-weight:600;font-size:19px;margin:0;color:#1A2830;letter-spacing:-0.01em}
+  .paper .p-top .meta{font-size:10px;color:#5B8699;margin-top:2px;letter-spacing:0.02em;line-height:1.5}
+  .paper .p-top .nr{text-align:right}
+  .paper .p-top .nr .l{font-family:"JetBrains Mono";font-size:9px;color:#5B8699;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:2px}
+  .paper .p-top .nr .v{font-family:"Space Grotesk";font-weight:600;font-size:17px;color:#1A2830}
+  .paper .billto{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;font-size:11px;line-height:1.55}
+  .paper .billto .lbl{font-family:"JetBrains Mono";font-size:9px;color:#5B8699;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px}
+  .paper table{width:100%;border-collapse:collapse;margin-bottom:14px}
+  .paper th{text-align:left;font-family:"JetBrains Mono";font-size:9px;color:#5B8699;letter-spacing:0.1em;text-transform:uppercase;padding:8px 4px;border-bottom:1px solid #3B5864;font-weight:500}
+  .paper th.r{text-align:right}
+  .paper td{padding:8px 4px;font-size:11px;border-bottom:1px solid rgba(59,88,100,0.15)}
+  .paper td.r{text-align:right;font-variant-numeric:tabular-nums}
+  .paper .sum{display:flex;justify-content:flex-end}
+  .paper .sum table{width:46%}
+  .paper .sum td{border-bottom:none;padding:3px 4px;font-size:11px}
+  .paper .sum tr.tot td{padding-top:10px;border-top:2px solid #3B5864;font-weight:600;font-size:13px}
+  .paper .foot{margin-top:16px;font-size:9px;color:#5B8699;letter-spacing:0.04em;line-height:1.6}
+  .paper .stamp{position:absolute;bottom:36px;right:30px;transform:rotate(-8deg);border:2px solid #4A8A6F;color:#4A8A6F;padding:6px 14px;font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.14em;font-weight:600;opacity:0.7}
+  .paper .stamp small{display:block;font-size:8px;letter-spacing:0.1em;opacity:0.85}
+
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field .l{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,236,0.5)}
+  .field .v{font-size:13px;color:var(--white-sand)}
+  .field .v.link{color:var(--stone-blue);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .field .v.big{font-family:"Space Grotesk";font-weight:600;font-size:22px;letter-spacing:-0.02em}
+
+  .alloc{margin-top:18px;border:1px solid rgba(247,245,236,0.1);background:var(--slate-deeper)}
+  .alloc table{width:100%;border-collapse:collapse;font-size:13px}
+  .alloc th{text-align:left;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.45);padding:8px 12px;border-bottom:1px solid rgba(247,245,236,0.08);font-weight:500}
+  .alloc th.r{text-align:right}
+  .alloc td{padding:10px 12px;border-bottom:1px solid rgba(247,245,236,0.05);color:rgba(247,245,236,0.85);font-variant-numeric:tabular-nums}
+  .alloc td.r{text-align:right;font-family:"JetBrains Mono";font-size:12px}
+  .alloc .code{font-family:"JetBrains Mono";font-size:11px;color:var(--stone-blue);font-weight:600}
+
+  .ai{margin-top:14px;padding:14px;background:rgba(91,134,153,0.08);border:1px solid rgba(91,134,153,0.3)}
+  .ai .h{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--stone-blue);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .ai .h i{width:5px;height:5px;background:var(--stone-blue);display:inline-block;font-style:normal}
+  .ai p{margin:0;font-size:12px;line-height:1.55;color:rgba(247,245,236,0.85)}
+  .ai p b{color:var(--white-sand);font-weight:500}
+  .ai .conf{margin-top:8px;font-family:"JetBrains Mono";font-size:10px;color:rgba(247,245,236,0.55);letter-spacing:0.04em}
+  .ai .conf b{color:var(--success)}
+
+  .timeline{position:relative;padding-left:16px}
+  .timeline::before{content:"";position:absolute;left:4px;top:6px;bottom:6px;width:1px;background:rgba(247,245,236,0.12)}
+  .tl-item{position:relative;padding:6px 0 14px}
+  .tl-item::before{content:"";position:absolute;left:-16px;top:10px;width:9px;height:9px;border-radius:50%;background:var(--stone-blue);border:2px solid var(--slate-deep)}
+  .tl-item.done::before{background:var(--success)}
+  .tl-item.pending::before{background:transparent;border-color:rgba(247,245,236,0.3)}
+  .tl-item .t{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.1em;color:rgba(247,245,236,0.4);margin-bottom:2px}
+  .tl-item .l{font-size:13px;color:var(--white-sand)}
+  .tl-item .l b{color:var(--stone-blue);font-weight:500}
+  .tl-item.pending .l{color:rgba(247,245,236,0.5)}
+
+  .side-card{margin-top:18px}
+  .side-card + .side-card{margin-top:14px}
+  .lienline{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid rgba(247,245,236,0.05);font-size:12.5px}
+  .lienline:first-of-type{border-top:none}
+  .lienline .v{color:var(--white-sand)}
+  .lienline.bad .v{color:var(--warn)}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="logo">
+    <span class="w">nightwork</span>
+    <svg width="56" height="3" viewBox="0 0 56 3"><defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect width="56" height="1" y="1" fill="url(#g1)"/></svg>
+  </div>
+  <ul>
+    <li><a href="#">Dashboard</a></li>
+    <li><a class="active" href="#">Financial</a></li>
+    <li><a href="#" style="color:rgba(247,245,236,0.25);">Operations</a></li>
+    <li><a href="#">Admin</a></li>
+  </ul>
+  <div class="right"><span style="font-size:13px">Jake</span><span class="role">PM</span></div>
+</div>
+
+<div class="wrap">
+  <div class="crumbs">Home / Financial / Invoices / <b>#INV-4410 · Harborline Plumbing</b></div>
+  <div class="head">
+    <div>
+      <h1>Invoice #INV-4410<span class="pill approved">QA Approved</span></h1>
+      <div class="sub">Harborline Plumbing · <b>Anna Maria — Hanlon</b> · Received Apr 17, 2026 · Assigned to Draw #9</div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost">Download PDF</button>
+      <button class="btn ghost">Reject</button>
+      <button class="btn primary">Push to QuickBooks →</button>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- Left: PDF preview -->
+    <div class="pdf">
+      <h3>Source document <span>Open in new tab ↗</span></h3>
+      <div class="paper">
+        <div class="p-top">
+          <div>
+            <h4>HARBORLINE PLUMBING</h4>
+            <div class="meta">142 Bay St · Bradenton, FL 34205<br>License FL-CFC1429818 · Tax ID 59-3388421</div>
+          </div>
+          <div class="nr">
+            <div class="l">Invoice</div>
+            <div class="v">#INV-4410</div>
+            <div class="l" style="margin-top:8px">Issued</div>
+            <div class="v" style="font-size:13px">April 17, 2026</div>
+          </div>
+        </div>
+        <div class="billto">
+          <div>
+            <div class="lbl">Bill to</div>
+            Ross Built Inc.<br>
+            3220 Clark Rd · Sarasota, FL 34231<br>
+            ap@rossbuilt.com
+          </div>
+          <div>
+            <div class="lbl">Project</div>
+            Hanlon Residence<br>
+            5420 Gulf Dr · Anna Maria, FL<br>
+            PO #RB-2026-041
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr></thead>
+          <tbody>
+            <tr><td>Rough plumbing, phase 3 (kitchen, baths)</td><td class="r">62 hr</td><td class="r">$200.00</td><td class="r">$12,400.00</td></tr>
+            <tr><td>Fixture set — rough valve installation</td><td class="r">1</td><td class="r">$3,800.00</td><td class="r">$3,800.00</td></tr>
+            <tr><td>Permit fee pass-through (Manatee Co.)</td><td class="r">1</td><td class="r">$850.00</td><td class="r">$850.00</td></tr>
+            <tr><td>Materials — copper, PEX, fittings</td><td class="r">—</td><td class="r">—</td><td class="r">$1,550.00</td></tr>
+          </tbody>
+        </table>
+        <div class="sum">
+          <table>
+            <tr><td>Subtotal</td><td class="r">$18,600.00</td></tr>
+            <tr><td>Tax</td><td class="r">$0.00</td></tr>
+            <tr class="tot"><td>TOTAL DUE</td><td class="r">$18,600.00</td></tr>
+          </table>
+        </div>
+        <div class="foot">Net 30 · Remit to Harborline Plumbing via ACH or check<br>Questions: ap@harborlineplumb.com · 941-555-0104</div>
+        <div class="stamp">QA APPROVED<small>MARIA D · APR 17 · 2026</small></div>
+      </div>
+    </div>
+
+    <!-- Right: Metadata + allocations + AI + timeline -->
+    <div class="card">
+      <h3>Invoice details</h3>
+      <div class="cs">System metadata · editable by PM and accounting</div>
+      <div class="field-grid">
+        <div class="field"><span class="l">Total amount</span><span class="v big">$18,600.00</span></div>
+        <div class="field"><span class="l">Net after retainage</span><span class="v big" style="color:var(--warn)">$16,740.00</span></div>
+        <div class="field"><span class="l">Vendor</span><span class="v link">Harborline Plumbing ↗</span></div>
+        <div class="field"><span class="l">Project</span><span class="v link">Anna Maria — Hanlon ↗</span></div>
+        <div class="field"><span class="l">Received</span><span class="v">Apr 17, 2026 · 10:04 AM</span></div>
+        <div class="field"><span class="l">Due</span><span class="v">May 17, 2026 · Net 30</span></div>
+        <div class="field"><span class="l">Payment terms</span><span class="v">ACH preferred · 10% retained</span></div>
+        <div class="field"><span class="l">Attached to draw</span><span class="v link">Draw #9 (pending) ↗</span></div>
+      </div>
+
+      <div class="alloc">
+        <table>
+          <thead><tr><th>Cost code allocation</th><th class="r">Allocated</th><th class="r">% of invoice</th></tr></thead>
+          <tbody>
+            <tr><td><span class="code">15-410</span> Rough plumbing · labor</td><td class="r">$12,400.00</td><td class="r">66.7%</td></tr>
+            <tr><td><span class="code">15-410</span> Rough plumbing · materials</td><td class="r">$1,550.00</td><td class="r">8.3%</td></tr>
+            <tr><td><span class="code">15-420</span> Fixtures</td><td class="r">$3,800.00</td><td class="r">20.4%</td></tr>
+            <tr><td><span class="code">01-500</span> Permits &amp; fees</td><td class="r">$850.00</td><td class="r">4.6%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ai">
+        <div class="h"><i></i>AI extraction · Claude Haiku</div>
+        <p><b>Matched vendor</b> from tax ID (59-3388421) and PO reference. <b>Line-item codes inferred</b> from description + historical pattern: 94% of Harborline invoices in last 12 mo route to 15-410 labor + materials. <b>Retainage flag</b> applied from job default (10%).</p>
+        <div class="conf">CONFIDENCE <b>96.2%</b> · 2 FLAGS CLEARED BY MARIA D</div>
+      </div>
+
+      <h3 style="margin-top:22px">Status timeline</h3>
+      <div class="cs">End-to-end audit trail · every action logged</div>
+      <div class="timeline">
+        <div class="tl-item done"><div class="t">APR 17 · 10:04</div><div class="l"><b>Received</b> via email-in · ap@rossbuilt.com</div></div>
+        <div class="tl-item done"><div class="t">APR 17 · 10:04</div><div class="l"><b>Auto-classified</b> by Nightwork AI — 96.2% confidence</div></div>
+        <div class="tl-item done"><div class="t">APR 17 · 10:47</div><div class="l"><b>Reviewed</b> by Maria D · 2 flags cleared</div></div>
+        <div class="tl-item done"><div class="t">APR 17 · 10:51</div><div class="l"><b>QA approved</b> · ready for draw</div></div>
+        <div class="tl-item"><div class="t">APR 18 · 10:42</div><div class="l"><b>Attached to Draw #9</b> by Jake</div></div>
+        <div class="tl-item pending"><div class="t">PENDING</div><div class="l">Lien release from Harborline</div></div>
+        <div class="tl-item pending"><div class="t">PENDING</div><div class="l">Owner approval of Draw #9</div></div>
+        <div class="tl-item pending"><div class="t">PENDING</div><div class="l">Push to QuickBooks · pay via ACH</div></div>
+      </div>
+
+      <div class="side-card" style="background:var(--slate-deeper);padding:14px 16px;border:1px solid rgba(247,245,236,0.08)">
+        <div style="font-family:'JetBrains Mono';font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,236,0.55);margin-bottom:6px">Lien release</div>
+        <div class="lienline"><span>Conditional partial release</span><span class="v" style="color:var(--success)">Requested</span></div>
+        <div class="lienline bad"><span>Signed copy on file</span><span class="v">Not received</span></div>
+        <div class="lienline"><span>Required by workflow</span><span class="v">Yes · before approval</span></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

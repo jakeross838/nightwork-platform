@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nightwork · Slate Immersive</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate-tile:#3B5864;
+    --slate-deep:#1A2830;
+    --slate-deeper:#132028;
+    --stone-blue:#5B8699;
+    --gulf-blue:#4E7A8C;
+    --oceanside:#CBD8DB;
+    --white-sand:#F7F5EC;
+    --ink:#0F1418;
+    --success:#4A8A6F;
+    --warn:#C98A3B;
+    --danger:#B0554E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:#0a0a0a;font-family:"Inter",sans-serif;color:var(--white-sand);}
+  .page{padding:0;}
+  .hero{padding:40px 40px 24px;max-width:1600px;margin:0 auto;}
+  .hero h1{font-family:"Space Grotesk";font-weight:500;font-size:30px;letter-spacing:-0.02em;margin:0 0 4px;color:#fff;}
+  .hero p{font-size:13px;color:#888;max-width:840px;line-height:1.65;margin:0 0 18px;}
+  .hero p b{color:#ddd;font-weight:500;}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
+  .sw{display:flex;align-items:center;gap:8px;border:1px solid #222;padding:5px 10px 5px 5px;background:#111;font-family:"JetBrains Mono";font-size:10px;color:#ddd;}
+  .sw .chip{width:22px;height:22px;border:1px solid rgba(255,255,255,0.08);}
+  .sw .hex{color:#666;}
+
+  .panel-label{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#666;margin:32px 40px 8px;}
+  .panel-label b{color:#fff;font-weight:500;margin-right:8px;}
+
+  .panel{max-width:1600px;margin:0 auto;border:1px solid #222;background:#0F1014;overflow:hidden;}
+
+  /* ===== LOCKUP ===== */
+  .lockup{background:var(--slate-deep);padding:56px 64px;display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center;}
+  .lockup .mark{display:flex;flex-direction:column;gap:14px;}
+  .lockup .word{font-family:"Space Grotesk";font-weight:600;font-size:88px;letter-spacing:-0.04em;line-height:0.95;color:var(--white-sand);}
+  .lockup .rail{width:100%;height:8px;}
+  .lockup .tag{font-size:14px;color:rgba(247,245,236,0.7);letter-spacing:0.01em;}
+  .lockup .tag b{color:var(--stone-blue);font-weight:500;}
+  .lockup .meta{font-family:"JetBrains Mono";font-size:10px;color:rgba(247,245,236,0.45);letter-spacing:0.12em;text-transform:uppercase;margin-top:18px;display:flex;gap:18px;flex-wrap:wrap;}
+  .lockup .meta span{display:flex;align-items:center;gap:6px;}
+  .lockup .meta i{width:6px;height:6px;background:var(--stone-blue);font-style:normal;}
+
+  /* Beam variant tiles in lockup right column */
+  .variants{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(247,245,236,0.08);border:1px solid rgba(247,245,236,0.08);}
+  .variants .v{background:var(--slate-deep);padding:22px 24px;}
+  .variants .v.light{background:var(--white-sand);color:var(--slate-tile);}
+  .variants .v.deeper{background:var(--slate-deeper);}
+  .variants .v.stone{background:var(--stone-blue);color:var(--white-sand);}
+  .variants .v .vword{font-family:"Space Grotesk";font-weight:600;font-size:30px;letter-spacing:-0.04em;line-height:1;}
+  .variants .v .vrail{margin-top:10px;height:5px;width:100%;}
+  .variants .v .vmeta{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;margin-top:10px;opacity:0.55;}
+
+  /* ===== SIGN IN ===== */
+  .signin{display:grid;grid-template-columns:1.1fr 1fr;background:var(--slate-deep);min-height:680px;}
+  .signin .left{padding:48px 56px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;}
+  .signin .left::before{content:"";position:absolute;inset:0;background:
+    radial-gradient(ellipse at 20% 110%, rgba(91,134,153,0.22), transparent 60%),
+    radial-gradient(ellipse at 90% 10%, rgba(78,122,140,0.14), transparent 50%);
+    pointer-events:none;}
+  .signin .left > *{position:relative;z-index:1;}
+  .signin .brand{display:flex;flex-direction:column;gap:12px;}
+  .signin .brand .w{font-family:"Space Grotesk";font-weight:600;font-size:38px;letter-spacing:-0.04em;line-height:1;color:var(--white-sand);}
+  .signin .brand .r{width:220px;height:6px;}
+  .signin .pitch{max-width:440px;}
+  .signin .pitch .eyebrow{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--stone-blue);margin-bottom:10px;}
+  .signin .pitch h2{font-family:"Space Grotesk";font-weight:500;font-size:34px;letter-spacing:-0.02em;line-height:1.15;margin:0 0 14px;color:var(--white-sand);}
+  .signin .pitch p{font-size:14px;line-height:1.6;color:rgba(247,245,236,0.7);margin:0 0 22px;}
+  .signin .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(247,245,236,0.1);border:1px solid rgba(247,245,236,0.1);max-width:520px;}
+  .signin .kpis .k{background:var(--slate-deep);padding:14px 16px;}
+  .signin .kpis .k .n{font-family:"Space Grotesk";font-weight:600;font-size:24px;letter-spacing:-0.02em;color:var(--stone-blue);}
+  .signin .kpis .k .l{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.5);margin-top:2px;}
+  .signin .foot{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.4);display:flex;gap:20px;}
+
+  .signin .right{background:var(--white-sand);padding:56px 56px;display:flex;flex-direction:column;justify-content:center;color:var(--slate-tile);}
+  .signin .right .eyebrow{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gulf-blue);margin-bottom:8px;}
+  .signin .right h3{font-family:"Space Grotesk";font-weight:500;font-size:28px;letter-spacing:-0.02em;margin:0 0 6px;color:var(--slate-tile);}
+  .signin .right .sub{font-size:13px;color:rgba(59,88,100,0.7);margin:0 0 28px;}
+  .signin .field{margin-bottom:16px;}
+  .signin .field label{display:block;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(59,88,100,0.7);margin-bottom:6px;}
+  .signin .field input{width:100%;padding:12px 14px;font-family:"Inter";font-size:14px;color:var(--slate-tile);background:#fff;border:1px solid rgba(59,88,100,0.25);border-radius:0;outline:none;}
+  .signin .field input:focus{border-color:var(--stone-blue);box-shadow:0 0 0 3px rgba(91,134,153,0.15);}
+  .signin .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+  .signin .row .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(59,88,100,0.8);}
+  .signin .row .chk i{display:inline-block;width:14px;height:14px;border:1px solid rgba(59,88,100,0.4);background:#fff;position:relative;}
+  .signin .row .chk i::after{content:"";position:absolute;top:2px;left:4px;width:4px;height:7px;border:solid var(--stone-blue);border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .signin .row a{font-size:12px;color:var(--gulf-blue);text-decoration:none;}
+  .signin .row a:hover{text-decoration:underline;}
+  .signin button.primary{width:100%;padding:14px;font-family:"JetBrains Mono";font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600;background:var(--slate-tile);color:var(--white-sand);border:none;border-radius:0;cursor:pointer;transition:background 0.15s;}
+  .signin button.primary:hover{background:var(--stone-blue);}
+  .signin .or{text-align:center;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(59,88,100,0.5);margin:18px 0;position:relative;}
+  .signin .or::before,.signin .or::after{content:"";position:absolute;top:50%;width:40%;height:1px;background:rgba(59,88,100,0.2);}
+  .signin .or::before{left:0;}
+  .signin .or::after{right:0;}
+  .signin button.secondary{width:100%;padding:12px;font-family:"Inter";font-size:13px;background:#fff;color:var(--slate-tile);border:1px solid rgba(59,88,100,0.25);border-radius:0;cursor:pointer;}
+  .signin button.secondary:hover{border-color:var(--stone-blue);}
+  .signin .foot-note{font-size:11px;color:rgba(59,88,100,0.5);margin-top:26px;text-align:center;}
+  .signin .foot-note a{color:var(--gulf-blue);}
+
+  /* ===== DASHBOARD ===== */
+  .dash{background:var(--slate-deep);color:var(--white-sand);}
+  .dash-nav{border-bottom:1px solid rgba(247,245,236,0.08);background:var(--slate-deeper);padding:0 28px;display:flex;align-items:center;gap:28px;height:54px;}
+  .dash-nav .logo{display:flex;align-items:center;gap:10px;}
+  .dash-nav .logo .w{font-family:"Space Grotesk";font-weight:600;font-size:18px;letter-spacing:-0.03em;}
+  .dash-nav .logo .r{width:56px;height:3px;}
+  .dash-nav ul{list-style:none;margin:0;padding:0;display:flex;gap:2px;flex:1;height:100%;}
+  .dash-nav ul li{display:flex;align-items:center;height:100%;}
+  .dash-nav ul li a{display:flex;align-items:center;height:100%;padding:0 14px;font-size:13px;color:rgba(247,245,236,0.65);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .dash-nav ul li a.active{color:var(--white-sand);border-bottom-color:var(--stone-blue);}
+  .dash-nav ul li a:hover{color:var(--white-sand);}
+  .dash-nav .right{display:flex;align-items:center;gap:12px;}
+  .dash-nav .role{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;border:1px solid rgba(247,245,236,0.25);padding:2px 6px;color:rgba(247,245,236,0.8);}
+  .dash-nav .user{font-size:13px;color:rgba(247,245,236,0.8);}
+
+  .dash-body{display:grid;grid-template-columns:220px 1fr;}
+  .dash-side{border-right:1px solid rgba(247,245,236,0.08);background:var(--slate-deeper);min-height:780px;padding:16px 0;}
+  .dash-side .sh{padding:0 16px 10px;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,236,0.4);display:flex;justify-content:space-between;}
+  .dash-side .new{margin:0 14px 10px;padding:7px 12px;border:1px solid rgba(91,134,153,0.5);color:var(--stone-blue);font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.1em;text-transform:uppercase;text-align:center;cursor:pointer;}
+  .dash-side .search{margin:0 14px 10px;padding:7px 10px;background:var(--slate-deep);border:1px solid rgba(247,245,236,0.1);color:rgba(247,245,236,0.5);font-size:11px;}
+  .dash-side .job{padding:8px 14px 8px 18px;font-size:13px;color:rgba(247,245,236,0.75);display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(247,245,236,0.05);cursor:pointer;}
+  .dash-side .job.active{background:rgba(91,134,153,0.1);color:var(--white-sand);border-left:2px solid var(--stone-blue);padding-left:16px;}
+  .dash-side .job .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .dash-side .job .dot.active{background:var(--success);}
+  .dash-side .job .dot.warranty{background:var(--warn);}
+  .dash-side .job .dot.complete{background:rgba(247,245,236,0.3);}
+  .dash-side .count{font-family:"JetBrains Mono";font-size:10px;color:rgba(247,245,236,0.35);padding:10px 16px;border-top:1px solid rgba(247,245,236,0.06);margin-top:4px;letter-spacing:0.1em;}
+
+  .dash-main{padding:28px 32px;min-height:780px;}
+  .crumbs{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.4);margin-bottom:18px;}
+  .crumbs b{color:rgba(247,245,236,0.85);font-weight:500;}
+  .dash-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:20px;}
+  .dash-head h2{font-family:"Space Grotesk";font-weight:500;font-size:30px;letter-spacing:-0.02em;margin:0 0 4px;color:var(--white-sand);}
+  .dash-head .sub{font-size:13px;color:rgba(247,245,236,0.55);}
+  .dash-head .sub span{color:var(--stone-blue);}
+  .dash-head .actions{display:flex;gap:10px;}
+  .btn{padding:10px 16px;font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:500;border:none;cursor:pointer;}
+  .btn.primary{background:var(--stone-blue);color:var(--white-sand);}
+  .btn.primary:hover{background:var(--slate-tile);}
+  .btn.ghost{background:transparent;border:1px solid rgba(247,245,236,0.2);color:var(--white-sand);}
+  .btn.ghost:hover{border-color:var(--stone-blue);color:var(--stone-blue);}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(247,245,236,0.08);border:1px solid rgba(247,245,236,0.08);margin-bottom:24px;}
+  .kpi-row .k{background:var(--slate-deep);padding:18px 20px;position:relative;}
+  .kpi-row .k .l{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,236,0.5);margin-bottom:10px;}
+  .kpi-row .k .n{font-family:"Space Grotesk";font-weight:600;font-size:28px;letter-spacing:-0.02em;color:var(--white-sand);}
+  .kpi-row .k .d{font-family:"JetBrains Mono";font-size:10px;margin-top:6px;color:rgba(247,245,236,0.55);}
+  .kpi-row .k .d .up{color:var(--success);}
+  .kpi-row .k .d .dn{color:var(--danger);}
+  .kpi-row .k .bar{position:absolute;bottom:0;left:0;height:2px;background:var(--stone-blue);}
+
+  .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:1px;background:rgba(247,245,236,0.08);border:1px solid rgba(247,245,236,0.08);}
+  .card{background:var(--slate-deep);padding:22px 22px 18px;}
+  .card h3{font-family:"Space Grotesk";font-weight:500;font-size:15px;margin:0 0 2px;color:var(--white-sand);letter-spacing:-0.01em;}
+  .card .cs{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.45);margin-bottom:16px;}
+  .card .link{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--stone-blue);float:right;text-decoration:none;}
+
+  /* Draws table */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  table thead th{text-align:left;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.4);padding:8px 10px 10px;border-bottom:1px solid rgba(247,245,236,0.08);font-weight:500;}
+  table thead th.r{text-align:right;}
+  table tbody td{padding:12px 10px;border-bottom:1px solid rgba(247,245,236,0.05);color:rgba(247,245,236,0.85);}
+  table tbody td.r{text-align:right;font-family:"JetBrains Mono";font-variant-numeric:tabular-nums;}
+  table tbody tr:hover{background:rgba(91,134,153,0.05);}
+  .status-pill{display:inline-block;padding:2px 7px;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid;}
+  .status-pill.pending{color:var(--warn);border-color:var(--warn);}
+  .status-pill.approved{color:var(--success);border-color:var(--success);}
+  .status-pill.paid{color:rgba(247,245,236,0.5);border-color:rgba(247,245,236,0.25);}
+  .status-pill.review{color:var(--stone-blue);border-color:var(--stone-blue);}
+
+  /* activity feed */
+  .feed .item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(247,245,236,0.05);}
+  .feed .item:last-child{border-bottom:none;}
+  .feed .d{font-family:"JetBrains Mono";font-size:10px;color:rgba(247,245,236,0.4);min-width:48px;padding-top:2px;}
+  .feed .m{flex:1;font-size:12.5px;color:rgba(247,245,236,0.85);line-height:1.5;}
+  .feed .m b{color:var(--stone-blue);font-weight:500;}
+
+  /* Progress */
+  .prog-row{display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0;color:rgba(247,245,236,0.85);}
+  .prog-row + .prog-row{border-top:1px solid rgba(247,245,236,0.05);}
+  .prog-bar{height:5px;background:rgba(247,245,236,0.08);margin-top:6px;position:relative;}
+  .prog-bar i{display:block;height:100%;background:var(--stone-blue);}
+  .prog-lbl{display:flex;justify-content:space-between;font-family:"JetBrains Mono";font-size:10px;color:rgba(247,245,236,0.5);margin-top:4px;letter-spacing:0.04em;}
+
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <h1>Nightwork · Slate Immersive (05)</h1>
+    <p><b>Build-out: logo lockup, sign-in, and full dashboard.</b> Dark surfaces drawn from Ross Built's <i>Slate Tile</i> #3B5864 deepened to #1A2830 for UI-contrast; accent is <i>Stone Blue</i> #5B8699; light surfaces use <i>White Sand</i> #F7F5EC with <i>Slate Tile</i> text. Type: Space Grotesk display, Inter body, JetBrains Mono for labels/numerals.</p>
+    <div class="swatches">
+      <div class="sw"><span class="chip" style="background:#1A2830"></span>Slate Deep <span class="hex">#1A2830</span></div>
+      <div class="sw"><span class="chip" style="background:#3B5864"></span>Slate Tile <span class="hex">#3B5864</span></div>
+      <div class="sw"><span class="chip" style="background:#5B8699"></span>Stone Blue <span class="hex">#5B8699</span></div>
+      <div class="sw"><span class="chip" style="background:#4E7A8C"></span>Gulf Blue <span class="hex">#4E7A8C</span></div>
+      <div class="sw"><span class="chip" style="background:#CBD8DB"></span>Oceanside <span class="hex">#CBD8DB</span></div>
+      <div class="sw"><span class="chip" style="background:#F7F5EC;border-color:#333"></span>White Sand <span class="hex">#F7F5EC</span></div>
+    </div>
+  </div>
+
+  <div class="panel-label"><b>01</b> LOCKUP · Primary wordmark + fade rail, plus variants</div>
+  <div class="panel">
+    <div class="lockup">
+      <div class="mark">
+        <div class="word">nightwork</div>
+        <svg class="rail" viewBox="0 0 600 8" preserveAspectRatio="none">
+          <defs><linearGradient id="bigrail" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs>
+          <rect x="0" y="3" width="600" height="2" fill="url(#bigrail)"/>
+        </svg>
+        <div class="tag"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+        <div class="meta">
+          <span><i></i>Space Grotesk 600</span>
+          <span><i></i>−0.04em tracking</span>
+          <span><i></i>Stone Blue fade</span>
+        </div>
+      </div>
+      <div class="variants">
+        <div class="v">
+          <div class="vword">nightwork</div>
+          <svg class="vrail" viewBox="0 0 200 5" preserveAspectRatio="none"><defs><linearGradient id="vr1" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="200" height="2" fill="url(#vr1)"/></svg>
+          <div class="vmeta">Slate Deep · primary</div>
+        </div>
+        <div class="v deeper">
+          <div class="vword">nightwork</div>
+          <svg class="vrail" viewBox="0 0 200 5" preserveAspectRatio="none"><rect x="0" y="2" width="200" height="2" fill="url(#vr1)"/></svg>
+          <div class="vmeta">Slate Deeper · hero bg</div>
+        </div>
+        <div class="v stone">
+          <div class="vword" style="color:#F7F5EC">nightwork</div>
+          <svg class="vrail" viewBox="0 0 200 5" preserveAspectRatio="none"><defs><linearGradient id="vr2" x1="0" x2="1"><stop offset="0" stop-color="#F7F5EC"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="200" height="2" fill="url(#vr2)"/></svg>
+          <div class="vmeta" style="color:rgba(247,245,236,0.6)">Stone Blue · accent bg</div>
+        </div>
+        <div class="v light">
+          <div class="vword">nightwork</div>
+          <svg class="vrail" viewBox="0 0 200 5" preserveAspectRatio="none"><defs><linearGradient id="vr3" x1="0" x2="1"><stop offset="0" stop-color="#3B5864"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="200" height="2" fill="url(#vr3)"/></svg>
+          <div class="vmeta" style="color:rgba(59,88,100,0.5)">White Sand · print / marketing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-label"><b>02</b> SIGN IN · Split screen, product pitch left, form right</div>
+  <div class="panel">
+    <div class="signin">
+      <div class="left">
+        <div class="brand">
+          <div class="w">nightwork</div>
+          <svg class="r" viewBox="0 0 220 6" preserveAspectRatio="none"><defs><linearGradient id="sir" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="220" height="2" fill="url(#sir)"/></svg>
+        </div>
+        <div class="pitch">
+          <div class="eyebrow">Financial command · Custom home builders</div>
+          <h2>Draws, invoices, and change orders. Owned in one place.</h2>
+          <p>Nightwork gives project managers, accounting, and owners a single ledger for every dollar on every job. From $1.5M spec to $10M custom — same clean workflow, same clean numbers.</p>
+        </div>
+        <div class="kpis">
+          <div class="k"><div class="n">$184k</div><div class="l">Payments due this week</div></div>
+          <div class="k"><div class="n">3</div><div class="l">Draws open</div></div>
+          <div class="k"><div class="n">12</div><div class="l">Active jobs</div></div>
+        </div>
+        <div class="foot">
+          <span>v2026.04</span>
+          <span>SOC 2 Type II</span>
+          <span>Jake Ross · Nightwork Build</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="eyebrow">Sign in</div>
+        <h3>Welcome back.</h3>
+        <div class="sub">Sign in to continue to your dashboard.</div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" value="jake@rossbuilt.com">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" value="••••••••••••">
+        </div>
+        <div class="row">
+          <span class="chk"><i></i> Remember this device</span>
+          <a href="#">Forgot?</a>
+        </div>
+        <button class="primary">Sign in</button>
+        <div class="or">or</div>
+        <button class="secondary">Continue with magic link</button>
+        <div class="foot-note">New here? <a href="#">Start a 14-day trial</a> · No card required</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-label"><b>03</b> DASHBOARD · PM view for a single custom home project</div>
+  <div class="panel">
+    <div class="dash">
+      <div class="dash-nav">
+        <div class="logo">
+          <span class="w">nightwork</span>
+          <svg class="r" viewBox="0 0 56 3" preserveAspectRatio="none"><defs><linearGradient id="navrl" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="1" width="56" height="1" fill="url(#navrl)"/></svg>
+        </div>
+        <ul>
+          <li><a class="active" href="#">Dashboard</a></li>
+          <li><a href="#">Financial</a></li>
+          <li><a href="#" style="color:rgba(247,245,236,0.25);">Operations <span style="font-size:8px;border:1px solid rgba(247,245,236,0.2);padding:1px 4px;margin-left:4px;letter-spacing:0.1em;">SOON</span></a></li>
+          <li><a href="#">Admin</a></li>
+        </ul>
+        <div class="right">
+          <span class="user">Jake</span>
+          <span class="role">PM</span>
+        </div>
+      </div>
+      <div class="dash-body">
+        <div class="dash-side">
+          <div class="sh">Jobs <span>A-Z</span></div>
+          <div class="new">+ New Job</div>
+          <div class="search">Search…</div>
+          <div class="job active"><span class="dot active"></span>Anna Maria — Hanlon</div>
+          <div class="job"><span class="dot active"></span>Longboat — Cove Residence</div>
+          <div class="job"><span class="dot active"></span>Sarasota — Palm Point</div>
+          <div class="job"><span class="dot warranty"></span>Bradenton — Harbor 17</div>
+          <div class="job"><span class="dot active"></span>Siesta Key — Beacon</div>
+          <div class="job"><span class="dot complete"></span>Lido — Azure Villa</div>
+          <div class="job"><span class="dot active"></span>Sarasota — Bayview Modern</div>
+          <div class="job"><span class="dot warranty"></span>Anna Maria — Dune House</div>
+          <div class="count">12 JOBS · 9 ACTIVE</div>
+        </div>
+        <div class="dash-main">
+          <div class="crumbs">Home / Jobs / <b>Anna Maria — Hanlon</b></div>
+          <div class="dash-head">
+            <div>
+              <h2>Anna Maria — Hanlon Residence</h2>
+              <div class="sub">5,240 sf · $4.82M contract · <span>Active · phase 4 of 7</span></div>
+            </div>
+            <div class="actions">
+              <button class="btn ghost">Export</button>
+              <button class="btn primary">New Draw</button>
+            </div>
+          </div>
+
+          <div class="kpi-row">
+            <div class="k">
+              <div class="l">Contract value</div>
+              <div class="n">$4,820,000</div>
+              <div class="d">Base + 3 change orders</div>
+              <i class="bar" style="width:100%;"></i>
+            </div>
+            <div class="k">
+              <div class="l">Billed to date</div>
+              <div class="n">$2,894,400</div>
+              <div class="d"><span class="up">60.0%</span> of contract</div>
+              <i class="bar" style="width:60%;"></i>
+            </div>
+            <div class="k">
+              <div class="l">Outstanding</div>
+              <div class="n">$184,250</div>
+              <div class="d">Draw #9 · due Apr 25</div>
+              <i class="bar" style="width:8%;background:#C98A3B;"></i>
+            </div>
+            <div class="k">
+              <div class="l">Margin to date</div>
+              <div class="n">22.4%</div>
+              <div class="d"><span class="up">+1.1%</span> vs. budget</div>
+              <i class="bar" style="width:75%;background:#4A8A6F;"></i>
+            </div>
+          </div>
+
+          <div class="cols">
+            <div class="card">
+              <a class="link" href="#">All Draws →</a>
+              <h3>Recent Draws</h3>
+              <div class="cs">Last 6 · Hanlon residence</div>
+              <table>
+                <thead><tr><th>#</th><th>Submitted</th><th>Status</th><th class="r">Amount</th><th class="r">Net</th></tr></thead>
+                <tbody>
+                  <tr><td>#09</td><td>Apr 18, 2026</td><td><span class="status-pill pending">Pending</span></td><td class="r">$184,250.00</td><td class="r">$175,037.50</td></tr>
+                  <tr><td>#08</td><td>Apr 02, 2026</td><td><span class="status-pill review">In review</span></td><td class="r">$215,900.00</td><td class="r">$205,105.00</td></tr>
+                  <tr><td>#07</td><td>Mar 15, 2026</td><td><span class="status-pill approved">Approved</span></td><td class="r">$306,400.00</td><td class="r">$291,080.00</td></tr>
+                  <tr><td>#06</td><td>Mar 01, 2026</td><td><span class="status-pill paid">Paid</span></td><td class="r">$278,600.00</td><td class="r">$264,670.00</td></tr>
+                  <tr><td>#05</td><td>Feb 14, 2026</td><td><span class="status-pill paid">Paid</span></td><td class="r">$319,800.00</td><td class="r">$303,810.00</td></tr>
+                  <tr><td>#04</td><td>Jan 28, 2026</td><td><span class="status-pill paid">Paid</span></td><td class="r">$247,400.00</td><td class="r">$235,030.00</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card">
+              <a class="link" href="#">All activity →</a>
+              <h3>Activity</h3>
+              <div class="cs">Across Anna Maria — Hanlon</div>
+              <div class="feed">
+                <div class="item"><div class="d">10:42</div><div class="m"><b>Maria Diaz</b> submitted Draw #9 · $184,250</div></div>
+                <div class="item"><div class="d">09:15</div><div class="m">Invoice <b>#INV-4410</b> from Harborline Plumbing · $18,600 · tagged to draw #9</div></div>
+                <div class="item"><div class="d">Yday</div><div class="m">CO-07 <b>approved</b> by owner · +$42,300 to contract</div></div>
+                <div class="item"><div class="d">Yday</div><div class="m"><b>Jake</b> marked framing inspection complete · milestone cleared</div></div>
+                <div class="item"><div class="d">Mon</div><div class="m">Draw #8 moved to <b>in review</b> · accounting queue</div></div>
+                <div class="item"><div class="d">Mon</div><div class="m">Vendor <b>Gulf Millwork</b> added · W-9 on file</div></div>
+                <div class="item"><div class="d">Apr 12</div><div class="m">Contract variance flagged: allowance overrun on tile +$8,400</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cols" style="margin-top:1px;">
+            <div class="card">
+              <a class="link" href="#">View budget →</a>
+              <h3>Budget vs. billed</h3>
+              <div class="cs">Top 6 cost codes</div>
+              <div>
+                <div class="prog-row"><span>01 — Sitework &amp; Foundation</span><span>$318k / $340k</span></div>
+                <div class="prog-bar"><i style="width:93%;"></i></div>
+                <div class="prog-lbl"><span>93% billed</span><span>$22k remaining</span></div>
+              </div>
+              <div style="margin-top:14px;">
+                <div class="prog-row"><span>03 — Framing &amp; Rough Carpentry</span><span>$612k / $680k</span></div>
+                <div class="prog-bar"><i style="width:90%;"></i></div>
+                <div class="prog-lbl"><span>90% billed</span><span>$68k remaining</span></div>
+              </div>
+              <div style="margin-top:14px;">
+                <div class="prog-row"><span>07 — Thermal &amp; Moisture</span><span>$184k / $220k</span></div>
+                <div class="prog-bar"><i style="width:83%;"></i></div>
+                <div class="prog-lbl"><span>83% billed</span><span>$36k remaining</span></div>
+              </div>
+              <div style="margin-top:14px;">
+                <div class="prog-row"><span>09 — Finishes (tile, paint)</span><span>$246k / $410k</span></div>
+                <div class="prog-bar"><i style="width:60%;"></i></div>
+                <div class="prog-lbl"><span>60% billed</span><span>$164k remaining</span></div>
+              </div>
+              <div style="margin-top:14px;">
+                <div class="prog-row"><span>15 — Mechanical</span><span>$208k / $360k</span></div>
+                <div class="prog-bar"><i style="width:57%;"></i></div>
+                <div class="prog-lbl"><span>57% billed</span><span>$152k remaining</span></div>
+              </div>
+              <div style="margin-top:14px;">
+                <div class="prog-row"><span>16 — Electrical</span><span>$142k / $290k</span></div>
+                <div class="prog-bar"><i style="width:49%;"></i></div>
+                <div class="prog-lbl"><span>49% billed</span><span>$148k remaining</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <a class="link" href="#">All invoices →</a>
+              <h3>Unassigned invoices</h3>
+              <div class="cs">Awaiting draw assignment · 5 items</div>
+              <table>
+                <thead><tr><th>Vendor</th><th>Invoice</th><th>Date</th><th class="r">Amount</th></tr></thead>
+                <tbody>
+                  <tr><td>Harborline Plumbing</td><td>#4410</td><td>Apr 17</td><td class="r">$18,600</td></tr>
+                  <tr><td>Gulf Millwork</td><td>#A-2281</td><td>Apr 16</td><td class="r">$34,450</td></tr>
+                  <tr><td>Coastal Concrete</td><td>#7742</td><td>Apr 15</td><td class="r">$12,200</td></tr>
+                  <tr><td>Bayline Electric</td><td>#E-0918</td><td>Apr 12</td><td class="r">$22,890</td></tr>
+                  <tr><td>Seaside Roofing</td><td>#R-3311</td><td>Apr 10</td><td class="r">$41,700</td></tr>
+                </tbody>
+              </table>
+              <div style="margin-top:14px;padding:12px;border:1px dashed rgba(91,134,153,0.35);color:var(--stone-blue);font-size:12px;font-family:'JetBrains Mono';letter-spacing:0.04em;">
+                <b>Suggestion:</b> 3 invoices match cost codes on Draw #9 — assign in one click?
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1600px;margin:28px auto 60px;padding:16px 20px;border:1px solid #222;background:#141414;font-size:12px;color:#999;line-height:1.7;">
+    <b style="color:#fff;font-weight:500">What's here:</b> lockup, sign-in screen, and a real PM dashboard for a Ross Built-style coastal custom-home job. <b style="color:#fff;font-weight:500">Next options:</b> draw wizard step-by-step, mobile jobsite view, invoice detail, owner-portal view, or the public marketing homepage. Tell me which one to build out next.
+  </div>
+</div>
+</body>
+</html>

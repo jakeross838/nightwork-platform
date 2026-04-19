@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spacing · radii · shadows</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>body{margin:0;padding:16px;background:#fff;display:grid;grid-template-columns:1fr 1fr;gap:18px}.block h3{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-tertiary);margin:0 0 10px;font-weight:500}.squares{display:flex;gap:8px;align-items:flex-end}.sq{background:#5B8699;color:#fff;font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;justify-content:center}.note{font-family:var(--font-body);font-size:11px;color:var(--text-secondary);margin-top:8px;line-height:1.4}.card{background:#fff;padding:14px 16px;font-size:12px;color:var(--text-primary);font-family:var(--font-body)}.c1{border:1px solid var(--border-default)}.c2{border:1px solid var(--border-default);box-shadow:0 4px 6px -1px rgba(26,40,48,0.08)}</style>
+</head><body>
+<div class="block"><h3>Spacing scale · 4px grid</h3>
+<div class="squares"><div class="sq" style="width:16px;height:16px">4</div><div class="sq" style="width:24px;height:24px">8</div><div class="sq" style="width:32px;height:32px">16</div><div class="sq" style="width:40px;height:40px">24</div><div class="sq" style="width:48px;height:48px">32</div></div>
+<div class="note">Card padding 24/26 · card gap 18–24 · KPI gap 1px</div>
+</div>
+<div class="block"><h3>Corners · everything is square</h3>
+<div class="squares"><div class="sq" style="width:40px;height:40px;border-radius:0">0</div><div class="sq" style="width:40px;height:40px;border-radius:999px">●</div></div>
+<div class="note">Zero radius on cards/buttons/fields. Only avatars + status dots round.</div>
+<h3 style="margin-top:14px">Shadows</h3>
+<div style="display:flex;gap:10px"><div class="card c1">No shadow (default)</div><div class="card c2">Hover lift</div></div>
+</div>
+</body></html>

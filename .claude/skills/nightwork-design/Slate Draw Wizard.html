@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nightwork · Draw Wizard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate-tile:#3B5864;--slate-deep:#1A2830;--slate-deeper:#132028;
+    --stone-blue:#5B8699;--gulf-blue:#4E7A8C;--oceanside:#CBD8DB;
+    --white-sand:#F7F5EC;--success:#4A8A6F;--warn:#C98A3B;--danger:#B0554E;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--slate-deep);font-family:"Inter",sans-serif;color:var(--white-sand)}
+  .wrap{max-width:1280px;margin:0 auto;padding:24px 32px 60px}
+  .nav{display:flex;align-items:center;gap:22px;padding:0 32px;height:54px;background:var(--slate-deeper);border-bottom:1px solid rgba(247,245,236,0.08);margin:0 -32px 28px}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo .w{font-family:"Space Grotesk";font-weight:600;font-size:18px;letter-spacing:-0.03em}
+  .logo .r{width:56px;height:3px}
+  .nav ul{list-style:none;margin:0;padding:0;display:flex;gap:2px;flex:1;height:100%}
+  .nav ul li{display:flex;align-items:center;height:100%}
+  .nav ul li a{display:flex;align-items:center;height:100%;padding:0 14px;font-size:13px;color:rgba(247,245,236,0.65);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .nav ul li a.active{color:var(--white-sand);border-bottom-color:var(--stone-blue)}
+  .nav .right{display:flex;align-items:center;gap:12px}
+  .nav .role{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;border:1px solid rgba(247,245,236,0.25);padding:2px 6px}
+
+  .crumbs{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.4);margin-bottom:14px}
+  .crumbs b{color:rgba(247,245,236,0.85);font-weight:500}
+  h1{font-family:"Space Grotesk";font-weight:500;font-size:30px;letter-spacing:-0.02em;margin:0 0 4px}
+  .sub{font-size:13px;color:rgba(247,245,236,0.55);margin-bottom:22px}
+  .sub b{color:var(--stone-blue);font-weight:500}
+
+  /* Stepper */
+  .steps{display:flex;gap:2px;background:rgba(247,245,236,0.08);border:1px solid rgba(247,245,236,0.08);margin-bottom:28px}
+  .steps .s{flex:1;background:var(--slate-deep);padding:12px 18px;display:flex;gap:10px;align-items:center}
+  .steps .s .n{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;color:rgba(247,245,236,0.4);border:1px solid rgba(247,245,236,0.2);padding:2px 7px}
+  .steps .s .l{font-size:13px;color:rgba(247,245,236,0.55)}
+  .steps .s.done{background:var(--slate-deeper)}
+  .steps .s.done .n{color:var(--success);border-color:var(--success)}
+  .steps .s.done .l{color:rgba(247,245,236,0.75)}
+  .steps .s.active{background:var(--stone-blue)}
+  .steps .s.active .n{color:var(--white-sand);border-color:var(--white-sand)}
+  .steps .s.active .l{color:var(--white-sand);font-weight:500}
+
+  .card{background:var(--slate-deep);border:1px solid rgba(247,245,236,0.08);padding:22px}
+  .card + .card{margin-top:18px}
+  .card h3{font-family:"Space Grotesk";font-weight:500;font-size:15px;margin:0 0 2px}
+  .card .cs{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.45);margin-bottom:18px}
+
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(247,245,236,0.08);border:1px solid rgba(247,245,236,0.08);margin-bottom:18px}
+  .kpi .k{background:var(--slate-deeper);padding:14px 16px}
+  .kpi .l{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,236,0.5);margin-bottom:6px}
+  .kpi .n{font-family:"Space Grotesk";font-weight:600;font-size:22px;letter-spacing:-0.02em;color:var(--white-sand)}
+  .kpi .d{font-family:"JetBrains Mono";font-size:10px;margin-top:4px;color:rgba(247,245,236,0.55)}
+
+  /* G703 table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{text-align:left;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.4);padding:9px 12px 10px;border-bottom:1px solid rgba(247,245,236,0.08);font-weight:500;background:var(--slate-deeper)}
+  thead th.r{text-align:right}
+  tbody td{padding:11px 12px;border-bottom:1px solid rgba(247,245,236,0.05);color:rgba(247,245,236,0.85);font-variant-numeric:tabular-nums}
+  tbody td.r{text-align:right;font-family:"JetBrains Mono";font-size:12px}
+  tbody tr:hover{background:rgba(91,134,153,0.05)}
+  tbody tr.section td{background:rgba(247,245,236,0.04);font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,236,0.55);padding:7px 12px}
+  tbody tr.section.co td{background:rgba(201,138,59,0.08);color:var(--warn)}
+  tbody tr.override td{background:rgba(201,138,59,0.06)}
+  tbody tr.override input{width:100%;padding:5px 8px;background:var(--slate-deeper);border:1px solid rgba(201,138,59,0.35);color:var(--white-sand);font-family:"Inter";font-size:11px}
+  .code{font-family:"JetBrains Mono";font-size:11px;color:var(--stone-blue);font-weight:600}
+  .code.co{color:var(--warn)}
+  .amtfield{width:100px;padding:5px 8px;background:var(--slate-deeper);border:1px solid rgba(247,245,236,0.15);color:var(--white-sand);font-family:"JetBrains Mono";font-size:12px;text-align:right}
+  .amtfield.edited{border-color:var(--warn);color:var(--warn)}
+  .retainage{color:var(--warn)}
+
+  .chk{display:inline-block;width:14px;height:14px;border:1px solid rgba(247,245,236,0.35);background:var(--slate-deeper);position:relative;vertical-align:middle}
+  .chk.on{border-color:var(--stone-blue);background:var(--stone-blue)}
+  .chk.on::after{content:"";position:absolute;top:2px;left:4px;width:3px;height:7px;border:solid var(--white-sand);border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+  /* G702 lines */
+  .g702 .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(247,245,236,0.04)}
+  .g702 .row .l{display:flex;gap:12px;align-items:baseline}
+  .g702 .row .l .nn{font-family:"JetBrains Mono";font-size:10px;color:rgba(247,245,236,0.4);width:24px}
+  .g702 .row .l .txt{font-size:13px;color:rgba(247,245,236,0.75)}
+  .g702 .row .v{font-family:"JetBrains Mono";font-size:13px;color:var(--white-sand)}
+  .g702 .row.sub{padding-left:30px;opacity:0.7}
+  .g702 .row.highlight{background:rgba(91,134,153,0.08);padding:12px 12px;margin:4px -12px;border:1px solid rgba(91,134,153,0.25);border-radius:0}
+  .g702 .row.highlight .txt{color:var(--white-sand);font-weight:500}
+  .g702 .row.highlight .v{color:var(--stone-blue);font-size:16px;font-weight:600}
+  .g702 .divider{height:1px;background:rgba(247,245,236,0.1);margin:8px 0}
+
+  .warnbox{background:rgba(201,138,59,0.08);border:1px solid rgba(201,138,59,0.3);padding:14px 16px;margin-top:18px}
+  .warnbox .h{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--warn);margin-bottom:8px}
+  .warnbox ul{margin:0;padding:0;list-style:none}
+  .warnbox li{font-size:12.5px;color:rgba(247,245,236,0.85);padding:4px 0;display:flex;gap:10px}
+  .warnbox li i{color:var(--warn);font-style:normal}
+  .warnbox li.info i{color:var(--stone-blue)}
+
+  .actions{display:flex;justify-content:space-between;margin-top:20px;gap:10px}
+  .btn{padding:11px 20px;font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:500;border:none;cursor:pointer}
+  .btn.primary{background:var(--stone-blue);color:var(--white-sand)}
+  .btn.primary:hover{background:var(--slate-tile)}
+  .btn.ghost{background:transparent;border:1px solid rgba(247,245,236,0.2);color:var(--white-sand)}
+  .btn.ghost:hover{border-color:var(--stone-blue);color:var(--stone-blue)}
+
+  .autosave{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono";font-size:10px;color:var(--success);letter-spacing:0.08em}
+  .autosave i{width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <div class="logo">
+      <span class="w">nightwork</span>
+      <svg class="r" viewBox="0 0 56 3" preserveAspectRatio="none"><defs><linearGradient id="r1" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="1" width="56" height="1" fill="url(#r1)"/></svg>
+    </div>
+    <ul>
+      <li><a href="#">Dashboard</a></li>
+      <li><a class="active" href="#">Financial</a></li>
+      <li><a href="#" style="color:rgba(247,245,236,0.25);">Operations</a></li>
+      <li><a href="#">Admin</a></li>
+    </ul>
+    <div class="right"><span style="font-size:13px">Jake</span><span class="role">PM</span></div>
+  </div>
+
+  <div class="crumbs">Home / Financial / Draws / <b>New draw</b></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;gap:14px;flex-wrap:wrap">
+    <div>
+      <h1>Draw #09 · Anna Maria — Hanlon</h1>
+      <div class="sub">Period <b>Apr 01 → Apr 18, 2026</b> · 14 approved invoices · Retainage 10%</div>
+    </div>
+    <span class="autosave"><i></i>DRAFT AUTO-SAVED 12s AGO</span>
+  </div>
+
+  <div class="steps">
+    <div class="s done"><span class="n">01</span><span class="l">Select job</span></div>
+    <div class="s done"><span class="n">02</span><span class="l">Period</span></div>
+    <div class="s active"><span class="n">03</span><span class="l">Review line items</span></div>
+    <div class="s"><span class="n">04</span><span class="l">Summary &amp; submit</span></div>
+  </div>
+
+  <div class="kpi">
+    <div class="k"><div class="l">Contract sum to date</div><div class="n">$4,820,000</div><div class="d">Base $4,777,700 + 3 CO</div></div>
+    <div class="k"><div class="l">Billed through draw #08</div><div class="n">$2,710,150</div><div class="d">56.2% of contract</div></div>
+    <div class="k"><div class="l">This draw (calculated)</div><div class="n" style="color:var(--stone-blue)">$184,250</div><div class="d">14 invoices · 6 cost codes</div></div>
+    <div class="k"><div class="l">Less 10% retainage</div><div class="n" style="color:var(--warn)">$18,425</div><div class="d">Current payment due $175,037.50 net</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Invoices in period <span style="color:var(--stone-blue);font-family:'JetBrains Mono';font-size:10px;letter-spacing:0.1em;margin-left:10px">14 OF 14 SELECTED</span></h3>
+    <div class="cs">Approved invoices received Apr 01–Apr 18 · Click to toggle · Unselected items excluded from this draw</div>
+    <table>
+      <thead>
+        <tr><th style="width:32px"></th><th>Vendor</th><th>Invoice #</th><th>Received</th><th>Cost code</th><th class="r">Amount</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="chk on"></span></td><td>Harborline Plumbing</td><td>#4410</td><td>Apr 17</td><td>15-410 Rough plumbing</td><td class="r">$18,600.00</td></tr>
+        <tr><td><span class="chk on"></span></td><td>Gulf Millwork</td><td>#A-2281</td><td>Apr 16</td><td>06-400 Architectural millwork</td><td class="r">$34,450.00</td></tr>
+        <tr><td><span class="chk on"></span></td><td>Coastal Concrete</td><td>#7742</td><td>Apr 15</td><td>03-300 Cast-in-place</td><td class="r">$12,200.00</td></tr>
+        <tr><td><span class="chk on"></span></td><td>Bayline Electric</td><td>#E-0918</td><td>Apr 12</td><td>16-120 Branch circuits</td><td class="r">$22,890.00</td></tr>
+        <tr><td><span class="chk on"></span></td><td>Seaside Roofing</td><td>#R-3311</td><td>Apr 10</td><td>07-310 Shingles</td><td class="r">$41,700.00</td></tr>
+        <tr><td><span class="chk on"></span></td><td>Precision Drywall</td><td>#92018</td><td>Apr 08</td><td>09-260 Gypsum board</td><td class="r">$16,800.00</td></tr>
+        <tr><td><span class="chk on"></span></td><td>Sarasota Tile Co</td><td>#INV-2204</td><td>Apr 08</td><td>09-310 Tile (CO-07)</td><td class="r">$14,300.00</td></tr>
+        <tr><td><span class="chk on"></span></td><td>Gulfcoast HVAC</td><td>#H-5590</td><td>Apr 06</td><td>15-720 Air handling</td><td class="r">$9,850.00</td></tr>
+        <tr><td colspan="6" style="text-align:center;padding:10px;color:rgba(247,245,236,0.4);font-size:11px;font-family:'JetBrains Mono';letter-spacing:0.1em">+ 6 MORE · SCROLL TO SEE ALL</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>G703 Continuation Sheet — Preview</h3>
+    <div class="cs">Calculated from invoices · Adjust "This period" inline · Line overrides require a reason</div>
+    <table>
+      <thead>
+        <tr><th>Code</th><th>Description</th><th class="r">Scheduled</th><th class="r">Previous</th><th class="r">This period</th><th class="r">Total completed</th><th class="r">Balance</th><th class="r">Retainage</th></tr>
+      </thead>
+      <tbody>
+        <tr class="section"><td colspan="8">BASE CONTRACT</td></tr>
+        <tr>
+          <td><span class="code">03-300</span></td><td>Cast-in-place concrete</td>
+          <td class="r">$340,000.00</td><td class="r">$306,000.00</td>
+          <td class="r"><input class="amtfield" value="12,200.00"></td>
+          <td class="r">$318,200.00</td><td class="r">$21,800.00</td><td class="r retainage">$1,220.00</td>
+        </tr>
+        <tr>
+          <td><span class="code">06-400</span></td><td>Architectural millwork</td>
+          <td class="r">$410,000.00</td><td class="r">$198,000.00</td>
+          <td class="r"><input class="amtfield edited" value="42,000.00"></td>
+          <td class="r">$240,000.00</td><td class="r">$170,000.00</td><td class="r retainage">$4,200.00</td>
+        </tr>
+        <tr class="override">
+          <td colspan="8"><input placeholder="Reason for adjustment — required" value="Gulf Millwork invoice split across two cost codes; $7,550 reclassed from 06-100"></td>
+        </tr>
+        <tr>
+          <td><span class="code">07-310</span></td><td>Shingles &amp; underlayment</td>
+          <td class="r">$220,000.00</td><td class="r">$142,300.00</td>
+          <td class="r"><input class="amtfield" value="41,700.00"></td>
+          <td class="r">$184,000.00</td><td class="r">$36,000.00</td><td class="r retainage">$4,170.00</td>
+        </tr>
+        <tr>
+          <td><span class="code">09-260</span></td><td>Gypsum board assemblies</td>
+          <td class="r">$148,000.00</td><td class="r">$74,400.00</td>
+          <td class="r"><input class="amtfield" value="16,800.00"></td>
+          <td class="r">$91,200.00</td><td class="r">$56,800.00</td><td class="r retainage">$1,680.00</td>
+        </tr>
+        <tr>
+          <td><span class="code">15-410</span></td><td>Rough plumbing</td>
+          <td class="r">$160,000.00</td><td class="r">$92,000.00</td>
+          <td class="r"><input class="amtfield" value="18,600.00"></td>
+          <td class="r">$110,600.00</td><td class="r">$49,400.00</td><td class="r retainage">$1,860.00</td>
+        </tr>
+        <tr>
+          <td><span class="code">15-720</span></td><td>Air handling units</td>
+          <td class="r">$180,000.00</td><td class="r">$64,500.00</td>
+          <td class="r"><input class="amtfield" value="9,850.00"></td>
+          <td class="r">$74,350.00</td><td class="r">$105,650.00</td><td class="r retainage">$985.00</td>
+        </tr>
+        <tr>
+          <td><span class="code">16-120</span></td><td>Branch circuits</td>
+          <td class="r">$140,000.00</td><td class="r">$58,400.00</td>
+          <td class="r"><input class="amtfield" value="22,890.00"></td>
+          <td class="r">$81,290.00</td><td class="r">$58,710.00</td><td class="r retainage">$2,289.00</td>
+        </tr>
+
+        <tr class="section co"><td colspan="8">CHANGE ORDERS · PCCO #07 (tile allowance overrun) · $42,300</td></tr>
+        <tr>
+          <td><span class="code co">09-310</span></td><td>Tile &amp; stone finishes <span style="font-size:9px;color:var(--warn);margin-left:6px;letter-spacing:0.1em">CO</span></td>
+          <td class="r">$42,300.00</td><td class="r">$0.00</td>
+          <td class="r"><input class="amtfield" value="14,300.00"></td>
+          <td class="r">$14,300.00</td><td class="r">$28,000.00</td><td class="r retainage">$1,430.00</td>
+        </tr>
+        <tr>
+          <td><span class="code co">09-910</span></td><td>Painting (CO) <span style="font-size:9px;color:var(--warn);margin-left:6px;letter-spacing:0.1em">CO</span></td>
+          <td class="r">$18,000.00</td><td class="r">$0.00</td>
+          <td class="r"><input class="amtfield" value="5,910.00"></td>
+          <td class="r">$5,910.00</td><td class="r">$12,090.00</td><td class="r retainage">$591.00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>G702 Summary — Application for payment <span style="color:var(--warn);font-family:'JetBrains Mono';font-size:10px;letter-spacing:0.1em;margin-left:10px">NOT FINAL</span></h3>
+    <div class="cs">Totals roll up from G703 preview above · Balance to finish includes retainage</div>
+    <div class="g702">
+      <div class="row"><div class="l"><span class="nn">1</span><span class="txt">Original contract sum</span></div><span class="v">$4,777,700.00</span></div>
+      <div class="row sub"><div class="l"><span class="nn">1a</span><span class="txt">Deposit (credit applied to first draws)</span></div><span class="v">$238,885.00</span></div>
+      <div class="row"><div class="l"><span class="nn">2</span><span class="txt">Net change by change orders</span></div><span class="v">+$42,300.00</span></div>
+      <div class="row highlight"><div class="l"><span class="nn">3</span><span class="txt">Contract sum to date</span></div><span class="v">$4,820,000.00</span></div>
+      <div class="row"><div class="l"><span class="nn">4</span><span class="txt">Total completed &amp; stored to date</span></div><span class="v">$2,894,400.00</span></div>
+      <div class="row sub"><div class="l"><span class="nn">5a</span><span class="txt">Retainage on completed work</span></div><span class="v">$18,425.00</span></div>
+      <div class="row sub"><div class="l"><span class="nn">5b</span><span class="txt">Retainage on stored material</span></div><span class="v">$0.00</span></div>
+      <div class="row"><div class="l"><span class="nn">5c</span><span class="txt">Total retainage</span></div><span class="v">$18,425.00</span></div>
+      <div class="row"><div class="l"><span class="nn">6</span><span class="txt">Total earned less retainage</span></div><span class="v">$2,875,975.00</span></div>
+      <div class="row"><div class="l"><span class="nn">7</span><span class="txt">Less previous certificates (thru #08)</span></div><span class="v">$2,700,937.50</span></div>
+      <div class="row highlight"><div class="l"><span class="nn">8</span><span class="txt">Current payment due</span></div><span class="v">$175,037.50</span></div>
+      <div class="divider"></div>
+      <div class="row"><div class="l"><span class="nn">9</span><span class="txt">Balance to finish incl. retainage</span></div><span class="v">$1,944,025.00</span></div>
+    </div>
+
+    <div class="warnbox">
+      <div class="h">Warnings · 2</div>
+      <ul>
+        <li><i>⚠</i><span>06-400 Architectural millwork: total completed $240,000 approaches scheduled value $410,000 — verify subcontractor schedule against project plan.</span></li>
+        <li class="info"><i>ℹ</i><span>Lien releases will be auto-generated for 8 vendor(s) when this draw is submitted. Approval blocked until all are received or waived.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn ghost">← Back: period</button>
+    <div style="display:flex;gap:10px">
+      <button class="btn ghost">Save draft</button>
+      <button class="btn primary">Next: summary &amp; submit →</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

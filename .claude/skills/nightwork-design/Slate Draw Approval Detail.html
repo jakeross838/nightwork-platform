@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Draw #9 · Review &amp; approve</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--slate-tile:#3B5864;--slate-deep:#1A2830;--slate-deeper:#132028;--stone-blue:#5B8699;--gulf-blue:#4E7A8C;--oceanside:#CBD8DB;--white-sand:#F7F5EC;--success:#4A8A6F;--warn:#C98A3B;--danger:#B0554E}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--white-sand);font-family:"Inter",sans-serif;color:var(--slate-tile)}
+  .nav{background:var(--slate-deep);color:var(--white-sand);padding:0 40px;height:60px;display:flex;align-items:center;gap:24px}
+  .nav .w{font-family:"Space Grotesk";font-weight:600;font-size:20px;letter-spacing:-0.03em}
+  .nav .beam{width:56px;height:1px;background:linear-gradient(90deg,var(--stone-blue),transparent);margin-left:12px}
+  .nav .spacer{flex:1}
+  .nav .av{width:32px;height:32px;background:var(--stone-blue);color:var(--white-sand);display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono";font-size:11px;font-weight:600}
+  .nav .user{font-size:13px}
+  .nav .role{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;border:1px solid rgba(247,245,236,0.3);padding:3px 8px}
+
+  .crumbs{max-width:1180px;margin:0 auto;padding:20px 40px 0;font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.1em;color:rgba(59,88,100,0.6)}
+  .crumbs a{color:var(--gulf-blue);text-decoration:none}
+  .crumbs a:hover{text-decoration:underline}
+  .crumbs .sep{margin:0 10px;color:rgba(59,88,100,0.3)}
+
+  .hero{max-width:1180px;margin:0 auto;padding:14px 40px 20px}
+  .hero .e{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;color:var(--warn);margin-bottom:6px}
+  .hero h1{font-family:"Space Grotesk";font-weight:500;font-size:38px;letter-spacing:-0.02em;margin:0 0 4px;color:var(--slate-tile)}
+  .hero .m{display:flex;gap:22px;font-size:13.5px;color:rgba(59,88,100,0.7);margin-top:6px;flex-wrap:wrap}
+  .hero .m b{color:var(--slate-tile);font-weight:500}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 40px 40px;display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start}
+
+  .card{background:#fff;border:1px solid rgba(59,88,100,0.15);padding:24px 26px}
+  .card h2{font-family:"Space Grotesk";font-weight:500;font-size:18px;margin:0 0 2px;color:var(--slate-tile);letter-spacing:-0.01em}
+  .card h2 + .s{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(59,88,100,0.55);margin-bottom:18px}
+
+  /* SUMMARY TABLE — budget roll-up */
+  .sum{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px}
+  .sum thead th{text-align:left;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(59,88,100,0.6);padding:10px 8px;border-bottom:1px solid rgba(59,88,100,0.15);font-weight:500;background:rgba(91,134,153,0.04)}
+  .sum thead th.r{text-align:right}
+  .sum tbody td{padding:12px 8px;border-bottom:1px solid rgba(59,88,100,0.08);color:var(--slate-tile);font-variant-numeric:tabular-nums}
+  .sum tbody td.r{text-align:right;font-family:"JetBrains Mono";font-size:12.5px}
+  .sum tbody tr:hover{background:rgba(91,134,153,0.04);cursor:pointer}
+  .sum tbody td .code{font-family:"JetBrains Mono";font-size:11px;color:var(--gulf-blue);margin-right:8px}
+  .sum tbody td .n{color:rgba(59,88,100,0.55);font-family:"JetBrains Mono";font-size:11px}
+  .sum tbody tr.tot td{background:rgba(91,134,153,0.08);font-weight:600;border-top:2px solid rgba(59,88,100,0.25)}
+  .microbar{width:80px;height:4px;background:rgba(59,88,100,0.1);display:inline-block;vertical-align:middle;margin-left:8px}
+  .microbar i{display:block;height:100%;background:var(--stone-blue)}
+  .microbar.over i{background:var(--warn)}
+
+  /* Invoice rows — detail drawer feel */
+  .inv{border:1px solid rgba(59,88,100,0.12);margin-bottom:8px;background:#fff}
+  .inv .head{padding:14px 16px;display:grid;grid-template-columns:22px 1fr auto auto;gap:12px;align-items:center;cursor:pointer}
+  .inv .head:hover{background:rgba(91,134,153,0.04)}
+  .inv .chev{color:rgba(59,88,100,0.4);font-family:"JetBrains Mono";font-size:12px;width:16px}
+  .inv.open .chev{color:var(--stone-blue);transform:rotate(90deg);display:inline-block}
+  .inv .venhold{display:flex;align-items:center;gap:14px}
+  .inv .vi{width:36px;height:36px;background:rgba(91,134,153,0.1);display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono";font-size:11px;font-weight:600;color:var(--gulf-blue);flex-shrink:0}
+  .inv .vmeta .v{font-weight:500;font-size:14px;color:var(--slate-tile)}
+  .inv .vmeta .vs{font-family:"JetBrains Mono";font-size:10.5px;letter-spacing:0.08em;color:rgba(59,88,100,0.55);margin-top:2px}
+  .inv .amt{font-family:"JetBrains Mono";font-size:14px;font-weight:500;color:var(--slate-tile);text-align:right}
+  .inv .st{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;padding:3px 8px;border:1px solid}
+  .inv .st.ok{color:var(--success);border-color:var(--success)}
+  .inv .st.flag{color:var(--warn);border-color:var(--warn)}
+  .inv .body{display:none;padding:0 16px 16px 54px;border-top:1px dashed rgba(59,88,100,0.15);margin-top:0}
+  .inv.open .body{display:block;padding-top:14px}
+  .inv .lines{display:grid;grid-template-columns:auto 1fr auto;gap:8px 18px;font-size:12.5px;color:rgba(59,88,100,0.8)}
+  .inv .lines .code{font-family:"JetBrains Mono";color:var(--gulf-blue);font-size:11px}
+  .inv .lines .amt2{font-family:"JetBrains Mono";color:var(--slate-tile);text-align:right}
+  .inv .flagmsg{margin-top:12px;padding:10px 12px;background:rgba(201,138,59,0.08);border-left:2px solid var(--warn);font-size:12.5px;color:var(--slate-tile)}
+  .inv .flagmsg b{color:var(--warn)}
+  .inv .attach{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+  .inv .attach a{padding:6px 10px;background:rgba(91,134,153,0.08);font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gulf-blue);text-decoration:none;border:1px solid rgba(91,134,153,0.2)}
+  .inv .attach a:hover{border-color:var(--stone-blue)}
+
+  /* RIGHT RAIL — sticky approval panel */
+  .rail{position:sticky;top:20px}
+  .rail .card{padding:0}
+  .rail .top{background:var(--slate-deep);color:var(--white-sand);padding:22px 24px}
+  .rail .top .l{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;color:rgba(247,245,236,0.6);margin-bottom:8px}
+  .rail .top .n{font-family:"Space Grotesk";font-weight:500;font-size:36px;letter-spacing:-0.02em;color:var(--white-sand);line-height:1}
+  .rail .top .sub{font-family:"JetBrains Mono";font-size:11px;color:rgba(247,245,236,0.55);margin-top:10px}
+  .rail .break{padding:18px 24px;border-bottom:1px solid rgba(59,88,100,0.1)}
+  .rail .break h3{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(59,88,100,0.55);margin:0 0 12px;font-weight:500}
+  .rail .line{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--slate-tile)}
+  .rail .line span{font-family:"JetBrains Mono";font-size:12.5px}
+  .rail .line.tot{margin-top:8px;padding-top:10px;border-top:1px solid rgba(59,88,100,0.15);font-weight:600;color:var(--slate-tile)}
+  .rail .cta{padding:20px 24px;display:flex;flex-direction:column;gap:10px}
+  .btn{padding:13px;font-family:"JetBrains Mono";font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:500;border:none;cursor:pointer;text-align:center}
+  .btn.primary{background:var(--slate-deep);color:var(--white-sand)}
+  .btn.primary:hover{background:var(--slate-deeper)}
+  .btn.ghost{background:transparent;border:1px solid rgba(59,88,100,0.3);color:var(--slate-tile)}
+  .btn.ghost:hover{border-color:var(--stone-blue);color:var(--stone-blue)}
+  .btn.danger{background:transparent;border:1px solid rgba(176,85,78,0.35);color:var(--danger)}
+  .btn.danger:hover{background:rgba(176,85,78,0.06)}
+  .rail .note{padding:16px 24px;background:rgba(91,134,153,0.06);font-size:12px;color:rgba(59,88,100,0.75);line-height:1.5;border-top:1px solid rgba(59,88,100,0.1)}
+  .rail .note b{color:var(--slate-tile)}
+
+  .attest{display:flex;align-items:flex-start;gap:10px;padding:14px 24px;font-size:12px;color:rgba(59,88,100,0.75);line-height:1.5;border-top:1px solid rgba(59,88,100,0.1)}
+  .attest input{margin-top:3px;accent-color:var(--stone-blue)}
+
+  .audit{margin-top:24px;font-family:"JetBrains Mono";font-size:10.5px;letter-spacing:0.08em;color:rgba(59,88,100,0.55);line-height:1.8}
+  .audit b{color:var(--slate-tile)}
+
+  /* MESSAGE area */
+  .msg{display:grid;grid-template-columns:40px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid rgba(59,88,100,0.08)}
+  .msg:last-child{border-bottom:none}
+  .msg .mav{width:36px;height:36px;background:var(--stone-blue);color:var(--white-sand);display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono";font-size:11px;font-weight:600}
+  .msg .mb .mh{display:flex;gap:10px;align-items:baseline;margin-bottom:4px}
+  .msg .mb .mh b{font-size:13.5px;color:var(--slate-tile);font-weight:500}
+  .msg .mb .mh .t{font-family:"JetBrains Mono";font-size:10px;color:rgba(59,88,100,0.5);letter-spacing:0.08em}
+  .msg .mb p{margin:0;font-size:13px;color:var(--slate-tile);line-height:1.55}
+  .msg-in{margin-top:14px;display:flex;gap:10px}
+  .msg-in input{flex:1;padding:10px 12px;border:1px solid rgba(59,88,100,0.25);background:#fff;font-family:inherit;font-size:13px;outline:none}
+  .msg-in input:focus{border-color:var(--stone-blue)}
+
+  @media (max-width:1000px){.wrap{grid-template-columns:1fr}.rail{position:static}}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <span class="w">nightwork</span>
+  <span class="beam"></span>
+  <div style="font-family:'JetBrains Mono';font-size:10px;letter-spacing:0.14em;color:rgba(247,245,236,0.7);margin-left:10px">OWNER PORTAL</div>
+  <div class="spacer"></div>
+  <span class="user">David Hanlon</span>
+  <span class="role">Owner</span>
+  <span class="av">DH</span>
+</div>
+
+<div class="crumbs">
+  <a href="Slate Owner Portal.html">Home</a><span class="sep">/</span>
+  <a href="#">Draws</a><span class="sep">/</span>
+  <span style="color:var(--slate-tile)">Draw #9</span>
+</div>
+
+<div class="hero">
+  <div class="e">⚠ AWAITING YOUR APPROVAL · DUE APR 25</div>
+  <h1>Draw #9 — Review &amp; approve</h1>
+  <div class="m">
+    <span>Period <b>Apr 1 — Apr 18, 2026</b></span>
+    <span>Submitted <b>Apr 18 · 10:42 AM</b> by Jake Ross</span>
+    <span>Job <b>Hanlon Residence · Anna Maria</b></span>
+    <span>14 vendor invoices</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div>
+    <!-- BUDGET SUMMARY -->
+    <div class="card" style="margin-bottom:18px">
+      <h2>This draw, by budget line</h2>
+      <div class="s">Rolled up from vendor invoices · CSI 16-division + allowances</div>
+      <table class="sum">
+        <thead>
+          <tr><th>Line</th><th class="r">Budget</th><th class="r">Spent prior</th><th class="r">This draw</th><th class="r">% used</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code">06-100</span>Rough carpentry &amp; framing labor</td>
+            <td class="r">$298,000</td><td class="r">$268,400</td><td class="r"><b>$22,800</b></td>
+            <td class="r">98%<span class="microbar"><i style="width:98%"></i></span></td>
+          </tr>
+          <tr>
+            <td><span class="code">09-290</span>Drywall hang &amp; finish</td>
+            <td class="r">$112,000</td><td class="r">$8,200</td><td class="r"><b>$46,500</b></td>
+            <td class="r">49%<span class="microbar"><i style="width:49%"></i></span></td>
+          </tr>
+          <tr>
+            <td><span class="code">16-200</span>Electrical rough &amp; fixtures</td>
+            <td class="r">$186,000</td><td class="r">$124,000</td><td class="r"><b>$28,300</b></td>
+            <td class="r">82%<span class="microbar"><i style="width:82%"></i></span></td>
+          </tr>
+          <tr>
+            <td><span class="code">15-400</span>Plumbing rough-in</td>
+            <td class="r">$134,000</td><td class="r">$98,700</td><td class="r"><b>$18,150</b></td>
+            <td class="r">87%<span class="microbar"><i style="width:87%"></i></span></td>
+          </tr>
+          <tr>
+            <td><span class="code">15-700</span>HVAC — rough + air handlers</td>
+            <td class="r">$158,000</td><td class="r">$112,400</td><td class="r"><b>$24,900</b></td>
+            <td class="r">87%<span class="microbar"><i style="width:87%"></i></span></td>
+          </tr>
+          <tr>
+            <td><span class="code">09-310</span>Tile — master &amp; powder <span class="n">(allowance)</span></td>
+            <td class="r">$48,000</td><td class="r">$41,200</td><td class="r"><b>$14,200</b></td>
+            <td class="r" style="color:var(--warn)">115%<span class="microbar over"><i style="width:100%"></i></span></td>
+          </tr>
+          <tr>
+            <td><span class="code">03-300</span>Pool deck cast &amp; finish</td>
+            <td class="r">$86,000</td><td class="r">$0</td><td class="r"><b>$12,800</b></td>
+            <td class="r">15%<span class="microbar"><i style="width:15%"></i></span></td>
+          </tr>
+          <tr>
+            <td><span class="code">01-900</span>Supervision &amp; PM (Ross Built)</td>
+            <td class="r">$188,000</td><td class="r">$112,800</td><td class="r"><b>$9,400</b></td>
+            <td class="r">65%<span class="microbar"><i style="width:65%"></i></span></td>
+          </tr>
+          <tr class="tot">
+            <td>Total this draw (14 invoices)</td>
+            <td class="r"></td><td class="r"></td><td class="r">$177,050</td><td class="r"></td>
+          </tr>
+          <tr>
+            <td style="color:rgba(59,88,100,0.6);font-size:12px">Less retainage (10%) · $17,705 held</td>
+            <td class="r"></td><td class="r"></td><td class="r" style="color:rgba(59,88,100,0.6)">-$17,705</td><td class="r"></td>
+          </tr>
+          <tr>
+            <td style="color:rgba(59,88,100,0.6);font-size:12px">Plus Ross Built fee (9% gross)</td>
+            <td class="r"></td><td class="r"></td><td class="r" style="color:rgba(59,88,100,0.6)">+$15,692</td><td class="r"></td>
+          </tr>
+          <tr class="tot">
+            <td><b style="color:var(--slate-deep)">Net due to Ross Built</b></td>
+            <td class="r"></td><td class="r"></td><td class="r" style="color:var(--slate-deep);font-size:15px">$175,037.50</td><td class="r"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- INVOICES -->
+    <div class="card" style="margin-bottom:18px">
+      <h2>Vendor invoices (14)</h2>
+      <div class="s">Click any row to see line items, photos, and lien waivers</div>
+
+      <div class="inv open">
+        <div class="head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="chev">▸</span>
+          <div class="venhold">
+            <div class="vi">GM</div>
+            <div class="vmeta">
+              <div class="v">Gulf Millwork &amp; Framing</div>
+              <div class="vs">INV #4418 · APR 15 · CSI 06-100</div>
+            </div>
+          </div>
+          <span class="st ok">Verified</span>
+          <span class="amt">$22,800.00</span>
+        </div>
+        <div class="body">
+          <div class="lines">
+            <span class="code">06-100.1</span><span>Framing crew — 142 hrs @ $95/hr</span><span class="amt2">$13,490</span>
+            <span class="code">06-100.2</span><span>Interior partitions — 2nd floor</span><span class="amt2">$6,220</span>
+            <span class="code">06-100.3</span><span>Blocking for cabinetry</span><span class="amt2">$3,090</span>
+          </div>
+          <div class="attach">
+            <a>📄 INVOICE.PDF</a>
+            <a>📄 LIEN WAIVER</a>
+            <a>📸 4 PHOTOS</a>
+            <a>📄 COI CURRENT</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv">
+        <div class="head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="chev">▸</span>
+          <div class="venhold">
+            <div class="vi">CE</div>
+            <div class="vmeta">
+              <div class="v">Coastal Electric LLC</div>
+              <div class="vs">INV #2087 · APR 12 · CSI 16-200</div>
+            </div>
+          </div>
+          <span class="st ok">Verified</span>
+          <span class="amt">$28,300.00</span>
+        </div>
+      </div>
+
+      <div class="inv">
+        <div class="head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="chev">▸</span>
+          <div class="venhold">
+            <div class="vi">BT</div>
+            <div class="vmeta">
+              <div class="v">Bayshore Tile Co</div>
+              <div class="vs">INV #881 · APR 10 · CSI 09-310</div>
+            </div>
+          </div>
+          <span class="st flag">Over allowance</span>
+          <span class="amt">$14,200.00</span>
+        </div>
+        <div class="body" style="display:block">
+          <div class="lines">
+            <span class="code">09-310.4</span><span>Carrara master shower &amp; floor</span><span class="amt2">$9,800</span>
+            <span class="code">09-310.5</span><span>Powder room — upgraded pattern per owner 3/28</span><span class="amt2">$4,400</span>
+          </div>
+          <div class="flagmsg">
+            <b>⚠ Allowance exceeded by $6,200.</b> Covered by <b>CO-07</b> (approved by you Apr 5 · $42,300).
+            <a href="#" style="color:var(--gulf-blue);margin-left:6px">View CO-07 →</a>
+          </div>
+          <div class="attach">
+            <a>📄 INVOICE.PDF</a>
+            <a>📄 LIEN WAIVER</a>
+            <a>📸 12 PHOTOS</a>
+            <a>📄 CO-07 LINK</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv">
+        <div class="head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="chev">▸</span>
+          <div class="venhold">
+            <div class="vi">WD</div>
+            <div class="vmeta">
+              <div class="v">Westshore Drywall</div>
+              <div class="vs">INV #1552 · APR 16 · CSI 09-290</div>
+            </div>
+          </div>
+          <span class="st ok">Verified</span>
+          <span class="amt">$46,500.00</span>
+        </div>
+      </div>
+
+      <div class="inv">
+        <div class="head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="chev">▸</span>
+          <div class="venhold">
+            <div class="vi">AP</div>
+            <div class="vmeta">
+              <div class="v">Anchor Plumbing</div>
+              <div class="vs">INV #6614 · APR 14 · CSI 15-400</div>
+            </div>
+          </div>
+          <span class="st ok">Verified</span>
+          <span class="amt">$18,150.00</span>
+        </div>
+      </div>
+
+      <div class="inv">
+        <div class="head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="chev">▸</span>
+          <div class="venhold">
+            <div class="vi">SH</div>
+            <div class="vmeta">
+              <div class="v">Sun Coast HVAC</div>
+              <div class="vs">INV #3928 · APR 13 · CSI 15-700</div>
+            </div>
+          </div>
+          <span class="st ok">Verified</span>
+          <span class="amt">$24,900.00</span>
+        </div>
+      </div>
+
+      <div style="padding:14px 0 0;text-align:center;font-family:'JetBrains Mono';font-size:11px;letter-spacing:0.1em;color:var(--gulf-blue);cursor:pointer">
+        + SHOW 8 MORE INVOICES
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="card">
+      <h2>Questions on this draw</h2>
+      <div class="s">Thread visible to you, Jake, and accounting</div>
+
+      <div class="msg">
+        <div class="mav">JR</div>
+        <div class="mb">
+          <div class="mh"><b>Jake Ross</b> <span class="t">APR 18 · 10:44 AM</span></div>
+          <p>David — submitted #9 this morning. Tile line looks high but it's covered by CO-07 you approved. Framing is finishing up this week so 06-100 will close out on #10. Call with any questions.</p>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="mav" style="background:var(--gulf-blue)">DH</div>
+        <div class="mb">
+          <div class="mh"><b>David Hanlon</b> <span class="t">APR 18 · 2:17 PM</span></div>
+          <p>Looks good. Confirming the $4,400 powder-room tile upgrade was the one Sarah picked last month? Want to make sure I'm tracking.</p>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="mav">JR</div>
+        <div class="mb">
+          <div class="mh"><b>Jake Ross</b> <span class="t">APR 18 · 2:45 PM</span></div>
+          <p>Correct — that's the Carrara herringbone she signed off on 3/28. Photo in the invoice attachment.</p>
+        </div>
+      </div>
+      <div class="msg-in">
+        <input placeholder="Message Jake and accounting…">
+        <button class="btn ghost" style="padding:10px 18px">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT RAIL -->
+  <div class="rail">
+    <div class="card">
+      <div class="top">
+        <div class="l">NET DUE TO ROSS BUILT</div>
+        <div class="n">$175,037.50</div>
+        <div class="sub">WIRE · ACH · RELEASED ON APPROVAL</div>
+      </div>
+
+      <div class="break">
+        <h3>Payment breakdown</h3>
+        <div class="line">Invoices (14)<span>$177,050.00</span></div>
+        <div class="line">Retainage held (10%)<span style="color:var(--danger)">-$17,705.00</span></div>
+        <div class="line">Ross Built fee (9%)<span>+$15,692.50</span></div>
+        <div class="line tot">Net this draw<span>$175,037.50</span></div>
+      </div>
+
+      <div class="break">
+        <h3>Contract status after this draw</h3>
+        <div class="line">Billed to date<span>$3,064,140</span></div>
+        <div class="line">Contract total<span>$4,820,000</span></div>
+        <div class="line" style="color:var(--gulf-blue)">% complete<span>63.6%</span></div>
+      </div>
+
+      <label class="attest">
+        <input type="checkbox">
+        <span>I've reviewed the invoices and confirm the work reflected here matches what I've seen on site.</span>
+      </label>
+
+      <div class="cta">
+        <button class="btn primary">Approve &amp; release payment →</button>
+        <button class="btn ghost">Request changes</button>
+        <button class="btn danger">Dispute a line item</button>
+      </div>
+
+      <div class="note">
+        <b>How approval works:</b> Clicking approve wires funds to Ross Built's operating account within 1 business day. You'll get an emailed receipt with all attached lien waivers and invoices.
+      </div>
+    </div>
+
+    <div class="audit">
+      <div style="font-family:'JetBrains Mono';font-size:10px;letter-spacing:0.14em;color:rgba(59,88,100,0.55);margin-bottom:8px">AUDIT TRAIL</div>
+      <div><b>APR 18 · 10:42</b> Jake Ross submitted draw</div>
+      <div><b>APR 18 · 10:42</b> System: 14 invoices verified, 1 flagged</div>
+      <div><b>APR 18 · 10:44</b> Jake Ross added note</div>
+      <div><b>APR 18 · 2:17</b> David Hanlon opened draw</div>
+      <div><b>APR 18 · 2:45</b> Jake Ross replied</div>
+      <div style="color:rgba(59,88,100,0.35);margin-top:8px">Awaiting owner approval…</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

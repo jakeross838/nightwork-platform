@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nightwork · Mobile Jobsite</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--slate-tile:#3B5864;--slate-deep:#1A2830;--slate-deeper:#132028;--stone-blue:#5B8699;--gulf-blue:#4E7A8C;--oceanside:#CBD8DB;--white-sand:#F7F5EC;--success:#4A8A6F;--warn:#C98A3B;--danger:#B0554E}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0a0a0a;font-family:"Inter",sans-serif;color:var(--white-sand)}
+  .page{padding:40px 24px 60px;max-width:1400px;margin:0 auto}
+  h1{font-family:"Space Grotesk";font-weight:500;font-size:26px;letter-spacing:-0.02em;margin:0 0 4px;color:#fff}
+  .hero-sub{font-size:13px;color:#888;max-width:900px;line-height:1.65;margin:0 0 32px}
+  .hero-sub b{color:#ddd;font-weight:500}
+  .row{display:flex;gap:36px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .phone-col{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .phone-label{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#888}
+  .phone-label b{color:#fff;margin-right:8px;font-weight:500}
+
+  /* Phone frame */
+  .phone{width:360px;background:#1A2830;border:10px solid #111;border-radius:42px;box-shadow:0 40px 80px rgba(0,0,0,0.5);overflow:hidden;position:relative}
+  .phone .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:110px;height:24px;background:#0a0a0a;border-radius:14px;z-index:20}
+  .status{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 6px;font-size:13px;font-weight:600;color:var(--white-sand);font-family:-apple-system,"Inter"}
+  .status .icons{display:flex;gap:5px;align-items:center}
+  .status .icons svg{width:14px;height:14px;fill:var(--white-sand)}
+
+  /* App nav */
+  .app-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 12px;border-bottom:1px solid rgba(247,245,236,0.08)}
+  .app-nav .logo .w{font-family:"Space Grotesk";font-weight:600;font-size:16px;letter-spacing:-0.03em}
+  .app-nav .logo svg{display:block;margin-top:2px}
+  .app-nav .user{display:flex;gap:8px;align-items:center}
+  .app-nav .bell{width:34px;height:34px;border:1px solid rgba(247,245,236,0.12);display:flex;align-items:center;justify-content:center;position:relative}
+  .app-nav .bell .dot{position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--warn);border-radius:50%}
+  .app-nav .bell svg{width:16px;height:16px;stroke:var(--white-sand);fill:none;stroke-width:1.6}
+  .app-nav .av{width:34px;height:34px;background:var(--stone-blue);color:var(--white-sand);font-family:"JetBrains Mono";font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:600}
+
+  .crumb{padding:8px 20px;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.45);border-bottom:1px solid rgba(247,245,236,0.05)}
+  .crumb b{color:var(--white-sand);font-weight:500}
+
+  /* Screen 1 · Job list */
+  .job-head{padding:18px 20px 10px}
+  .job-head h2{font-family:"Space Grotesk";font-weight:500;font-size:22px;letter-spacing:-0.02em;margin:0 0 2px}
+  .job-head .s{font-size:12px;color:rgba(247,245,236,0.55)}
+  .search{margin:0 20px 14px;padding:10px 14px;background:var(--slate-deeper);border:1px solid rgba(247,245,236,0.1);color:rgba(247,245,236,0.55);font-size:13px;display:flex;align-items:center;gap:10px}
+  .search svg{width:14px;height:14px;stroke:rgba(247,245,236,0.5);fill:none;stroke-width:2}
+  .filters{display:flex;gap:6px;padding:0 20px 14px;overflow-x:auto}
+  .filters .f{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;padding:6px 12px;border:1px solid rgba(247,245,236,0.15);color:rgba(247,245,236,0.6);white-space:nowrap}
+  .filters .f.on{background:var(--stone-blue);border-color:var(--stone-blue);color:var(--white-sand)}
+
+  .job{display:flex;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(247,245,236,0.05);align-items:center;min-height:72px}
+  .job .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;align-self:flex-start;margin-top:6px}
+  .job .dot.active{background:var(--success)}
+  .job .dot.warr{background:var(--warn)}
+  .job .dot.done{background:rgba(247,245,236,0.3)}
+  .job .info{flex:1;min-width:0}
+  .job .info .t{font-size:14px;color:var(--white-sand);font-weight:500;margin-bottom:2px}
+  .job .info .a{font-size:12px;color:rgba(247,245,236,0.55)}
+  .job .info .meta{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.08em;color:rgba(247,245,236,0.5);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+  .job .info .meta i{font-style:normal;color:var(--stone-blue)}
+  .job .arrow{color:rgba(247,245,236,0.3);font-size:18px}
+  .job.active-row{background:rgba(91,134,153,0.05);border-left:3px solid var(--stone-blue);padding-left:17px}
+
+  .count-bar{padding:12px 20px;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.1em;color:rgba(247,245,236,0.4);border-bottom:1px solid rgba(247,245,236,0.05)}
+
+  /* Tab bar */
+  .tabbar{display:flex;border-top:1px solid rgba(247,245,236,0.1);background:var(--slate-deeper);padding:10px 0 24px}
+  .tabbar .t{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(247,245,236,0.45);padding:6px 0}
+  .tabbar .t svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7}
+  .tabbar .t.on{color:var(--stone-blue)}
+
+  /* Screen 2 · job detail */
+  .job-hero{padding:18px 20px 16px;border-bottom:1px solid rgba(247,245,236,0.08)}
+  .job-hero .n{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--stone-blue);margin-bottom:6px}
+  .job-hero h2{font-family:"Space Grotesk";font-weight:500;font-size:22px;letter-spacing:-0.02em;margin:0 0 4px;line-height:1.15}
+  .job-hero .addr{font-size:12px;color:rgba(247,245,236,0.55);margin-bottom:12px}
+  .quick{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(247,245,236,0.1);border:1px solid rgba(247,245,236,0.1)}
+  .quick .q{background:var(--slate-deeper);padding:10px 12px}
+  .quick .ql{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,245,236,0.5);margin-bottom:4px}
+  .quick .qn{font-family:"Space Grotesk";font-weight:600;font-size:17px;color:var(--white-sand);letter-spacing:-0.02em}
+  .quick .qn.accent{color:var(--stone-blue)}
+
+  .actionrow{display:flex;gap:10px;padding:14px 20px;overflow-x:auto;border-bottom:1px solid rgba(247,245,236,0.05)}
+  .action{flex-shrink:0;background:var(--slate-deeper);border:1px solid rgba(247,245,236,0.1);padding:10px 14px;display:flex;flex-direction:column;gap:4px;min-width:96px;cursor:pointer}
+  .action.primary{background:var(--stone-blue);border-color:var(--stone-blue);color:var(--white-sand)}
+  .action svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6}
+  .action .al{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.08em;text-transform:uppercase}
+
+  .sec-h{padding:16px 20px 8px;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,236,0.5);display:flex;justify-content:space-between}
+  .sec-h span{color:var(--stone-blue)}
+  .progress-item{padding:10px 20px;border-bottom:1px solid rgba(247,245,236,0.05)}
+  .progress-item .r1{display:flex;justify-content:space-between;font-size:13px;color:var(--white-sand);margin-bottom:6px}
+  .progress-item .r1 span{font-family:"JetBrains Mono";font-size:11px;color:rgba(247,245,236,0.6)}
+  .progress-item .bar{height:4px;background:rgba(247,245,236,0.08);position:relative}
+  .progress-item .bar i{display:block;height:100%;background:var(--stone-blue)}
+  .progress-item .l{display:flex;justify-content:space-between;font-family:"JetBrains Mono";font-size:10px;color:rgba(247,245,236,0.45);margin-top:4px;letter-spacing:0.04em}
+
+  .feed-item{padding:12px 20px;display:flex;gap:12px;border-bottom:1px solid rgba(247,245,236,0.04)}
+  .feed-item .i{width:32px;height:32px;background:rgba(91,134,153,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .feed-item .i svg{width:16px;height:16px;stroke:var(--stone-blue);fill:none;stroke-width:1.7}
+  .feed-item .m{flex:1;font-size:12.5px;color:rgba(247,245,236,0.85);line-height:1.4}
+  .feed-item .m b{color:var(--white-sand);font-weight:500}
+  .feed-item .t{font-family:"JetBrains Mono";font-size:10px;color:rgba(247,245,236,0.4);margin-top:3px;letter-spacing:0.04em}
+
+  /* Screen 3 · invoice capture */
+  .capture-wrap{background:#000;aspect-ratio:9/12;position:relative;overflow:hidden}
+  .capture-wrap::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,#2a2520 0%,#3e362c 40%,#2a231a 100%)}
+  .paper{position:absolute;left:28px;right:28px;top:60px;bottom:80px;background:#F7F5EC;transform:rotate(-2deg);box-shadow:0 20px 40px rgba(0,0,0,0.5);padding:16px 14px;color:#3B5864;font-family:"JetBrains Mono";font-size:9px;line-height:1.5;overflow:hidden}
+  .paper h4{font-family:"Space Grotesk";font-size:13px;margin:0 0 2px;letter-spacing:-0.01em;color:#1A2830;font-weight:600}
+  .paper .small{font-size:8px;color:#5B8699;margin-bottom:8px}
+  .paper .ln{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dashed rgba(59,88,100,0.2)}
+  .paper .tot{display:flex;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid #3B5864;font-weight:600;font-size:10px}
+
+  .corners{position:absolute;inset:0}
+  .corners .c{position:absolute;width:28px;height:28px;border:3px solid var(--stone-blue)}
+  .corners .c.tl{top:80px;left:26px;border-right:none;border-bottom:none}
+  .corners .c.tr{top:80px;right:26px;border-left:none;border-bottom:none}
+  .corners .c.bl{bottom:110px;left:26px;border-right:none;border-top:none}
+  .corners .c.br{bottom:110px;right:26px;border-left:none;border-top:none}
+
+  .cap-top{position:absolute;top:0;left:0;right:0;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;z-index:3;background:linear-gradient(180deg,rgba(0,0,0,0.55),transparent)}
+  .cap-top .x{width:34px;height:34px;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;backdrop-filter:blur(6px)}
+  .cap-top .mode{display:flex;gap:4px;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,0.4);padding:6px 10px;backdrop-filter:blur(6px)}
+  .cap-top .mode b{color:var(--stone-blue);font-weight:500}
+
+  .cap-hint{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);z-index:3;text-align:center;color:#fff;font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.14em;text-transform:uppercase;background:rgba(0,0,0,0.6);padding:8px 14px;backdrop-filter:blur(6px)}
+  .cap-hint b{color:var(--stone-blue);display:block;margin-bottom:2px;font-size:11px}
+
+  .cap-bottom{position:absolute;bottom:0;left:0;right:0;padding:14px 20px 18px;background:linear-gradient(0deg,rgba(0,0,0,0.7),transparent);z-index:3;display:flex;flex-direction:column;gap:10px}
+  .cap-chip{background:rgba(26,40,48,0.85);border:1px solid rgba(247,245,236,0.15);padding:10px 12px;backdrop-filter:blur(8px);font-size:11px;color:var(--white-sand)}
+  .cap-chip b{color:var(--stone-blue);font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.12em;text-transform:uppercase;display:block;margin-bottom:2px}
+  .cap-controls{display:flex;justify-content:center;align-items:center;gap:26px}
+  .cap-controls .side{width:44px;height:44px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center}
+  .cap-controls .side svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.7}
+  .cap-controls .shutter{width:72px;height:72px;border:4px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .cap-controls .shutter i{width:58px;height:58px;border-radius:50%;background:#fff;display:block}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Nightwork Mobile · Jobsite</h1>
+  <div class="hero-sub"><b>Field-first views.</b> PMs spend half their day on phones in pickup trucks, basements, and framing walls. Large tap targets (44px+), high-contrast slate surfaces that read in sun, tabular numerals for amounts. Three core surfaces: job list, job detail, and invoice capture (photo + AI extract).</div>
+
+  <div class="row">
+
+    <!-- Screen 1: Job List -->
+    <div class="phone-col">
+      <div class="phone-label"><b>01</b>Job list · /jobs</div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status"><span>9:41</span><span class="icons">
+          <svg viewBox="0 0 18 12"><path d="M1 10 L1 8 M5 10 L5 6 M9 10 L9 4 M13 10 L13 2"/><path d="M1 10 h16" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+          <svg viewBox="0 0 18 12"><path d="M1 9 Q9 1 17 9"/></svg>
+          <svg viewBox="0 0 26 12"><rect x="0.5" y="1" width="22" height="10" rx="2" stroke="currentColor" fill="none"/><rect x="2" y="2.5" width="17" height="7" rx="0.5"/><rect x="23" y="4" width="2" height="4"/></svg>
+        </span></div>
+        <div class="app-nav">
+          <div class="logo">
+            <span class="w">nightwork</span>
+            <svg width="56" height="3" viewBox="0 0 56 3"><defs><linearGradient id="gm1" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect width="56" height="1" y="1" fill="url(#gm1)"/></svg>
+          </div>
+          <div class="user">
+            <div class="bell"><svg viewBox="0 0 24 24"><path d="M18 16v-5a6 6 0 0 0-12 0v5l-2 3h16zM10 22a2 2 0 0 0 4 0"/></svg><span class="dot"></span></div>
+            <div class="av">JR</div>
+          </div>
+        </div>
+        <div class="crumb">HOME / <b>JOBS</b></div>
+        <div class="job-head">
+          <h2>My Jobs</h2>
+          <div class="s">9 active · 3 warranty</div>
+        </div>
+        <div class="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          Search jobs or addresses…
+        </div>
+        <div class="filters">
+          <div class="f on">Mine</div>
+          <div class="f">All</div>
+          <div class="f">Active</div>
+          <div class="f">Warranty</div>
+        </div>
+        <div class="count-bar">12 RESULTS · A–Z</div>
+
+        <div class="job">
+          <span class="dot active"></span>
+          <div class="info">
+            <div class="t">Anna Maria — Hanlon</div>
+            <div class="a">5420 Gulf Dr, Anna Maria, FL</div>
+            <div class="meta"><i>60% billed</i><span>Draw #9 pending</span><span>3 invoices</span></div>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="job">
+          <span class="dot active"></span>
+          <div class="info">
+            <div class="t">Longboat — Cove Residence</div>
+            <div class="a">110 Cove Lane, Longboat Key</div>
+            <div class="meta"><i>34% billed</i><span>Draw #5 paid</span></div>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="job">
+          <span class="dot warr"></span>
+          <div class="info">
+            <div class="t">Bradenton — Harbor 17</div>
+            <div class="a">17 Harbor Cove, Bradenton</div>
+            <div class="meta"><i style="color:var(--warn)">Warranty · 4 open</i><span>Month 8 of 12</span></div>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="job">
+          <span class="dot active"></span>
+          <div class="info">
+            <div class="t">Siesta Key — Beacon House</div>
+            <div class="a">882 Beach Rd, Siesta Key</div>
+            <div class="meta"><i>22% billed</i><span>Framing inspection wed</span></div>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="job">
+          <span class="dot done"></span>
+          <div class="info">
+            <div class="t">Lido — Azure Villa</div>
+            <div class="a">14 Lido Shores Dr, Sarasota</div>
+            <div class="meta"><i style="color:rgba(247,245,236,0.4)">Complete · final in Mar</i></div>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+
+        <div class="tabbar">
+          <div class="t on">
+            <svg viewBox="0 0 24 24"><path d="M4 21h6v-8H4zM14 21h6v-11h-6zM14 6h6V3h-6zM4 10h6V3H4z"/></svg>
+            Jobs
+          </div>
+          <div class="t">
+            <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 9h18"/></svg>
+            Draws
+          </div>
+          <div class="t">
+            <svg viewBox="0 0 24 24"><path d="M6 3h12l2 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z"/><path d="M4 7h16M9 13h6M9 17h6"/></svg>
+            Invoices
+          </div>
+          <div class="t">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+            Me
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: Job Detail -->
+    <div class="phone-col">
+      <div class="phone-label"><b>02</b>Job detail · /jobs/hanlon</div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="status"><span>9:42</span><span class="icons">
+          <svg viewBox="0 0 18 12"><path d="M1 10 L1 8 M5 10 L5 6 M9 10 L9 4 M13 10 L13 2"/></svg>
+          <svg viewBox="0 0 18 12"><path d="M1 9 Q9 1 17 9"/></svg>
+          <svg viewBox="0 0 26 12"><rect x="0.5" y="1" width="22" height="10" rx="2" stroke="currentColor" fill="none"/><rect x="2" y="2.5" width="17" height="7" rx="0.5"/></svg>
+        </span></div>
+        <div class="app-nav">
+          <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--stone-blue)"><span style="font-size:20px">‹</span>Jobs</div>
+          <div class="user">
+            <div class="bell"><svg viewBox="0 0 24 24"><path d="M18 16v-5a6 6 0 0 0-12 0v5l-2 3h16z"/></svg><span class="dot"></span></div>
+            <div class="av">JR</div>
+          </div>
+        </div>
+        <div class="crumb">JOBS / <b>HANLON</b></div>
+        <div class="job-hero">
+          <div class="n">● ACTIVE · PHASE 4 OF 7</div>
+          <h2>Anna Maria — Hanlon Residence</h2>
+          <div class="addr">5420 Gulf Dr · 5,240 sf · $4.82M</div>
+          <div class="quick">
+            <div class="q"><div class="ql">Billed to date</div><div class="qn">$2.89M</div></div>
+            <div class="q"><div class="ql">Outstanding</div><div class="qn accent">$184k</div></div>
+            <div class="q"><div class="ql">Margin</div><div class="qn">22.4%</div></div>
+            <div class="q"><div class="ql">Next milestone</div><div class="qn" style="font-size:13px;letter-spacing:0">Drywall · Apr 28</div></div>
+          </div>
+        </div>
+
+        <div class="actionrow">
+          <div class="action primary">
+            <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="1"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>
+            <span class="al">New draw</span>
+          </div>
+          <div class="action">
+            <svg viewBox="0 0 24 24"><path d="M6 3h12l2 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z"/><path d="M4 7h16"/></svg>
+            <span class="al">Add invoice</span>
+          </div>
+          <div class="action">
+            <svg viewBox="0 0 24 24"><path d="M3 12h18M12 3v18"/></svg>
+            <span class="al">Change order</span>
+          </div>
+          <div class="action">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span class="al">Log time</span>
+          </div>
+        </div>
+
+        <div class="sec-h">Budget · Top 3 <span>View all ›</span></div>
+        <div class="progress-item">
+          <div class="r1"><b>03 — Framing &amp; Rough Carpentry</b><span>90%</span></div>
+          <div class="bar"><i style="width:90%"></i></div>
+          <div class="l"><span>$612k billed</span><span>$68k left</span></div>
+        </div>
+        <div class="progress-item">
+          <div class="r1"><b>09 — Finishes</b><span>60%</span></div>
+          <div class="bar"><i style="width:60%"></i></div>
+          <div class="l"><span>$246k billed</span><span>$164k left</span></div>
+        </div>
+        <div class="progress-item">
+          <div class="r1"><b>15 — Mechanical</b><span>57%</span></div>
+          <div class="bar"><i style="width:57%"></i></div>
+          <div class="l"><span>$208k billed</span><span>$152k left</span></div>
+        </div>
+
+        <div class="sec-h">Recent activity <span>All ›</span></div>
+        <div class="feed-item">
+          <div class="i"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="1"/><path d="M4 10h16"/></svg></div>
+          <div class="m"><div><b>Draw #9</b> submitted · $184,250</div><div class="t">TODAY 10:42</div></div>
+        </div>
+        <div class="feed-item">
+          <div class="i"><svg viewBox="0 0 24 24"><path d="M6 3h12l2 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z"/><path d="M4 7h16"/></svg></div>
+          <div class="m"><div>Invoice <b>#INV-4410</b> Harborline Plumbing · $18,600</div><div class="t">TODAY 09:15</div></div>
+        </div>
+        <div class="feed-item">
+          <div class="i"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+          <div class="m"><div><b>CO-07</b> approved · +$42,300 to contract</div><div class="t">YESTERDAY</div></div>
+        </div>
+
+        <div class="tabbar">
+          <div class="t on"><svg viewBox="0 0 24 24"><path d="M4 21h6v-8H4zM14 21h6v-11h-6z"/></svg>Jobs</div>
+          <div class="t"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/></svg>Draws</div>
+          <div class="t"><svg viewBox="0 0 24 24"><path d="M6 3h12l2 4v13H4V7z"/></svg>Invoices</div>
+          <div class="t"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>Me</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Invoice Capture -->
+    <div class="phone-col">
+      <div class="phone-label"><b>03</b>Capture invoice · live camera</div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="capture-wrap">
+          <div class="cap-top">
+            <div class="x">✕</div>
+            <div class="mode"><b>CAPTURE</b>INVOICE</div>
+            <div class="x">⚡</div>
+          </div>
+
+          <div class="paper">
+            <h4>HARBORLINE PLUMBING</h4>
+            <div class="small">INVOICE #4410 · APR 17, 2026</div>
+            <div class="ln"><span>ROUGH PLUMB · PHASE 3</span><span>$12,400</span></div>
+            <div class="ln"><span>FIXTURES</span><span>$3,800</span></div>
+            <div class="ln"><span>PERMIT FEE</span><span>$850</span></div>
+            <div class="ln"><span>MATERIALS</span><span>$1,550</span></div>
+            <div class="tot"><span>TOTAL</span><span>$18,600</span></div>
+            <div style="margin-top:10px;font-size:8px;color:#5B8699">REMIT TO: HARBORLINE PLUMBING<br>142 BAY ST · BRADENTON FL</div>
+          </div>
+
+          <div class="corners"><div class="c tl"></div><div class="c tr"></div><div class="c bl"></div><div class="c br"></div></div>
+
+          <div class="cap-hint"><b>✓ DOCUMENT DETECTED</b>HOLD STEADY</div>
+
+          <div class="cap-bottom">
+            <div class="cap-chip">
+              <b>AUTO-ASSIGN</b>
+              Anna Maria — Hanlon · 15-410 Rough plumbing · Draw #9
+            </div>
+            <div class="cap-controls">
+              <div class="side">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <div class="shutter"><i></i></div>
+              <div class="side">
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
