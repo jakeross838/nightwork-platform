@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatCents } from "@/lib/utils/format";
+import NwButton from "@/components/nw/Button";
+import NwEyebrow from "@/components/nw/Eyebrow";
+import NwMoney from "@/components/nw/Money";
 
 type CostCode = { id: string; code: string; description: string };
 
@@ -118,23 +121,28 @@ export default function InvoiceAllocationsEditor({
   const canEdit = !readOnly && !locked;
 
   return (
-    <div className="mt-3 border border-brand-border bg-brand-surface/30 p-3">
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h4 className="text-sm font-medium text-cream">Allocations</h4>
-          <p className="text-[11px] text-cream-dim">
+    <div
+      className="mt-3 border p-4"
+      style={{
+        background: "var(--bg-subtle)",
+        borderColor: "var(--border-default)",
+      }}
+    >
+      <div className="flex items-start justify-between mb-3 gap-3">
+        <div className="min-w-0">
+          <NwEyebrow tone="default">Allocations</NwEyebrow>
+          <p
+            className="text-[11px] mt-1"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Split this invoice across multiple cost codes. Sum must equal the invoice total.
             {autoCreated && " (Auto-created from invoice-level cost code \u2014 edit to split.)"}
           </p>
         </div>
         {canEdit && (
-          <button
-            onClick={addRow}
-            disabled={saving}
-            className="text-xs px-2 py-1 border border-teal text-teal hover:bg-teal/10"
-          >
+          <NwButton variant="secondary" size="sm" onClick={addRow} disabled={saving}>
             + Split row
-          </button>
+          </NwButton>
         )}
       </div>
 
@@ -146,10 +154,16 @@ export default function InvoiceAllocationsEditor({
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-[11px] uppercase tracking-wider text-cream-dim border-b border-brand-border">
-            <th className="py-1 pr-2">Cost code</th>
-            <th className="py-1 pr-2">Description</th>
-            <th className="py-1 pr-2 text-right">Amount ($)</th>
+          <tr className="text-left border-b" style={{ borderColor: "var(--border-default)" }}>
+            <th className="py-1.5 pr-2">
+              <NwEyebrow tone="muted">Cost code</NwEyebrow>
+            </th>
+            <th className="py-1.5 pr-2">
+              <NwEyebrow tone="muted">Description</NwEyebrow>
+            </th>
+            <th className="py-1.5 pr-2 text-right">
+              <NwEyebrow tone="muted">Amount ($)</NwEyebrow>
+            </th>
             <th className="py-1" />
           </tr>
         </thead>
@@ -206,14 +220,20 @@ export default function InvoiceAllocationsEditor({
           ))}
         </tbody>
         <tfoot>
-          <tr className="border-t-2 border-brand-border">
-            <td className="py-1 pr-2 text-[11px] text-cream-dim uppercase tracking-wider">Total</td>
+          <tr className="border-t-2" style={{ borderColor: "var(--border-strong)" }}>
+            <td className="py-2 pr-2">
+              <NwEyebrow tone="default">Total</NwEyebrow>
+            </td>
             <td />
-            <td className="py-1 pr-2 text-right font-medium">
-              <span className={balanced ? "text-teal" : "text-status-danger"}>
-                {formatCents(sum)}
+            <td className="py-2 pr-2 text-right">
+              <NwMoney
+                cents={sum}
+                variant={balanced ? "emphasized" : "negative"}
+                size="md"
+              />
+              <span style={{ color: "var(--text-tertiary)", marginLeft: "4px" }}>
+                / <NwMoney cents={invoiceTotalCents} variant="muted" size="md" />
               </span>
-              <span className="text-cream-dim"> / {formatCents(invoiceTotalCents)}</span>
             </td>
             <td />
           </tr>
@@ -227,11 +247,13 @@ export default function InvoiceAllocationsEditor({
       )}
 
       {canEdit && (
-        <div className="mt-2 flex items-center gap-2">
-          <button
+        <div className="mt-3 flex items-center gap-3 flex-wrap">
+          <NwButton
+            variant="primary"
+            size="sm"
             onClick={save}
             disabled={saving || !balanced || anyCostCodeMissing}
-            className="px-3 py-1 bg-teal text-white text-xs font-medium hover:bg-teal/90 disabled:opacity-60"
+            loading={saving}
             title={
               anyCostCodeMissing
                 ? "Every allocation needs a cost code"
@@ -240,17 +262,17 @@ export default function InvoiceAllocationsEditor({
                   : ""
             }
           >
-            {saving ? "Saving..." : "Save allocations"}
-          </button>
+            Save allocations
+          </NwButton>
           {!balanced && (
-            <span className="text-[11px] text-status-danger">
+            <span className="text-[11px]" style={{ color: "var(--nw-danger)" }}>
               {sum > invoiceTotalCents
                 ? `Over by ${formatCents(sum - invoiceTotalCents)}`
                 : `Under by ${formatCents(invoiceTotalCents - sum)}`}
             </span>
           )}
           {anyCostCodeMissing && balanced && (
-            <span className="text-[11px] text-status-danger">
+            <span className="text-[11px]" style={{ color: "var(--nw-danger)" }}>
               Assign a cost code to every row
             </span>
           )}
