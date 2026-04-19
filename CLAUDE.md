@@ -22,10 +22,11 @@ Screenshots are captured via Chrome MCP and returned inline in the conversation.
 ## Project Identity Guard
 **This project is Ross-Built-Command (Ross Command Center / Nightwork).**
 - GitHub repo: github.com/jakeross838/Ross-Built-Command
-- Local path: C:\Users\Jake\Ross-Built-Command
+- Repo directory name must end in `Ross-Built-Command` (local checkout path varies per PC and contributor).
 - If CLAUDE.md mentions "RossOS", "cms_rebuild", "136 tables", "10,000+ companies", or "Phase 4 modules 20-28" — STOP. You are in the wrong project.
 - If pwd does not show Ross-Built-Command — STOP. Navigate to the correct directory.
 - Never modify files outside of this project directory.
+- When referencing project files or folders, use repo-relative paths (e.g. `./screenshots/`, `./docs/`, `./test-invoices/`) — never absolute `C:\Users\...` paths.
 
 ## What This Is
 
