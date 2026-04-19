@@ -216,8 +216,29 @@ export default function BulkLienReleasesPage() {
         <FinancialViewTabs active="liens" />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">Lien Releases</h2>
-            <p className="text-sm text-cream-dim mt-1">
+            <span
+              className="block mb-2 text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Financial · Lien Releases
+            </span>
+            <h2
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "30px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              Lien Releases
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
               All lien releases across every active draw. Drop a stack of signed PDFs below — we&rsquo;ll match each one to a release by vendor and amount.
             </p>
           </div>

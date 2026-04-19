@@ -189,8 +189,29 @@ export default function PaymentsPage() {
         <FinancialViewTabs active="payments" />
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">Payment Tracking</h2>
-            <p className="text-sm text-cream-dim mt-1">
+            <span
+              className="block mb-2 text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Financial · Payments
+            </span>
+            <h2
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "30px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              Payment Tracking
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
               Schedule payments, mark invoices paid, and keep the aging report honest.
             </p>
           </div>

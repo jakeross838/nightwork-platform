@@ -143,8 +143,31 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
           ]}
         />
         <div className="mb-4">
-          <h2 className="font-display text-2xl text-cream">{job.name}</h2>
-          <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
+          <span
+            className="block mb-2 text-[10px] uppercase"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              letterSpacing: "0.14em",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            Job · Invoices
+          </span>
+          <h2
+            className="m-0"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "30px",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
+            {job.name}
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+            {job.address ?? "No address"}
+          </p>
         </div>
         <JobTabs jobId={job.id} active="invoices" />
         <JobFinancialBar jobId={job.id} />

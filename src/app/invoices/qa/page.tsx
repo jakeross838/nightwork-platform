@@ -52,10 +52,33 @@ export default function QaQueuePage() {
  <AppShell>
  <main className="max-w-[1600px] mx-auto px-6 py-8">
  <FinancialViewTabs active="qa" />
- <div className="flex items-center justify-between mb-6">
+ <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
  <div>
- <h2 className="font-display text-2xl text-cream">Accounting QA</h2>
- <p className="text-sm text-cream-dim mt-1">{invoices.length} invoice{invoices.length !== 1 ? "s" : ""} ready for QA review</p>
+ <span
+ className="block mb-2 text-[10px] uppercase"
+ style={{
+ fontFamily: "var(--font-jetbrains-mono)",
+ letterSpacing: "0.14em",
+ color: "var(--text-tertiary)",
+ }}
+ >
+ Financial · Accounting QA
+ </span>
+ <h2
+ className="m-0"
+ style={{
+ fontFamily: "var(--font-space-grotesk)",
+ fontWeight: 500,
+ fontSize: "30px",
+ letterSpacing: "-0.02em",
+ color: "var(--text-primary)",
+ }}
+ >
+ Accounting QA
+ </h2>
+ <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+ {invoices.length} invoice{invoices.length !== 1 ? "s" : ""} ready for QA review
+ </p>
  </div>
  </div>
 

@@ -135,10 +135,33 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
             { label: "Lien Releases" },
           ]}
         />
-        <h2 className="font-display text-2xl text-cream mb-2">{job?.name} — Lien Releases</h2>
-        <p className="text-sm text-cream-dim mb-6">
-          Track conditional and unconditional waivers for every vendor on every draw.
-        </p>
+        <div className="mb-6">
+          <span
+            className="block mb-2 text-[10px] uppercase"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              letterSpacing: "0.14em",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            Job · Lien Releases
+          </span>
+          <h2
+            className="m-0"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "30px",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
+            {job?.name}
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+            Track conditional and unconditional waivers for every vendor on every draw.
+          </p>
+        </div>
         <JobTabs jobId={params.id} active="draws" />
         <JobFinancialBar jobId={params.id} />
         <DrawsSubTabs jobId={params.id} active="liens" />
