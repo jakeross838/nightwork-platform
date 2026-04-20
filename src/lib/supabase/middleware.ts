@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 /**
  * Billing gate evaluation returned alongside the user.
@@ -205,6 +206,19 @@ export async function updateSession(request: NextRequest) {
   if (platformAdmin) {
     scrubbed.set("x-platform-admin", "1");
     scrubbed.set("x-platform-admin-role", platformAdmin.role);
+  }
+
+  // Tag the current Sentry scope so any captured error carries tenant
+  // context. No-op when DSN isn't configured. Tags are scoped
+  // per-request via Sentry's AsyncLocalStorage integration, so this is
+  // safe to set from middleware.
+  try {
+    if (user) Sentry.setTag("user_id", user.id);
+    if (membership) Sentry.setTag("org_id", membership.org_id);
+    Sentry.setTag("impersonation_active", impersonationActive ? "1" : "0");
+    Sentry.setTag("platform_admin", platformAdmin ? "1" : "0");
+  } catch {
+    // Sentry not initialized — fine.
   }
 
   const response = NextResponse.next({ request: { headers: scrubbed } });
