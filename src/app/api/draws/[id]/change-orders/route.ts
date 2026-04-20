@@ -69,6 +69,9 @@ export const POST = withApiError(async (
     throw new ApiError("Forbidden", 403);
   }
   const supabase = createServerClient();
+  const {
+    data: { user: actor },
+  } = await supabase.auth.getUser();
   const body = (await req.json()) as AttachBody;
   if (!Array.isArray(body.change_order_ids) || body.change_order_ids.length === 0) {
     throw new ApiError("change_order_ids is required", 400);
@@ -123,6 +126,7 @@ export const POST = withApiError(async (
         percent_complete: 0,
         balance_to_finish: 0,
         org_id: membership.org_id,
+        created_by: actor?.id ?? null,
       })
       .select("id")
       .single();

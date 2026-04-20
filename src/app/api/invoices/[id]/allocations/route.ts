@@ -34,6 +34,7 @@ export const GET = withApiError(async (
     .from("invoice_allocations")
     .select("id, invoice_id, cost_code_id, amount_cents, description, created_at")
     .eq("invoice_id", context.params.id)
+    .is("deleted_at", null)
     .order("created_at", { ascending: true });
 
   // BACKWARD COMPAT: invoices created before Phase D have no explicit
@@ -132,10 +133,13 @@ export const PUT = withApiError(async (
     );
   }
 
+  // Soft-delete existing live allocations so the replacement set is clean.
+  // Hard delete would lose audit history; past rows stay via deleted_at IS NOT NULL.
   await supabase
     .from("invoice_allocations")
-    .delete()
-    .eq("invoice_id", context.params.id);
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("invoice_id", context.params.id)
+    .is("deleted_at", null);
 
   const toInsert = body.allocations.map((a) => ({
     invoice_id: context.params.id,

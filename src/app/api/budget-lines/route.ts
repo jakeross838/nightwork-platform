@@ -85,6 +85,7 @@ export const POST = withApiError(async (request: NextRequest) => {
       notes: body.notes ?? null,
       budget_id: (budgetRow as { id?: string } | null)?.id ?? null,
       org_id: membership.org_id,
+      created_by: user?.id ?? null,
     })
     .select("id, budget_id")
     .single();

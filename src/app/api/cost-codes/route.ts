@@ -22,6 +22,9 @@ export const GET = withApiError(async () => {
 export const POST = withApiError(async (request: NextRequest) => {
   const membership = await requireRole(ADMIN_OR_OWNER);
   const supabase = createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const body = (await request.json()) as {
     code: string;
     description: string;
@@ -39,6 +42,7 @@ export const POST = withApiError(async (request: NextRequest) => {
     category: body.category ?? null,
     sort_order: body.sort_order ?? 0,
     is_change_order: body.is_change_order ?? false,
+    created_by: user?.id ?? null,
   });
   if (error) {
     if (error.code === "23505") {

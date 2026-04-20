@@ -65,6 +65,9 @@ export const POST = withApiError(
     if (!["owner", "admin"].includes(membership.role)) throw new ApiError("Admin only", 403);
 
     const supabase = createServerClient();
+    const {
+      data: { user: actor },
+    } = await supabase.auth.getUser();
     const { billing_ids } = (await request.json()) as { billing_ids: string[] };
 
     if (!Array.isArray(billing_ids) || billing_ids.length === 0) {
@@ -94,6 +97,7 @@ export const POST = withApiError(
         .select("id, status, amount_cents, percentage, cost_code_id, billing_type_id, internal_billing_types!billing_type_id (calculation_method)")
         .eq("id", billingId)
         .eq("org_id", membership.org_id)
+        .is("deleted_at", null)
         .single();
 
       if (!billing) {
@@ -137,6 +141,7 @@ export const POST = withApiError(
           percent_complete: 0,
           balance_to_finish: 0,
           org_id: membership.org_id,
+          created_by: actor?.id ?? null,
         })
         .select("id")
         .single();

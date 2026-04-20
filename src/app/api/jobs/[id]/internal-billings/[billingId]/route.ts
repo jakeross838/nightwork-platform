@@ -66,6 +66,7 @@ export const PATCH = withApiError(
         .select("rate_cents, quantity, billing_type_id, internal_billing_types!billing_type_id (calculation_method)")
         .eq("id", params.billingId)
         .eq("org_id", membership.org_id)
+        .is("deleted_at", null)
         .single();
 
       if (!current) throw new ApiError("Billing not found", 404);
@@ -85,6 +86,7 @@ export const PATCH = withApiError(
       .update(patch)
       .eq("id", params.billingId)
       .eq("org_id", membership.org_id)
+      .is("deleted_at", null)
       .select("*")
       .single();
 
@@ -112,6 +114,7 @@ export const DELETE = withApiError(
       .select("id, status")
       .eq("id", params.billingId)
       .eq("org_id", membership.org_id)
+      .is("deleted_at", null)
       .single();
 
     if (!billing) throw new ApiError("Billing not found", 404);
@@ -119,11 +122,12 @@ export const DELETE = withApiError(
       throw new ApiError("Cannot delete non-draft billing", 409);
     }
 
-    // Hard delete (internal_billings has no deleted_at column)
+    // Soft delete — migration 00045 added deleted_at to internal_billings.
     const { error } = await supabase
       .from("internal_billings")
-      .delete()
-      .eq("id", params.billingId);
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", params.billingId)
+      .eq("org_id", membership.org_id);
 
     if (error) throw new ApiError(error.message, 500);
     return NextResponse.json({ ok: true });
