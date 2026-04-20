@@ -130,7 +130,7 @@ export default function GettingStartedChecklist() {
   }
 
   return (
-    <aside className="w-full max-w-[420px] mx-auto mt-8 mb-0 text-left border border-brand-border bg-white p-5">
+    <aside className="w-full max-w-[420px] mx-auto mt-8 mb-0 text-left border border-brand-border bg-brand-card p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <p className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Getting Started</p>

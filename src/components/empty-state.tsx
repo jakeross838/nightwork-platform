@@ -26,7 +26,7 @@ export default function EmptyState({
 }: EmptyStateProps) {
   const iconColor = variant === "success" ? "text-status-success" : "text-cream-dim";
   return (
-    <div className="text-center py-16 px-6 border border-dashed border-brand-border bg-white">
+    <div className="text-center py-16 px-6 border border-dashed border-brand-border bg-brand-card">
       <div className={`inline-flex items-center justify-center w-12 h-12 ${iconColor}`}>
         {icon ?? <DefaultEmptyIcon />}
       </div>
@@ -56,7 +56,7 @@ function ActionButton({
   const cls =
     variant === "primary"
       ? "px-4 py-2 bg-teal text-white text-sm hover:bg-teal-hover transition-colors"
-      : "px-4 py-2 border border-brand-border bg-white text-cream text-sm hover:border-teal/60 transition-colors";
+      : "px-4 py-2 border border-brand-border bg-brand-card text-cream text-sm hover:border-teal/60 transition-colors";
   if (href) {
     return (
       <Link href={href} className={cls}>
