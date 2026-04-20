@@ -6,6 +6,10 @@ import { recalcBudgetLine, recalcPO } from "@/lib/recalc";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { canVoidPO, formatBlockers } from "@/lib/deletion-guards";
 import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -82,7 +86,9 @@ interface PatchBody {
 export const PATCH = withApiError(async (request: NextRequest, { params }: { params: { id: string } }) => {
   const membership = await getCurrentMembership();
   if (!membership) throw new ApiError("Not authenticated", 401);
-  const supabase = createServerClient();
+  const ctx = await getClientForRequest();
+  if (!ctx.ok) throw new ApiError(`Impersonation rejected: ${ctx.reason}`, 401);
+  const supabase = ctx.client;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
 
@@ -243,13 +249,23 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     });
   }
 
+  await logImpersonatedWrite(ctx, {
+    target_record_type: "purchase_order",
+    target_record_id: params.id,
+    details: { patch_fields: Object.keys(body) },
+    route: `/api/purchase-orders/${params.id}`,
+    method: "PATCH",
+  });
+
   return NextResponse.json({ ok: true });
 });
 
 export const DELETE = withApiError(async (_req: NextRequest, { params }: { params: { id: string } }) => {
   const membership = await getCurrentMembership();
   if (!membership) throw new ApiError("Not authenticated", 401);
-  const supabase = createServerClient();
+  const ctx = await getClientForRequest();
+  if (!ctx.ok) throw new ApiError(`Impersonation rejected: ${ctx.reason}`, 401);
+  const supabase = ctx.client;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
 
@@ -287,6 +303,14 @@ export const DELETE = withApiError(async (_req: NextRequest, { params }: { param
     entity_id: params.id,
     action: "deleted",
     details: { from_status: existing?.status ?? null },
+  });
+
+  await logImpersonatedWrite(ctx, {
+    target_record_type: "purchase_order",
+    target_record_id: params.id,
+    details: { soft_deleted: true },
+    route: `/api/purchase-orders/${params.id}`,
+    method: "DELETE",
   });
 
   return NextResponse.json({ ok: true });

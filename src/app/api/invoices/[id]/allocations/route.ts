@@ -3,6 +3,10 @@ import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
 import { recomputePercentageBillings } from "@/lib/recompute-percentage-billings";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -83,7 +87,9 @@ export const PUT = withApiError(async (
   if (!["owner", "admin", "pm"].includes(membership.role)) {
     throw new ApiError("Only admins/PMs can split invoices", 403);
   }
-  const supabase = createServerClient();
+  const ctx = await getClientForRequest();
+  if (!ctx.ok) throw new ApiError(`Impersonation rejected: ${ctx.reason}`, 401);
+  const supabase = ctx.client;
 
   const body = (await req.json()) as { allocations: AllocationInput[] };
   if (!Array.isArray(body.allocations) || body.allocations.length === 0) {
@@ -155,6 +161,14 @@ export const PUT = withApiError(async (
   if (drawId) {
     await recomputePercentageBillings(drawId);
   }
+
+  await logImpersonatedWrite(ctx, {
+    target_record_type: "invoice",
+    target_record_id: context.params.id,
+    details: { allocations: toInsert, sum },
+    route: `/api/invoices/${context.params.id}/allocations`,
+    method: "PUT",
+  });
 
   return NextResponse.json({ ok: true, count: toInsert.length });
 });

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { canDeleteVendor, formatBlockers } from "@/lib/deletion-guards";
 import { logActivity } from "@/lib/activity-log";
 import { getCurrentMembership } from "@/lib/org/session";
 import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +57,14 @@ export async function PATCH(
       );
     }
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
 
     const lockResult = await updateWithLock<{ id: string }>(supabase, {
       table: "vendors",
@@ -67,6 +77,14 @@ export async function PATCH(
     if (isLockConflict(lockResult)) {
       return lockResult.response;
     }
+
+    await logImpersonatedWrite(ctx, {
+      target_record_type: "vendor",
+      target_record_id: id,
+      details: { fields: Object.keys(updates).filter((k) => k !== "updated_at") },
+      route: `/api/vendors/${id}`,
+      method: "PATCH",
+    });
 
     return NextResponse.json(lockResult);
   } catch (err) {
@@ -85,7 +103,14 @@ export async function DELETE(
     const membership = await getCurrentMembership();
     if (!membership) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
     const { data: { user } } = await supabase.auth.getUser();
 
     const guard = await canDeleteVendor(id);
@@ -114,6 +139,14 @@ export async function DELETE(
       entity_type: "vendor",
       entity_id: id,
       action: "deleted",
+    });
+
+    await logImpersonatedWrite(ctx, {
+      target_record_type: "vendor",
+      target_record_id: id,
+      details: { soft_deleted: true },
+      route: `/api/vendors/${id}`,
+      method: "DELETE",
     });
 
     return NextResponse.json({ ok: true });

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 import {
   notifyRole,
   notifyUser,
@@ -51,7 +54,14 @@ export async function POST(
  return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
  }
 
- const supabase = createServerClient();
+ const ctx = await getClientForRequest();
+ if (!ctx.ok) {
+   return NextResponse.json(
+     { error: `Impersonation rejected: ${ctx.reason}` },
+     { status: 401 }
+   );
+ }
+ const supabase = ctx.client;
  const body: ActionRequest = await request.json();
  const { action, pm_overrides, qa_overrides, updates, expected_updated_at } = body;
  let note = body.note;
@@ -462,6 +472,14 @@ export async function POST(
  `[invoice action notifications] ${notifyErr instanceof Error ? notifyErr.message : notifyErr}`
  );
  }
+
+ await logImpersonatedWrite(ctx, {
+   target_record_type: "invoice",
+   target_record_id: params.id,
+   details: { action, note, final_status: finalStatus },
+   route: `/api/invoices/${params.id}/action`,
+   method: "POST",
+ });
 
  return NextResponse.json({ status: finalStatus, action });
  } catch (err) {

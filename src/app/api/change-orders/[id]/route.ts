@@ -6,6 +6,10 @@ import { recalcBudgetLine } from "@/lib/recalc";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { canVoidCO, formatBlockers } from "@/lib/deletion-guards";
 import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -65,7 +69,9 @@ interface PatchBody {
 export const PATCH = withApiError(async (request: NextRequest, { params }: { params: { id: string } }) => {
   const membership = await getCurrentMembership();
   if (!membership) throw new ApiError("Not authenticated", 401);
-  const supabase = createServerClient();
+  const ctx = await getClientForRequest();
+  if (!ctx.ok) throw new ApiError(`Impersonation rejected: ${ctx.reason}`, 401);
+  const supabase = ctx.client;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new ApiError("Not authenticated", 401);
 
@@ -311,6 +317,14 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
       details: { fields: Object.keys(patch) },
     });
   }
+
+  await logImpersonatedWrite(ctx, {
+    target_record_type: "change_order",
+    target_record_id: params.id,
+    details: { fields: Object.keys(patch) },
+    route: `/api/change-orders/${params.id}`,
+    method: "PATCH",
+  });
 
   return NextResponse.json({ ok: true });
 });

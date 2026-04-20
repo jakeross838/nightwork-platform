@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity-log";
 import { getCurrentMembership } from "@/lib/org/session";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 import {
   computeDrawLines,
   lessPreviousCertificatesForJob,
@@ -30,7 +33,14 @@ export async function POST(request: NextRequest) {
     }
     const orgId = membership.org_id;
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
     const body: CreateDrawRequest = await request.json();
     const {
       job_id,
@@ -208,6 +218,18 @@ export async function POST(request: NextRequest) {
         retainage: totals.total_retainage,
         is_final: !!is_final,
       },
+    });
+
+    await logImpersonatedWrite(ctx, {
+      target_record_type: "draw",
+      target_record_id: draw.id as string,
+      details: {
+        draw_number: drawNumber,
+        invoice_count: invoice_ids.length,
+        is_final: !!is_final,
+      },
+      route: "/api/draws/new",
+      method: "POST",
     });
 
     return NextResponse.json({ id: draw.id, draw_number: draw.draw_number });

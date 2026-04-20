@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +24,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
     const body = (await request.json()) as Record<string, unknown>;
 
     const { data: existing } = await supabase
@@ -76,6 +86,13 @@ export async function PATCH(
       entity_id: params.id,
       action: "updated",
       details: { lien_release_update: updates },
+    });
+    await logImpersonatedWrite(ctx, {
+      target_record_type: "lien_release",
+      target_record_id: params.id,
+      details: { updates },
+      route: `/api/lien-releases/${params.id}`,
+      method: "PATCH",
     });
     return NextResponse.json({ ok: true });
   } catch (err) {
