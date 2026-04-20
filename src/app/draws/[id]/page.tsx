@@ -174,7 +174,7 @@ export default function DrawDetailPage() {
     return (
       <AppShell>
         <div className="flex items-center justify-center py-32">
-          <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" />
+          <div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-teal animate-spin" />
         </div>
       </AppShell>
     );
@@ -266,12 +266,12 @@ export default function DrawDetailPage() {
     <AppShell>
 
       {/* Sub-header */}
-      <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-5 print:hidden">
+      <div className="border-b border-[var(--border-default)] bg-[rgba(91,134,153,0.04)] px-6 py-5 print:hidden">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4 flex-wrap">
             <button
               onClick={() => router.push("/draws")}
-              className="text-cream-dim hover:text-teal transition-colors text-sm"
+              className="text-[color:var(--text-secondary)] hover:text-[color:var(--nw-stone-blue)] transition-colors text-sm"
             >
               &larr; Draws
             </button>
@@ -302,7 +302,7 @@ export default function DrawDetailPage() {
           <div className="flex items-center gap-2 flex-wrap print:hidden">
             <button
               onClick={() => window.print()}
-              className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
+              className="px-4 py-2 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-muted)] text-sm uppercase tracking-[0.06em] transition-colors"
               aria-label="Print this draw"
             >
               Print
@@ -315,7 +315,7 @@ export default function DrawDetailPage() {
                   a.download = "";
                   a.click();
                 }}
-                className="px-4 py-2 border border-brand-border text-cream hover:bg-brand-elevated text-sm uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-muted)] text-sm uppercase tracking-[0.06em] transition-colors"
               >
                 Export to Excel
               </button>
@@ -341,7 +341,7 @@ export default function DrawDetailPage() {
                 <button
                   onClick={() => handleAction("approve")}
                   disabled={acting}
-                  className="px-4 py-2 bg-status-success hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                  className="px-4 py-2 bg-[var(--nw-success)] hover:opacity-90 disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
                 >
                   {acting ? "Processing..." : "Approve Draw"}
                 </button>
@@ -365,7 +365,7 @@ export default function DrawDetailPage() {
               <button
                 onClick={() => handleAction("mark_paid")}
                 disabled={acting}
-                className="px-4 py-2 border border-status-success text-status-success hover:bg-status-success/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 border border-[rgba(74,138,111,0.5)] text-[color:var(--nw-success)] hover:bg-[rgba(74,138,111,0.12)] disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
               >
                 Mark Paid
               </button>
@@ -379,7 +379,7 @@ export default function DrawDetailPage() {
                   )
                 }
                 disabled={acting}
-                className="px-4 py-2 border border-status-danger text-status-danger hover:bg-status-danger/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                className="px-4 py-2 border border-[rgba(176,85,78,0.5)] text-[color:var(--nw-danger)] hover:bg-[rgba(176,85,78,0.12)] disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
               >
                 Void
               </button>
@@ -389,8 +389,8 @@ export default function DrawDetailPage() {
       </div>
 
       {actionError && (
-        <div className="bg-status-danger/10 border-b border-status-danger/40">
-          <div className="max-w-[1600px] mx-auto px-6 py-3 text-sm text-status-danger">
+        <div className="bg-[rgba(176,85,78,0.12)] border-b border-[rgba(176,85,78,0.35)]">
+          <div className="max-w-[1600px] mx-auto px-6 py-3 text-sm text-[color:var(--nw-danger)]">
             {actionError}
           </div>
         </div>
@@ -398,18 +398,18 @@ export default function DrawDetailPage() {
 
       {/* Locked banner */}
       {draw.status === "locked" && (
-        <div className="bg-teal/10 border-b border-teal/30">
+        <div className="bg-[rgba(91,134,153,0.12)] border-b border-[rgba(91,134,153,0.3)]">
           <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-5 h-5 text-[color:var(--nw-stone-blue)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
               </svg>
-              <p className="text-teal text-sm">This draw is locked — permanent record. Changes require a revision.</p>
+              <p className="text-[color:var(--nw-stone-blue)] text-sm">This draw is locked — permanent record. Changes require a revision.</p>
             </div>
             <button
               onClick={handleCreateRevision}
               disabled={acting}
-              className="px-4 py-1.5 bg-transparent hover:bg-teal/10 border border-teal text-teal text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-1.5 bg-transparent hover:bg-[rgba(91,134,153,0.12)] border border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)] text-sm font-medium transition-colors disabled:opacity-50"
             >
               {acting ? "Creating..." : "Create Revision"}
             </button>
@@ -417,12 +417,12 @@ export default function DrawDetailPage() {
         </div>
       )}
       {draw.status === "paid" && (
-        <div className="bg-teal/10 border-b border-teal/30">
+        <div className="bg-[rgba(91,134,153,0.12)] border-b border-[rgba(91,134,153,0.3)]">
           <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-3">
-            <svg className="w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-5 h-5 text-[color:var(--nw-stone-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-teal text-sm">This draw has been paid.</p>
+            <p className="text-[color:var(--nw-stone-blue)] text-sm">This draw has been paid.</p>
           </div>
         </div>
       )}
@@ -471,13 +471,13 @@ export default function DrawDetailPage() {
           {/* G702 Summary */}
           <div className="xl:col-span-1">
             <div className="sticky top-24 space-y-5">
-              <div className="bg-brand-card border border-teal/30 p-6">
+              <div className="bg-[var(--bg-card)] border border-[rgba(91,134,153,0.3)] p-6">
                 <p className="section-label">G702 — Application for Payment</p>
                 <div className="mt-5 space-y-2.5">
                   <G702Row num="1" label="Original Contract Sum" value={draw.original_contract_sum} />
                   <G702Row num="2" label="Net Change Orders" value={draw.net_change_orders} />
                   <G702Row num="3" label="Contract Sum to Date" value={draw.contract_sum_to_date} bold />
-                  <div className="border-t border-brand-border my-1" />
+                  <div className="border-t border-[var(--border-default)] my-1" />
                   <G702Row num="4" label="Total Completed to Date" value={draw.total_completed_to_date} />
                   <G702Row num="5a" label="Retainage on Completed" value={draw.retainage_on_completed} sub />
                   <G702Row num="5b" label="Retainage on Stored" value={draw.retainage_on_stored} sub />
@@ -489,44 +489,44 @@ export default function DrawDetailPage() {
                   />
                   <G702Row num="7" label="Less Previous Certificates" value={draw.less_previous_certificates} />
                   <G702Row num="8" label="Current Payment Due" value={draw.current_payment_due} bold highlight />
-                  <div className="border-t border-brand-border my-1" />
+                  <div className="border-t border-[var(--border-default)] my-1" />
                   <G702Row num="9" label="Balance + Retainage" value={draw.balance_to_finish} />
                 </div>
               </div>
 
-              <div className="bg-brand-card border border-teal/30 p-6">
+              <div className="bg-[var(--bg-card)] border border-[rgba(91,134,153,0.3)] p-6">
                 <p className="section-label">Details</p>
                 <div className="mt-5 space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Application #</span>
-                    <span className="text-cream">
+                    <span className="text-[color:var(--text-secondary)]">Application #</span>
+                    <span className="text-[color:var(--text-primary)]">
                       {draw.application_number ?? draw.draw_number}
                       {draw.revision_number > 0 ? ` Rev ${draw.revision_number}` : ""}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Period</span>
-                    <span className="text-cream">
+                    <span className="text-[color:var(--text-secondary)]">Period</span>
+                    <span className="text-[color:var(--text-primary)]">
                       {formatDate(draw.period_start)} — {formatDate(draw.period_end)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">App Date</span>
-                    <span className="text-cream">{formatDate(draw.application_date)}</span>
+                    <span className="text-[color:var(--text-secondary)]">App Date</span>
+                    <span className="text-[color:var(--text-primary)]">{formatDate(draw.application_date)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Retainage %</span>
-                    <span className="text-cream">
+                    <span className="text-[color:var(--text-secondary)]">Retainage %</span>
+                    <span className="text-[color:var(--text-primary)]">
                       {draw.retainage_percent.toFixed(1)}%{draw.is_final && " (released)"}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Owner</span>
-                    <span className="text-cream">{draw.jobs?.client_name ?? "—"}</span>
+                    <span className="text-[color:var(--text-secondary)]">Owner</span>
+                    <span className="text-[color:var(--text-primary)]">{draw.jobs?.client_name ?? "—"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cream-dim">Invoices</span>
-                    <span className="text-cream">{draw.invoices?.length ?? 0}</span>
+                    <span className="text-[color:var(--text-secondary)]">Invoices</span>
+                    <span className="text-[color:var(--text-primary)]">{draw.invoices?.length ?? 0}</span>
                   </div>
                 </div>
               </div>
@@ -536,7 +536,7 @@ export default function DrawDetailPage() {
           {/* Right column with tabs */}
           <div className="xl:col-span-3 min-w-0">
             <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 mb-4">
-              <div className="flex gap-1 bg-brand-surface border border-brand-border p-1 w-fit whitespace-nowrap">
+              <div className="flex gap-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] p-1 w-fit whitespace-nowrap">
                 <TabButton active={activeTab === "detail"} onClick={() => setActiveTab("detail")}>
                   Detail
                 </TabButton>
@@ -552,7 +552,7 @@ export default function DrawDetailPage() {
                 >
                   Lien Releases
                   {missingDocCount > 0 && (
-                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-status-danger text-white">
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] bg-[var(--nw-danger)] text-white">
                       {missingDocCount}
                     </span>
                   )}
@@ -614,15 +614,15 @@ export default function DrawDetailPage() {
             )}
             <p className="section-label">G703 — Continuation Sheet</p>
             {hasNoBudget && (
-              <div className="mt-3 border border-status-warning/40 bg-status-warning/5 px-4 py-3 text-sm text-status-warning">
+              <div className="mt-3 border border-[rgba(201,138,59,0.35)] bg-[rgba(201,138,59,0.08)] px-4 py-3 text-sm text-[color:var(--nw-warn)]">
                 No budget loaded for this job — scheduled values fall back to the job contract. Import a
                 budget on the Budget tab for accurate G703 math.
               </div>
             )}
-            <div className="mt-5 overflow-x-auto border border-brand-border">
+            <div className="mt-5 overflow-x-auto border border-[var(--border-default)]">
               <table className="w-full min-w-[1100px] text-sm">
                 <thead>
-                  <tr className="bg-brand-surface text-left">
+                  <tr className="bg-[var(--bg-subtle)] text-left">
                     <Th sticky>A — Item</Th>
                     <Th>B — Description</Th>
                     <Th right>C — Scheduled Value</Th>
@@ -636,8 +636,8 @@ export default function DrawDetailPage() {
                 </thead>
                 <tbody>
                   {baseRows.length > 0 && (
-                    <tr className="bg-brand-surface/40 border-t border-brand-border">
-                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-cream-dim font-semibold">
+                    <tr className="bg-[rgba(91,134,153,0.06)] border-t border-[var(--border-default)]">
+                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)] font-semibold">
                         Base Contract
                       </td>
                     </tr>
@@ -657,23 +657,23 @@ export default function DrawDetailPage() {
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-brand-border-light bg-brand-surface">
-                    <td colSpan={2} className="py-3 px-4 text-cream font-medium">
+                  <tr className="border-t border-[var(--border-default)]-light bg-[var(--bg-subtle)]">
+                    <td colSpan={2} className="py-3 px-4 text-[color:var(--text-primary)] font-medium">
                       Grand Total
                     </td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                    <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display font-medium">
                       {formatCents(totals.scheduled)}
                     </td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
-                      {totals.previous > 0 ? formatCents(totals.previous) : <span className="text-cream-dim">—</span>}
+                    <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display font-medium">
+                      {totals.previous > 0 ? formatCents(totals.previous) : <span className="text-[color:var(--text-secondary)]">—</span>}
                     </td>
-                    <td className="py-3 px-4 text-teal text-right font-display font-medium">
+                    <td className="py-3 px-4 text-[color:var(--nw-stone-blue)] text-right font-display font-medium">
                       {formatCents(totals.thisPeriod)}
                     </td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                    <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display font-medium">
                       {formatCents(totals.totalToDate)}
                     </td>
-                    <td className="py-3 px-4 text-cream-dim text-right">
+                    <td className="py-3 px-4 text-[color:var(--text-secondary)] text-right">
                       {totals.scheduled > 0
                         ? `${((totals.totalToDate / totals.scheduled) * 100).toFixed(1)}%`
                         : "—"}
@@ -681,7 +681,7 @@ export default function DrawDetailPage() {
                     <td className="py-3 px-4 text-brass text-right font-display font-medium">
                       {formatCents(totals.retainage)}
                     </td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                    <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display font-medium">
                       {formatCents(totals.balance)}
                     </td>
                   </tr>
@@ -696,21 +696,21 @@ export default function DrawDetailPage() {
                 {draw.jobs && (
                   <Link
                     href={`/jobs/${draw.jobs.id}/lien-releases`}
-                    className="text-xs text-teal hover:underline"
+                    className="text-xs text-[color:var(--nw-stone-blue)] hover:underline"
                   >
                     Manage all releases for this job →
                   </Link>
                 )}
               </div>
               {draw.lien_releases.length === 0 ? (
-                <div className="border border-brand-border px-4 py-4 text-sm text-cream-dim">
+                <div className="border border-[var(--border-default)] px-4 py-4 text-sm text-[color:var(--text-secondary)]">
                   No lien releases yet. They will auto-generate when this draw is submitted.
                 </div>
               ) : (
-                <div className="overflow-x-auto border border-brand-border">
+                <div className="overflow-x-auto border border-[var(--border-default)]">
                   <table className="w-full min-w-[700px] text-sm">
                     <thead>
-                      <tr className="bg-brand-surface text-left">
+                      <tr className="bg-[var(--bg-subtle)] text-left">
                         <Th>Vendor</Th>
                         <Th>Type</Th>
                         <Th right>Amount</Th>
@@ -721,12 +721,12 @@ export default function DrawDetailPage() {
                     </thead>
                     <tbody>
                       {draw.lien_releases.map((lr) => (
-                        <tr key={lr.id} className="border-t border-brand-row-border">
-                          <td className="py-3 px-4 text-cream">{lr.vendors?.name ?? "—"}</td>
-                          <td className="py-3 px-4 text-cream-muted text-xs">
+                        <tr key={lr.id} className="border-t border-[var(--border-default)]">
+                          <td className="py-3 px-4 text-[color:var(--text-primary)]">{lr.vendors?.name ?? "—"}</td>
+                          <td className="py-3 px-4 text-[color:var(--text-muted)] text-xs">
                             {formatReleaseType(lr.release_type)}
                           </td>
-                          <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                          <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display font-medium">
                             {lr.amount != null ? formatCents(lr.amount) : "—"}
                           </td>
                           <td className="py-3 px-4">
@@ -734,14 +734,14 @@ export default function DrawDetailPage() {
                               {formatReleaseStatus(lr.status)}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(lr.through_date)}</td>
-                          <td className="py-3 px-4 text-cream-muted text-xs">
+                          <td className="py-3 px-4 text-[color:var(--text-muted)] text-xs">{formatDate(lr.through_date)}</td>
+                          <td className="py-3 px-4 text-[color:var(--text-muted)] text-xs">
                             {lr.document_url ? (
-                              <a href={lr.document_url} target="_blank" rel="noreferrer" className="text-teal hover:underline">
+                              <a href={lr.document_url} target="_blank" rel="noreferrer" className="text-[color:var(--nw-stone-blue)] hover:underline">
                                 View
                               </a>
                             ) : (
-                              <span className="text-cream-dim">—</span>
+                              <span className="text-[color:var(--text-secondary)]">—</span>
                             )}
                           </td>
                         </tr>
@@ -756,10 +756,10 @@ export default function DrawDetailPage() {
             {draw.invoices && draw.invoices.length > 0 && (
               <div className="mt-8">
                 <p className="section-label">Included Invoices</p>
-                <div className="mt-3 overflow-x-auto border border-brand-border">
+                <div className="mt-3 overflow-x-auto border border-[var(--border-default)]">
                   <table className="w-full min-w-[500px] text-sm">
                     <thead>
-                      <tr className="bg-brand-surface text-left">
+                      <tr className="bg-[var(--bg-subtle)] text-left">
                         <Th>Vendor</Th>
                         <Th>Invoice #</Th>
                         <Th right>Amount</Th>
@@ -770,14 +770,14 @@ export default function DrawDetailPage() {
                       {draw.invoices.map((inv) => (
                         <tr
                           key={inv.id}
-                          className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+                          className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)]/50 cursor-pointer transition-colors"
                           onClick={() => router.push(`/invoices/${inv.id}`)}
                         >
-                          <td className="py-3 px-4 text-cream">{inv.vendor_name_raw ?? "Unknown"}</td>
-                          <td className="py-3 px-4 text-cream-muted font-mono text-xs">
+                          <td className="py-3 px-4 text-[color:var(--text-primary)]">{inv.vendor_name_raw ?? "Unknown"}</td>
+                          <td className="py-3 px-4 text-[color:var(--text-muted)] font-mono text-xs">
                             {inv.invoice_number ?? "—"}
                           </td>
-                          <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                          <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display font-medium">
                             {formatCents(inv.total_amount)}
                           </td>
                           <td className="py-3 px-4">
@@ -828,7 +828,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`px-4 py-2 text-sm font-medium transition-colors ${
-        active ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+        active ? "bg-[var(--bg-muted)] text-[color:var(--text-primary)]" : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
       }`}
     >
       {children}
@@ -849,9 +849,9 @@ function Th({
 }) {
   return (
     <th
-      className={`py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider ${
+      className={`py-3 px-4 text-[11px] text-[color:var(--text-primary)] font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
-      } ${sticky ? "sticky left-0 bg-brand-surface z-10" : ""}`}
+      } ${sticky ? "sticky left-0 bg-[var(--bg-subtle)] z-10" : ""}`}
     >
       {children}
     </th>
@@ -880,49 +880,49 @@ function G703RowView({
 }) {
   const overBudget = row.balance_to_finish < 0;
   const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
-  const highlight = row.this_period > 0 ? "bg-teal/5" : stripe;
-  const codeColor = co ? "text-brass" : "text-teal";
+  const highlight = row.this_period > 0 ? "bg-[rgba(91,134,153,0.08)]" : stripe;
+  const codeColor = co ? "text-brass" : "text-[color:var(--nw-stone-blue)]";
   return (
-    <tr className={`border-t border-brand-row-border ${highlight}`}>
-      <td className={`py-3 px-4 ${codeColor} font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-brand-card"}`}>
+    <tr className={`border-t border-[var(--border-default)] ${highlight}`}>
+      <td className={`py-3 px-4 ${codeColor} font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-[var(--bg-card)]"}`}>
         {row.code}
       </td>
-      <td className="py-3 px-4 text-cream">
+      <td className="py-3 px-4 text-[color:var(--text-primary)]">
         {row.description}
         {co && <span className="ml-2 text-[10px] text-brass uppercase tracking-wider">CO</span>}
       </td>
-      <td className="py-3 px-4 text-cream text-right">
+      <td className="py-3 px-4 text-[color:var(--text-primary)] text-right">
         {formatCents(row.scheduled_value)}
         {row.co_adjustment > 0 && !co && (
-          <span className="text-[10px] text-teal ml-1" title={`Includes ${formatCents(row.co_adjustment)} in approved COs`}>
+          <span className="text-[10px] text-[color:var(--nw-stone-blue)] ml-1" title={`Includes ${formatCents(row.co_adjustment)} in approved COs`}>
             (+{formatCents(row.co_adjustment)} CO)
           </span>
         )}
       </td>
-      <td className="py-3 px-4 text-cream text-right">
-        {row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-cream-dim">—</span>}
+      <td className="py-3 px-4 text-[color:var(--text-primary)] text-right">
+        {row.previous_applications > 0 ? formatCents(row.previous_applications) : <span className="text-[color:var(--text-secondary)]">—</span>}
       </td>
       <td className="py-3 px-4 text-right font-medium">
         {row.this_period > 0 ? (
-          <span className="text-teal">{formatCents(row.this_period)}</span>
+          <span className="text-[color:var(--nw-stone-blue)]">{formatCents(row.this_period)}</span>
         ) : (
-          <span className="text-cream-dim">—</span>
+          <span className="text-[color:var(--text-secondary)]">—</span>
         )}
       </td>
-      <td className="py-3 px-4 text-cream text-right">
-        {row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-cream-dim">—</span>}
+      <td className="py-3 px-4 text-[color:var(--text-primary)] text-right">
+        {row.total_to_date > 0 ? formatCents(row.total_to_date) : <span className="text-[color:var(--text-secondary)]">—</span>}
       </td>
-      <td className="py-3 px-4 text-cream-muted text-right">
-        {row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-cream-dim">—</span>}
+      <td className="py-3 px-4 text-[color:var(--text-muted)] text-right">
+        {row.percent_complete > 0 ? `${row.percent_complete.toFixed(1)}%` : <span className="text-[color:var(--text-secondary)]">—</span>}
       </td>
       <td className="py-3 px-4 text-right">
         {row.retainage > 0 ? (
           <span className="text-brass">{formatCents(row.retainage)}</span>
         ) : (
-          <span className="text-cream-dim">—</span>
+          <span className="text-[color:var(--text-secondary)]">—</span>
         )}
       </td>
-      <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-cream"}`}>
+      <td className={`py-3 px-4 text-right ${overBudget ? "text-red-400 font-medium" : "text-[color:var(--text-primary)]"}`}>
         {overBudget && <span className="mr-1 font-bold" title="Over original budget — see change order log">*</span>}
         {formatCents(row.balance_to_finish)}
       </td>
@@ -931,28 +931,28 @@ function G703RowView({
 }
 
 function badgeClass(status: string): string {
-  if (status === "submitted") return "bg-transparent text-cream border border-cream";
+  if (status === "submitted") return "bg-transparent text-[color:var(--text-primary)] border border-cream";
   if (["approved", "locked", "paid"].includes(status))
-    return "bg-transparent text-status-success border border-status-success";
+    return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
   if (status === "draft" || status === "pm_review")
     return "bg-transparent text-brass border border-brass";
-  if (status === "void") return "bg-transparent text-status-danger border border-status-danger";
-  return "bg-transparent text-cream-muted border border-brand-border-light";
+  if (status === "void") return "bg-transparent text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.5)]";
+  return "bg-transparent text-[color:var(--text-muted)] border border-[var(--border-default)]-light";
 }
 
 function paymentBadge(status: string | null): string {
-  if (status === "paid") return "bg-transparent text-status-success border border-status-success";
-  if (status === "scheduled") return "bg-transparent text-teal border border-teal";
+  if (status === "paid") return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
+  if (status === "scheduled") return "bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)]";
   if (status === "partial") return "bg-transparent text-brass border border-brass";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+  return "bg-transparent text-[color:var(--text-secondary)] border border-[var(--border-default)]-light";
 }
 
 function releaseBadge(status: string): string {
-  if (status === "received") return "bg-transparent text-status-success border border-status-success";
+  if (status === "received") return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
   if (status === "pending") return "bg-transparent text-brass border border-brass";
   if (status === "waived" || status === "not_required")
-    return "bg-transparent text-cream-dim border border-brand-border-light";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+    return "bg-transparent text-[color:var(--text-secondary)] border border-[var(--border-default)]-light";
+  return "bg-transparent text-[color:var(--text-secondary)] border border-[var(--border-default)]-light";
 }
 
 function formatReleaseType(t: string): string {
@@ -998,15 +998,15 @@ function G702Row({
     <div className={`flex items-center justify-between ${sub ? "pl-4 opacity-70" : ""}`}>
       <div className="flex items-center gap-2">
         {num ? (
-          <span className="text-cream-dim text-[11px] font-mono w-6">{num}</span>
+          <span className="text-[color:var(--text-secondary)] text-[11px] font-mono w-6">{num}</span>
         ) : (
           <span className="w-6" />
         )}
-        <span className={`text-xs ${bold ? "text-cream font-medium" : "text-cream-muted"}`}>{label}</span>
+        <span className={`text-xs ${bold ? "text-[color:var(--text-primary)] font-medium" : "text-[color:var(--text-muted)]"}`}>{label}</span>
       </div>
       <span
         className={`font-display text-sm ${
-          highlight ? "text-brass font-medium" : bold ? "text-cream font-medium" : "text-cream"
+          highlight ? "text-brass font-medium" : bold ? "text-[color:var(--text-primary)] font-medium" : "text-[color:var(--text-primary)]"
         }`}
       >
         {formatCents(value)}

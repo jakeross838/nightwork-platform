@@ -117,30 +117,30 @@ export default function DrawsPage() {
  <NwBadge variant="info" size="md">
  {job?.name ?? "Unknown Job"}
  </NwBadge>
- <span className="text-xs text-cream-dim">{job?.address}</span>
+ <span className="text-xs text-[color:var(--text-secondary)]">{job?.address}</span>
  </div>
- <div className="overflow-x-auto border border-brand-border">
+ <div className="overflow-x-auto border border-[var(--border-default)]">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-brand-surface text-left">
- <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Draw #</th>
- <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Period</th>
- <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Application Date</th>
- <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Status</th>
- <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right">Current Payment Due</th>
+ <tr className="bg-[var(--bg-subtle)] text-left">
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)]">Draw #</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)]">Period</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)]">Application Date</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)]">Status</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] text-right">Current Payment Due</th>
  </tr>
  </thead>
  <tbody>
  {jobDraws.map((d) => (
  <tr key={d.id}
- className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+ className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)]/50 cursor-pointer transition-colors"
  onClick={() => window.location.href = `/draws/${d.id}`}>
- <td className="py-4 px-5 text-cream font-display font-medium">
+ <td className="py-4 px-5 text-[color:var(--text-primary)] font-display font-medium">
  #{d.draw_number}
  {d.revision_number > 0 && <span className="text-brass ml-1 text-xs">Rev {d.revision_number}</span>}
  </td>
- <td className="py-4 px-5 text-cream-muted">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
- <td className="py-4 px-5 text-cream-muted">{formatDate(d.application_date)}</td>
+ <td className="py-4 px-5 text-[color:var(--text-muted)]">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
+ <td className="py-4 px-5 text-[color:var(--text-muted)]">{formatDate(d.application_date)}</td>
  <td className="py-4 px-5">
  <NwBadge variant={drawBadgeVariant(d.status)} size="sm">
  {formatStatus(d.status)}
