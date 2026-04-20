@@ -164,7 +164,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
   return (
     <div
       role="status"
-      className={`pointer-events-auto flex items-start gap-3 bg-white border ${style.border} px-4 py-3 shadow-md animate-fade-up`}
+      className={`pointer-events-auto flex items-start gap-3 bg-brand-card border ${style.border} px-4 py-3 shadow-md animate-fade-up`}
     >
       <span className={style.iconBg}>{style.icon}</span>
       <p className="flex-1 text-sm text-cream leading-snug">{toast.message}</p>
