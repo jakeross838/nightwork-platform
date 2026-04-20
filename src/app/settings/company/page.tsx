@@ -15,8 +15,6 @@ export default async function CompanySettingsPage() {
         name: org.name,
         tagline: org.tagline,
         logo_url: org.logo_url,
-        primary_color: org.primary_color,
-        accent_color: org.accent_color,
         company_address: org.company_address,
         company_city: org.company_city,
         company_state: org.company_state,

@@ -10,6 +10,4 @@ export type OrgBrandingPublic = {
   name: string;
   tagline: string | null;
   logo_url: string | null;
-  primary_color: string;
-  accent_color: string | null;
 };

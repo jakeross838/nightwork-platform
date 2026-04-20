@@ -6,11 +6,7 @@ export type OrgBranding = {
   name: string;
   tagline: string | null;
   logo_url: string | null;
-  primary_color: string;
-  accent_color: string | null;
 };
-
-const FALLBACK_PRIMARY = "#3F5862";
 
 /**
  * Server-side branding fetch, cached per-request via React cache().
@@ -24,8 +20,6 @@ export const getOrgBranding = cache(async (): Promise<OrgBranding | null> => {
     name: org.name,
     tagline: org.tagline,
     logo_url: org.logo_url,
-    primary_color: org.primary_color || FALLBACK_PRIMARY,
-    accent_color: org.accent_color,
   };
 });
 

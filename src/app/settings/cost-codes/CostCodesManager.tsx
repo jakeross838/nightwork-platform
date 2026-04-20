@@ -314,7 +314,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
           <button
             type="button"
             onClick={startAdd}
-            className="px-3 py-2 bg-[var(--org-primary)] text-white text-sm"
+            className="px-3 py-2 bg-[var(--nw-stone-blue)] text-white text-sm"
           >
             + Add Cost Code
           </button>
@@ -395,7 +395,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               type="button"
               onClick={commitImport}
               disabled={busy}
-              className="px-3 py-2 bg-[var(--org-primary)] text-white text-sm"
+              className="px-3 py-2 bg-[var(--nw-stone-blue)] text-white text-sm"
             >
               {busy ? "Importing…" : "Confirm import"}
             </button>
@@ -464,7 +464,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               type="button"
               onClick={saveEditing}
               disabled={busy || !editing.code || !editing.description}
-              className="px-3 py-2 bg-[var(--org-primary)] text-white text-sm disabled:opacity-60"
+              className="px-3 py-2 bg-[var(--nw-stone-blue)] text-white text-sm disabled:opacity-60"
             >
               {busy ? "Saving…" : "Save"}
             </button>

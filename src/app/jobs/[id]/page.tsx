@@ -545,7 +545,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
           color: var(--text-primary);
           font-size: 14px;
         }
-        .input:focus { outline: none; border-color: var(--org-primary); }
+        .input:focus { outline: none; border-color: var(--nw-stone-blue); }
       `}</style>
     </>
   );

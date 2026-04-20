@@ -289,7 +289,7 @@ export default function InvoiceAllocationsEditor({
         }
         .input:focus {
           outline: none;
-          border-color: var(--org-primary);
+          border-color: var(--nw-stone-blue);
         }
       `}</style>
     </div>

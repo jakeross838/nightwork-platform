@@ -74,8 +74,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const branding = await getOrgBranding();
-  const primary = branding?.primary_color ?? "#3F5862";
-  const accent = branding?.accent_color ?? primary;
 
   // Server-side theme read from cookie. Default = light. Setting data-theme
   // on <html> at server-render time avoids a flash-of-wrong-theme on first paint.
@@ -88,15 +86,6 @@ export default async function RootLayout({
       data-theme={theme}
       className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
-      <head>
-        <style
-          // Per-org CSS vars override the defaults declared in globals.css.
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{
-            __html: `:root{--org-primary:${primary};--org-accent:${accent};}`,
-          }}
-        />
-      </head>
       <body className="grain antialiased">
         <ThemeProvider initialTheme={theme}>
           <OrgBrandingProvider branding={branding}>
