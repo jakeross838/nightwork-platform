@@ -128,6 +128,7 @@ function FilePreview({ fileStatus }: { fileStatus: FileStatus }) {
  file.name.toLowerCase().endsWith(".docx");
  if (isDocx) {
  return (
+ // DOCX preview surface stays white — paper metaphor, intentional across themes.
  <div className="border border-brand-border bg-white">
  <div className="flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2">
  <span className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">

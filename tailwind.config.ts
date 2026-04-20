@@ -68,12 +68,14 @@ const config: Config = {
         "nw-danger": "var(--nw-danger)",
       },
       fontFamily: {
-        display: ["Century Gothic", "CenturyGothic", "AppleGothic", "sans-serif"],
-        body: ["Century Gothic", "CenturyGothic", "AppleGothic", "sans-serif"],
-        // Nightwork brand font (wordmark). Available as `font-sans` on
-        // new chrome work; existing components keep their font-display /
-        // font-body Century Gothic styling.
+        // Nightwork Slate palette fonts:
+        //   display → Space Grotesk  (headings, wordmark)
+        //   sans    → Inter          (body text)
+        //   mono    → JetBrains Mono (eyebrows, metadata, code)
+        display: ["var(--font-space-grotesk)", "Space Grotesk", "system-ui", "sans-serif"],
+        body: ["var(--font-inter)", "Inter", "system-ui", "-apple-system", "sans-serif"],
         sans: ["var(--font-inter)", "Inter", "system-ui", "-apple-system", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "JetBrains Mono", "ui-monospace", "monospace"],
       },
       borderRadius: {
         none: "0",

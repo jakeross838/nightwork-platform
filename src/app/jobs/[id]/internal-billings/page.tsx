@@ -110,18 +110,36 @@ function formatPeriod(start: string | null, end: string | null): string {
   return `\u2014 ${fmt(end!)}`;
 }
 
-function statusBadgeClass(status: BillingStatus): string {
+function statusBadgeStyle(status: BillingStatus): React.CSSProperties {
+  // Theme-adaptive: pull colours from CSS vars so badges stay readable in
+  // light + dark. Draft = neutral, billed = brand, paid = success,
+  // attached = info. Token values live in colors_and_type.css.
   switch (status) {
     case "draft":
-      return "bg-gray-500/20 text-gray-300";
+      return {
+        background: "var(--bg-elevated)",
+        color: "var(--text-secondary)",
+      };
     case "attached":
-      return "bg-blue-500/20 text-blue-300";
+      return {
+        background: "var(--nw-oceanside)",
+        color: "var(--nw-white-sand)",
+      };
     case "billed":
-      return "bg-teal/20 text-teal";
+      return {
+        background: "var(--nw-stone-blue)",
+        color: "var(--nw-white-sand)",
+      };
     case "paid":
-      return "bg-green-500/20 text-green-300";
+      return {
+        background: "var(--nw-success)",
+        color: "var(--nw-white-sand)",
+      };
     default:
-      return "bg-gray-500/20 text-gray-300";
+      return {
+        background: "var(--bg-elevated)",
+        color: "var(--text-secondary)",
+      };
   }
 }
 
@@ -897,7 +915,8 @@ export default function JobInternalBillingsPage({
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider ${statusBadgeClass(b.status)}`}
+                          className="inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider"
+                          style={statusBadgeStyle(b.status)}
                         >
                           {statusLabel(b.status)}
                         </span>

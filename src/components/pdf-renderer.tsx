@@ -46,6 +46,7 @@ export default function PdfRenderer({ fileUrl, downloadUrl, fileName }: Props) {
             if (e.target === e.currentTarget) setExpanded(false);
           }}
         >
+          {/* PDF canvas surface stays white — paper metaphor, intentional across themes. */}
           <div className="bg-white w-full h-full md:w-[80vw] md:h-[85vh] flex flex-col shadow-2xl">
             <PdfViewer
               fileUrl={fileUrl}
@@ -228,6 +229,7 @@ function PdfViewer({
           )}
         </div>
       </div>
+      {/* PDF canvas surface stays white — paper metaphor, intentional across themes. */}
       <div
         ref={containerRef}
         className={`${fullscreen ? "flex-1" : "max-h-[700px]"} overflow-auto p-3 bg-white`}
