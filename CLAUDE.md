@@ -395,7 +395,13 @@ The draw output must match AIA standard format. Reference: Drummond Pay App 8.
 ## Development Rules
 - Run `npm run build` before committing — no build errors allowed
 - Every database change is a numbered migration file
-- Never store computed values — compute budget math on read
+- Never store computed values — compute budget math on read.
+  **Exception:** trigger-maintained caches are permitted when read-time
+  recompute would be prohibitively expensive. Every such column must have an
+  explicit trigger and a rationale comment. Canonical example:
+  `jobs.approved_cos_total` maintained by `co_cache_trigger` (migration
+  00042) so dashboard + budget pages don't re-aggregate every change order
+  on every render.
 - Never delete records — soft delete only
 - All amounts in cents in the database, dollars in the UI
 - Status changes always append to status_history JSONB
