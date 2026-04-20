@@ -12,6 +12,8 @@ import DrawInternalBillings from "@/components/draw-internal-billings";
 import DrawChangeOrders from "@/components/draw-change-orders";
 import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
 import { toast } from "@/lib/utils/toast";
+import NwButton from "@/components/nw/Button";
+import NwEyebrow from "@/components/nw/Eyebrow";
 
 interface LienReleaseRow {
   id: string;
@@ -96,6 +98,7 @@ export default function DrawDetailPage() {
   const drawId = params.id as string;
   const [draw, setDraw] = useState<DrawData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"detail" | "compare" | "cover" | "lien-uploads" | "internal-billings" | "change-orders">(
@@ -103,9 +106,20 @@ export default function DrawDetailPage() {
   );
 
   async function fetchDraw() {
-    const res = await fetch(`/api/draws/${drawId}`);
-    if (res.ok) setDraw(await res.json());
-    setLoading(false);
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const res = await fetch(`/api/draws/${drawId}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `Draw failed to load (${res.status})`);
+      }
+      setDraw(await res.json());
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Couldn't load draw");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -165,12 +179,26 @@ export default function DrawDetailPage() {
       </AppShell>
     );
   }
-  if (!draw) {
+  if (loadError || !draw) {
     return (
       <AppShell>
-        <div className="flex items-center justify-center py-32">
-          <p className="text-status-danger font-display text-lg">Draw not found</p>
-        </div>
+        <main className="max-w-[640px] mx-auto px-4 md:px-6 py-16">
+          <div
+            className="border p-6"
+            style={{
+              background: "var(--bg-card)",
+              borderColor: "var(--nw-danger)",
+              color: "var(--text-primary)",
+            }}
+          >
+            <NwEyebrow tone="danger" className="mb-2">Couldn&apos;t load</NwEyebrow>
+            <p className="text-sm">{loadError ?? "Draw not found"}</p>
+            <div className="mt-4 flex gap-2">
+              <NwButton variant="secondary" size="sm" onClick={fetchDraw}>Retry</NwButton>
+              <NwButton variant="ghost" size="sm" onClick={() => router.push("/draws")}>Back to Draws</NwButton>
+            </div>
+          </div>
+        </main>
       </AppShell>
     );
   }

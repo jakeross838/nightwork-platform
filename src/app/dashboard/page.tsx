@@ -16,6 +16,7 @@ import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import NwCard from "@/components/nw/Card";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwBadge from "@/components/nw/Badge";
+import NwButton from "@/components/nw/Button";
 import NwMoney from "@/components/nw/Money";
 import NwStatusDot, { type StatusDotVariant } from "@/components/nw/StatusDot";
 
@@ -77,34 +78,42 @@ export default function Dashboard() {
   const [firstName, setFirstName] = useState<string | null>(null);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const [{ data: profile }, { data: membership }] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+          supabase
+            .from("org_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("is_active", true)
+            .maybeSingle(),
+        ]);
+        if (membership?.role) setRole(membership.role as UserRole);
+        if (profile?.full_name) setFirstName(firstNameOf(profile.full_name));
+      }
+
+      const res = await fetch("/api/dashboard", { cache: "no-store" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `Dashboard failed (${res.status})`);
+      }
+      const json = (await res.json()) as DashboardData;
+      setData(json);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Couldn't load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const [{ data: profile }, { data: membership }] = await Promise.all([
-            supabase.from("profiles").select("full_name").eq("id", user.id).single(),
-            supabase
-              .from("org_members")
-              .select("role")
-              .eq("user_id", user.id)
-              .eq("is_active", true)
-              .maybeSingle(),
-          ]);
-          if (membership?.role) setRole(membership.role as UserRole);
-          if (profile?.full_name) setFirstName(firstNameOf(profile.full_name));
-        }
-
-        const res = await fetch("/api/dashboard", { cache: "no-store" });
-        if (res.ok) {
-          const json = (await res.json()) as DashboardData;
-          setData(json);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
   }, []);
 
@@ -135,6 +144,23 @@ export default function Dashboard() {
             <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>{tagline}</p>
           )}
         </div>
+
+        {errorMessage && !loading && (
+          <section className="mb-6 animate-fade-up">
+            <NwCard
+              padding="md"
+              style={{ borderColor: "var(--nw-danger)" }}
+            >
+              <NwEyebrow tone="danger" className="mb-2">Couldn&apos;t load</NwEyebrow>
+              <p className="text-sm" style={{ color: "var(--text-primary)" }}>
+                {errorMessage}
+              </p>
+              <div className="mt-4">
+                <NwButton variant="secondary" size="sm" onClick={load}>Retry</NwButton>
+              </div>
+            </NwCard>
+          </section>
+        )}
 
         {/* Top row — 4 metric cards */}
         <section className="mb-6 animate-fade-up stagger-1">
