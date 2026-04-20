@@ -166,7 +166,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin mx-auto" />
       </main>
     );
   }
@@ -273,7 +273,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
                 <input
                   type="number"
                   step="0.1"
-                  className="w-full mt-2 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  className="w-full mt-2 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
                   value={customRate}
                   onChange={(e) => setCustomRate(e.target.value)}
                   placeholder="e.g. 15"
