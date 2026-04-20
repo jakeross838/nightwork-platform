@@ -13,8 +13,10 @@ type NavItem = {
 
 export default function PlatformSidebar({
   unresolvedFeedback,
+  escalatedSupport,
 }: {
   unresolvedFeedback?: number;
+  escalatedSupport?: number;
 }) {
   const pathname = usePathname();
 
@@ -22,6 +24,11 @@ export default function PlatformSidebar({
     { href: "/admin/platform", label: "Overview", exact: true },
     { href: "/admin/platform/organizations", label: "Organizations" },
     { href: "/admin/platform/users", label: "Users" },
+    {
+      href: "/admin/platform/support",
+      label: "Support",
+      badge: escalatedSupport ?? null,
+    },
     {
       href: "/admin/platform/feedback",
       label: "Feedback",

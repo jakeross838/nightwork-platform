@@ -19,12 +19,20 @@ export default async function PlatformAdminLayout({
     redirect("/dashboard");
   }
 
-  // Unresolved feedback count for the sidebar badge.
+  // Counts for sidebar badges.
   const supabase = createServerClient();
-  const { count: unresolvedFeedback } = await supabase
-    .from("feedback_notes")
-    .select("id", { count: "exact", head: true })
-    .in("status", ["new", "reviewing", "in_progress"]);
+  const [feedbackRes, supportRes] = await Promise.all([
+    supabase
+      .from("feedback_notes")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["new", "reviewing", "in_progress"]),
+    supabase
+      .from("support_conversations")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "escalated"),
+  ]);
+  const unresolvedFeedback = feedbackRes.count ?? 0;
+  const escalatedSupport = supportRes.count ?? 0;
 
   return (
     <div
@@ -70,7 +78,10 @@ export default async function PlatformAdminLayout({
       </header>
 
       <div className="flex-1 flex">
-        <PlatformSidebar unresolvedFeedback={unresolvedFeedback ?? 0} />
+        <PlatformSidebar
+          unresolvedFeedback={unresolvedFeedback}
+          escalatedSupport={escalatedSupport}
+        />
         <main className="flex-1 min-w-0">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8">
             {children}
