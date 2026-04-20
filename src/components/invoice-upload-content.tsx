@@ -205,7 +205,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
 
  {/* Document type warning */}
  {isNotInvoice && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-warning-muted text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
@@ -224,7 +224,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
 
  {/* Other flags */}
  {parsed.flags.filter(f => f !== "math_mismatch" && f !== "not_an_invoice").map((flag) => (
- <span key={flag} className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium bg-status-warning-muted text-brass border border-brass/20">
+ <span key={flag} className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium bg-status-warning-muted text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
  {formatFlag(flag)}
  </span>
  ))}
@@ -339,7 +339,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
  )}
  <div className="flex justify-between text-base font-semibold pt-1">
  <span className="text-cream">Total</span>
- <span className="text-brass font-display text-lg">{formatDollars(parsed.total_amount)}</span>
+ <span className="text-[color:var(--nw-warn)] font-display text-lg">{formatDollars(parsed.total_amount)}</span>
  </div>
  </div>
 
@@ -390,7 +390,7 @@ function DuplicateModal({
  {/* Warning icon */}
  <div className="flex items-center gap-3 mb-4">
  <div className="w-10 h-10 bg-status-warning-muted flex items-center justify-center flex-shrink-0">
- <svg className="w-5 h-5 text-brass" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-5 h-5 text-[color:var(--nw-warn)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
  </svg>
  </div>
@@ -399,7 +399,7 @@ function DuplicateModal({
 
  <p className="text-sm text-cream-muted mb-4">
  An invoice from <span className="font-medium text-cream">{duplicate.existing.vendor_name_raw}</span> for{" "}
- <span className="font-medium text-brass">{formatDollars(amountDollars)}</span> already
+ <span className="font-medium text-[color:var(--nw-warn)]">{formatDollars(amountDollars)}</span> already
  exists in the system.
  </p>
 
@@ -432,7 +432,7 @@ function DuplicateModal({
  <button
  onClick={onSaveAnyway}
  disabled={saving}
- className="flex-1 px-4 py-2.5 bg-status-warning-muted text-brass text-sm font-medium hover:brightness-110 disabled:opacity-50 transition-all"
+ className="flex-1 px-4 py-2.5 bg-status-warning-muted text-[color:var(--nw-warn)] text-sm font-medium hover:brightness-110 disabled:opacity-50 transition-all"
  >
  {saving ? "Saving..." : "Save Anyway"}
  </button>

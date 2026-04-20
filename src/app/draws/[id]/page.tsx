@@ -290,7 +290,7 @@ export default function DrawDetailPage() {
                 <span className="ml-1" style={{ color: "var(--nw-warn)" }}>Rev {draw.revision_number}</span>
               )}
               {draw.is_final && (
-                <span className="ml-2 text-[10px] px-2 py-0.5 border border-brass text-brass uppercase tracking-wider">
+                <span className="ml-2 text-[10px] px-2 py-0.5 border border-[var(--nw-warn)] text-[color:var(--nw-warn)] uppercase tracking-wider">
                   FINAL
                 </span>
               )}
@@ -334,7 +334,7 @@ export default function DrawDetailPage() {
                 <button
                   onClick={() => handleAction("send_back")}
                   disabled={acting}
-                  className="px-4 py-2 border border-brass text-brass hover:bg-brass/10 disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                  className="px-4 py-2 border border-[var(--nw-warn)] text-[color:var(--nw-warn)] hover:bg-[rgba(201,138,59,0.12)] disabled:opacity-50 text-sm font-medium uppercase tracking-[0.06em] transition-colors"
                 >
                   Send Back to Draft
                 </button>
@@ -429,12 +429,12 @@ export default function DrawDetailPage() {
 
       {/* Pending-releases warning banner for submitted draws */}
       {draw.status === "submitted" && pendingReleaseCount > 0 && (
-        <div className="bg-brass/10 border-b border-brass/40">
+        <div className="bg-[rgba(201,138,59,0.12)] border-b border-[rgba(201,138,59,0.35)]">
           <div className="max-w-[1600px] mx-auto px-6 py-3 flex items-center gap-3">
-            <svg className="w-5 h-5 text-brass" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-5 h-5 text-[color:var(--nw-warn)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
             </svg>
-            <p className="text-brass text-sm">
+            <p className="text-[color:var(--nw-warn)] text-sm">
               <span className="font-medium">
                 {pendingReleaseCount} of {totalReleaseCount}
               </span>{" "}
@@ -646,8 +646,8 @@ export default function DrawDetailPage() {
                     <G703RowView key={row.code + "-b"} row={row} idx={idx} />
                   ))}
                   {coRows.length > 0 && (
-                    <tr className="bg-brass/10 border-t-2 border-brass/40">
-                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-brass font-semibold">
+                    <tr className="bg-[rgba(201,138,59,0.12)] border-t-2 border-[rgba(201,138,59,0.35)]">
+                      <td colSpan={9} className="py-1.5 px-4 text-[10px] uppercase tracking-wider text-[color:var(--nw-warn)] font-semibold">
                         Change Orders · PCCO adjustments
                       </td>
                     </tr>
@@ -678,7 +678,7 @@ export default function DrawDetailPage() {
                         ? `${((totals.totalToDate / totals.scheduled) * 100).toFixed(1)}%`
                         : "—"}
                     </td>
-                    <td className="py-3 px-4 text-brass text-right font-display font-medium">
+                    <td className="py-3 px-4 text-[color:var(--nw-warn)] text-right font-display font-medium">
                       {formatCents(totals.retainage)}
                     </td>
                     <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display font-medium">
@@ -881,7 +881,7 @@ function G703RowView({
   const overBudget = row.balance_to_finish < 0;
   const stripe = idx % 2 === 1 ? "bg-[#FAFAF5]" : "";
   const highlight = row.this_period > 0 ? "bg-[rgba(91,134,153,0.08)]" : stripe;
-  const codeColor = co ? "text-brass" : "text-[color:var(--nw-stone-blue)]";
+  const codeColor = co ? "text-[color:var(--nw-warn)]" : "text-[color:var(--nw-stone-blue)]";
   return (
     <tr className={`border-t border-[var(--border-default)] ${highlight}`}>
       <td className={`py-3 px-4 ${codeColor} font-mono text-xs font-bold sticky left-0 z-[1] ${highlight || "bg-[var(--bg-card)]"}`}>
@@ -889,7 +889,7 @@ function G703RowView({
       </td>
       <td className="py-3 px-4 text-[color:var(--text-primary)]">
         {row.description}
-        {co && <span className="ml-2 text-[10px] text-brass uppercase tracking-wider">CO</span>}
+        {co && <span className="ml-2 text-[10px] text-[color:var(--nw-warn)] uppercase tracking-wider">CO</span>}
       </td>
       <td className="py-3 px-4 text-[color:var(--text-primary)] text-right">
         {formatCents(row.scheduled_value)}
@@ -917,7 +917,7 @@ function G703RowView({
       </td>
       <td className="py-3 px-4 text-right">
         {row.retainage > 0 ? (
-          <span className="text-brass">{formatCents(row.retainage)}</span>
+          <span className="text-[color:var(--nw-warn)]">{formatCents(row.retainage)}</span>
         ) : (
           <span className="text-[color:var(--text-secondary)]">—</span>
         )}
@@ -935,7 +935,7 @@ function badgeClass(status: string): string {
   if (["approved", "locked", "paid"].includes(status))
     return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
   if (status === "draft" || status === "pm_review")
-    return "bg-transparent text-brass border border-brass";
+    return "bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]";
   if (status === "void") return "bg-transparent text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.5)]";
   return "bg-transparent text-[color:var(--text-muted)] border border-[var(--border-default)]-light";
 }
@@ -943,13 +943,13 @@ function badgeClass(status: string): string {
 function paymentBadge(status: string | null): string {
   if (status === "paid") return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
   if (status === "scheduled") return "bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)]";
-  if (status === "partial") return "bg-transparent text-brass border border-brass";
+  if (status === "partial") return "bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]";
   return "bg-transparent text-[color:var(--text-secondary)] border border-[var(--border-default)]-light";
 }
 
 function releaseBadge(status: string): string {
   if (status === "received") return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
-  if (status === "pending") return "bg-transparent text-brass border border-brass";
+  if (status === "pending") return "bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]";
   if (status === "waived" || status === "not_required")
     return "bg-transparent text-[color:var(--text-secondary)] border border-[var(--border-default)]-light";
   return "bg-transparent text-[color:var(--text-secondary)] border border-[var(--border-default)]-light";
@@ -1006,7 +1006,7 @@ function G702Row({
       </div>
       <span
         className={`font-display text-sm ${
-          highlight ? "text-brass font-medium" : bold ? "text-[color:var(--text-primary)] font-medium" : "text-[color:var(--text-primary)]"
+          highlight ? "text-[color:var(--nw-warn)] font-medium" : bold ? "text-[color:var(--text-primary)] font-medium" : "text-[color:var(--text-primary)]"
         }`}
       >
         {formatCents(value)}

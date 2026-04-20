@@ -60,8 +60,8 @@ export function confidenceColor(score: number): string {
 export function statusBadgeOutline(status: string): string {
  if (["pm_approved", "qa_approved", "pushed_to_qb"].includes(status)) return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
  if (["in_draw", "paid"].includes(status)) return "bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)]";
- if (["pm_review", "ai_processed", "qa_review", "received", "info_requested"].includes(status)) return "bg-transparent text-brass border border-brass";
- if (["pm_held"].includes(status)) return "bg-transparent text-brass border border-brass";
+ if (["pm_review", "ai_processed", "qa_review", "received", "info_requested"].includes(status)) return "bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]";
+ if (["pm_held"].includes(status)) return "bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]";
  if (["qa_kicked_back", "pm_denied", "void", "qb_failed"].includes(status)) return "bg-transparent text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.5)]";
  return "bg-transparent text-[color:var(--text-muted)] border border-[var(--border-strong)]";
 }

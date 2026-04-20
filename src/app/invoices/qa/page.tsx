@@ -143,7 +143,7 @@ export default function QaQueuePage() {
  ) : "—"}
  </td>
  <td className="py-4 px-5 text-right">
- <span className={`text-sm font-medium ${daysAgo(inv.received_date) > 5 ? "text-[color:var(--nw-danger)]" : daysAgo(inv.received_date) > 2 ? "text-brass" : "text-[color:var(--text-secondary)]"}`}>
+ <span className={`text-sm font-medium ${daysAgo(inv.received_date) > 5 ? "text-[color:var(--nw-danger)]" : daysAgo(inv.received_date) > 2 ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-secondary)]"}`}>
  {daysAgo(inv.received_date)}d
  </span>
  </td>

@@ -413,7 +413,7 @@ export default function PaymentsPage() {
                         <td className="py-3 px-4 text-right">
                           <NwMoney cents={inv.total_amount} />
                           {inv.payment_status === "partial" && (
-                            <div className="text-[10px] text-brass mt-0.5">
+                            <div className="text-[10px] text-[color:var(--nw-warn)] mt-0.5">
                               paid <NwMoney cents={inv.payment_amount ?? 0} size="sm" variant="muted" />
                             </div>
                           )}
@@ -467,7 +467,7 @@ export default function PaymentsPage() {
                           const days = ref
                             ? Math.floor((Date.now() - new Date(ref + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24))
                             : 0;
-                          const color = b === "90_plus" ? "text-[color:var(--nw-danger)]" : "text-brass";
+                          const color = b === "90_plus" ? "text-[color:var(--nw-danger)]" : "text-[color:var(--nw-warn)]";
                           return (
                             <tr key={inv.id} className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
                               <td className="py-3 px-4 text-[color:var(--text-primary)]">{inv.vendor_name_raw ?? "Unknown"}</td>
@@ -541,8 +541,8 @@ function AgingCard({
   warn?: boolean;
   danger?: boolean;
 }) {
-  const textColor = danger ? "text-[color:var(--nw-danger)]" : warn ? "text-brass" : "text-[color:var(--text-primary)]";
-  const borderColor = danger ? "border-[rgba(176,85,78,0.35)]" : warn ? "border-brass/40" : "border-[var(--border-default)]";
+  const textColor = danger ? "text-[color:var(--nw-danger)]" : warn ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-primary)]";
+  const borderColor = danger ? "border-[rgba(176,85,78,0.35)]" : warn ? "border-[rgba(201,138,59,0.35)]" : "border-[var(--border-default)]";
   return (
     <div className={`bg-[var(--bg-card)] border ${borderColor} px-4 py-3`}>
       <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">{label}</p>

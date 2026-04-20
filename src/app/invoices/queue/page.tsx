@@ -1010,7 +1010,7 @@ export default function QueuePage() {
  const aging = agingBadgeInfo(d);
  return (
  <>
- <span className={`text-sm font-medium ${d > 5 ? "text-[color:var(--nw-danger)]" : d > 2 ? "text-brass" : "text-[color:var(--text-secondary)]"}`}>
+ <span className={`text-sm font-medium ${d > 5 ? "text-[color:var(--nw-danger)]" : d > 2 ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-secondary)]"}`}>
  {d}d
  </span>
  {aging && <NwBadge variant={aging.variant} size="sm">{aging.label}</NwBadge>}
@@ -1273,7 +1273,7 @@ export default function QueuePage() {
  const aging = agingBadgeInfo(d);
  return (
  <div className="flex items-center justify-end gap-1.5">
- <span className={`text-sm font-medium ${d > 5 ? "text-[color:var(--nw-danger)]" : d > 2 ? "text-brass" : "text-[color:var(--text-secondary)]"}`}>
+ <span className={`text-sm font-medium ${d > 5 ? "text-[color:var(--nw-danger)]" : d > 2 ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-secondary)]"}`}>
  {d}d
  </span>
  {aging && <NwBadge variant={aging.variant} size="sm">{aging.label}</NwBadge>}
@@ -1419,7 +1419,7 @@ export default function QueuePage() {
  <button
  onClick={handleBatchHold}
  disabled={!holdNote.trim() || batchProcessing}
- className="flex-1 px-4 py-2.5 text-sm font-medium bg-brass text-[color:var(--bg-page)] hover:bg-brass-hover transition-colors disabled:opacity-50"
+ className="flex-1 px-4 py-2.5 text-sm font-medium bg-[var(--nw-warn)] text-[color:var(--bg-page)] hover:bg-[rgba(201,138,59,0.85)] transition-colors disabled:opacity-50"
  >
  Hold
  </button>

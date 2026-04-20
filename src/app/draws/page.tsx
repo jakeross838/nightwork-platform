@@ -137,7 +137,7 @@ export default function DrawsPage() {
  onClick={() => window.location.href = `/draws/${d.id}`}>
  <td className="py-4 px-5 text-[color:var(--text-primary)] font-display font-medium">
  #{d.draw_number}
- {d.revision_number > 0 && <span className="text-brass ml-1 text-xs">Rev {d.revision_number}</span>}
+ {d.revision_number > 0 && <span className="text-[color:var(--nw-warn)] ml-1 text-xs">Rev {d.revision_number}</span>}
  </td>
  <td className="py-4 px-5 text-[color:var(--text-muted)]">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
  <td className="py-4 px-5 text-[color:var(--text-muted)]">{formatDate(d.application_date)}</td>

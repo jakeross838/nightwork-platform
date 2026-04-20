@@ -41,11 +41,11 @@ const ALIAS: Record<string, string> = {
 };
 
 const BRANCH_COLORS: Record<string, string> = {
-  pm_held: "bg-brass",
+  pm_held: "bg-[var(--nw-warn)]",
   pm_denied: "bg-[var(--nw-danger)]",
   qa_kicked_back: "bg-[var(--nw-danger)]",
   void: "bg-[var(--nw-danger)]",
-  info_requested: "bg-brass",
+  info_requested: "bg-[var(--nw-warn)]",
 };
 
 function statusColor(key: string): string {

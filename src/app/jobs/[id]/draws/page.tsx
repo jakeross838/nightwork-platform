@@ -161,7 +161,7 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
                     <td className="px-4 py-3 text-[color:var(--text-primary)] font-display font-medium">
                       #{d.draw_number}
                       {d.revision_number > 0 && (
-                        <span className="text-brass ml-1 text-xs">Rev {d.revision_number}</span>
+                        <span className="text-[color:var(--nw-warn)] ml-1 text-xs">Rev {d.revision_number}</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-[color:var(--text-muted)]">

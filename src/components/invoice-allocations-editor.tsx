@@ -147,7 +147,7 @@ export default function InvoiceAllocationsEditor({
       </div>
 
       {locked && (
-        <div className="mb-2 text-[11px] text-brass border border-brass/40 bg-brass/5 px-2 py-1">
+        <div className="mb-2 text-[11px] text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.35)] bg-[rgba(201,138,59,0.08)] px-2 py-1">
           Cannot edit: this invoice is on a submitted draw.
         </div>
       )}

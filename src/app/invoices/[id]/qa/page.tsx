@@ -35,7 +35,7 @@ interface InvoiceData {
 
 function statusDotColor(newStatus: string): string {
  if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-[var(--nw-success)]";
- if (["pm_held", "request_info"].includes(newStatus)) return "bg-brass";
+ if (["pm_held", "request_info"].includes(newStatus)) return "bg-[var(--nw-warn)]";
  if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-[var(--nw-danger)]";
  return "bg-[var(--nw-stone-blue)]";
 }
@@ -268,7 +268,7 @@ export default function QaReviewPage() {
  </td>
  <td className="py-2 px-3 text-center">
  {li.is_change_order ? (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-brass border border-brass">
+ <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]">
  {li.co_reference || "CO"}
  </span>
  ) : (
@@ -331,7 +331,7 @@ export default function QaReviewPage() {
  <div className="mt-5 space-y-2.5 text-sm">
  <div className="flex justify-between"><span className="text-[color:var(--text-secondary)]">Received</span><span className="text-[color:var(--text-primary)]">{formatDate(invoice.received_date)}</span></div>
  <div className="flex justify-between"><span className="text-[color:var(--text-secondary)]">Scheduled</span><span className="text-[color:var(--text-primary)]">{formatDate(invoice.payment_date)}</span></div>
- <div className="flex justify-between border-t border-[var(--border-default)] pt-2.5"><span className="text-[color:var(--text-secondary)]">Amount</span><span className="text-brass font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
+ <div className="flex justify-between border-t border-[var(--border-default)] pt-2.5"><span className="text-[color:var(--text-secondary)]">Amount</span><span className="text-[color:var(--nw-warn)] font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
  </div>
  </div>
 

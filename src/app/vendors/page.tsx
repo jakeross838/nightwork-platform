@@ -324,7 +324,7 @@ export default function VendorsPage() {
                 <button
                   onClick={handleMerge}
                   disabled={!mergePrimaryId || merging}
-                  className="px-4 py-2 bg-brass hover:bg-brass/80 text-[color:var(--bg-page)] text-sm font-medium transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-[var(--nw-warn)] hover:bg-[var(--nw-warn)]/80 text-[color:var(--bg-page)] text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   {merging ? "Merging..." : "Confirm Merge"}
                 </button>
