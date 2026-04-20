@@ -791,12 +791,12 @@ export default function AllInvoicesPage() {
  <InvoiceUploadModal open={uploadOpen} onClose={() => {
  setUploadOpen(false);
  if (searchParams.get("action")) router.replace("/invoices");
- window.location.reload();
+ router.refresh();
  }} />
  <InvoiceImportModal open={importOpen} onClose={() => {
  setImportOpen(false);
  if (searchParams.get("action")) router.replace("/invoices");
- window.location.reload();
+ router.refresh();
  }} />
  </AppShell>
  );

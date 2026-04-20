@@ -1177,7 +1177,7 @@ export default function InvoiceReviewPage() {
  body: JSON.stringify({ action: "reopen", note: "Reopened for review" }),
  });
  setSaving(false);
- if (res.ok) window.location.reload();
+ if (res.ok) router.refresh();
  };
 
  const handleSavePaymentTracking = async () => {

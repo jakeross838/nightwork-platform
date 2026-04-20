@@ -7,12 +7,18 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 
+// An action is either a link (href) or a button (onClick) — never both.
+// The discriminated union surfaces misuse at the type level.
+type EmptyStateAction =
+  | { label: string; href: string; onClick?: never }
+  | { label: string; onClick: () => void; href?: never };
+
 interface EmptyStateProps {
   icon?: ReactNode;
   title: string;
   message: string;
-  primaryAction?: { label: string; href?: string; onClick?: () => void };
-  secondaryAction?: { label: string; href?: string; onClick?: () => void };
+  primaryAction?: EmptyStateAction;
+  secondaryAction?: EmptyStateAction;
   variant?: "default" | "success";
 }
 

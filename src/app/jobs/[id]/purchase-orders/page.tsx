@@ -287,7 +287,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
         onClose={() => {
           setImportOpen(false);
           if (searchParams.get("action")) router.replace(`/jobs/${params.id}/purchase-orders`);
-          window.location.reload();
+          router.refresh();
         }}
       />
     </>
