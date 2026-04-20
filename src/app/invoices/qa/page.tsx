@@ -94,7 +94,7 @@ export default function QaQueuePage() {
  message="No invoices waiting for accounting review. PM-approved invoices will appear here."
  />
  ) : (
- <div className="overflow-x-auto border border-brand-border animate-fade-up">
+ <div className="overflow-x-auto border border-[var(--border-default)] animate-fade-up">
  <table className="w-full text-sm">
  <thead>
  <tr
@@ -115,35 +115,35 @@ export default function QaQueuePage() {
  const approval = getApprovalInfo(inv.status_history ?? []);
  return (
  <tr key={inv.id}
- className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors animate-fade-up"
+ className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] cursor-pointer transition-colors animate-fade-up"
  style={{ animationDelay: `${0.05 + i * 0.03}s` }}
  onClick={() => window.location.href = `/invoices/${inv.id}/qa`}
  >
- <td className="py-4 px-5 text-cream font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
- <td className="py-4 px-5 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+ <td className="py-4 px-5 text-[color:var(--text-primary)] font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
+ <td className="py-4 px-5 text-[color:var(--text-muted)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
  <td className="py-4 px-5">
  {inv.jobs?.name ? (
  <NwBadge variant="info" size="sm">{inv.jobs.name}</NwBadge>
  ) : (
- <span className="text-cream-dim">—</span>
+ <span className="text-[color:var(--text-secondary)]">—</span>
  )}
  </td>
- <td className="py-4 px-5 text-cream-muted text-xs">
+ <td className="py-4 px-5 text-[color:var(--text-muted)] text-xs">
  {inv.cost_codes ? `${inv.cost_codes.code} — ${inv.cost_codes.description}` : "—"}
  </td>
  <td className="py-4 px-5 text-right">
  <NwMoney cents={inv.total_amount} />
  </td>
- <td className="py-4 px-5 text-cream-dim text-xs">
+ <td className="py-4 px-5 text-[color:var(--text-secondary)] text-xs">
  {approval ? (
  <>
- <span className="text-cream-muted">{approval.who}</span>
- <span className="text-cream-dim"> — {formatDateTime(approval.when)}</span>
+ <span className="text-[color:var(--text-muted)]">{approval.who}</span>
+ <span className="text-[color:var(--text-secondary)]"> — {formatDateTime(approval.when)}</span>
  </>
  ) : "—"}
  </td>
  <td className="py-4 px-5 text-right">
- <span className={`text-sm font-medium ${daysAgo(inv.received_date) > 5 ? "text-status-danger" : daysAgo(inv.received_date) > 2 ? "text-brass" : "text-cream-dim"}`}>
+ <span className={`text-sm font-medium ${daysAgo(inv.received_date) > 5 ? "text-[color:var(--nw-danger)]" : daysAgo(inv.received_date) > 2 ? "text-brass" : "text-[color:var(--text-secondary)]"}`}>
  {daysAgo(inv.received_date)}d
  </span>
  </td>

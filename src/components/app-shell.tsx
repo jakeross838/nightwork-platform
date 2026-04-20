@@ -63,14 +63,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 onClick={closeDrawer}
               />
               {/* Drawer panel */}
-              <div className="fixed inset-y-0 left-0 z-30 w-[280px] bg-brand-card shadow-2xl md:hidden overflow-hidden flex flex-col animate-slide-in-left">
-                <div className="flex items-center justify-between p-3 border-b border-brand-border">
-                  <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim font-medium">
+              <div className="fixed inset-y-0 left-0 z-30 w-[280px] bg-[var(--bg-card)] shadow-2xl md:hidden overflow-hidden flex flex-col animate-slide-in-left">
+                <div className="flex items-center justify-between p-3 border-b border-[var(--border-default)]">
+                  <span className="text-[10px] tracking-[0.12em] uppercase text-[color:var(--text-secondary)] font-medium">
                     Jobs
                   </span>
                   <button
                     onClick={closeDrawer}
-                    className="w-7 h-7 flex items-center justify-center text-cream-dim hover:text-cream"
+                    className="w-7 h-7 flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
                     aria-label="Close sidebar"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

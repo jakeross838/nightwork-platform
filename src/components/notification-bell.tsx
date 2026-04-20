@@ -99,22 +99,22 @@ export default function NotificationBell({ userId, className }: { userId: string
           <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-status-danger text-white text-[10px] font-bold rounded-full border border-teal">
+          <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-[var(--nw-danger)] text-white text-[10px] font-bold rounded-full border border-[var(--nw-stone-blue)]">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="fixed sm:absolute right-0 sm:right-0 top-14 sm:top-full sm:mt-1 left-0 sm:left-auto mx-2 sm:mx-0 sm:w-[360px] max-h-[70vh] sm:max-h-[520px] overflow-hidden flex flex-col bg-brand-card border border-brand-border shadow-2xl z-50">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-brand-border bg-brand-surface/60">
-            <p className="text-[11px] tracking-[0.12em] uppercase text-cream-dim font-medium">
+        <div className="fixed sm:absolute right-0 sm:right-0 top-14 sm:top-full sm:mt-1 left-0 sm:left-auto mx-2 sm:mx-0 sm:w-[360px] max-h-[70vh] sm:max-h-[520px] overflow-hidden flex flex-col bg-[var(--bg-card)] border border-[var(--border-default)] shadow-2xl z-50">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-default)] bg-[rgba(91,134,153,0.08)]">
+            <p className="text-[11px] tracking-[0.12em] uppercase text-[color:var(--text-secondary)] font-medium">
               Notifications
             </p>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-[11px] text-teal hover:underline underline-offset-2"
+                className="text-[11px] text-[color:var(--nw-stone-blue)] hover:underline underline-offset-2"
               >
                 Mark all read
               </button>
@@ -123,36 +123,36 @@ export default function NotificationBell({ userId, className }: { userId: string
           <div className="flex-1 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="px-4 py-12 text-center">
-                <p className="text-sm text-cream-dim">No notifications yet</p>
-                <p className="mt-1 text-xs text-cream-dim/70">
+                <p className="text-sm text-[color:var(--text-secondary)]">No notifications yet</p>
+                <p className="mt-1 text-xs text-[color:var(--text-secondary)]/70">
                   You&apos;ll see updates here when invoices and draws move forward.
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-brand-row-border">
+              <ul className="divide-y divide-[var(--border-default)]">
                 {notifications.map((n) => {
                   const inner = (
                     <div
-                      className={`px-4 py-3 flex gap-3 hover:bg-brand-surface/60 transition-colors ${
-                        n.read ? "" : "bg-teal/5"
+                      className={`px-4 py-3 flex gap-3 hover:bg-[rgba(91,134,153,0.08)] transition-colors ${
+                        n.read ? "" : "bg-[rgba(91,134,153,0.08)]"
                       }`}
                     >
                       <span
                         className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
-                          n.read ? "bg-transparent border border-cream-dim/40" : "bg-teal"
+                          n.read ? "bg-transparent border border-[rgba(59,88,100,0.28)]" : "bg-[var(--nw-stone-blue)]"
                         }`}
                         aria-hidden
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-cream font-medium leading-tight">
+                        <p className="text-sm text-[color:var(--text-primary)] font-medium leading-tight">
                           {n.title}
                         </p>
                         {n.body && (
-                          <p className="mt-0.5 text-xs text-cream-muted line-clamp-2">
+                          <p className="mt-0.5 text-xs text-[color:var(--text-muted)] line-clamp-2">
                             {n.body}
                           </p>
                         )}
-                        <p className="mt-1 text-[11px] text-cream-dim">
+                        <p className="mt-1 text-[11px] text-[color:var(--text-secondary)]">
                           {timeAgo(n.created_at)}
                         </p>
                       </div>

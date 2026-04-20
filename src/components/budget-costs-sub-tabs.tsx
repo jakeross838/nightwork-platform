@@ -18,7 +18,7 @@ export default function BudgetCostsSubTabs({
   active: BudgetCostsSection;
 }) {
   return (
-    <div className="flex items-center gap-1 mb-5 border-b border-brand-border/50">
+    <div className="flex items-center gap-1 mb-5 border-b border-[var(--border-default)]/50">
       {TABS.map((tab) => {
         const isActive = tab.key === active;
         return (
@@ -26,12 +26,12 @@ export default function BudgetCostsSubTabs({
             key={tab.key}
             href={`/jobs/${jobId}${tab.slug}`}
             className={`relative px-3 py-2 text-xs tracking-[0.04em] font-medium transition-colors whitespace-nowrap ${
-              isActive ? "text-cream" : "text-cream-dim hover:text-cream"
+              isActive ? "text-[color:var(--text-primary)]" : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
             }`}
           >
             {tab.label}
             {isActive && (
-              <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-teal" />
+              <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[var(--nw-stone-blue)]" />
             )}
           </Link>
         );

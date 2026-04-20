@@ -165,31 +165,31 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
             </Link>
           )}
           {role === "pm" && (
-            <div className="flex gap-1 bg-brand-surface border border-brand-border p-0.5">
+            <div className="flex gap-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] p-0.5">
               <button type="button" onClick={() => setFilter("mine")}
                 className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
-                  filter === "mine" ? "bg-brand-card text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+                  filter === "mine" ? "bg-[var(--bg-card)] text-[color:var(--text-primary)] font-medium shadow-sm" : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
                 }`}
                 style={{ fontFamily: "var(--font-mono)" }}
               >My Jobs</button>
               <button type="button" onClick={() => setFilter("all")}
                 className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
-                  filter === "all" ? "bg-brand-card text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+                  filter === "all" ? "bg-[var(--bg-card)] text-[color:var(--text-primary)] font-medium shadow-sm" : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
                 }`}
                 style={{ fontFamily: "var(--font-mono)" }}
               >All Jobs</button>
             </div>
           )}
           <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-2 py-1.5 text-xs border border-brand-border bg-brand-card text-cream placeholder:text-cream-dim/50 focus:outline-none focus:border-nw-stone-blue" />
+            className="w-full px-2 py-1.5 text-xs border border-[var(--border-default)] bg-[var(--bg-card)] text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)]/50 focus:outline-none focus:border-nw-stone-blue" />
         </div>
         {selectedJob && (
-          <div className="px-3 pb-3 border-b border-brand-border bg-[rgba(91,134,153,0.05)]">
-            <p className="text-sm font-medium text-cream">{selectedJob.name}</p>
+          <div className="px-3 pb-3 border-b border-[var(--border-default)] bg-[rgba(91,134,153,0.05)]">
+            <p className="text-sm font-medium text-[color:var(--text-primary)]">{selectedJob.name}</p>
             <div className="flex items-center gap-1.5 mt-1">
               <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`} />
               <span
-                className="text-[10px] uppercase tracking-wider text-cream-dim"
+                className="text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)]"
                 style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.08em" }}
               >{statusLabel(selectedJob.status)}</span>
             </div>
@@ -201,14 +201,14 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
               <div className="w-5 h-5 border-2 border-[rgba(91,134,153,0.3)] border-t-nw-stone-blue animate-spin mx-auto" />
             </div>
           ) : otherJobs.length === 0 ? (
-            <p className="p-3 text-xs text-cream-dim text-center">{search ? "No matches" : "No jobs"}</p>
+            <p className="p-3 text-xs text-[color:var(--text-secondary)] text-center">{search ? "No matches" : "No jobs"}</p>
           ) : (
             otherJobs.map((j) => (
               <Link key={j.id} href={jobHref(j.id)}
-                className="flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-[rgba(91,134,153,0.04)] border-b border-brand-border/30"
+                className="flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-[rgba(91,134,153,0.04)] border-b border-[var(--border-default)]/30"
                 title={j.address ?? j.name}>
                 <span className={`shrink-0 inline-block w-1.5 h-1.5 rounded-full ${statusDot(j.status)}`} />
-                <span className="truncate text-cream text-[13px]">{j.name}</span>
+                <span className="truncate text-[color:var(--text-primary)] text-[13px]">{j.name}</span>
               </Link>
             ))
           )}
@@ -220,10 +220,10 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
   // Collapsed rail
   if (collapsed) {
     return (
-      <aside className="hidden md:flex flex-col items-center w-12 shrink-0 border-r border-brand-border bg-brand-card py-4 gap-3">
+      <aside className="hidden md:flex flex-col items-center w-12 shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-card)] py-4 gap-3">
         <button
           onClick={toggleCollapse}
-          className="w-8 h-8 flex items-center justify-center text-cream-dim hover:text-cream hover:bg-brand-surface transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
           title="Expand sidebar"
           aria-label="Expand sidebar"
         >
@@ -254,19 +254,19 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
 
   // Expanded sidebar
   return (
-    <aside className="hidden md:flex flex-col w-[220px] shrink-0 border-r border-brand-border bg-brand-card overflow-hidden">
+    <aside className="hidden md:flex flex-col w-[220px] shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
       {/* Header */}
-      <div className="p-3 border-b border-brand-border space-y-2">
+      <div className="p-3 border-b border-[var(--border-default)] space-y-2">
         <div className="flex items-center justify-between">
           <span
-            className="text-[10px] tracking-[0.12em] uppercase text-cream-dim font-medium"
+            className="text-[10px] tracking-[0.12em] uppercase text-[color:var(--text-secondary)] font-medium"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             Jobs
           </span>
           <button
             onClick={toggleCollapse}
-            className="w-6 h-6 flex items-center justify-center text-cream-dim hover:text-cream transition-colors"
+            className="w-6 h-6 flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors"
             title="Collapse sidebar"
             aria-label="Collapse sidebar"
           >
@@ -287,12 +287,12 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
 
         {/* Filter toggle — only shown for PMs who have a meaningful distinction */}
         {role === "pm" && (
-          <div className="flex gap-1 bg-brand-surface border border-brand-border p-0.5">
+          <div className="flex gap-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] p-0.5">
             <button
               type="button"
               onClick={() => setFilter("mine")}
               className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
-                filter === "mine" ? "bg-brand-card text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+                filter === "mine" ? "bg-[var(--bg-card)] text-[color:var(--text-primary)] font-medium shadow-sm" : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
               }`}
               style={{ fontFamily: "var(--font-mono)" }}
             >
@@ -302,7 +302,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
               type="button"
               onClick={() => setFilter("all")}
               className={`flex-1 py-1 text-[10px] uppercase tracking-wider transition-colors ${
-                filter === "all" ? "bg-brand-card text-cream font-medium shadow-sm" : "text-cream-dim hover:text-cream"
+                filter === "all" ? "bg-[var(--bg-card)] text-[color:var(--text-primary)] font-medium shadow-sm" : "text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
               }`}
               style={{ fontFamily: "var(--font-mono)" }}
             >
@@ -317,14 +317,14 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-2 py-1.5 text-xs border border-brand-border bg-brand-card text-cream placeholder:text-cream-dim/50 focus:outline-none focus:border-nw-stone-blue"
+          className="w-full px-2 py-1.5 text-xs border border-[var(--border-default)] bg-[var(--bg-card)] text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)]/50 focus:outline-none focus:border-nw-stone-blue"
         />
 
         {/* Sort */}
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
-          className="w-full px-2 py-1 text-[10px] border border-brand-border bg-brand-card text-cream-dim focus:outline-none focus:border-nw-stone-blue"
+          className="w-full px-2 py-1 text-[10px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[color:var(--text-secondary)] focus:outline-none focus:border-nw-stone-blue"
           style={{ fontFamily: "var(--font-mono)" }}
         >
           <option value="alpha">A-Z</option>
@@ -335,22 +335,22 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
 
       {/* Selected job details */}
       {selectedJob && (
-        <div className="p-3 border-b border-brand-border bg-[rgba(91,134,153,0.05)]">
-          <p className="text-sm font-medium text-cream truncate">{selectedJob.name}</p>
+        <div className="p-3 border-b border-[var(--border-default)] bg-[rgba(91,134,153,0.05)]">
+          <p className="text-sm font-medium text-[color:var(--text-primary)] truncate">{selectedJob.name}</p>
           <div className="flex items-center gap-1.5 mt-1">
             <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot(selectedJob.status)}`} />
             <span
-              className="text-[10px] uppercase text-cream-dim"
+              className="text-[10px] uppercase text-[color:var(--text-secondary)]"
               style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.08em" }}
             >
               {statusLabel(selectedJob.status)}
             </span>
           </div>
           {selectedJob.client_name && (
-            <p className="text-[11px] text-cream-dim mt-1.5 truncate">{selectedJob.client_name}</p>
+            <p className="text-[11px] text-[color:var(--text-secondary)] mt-1.5 truncate">{selectedJob.client_name}</p>
           )}
           {selectedJob.address && (
-            <p className="text-[11px] text-cream-dim mt-0.5 truncate">{selectedJob.address}</p>
+            <p className="text-[11px] text-[color:var(--text-secondary)] mt-0.5 truncate">{selectedJob.address}</p>
           )}
           <div className="flex items-center gap-2 mt-2">
             {selectedJob.client_email && (
@@ -381,7 +381,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
       <div className="flex-1 overflow-y-auto">
         <Link
           href="/jobs"
-          className="block px-3 py-2 text-[10px] uppercase tracking-[0.08em] text-cream-dim hover:text-cream border-b border-brand-border/50"
+          className="block px-3 py-2 text-[10px] uppercase tracking-[0.08em] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] border-b border-[var(--border-default)]/50"
           style={{ fontFamily: "var(--font-mono)" }}
         >
           All {filtered.length} Job{filtered.length !== 1 ? "s" : ""}
@@ -391,7 +391,7 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
             <div className="w-5 h-5 border-2 border-[rgba(91,134,153,0.3)] border-t-nw-stone-blue animate-spin mx-auto" />
           </div>
         ) : otherJobs.length === 0 ? (
-          <p className="p-3 text-xs text-cream-dim text-center">
+          <p className="p-3 text-xs text-[color:var(--text-secondary)] text-center">
             {search ? "No matches" : "No other jobs"}
           </p>
         ) : (
@@ -399,11 +399,11 @@ export default function JobSidebar({ mobile }: { mobile?: boolean } = {}) {
             <Link
               key={j.id}
               href={jobHref(j.id)}
-              className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[rgba(91,134,153,0.04)] border-b border-brand-border/30"
+              className="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[rgba(91,134,153,0.04)] border-b border-[var(--border-default)]/30"
               title={j.address ?? j.name}
             >
               <span className={`shrink-0 inline-block w-1.5 h-1.5 rounded-full ${statusDot(j.status)}`} />
-              <span className="truncate text-cream text-[13px]">{j.name}</span>
+              <span className="truncate text-[color:var(--text-primary)] text-[13px]">{j.name}</span>
             </Link>
           ))
         )}

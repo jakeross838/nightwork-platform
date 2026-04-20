@@ -253,11 +253,11 @@ export default function BulkLienReleasesPage() {
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           className={`mb-6 border-2 border-dashed p-6 text-center transition-colors ${
-            dragOver ? "border-teal bg-teal/5" : "border-brand-border bg-brand-card"
+            dragOver ? "border-[var(--nw-stone-blue)] bg-[rgba(91,134,153,0.08)]" : "border-[var(--border-default)] bg-[var(--bg-card)]"
           }`}
         >
-          <p className="font-display text-cream">Drop signed lien releases here</p>
-          <p className="text-sm text-cream-dim mt-1">
+          <p className="font-display text-[color:var(--text-primary)]">Drop signed lien releases here</p>
+          <p className="text-sm text-[color:var(--text-secondary)] mt-1">
             PDFs, JPG/PNG supported. Files are matched to open lien releases by the vendor name and (if present) amount in the filename.
           </p>
           <div className="mt-3">
@@ -282,12 +282,12 @@ export default function BulkLienReleasesPage() {
         </div>
 
         {bulkResults && (
-          <div className="mb-6 bg-brand-card border border-teal/30 p-4 text-sm">
-            <p className="font-display text-cream mb-2">Bulk upload results</p>
-            <ul className="divide-y divide-brand-row-border">
+          <div className="mb-6 bg-[var(--bg-card)] border border-[rgba(91,134,153,0.3)] p-4 text-sm">
+            <p className="font-display text-[color:var(--text-primary)] mb-2">Bulk upload results</p>
+            <ul className="divide-y divide-[var(--border-default)]">
               {bulkResults.map((r, i) => (
                 <li key={i} className="py-2 flex items-center gap-3 flex-wrap">
-                  <span className="font-mono text-xs text-cream-dim truncate max-w-[320px]">{r.file}</span>
+                  <span className="font-mono text-xs text-[color:var(--text-secondary)] truncate max-w-[320px]">{r.file}</span>
                   {r.releaseId ? (
                     <>
                       <NwBadge
@@ -302,12 +302,12 @@ export default function BulkLienReleasesPage() {
                       >
                         {r.matchScore}
                       </NwBadge>
-                      <span className="text-cream">{r.vendor}</span>
-                      <span className="text-cream-muted">· {r.job}</span>
-                      <span className="text-cream-dim tabular-nums ml-auto">{r.amount != null ? formatCents(r.amount) : "—"}</span>
+                      <span className="text-[color:var(--text-primary)]">{r.vendor}</span>
+                      <span className="text-[color:var(--text-muted)]">· {r.job}</span>
+                      <span className="text-[color:var(--text-secondary)] tabular-nums ml-auto">{r.amount != null ? formatCents(r.amount) : "—"}</span>
                     </>
                   ) : (
-                    <span className="text-status-danger text-xs">No vendor match — use per-row upload below</span>
+                    <span className="text-[color:var(--nw-danger)] text-xs">No vendor match — use per-row upload below</span>
                   )}
                 </li>
               ))}
@@ -339,12 +339,12 @@ export default function BulkLienReleasesPage() {
                 placeholder="Search vendor, job, or type…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 min-w-[240px] px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none"
+                className="flex-1 min-w-[240px] px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
               />
               <select
                 value={jobFilter}
                 onChange={(e) => setJobFilter(e.target.value)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
               >
                 <option value="">All Jobs</option>
                 {jobs.map((j) => (
@@ -354,7 +354,7 @@ export default function BulkLienReleasesPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                className="px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -364,10 +364,10 @@ export default function BulkLienReleasesPage() {
               </select>
             </div>
 
-            <div className="bg-brand-card border border-brand-border overflow-x-auto">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium">
+                  <tr className="border-b border-[var(--border-default)] text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-secondary)] font-medium">
                     <th className="text-left px-4 py-3 font-medium">Vendor</th>
                     <th className="text-left px-4 py-3 font-medium">Job</th>
                     <th className="text-left px-4 py-3 font-medium">Draw</th>
@@ -383,25 +383,25 @@ export default function BulkLienReleasesPage() {
                   {filtered.map((r) => {
                     const missing = !r.document_url && (r.status === "pending" || r.status === "received");
                     return (
-                      <tr key={r.id} className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface/40">
-                        <td className="px-4 py-3 text-cream">{r.vendors?.name ?? "—"}</td>
-                        <td className="px-4 py-3 text-cream-muted">
+                      <tr key={r.id} className="border-b border-[var(--border-default)] last:border-0 hover:bg-[rgba(91,134,153,0.06)]">
+                        <td className="px-4 py-3 text-[color:var(--text-primary)]">{r.vendors?.name ?? "—"}</td>
+                        <td className="px-4 py-3 text-[color:var(--text-muted)]">
                           {r.jobs ? (
-                            <Link href={`/jobs/${r.jobs.id}/lien-releases`} className="hover:text-teal hover:underline">
+                            <Link href={`/jobs/${r.jobs.id}/lien-releases`} className="hover:text-[color:var(--nw-stone-blue)] hover:underline">
                               {r.jobs.name}
                             </Link>
                           ) : "—"}
                         </td>
-                        <td className="px-4 py-3 text-cream-muted">
+                        <td className="px-4 py-3 text-[color:var(--text-muted)]">
                           {r.draws ? `#${r.draws.draw_number}${r.draws.revision_number > 0 ? ` Rev ${r.draws.revision_number}` : ""}` : "—"}
                         </td>
-                        <td className="px-4 py-3 text-cream-muted text-xs">
+                        <td className="px-4 py-3 text-[color:var(--text-muted)] text-xs">
                           {r.release_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <NwMoney cents={r.amount} />
                         </td>
-                        <td className="px-4 py-3 text-cream-muted text-xs">{formatDate(r.through_date)}</td>
+                        <td className="px-4 py-3 text-[color:var(--text-muted)] text-xs">{formatDate(r.through_date)}</td>
                         <td className="px-4 py-3">
                           <NwBadge variant={lienBadgeVariant(r.status)} size="sm">
                             {r.status.replace(/_/g, " ")}
@@ -409,13 +409,13 @@ export default function BulkLienReleasesPage() {
                         </td>
                         <td className="px-4 py-3 text-xs">
                           {r.document_url ? (
-                            <a href={r.document_url} target="_blank" rel="noreferrer" className="text-teal hover:underline">
+                            <a href={r.document_url} target="_blank" rel="noreferrer" className="text-[color:var(--nw-stone-blue)] hover:underline">
                               View
                             </a>
                           ) : missing ? (
-                            <span className="text-status-danger">Missing</span>
+                            <span className="text-[color:var(--nw-danger)]">Missing</span>
                           ) : (
-                            <span className="text-cream-dim">—</span>
+                            <span className="text-[color:var(--text-secondary)]">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -455,9 +455,9 @@ export default function BulkLienReleasesPage() {
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="bg-brand-card border border-brand-border p-4">
-      <p className="text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium font-medium">{label}</p>
-      <p className={`text-2xl mt-1 font-display tabular-nums ${highlight ? "text-status-danger" : "text-cream"}`}>{value}</p>
+    <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-secondary)] font-medium font-medium">{label}</p>
+      <p className={`text-2xl mt-1 font-display tabular-nums ${highlight ? "text-[color:var(--nw-danger)]" : "text-[color:var(--text-primary)]"}`}>{value}</p>
     </div>
   );
 }

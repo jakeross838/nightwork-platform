@@ -60,19 +60,19 @@ export default function SlideOutPanel({
       />
       {/* Panel */}
       <aside
-        className={`w-full ${widthClass} bg-brand-card border-l border-brand-border shadow-2xl flex flex-col animate-slide-in-right`}
+        className={`w-full ${widthClass} bg-[var(--bg-card)] border-l border-[var(--border-default)] shadow-2xl flex flex-col animate-slide-in-right`}
       >
-        <header className="flex items-start justify-between gap-3 p-5 border-b border-brand-border">
+        <header className="flex items-start justify-between gap-3 p-5 border-b border-[var(--border-default)]">
           <div className="min-w-0">
-            <h2 className="font-display text-lg text-cream truncate">{title}</h2>
+            <h2 className="font-display text-lg text-[color:var(--text-primary)] truncate">{title}</h2>
             {subtitle && (
-              <p className="mt-0.5 text-xs text-cream-dim truncate">{subtitle}</p>
+              <p className="mt-0.5 text-xs text-[color:var(--text-secondary)] truncate">{subtitle}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 w-8 h-8 flex items-center justify-center text-cream-dim hover:text-cream hover:bg-brand-surface transition-colors"
+            className="shrink-0 w-8 h-8 flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
             aria-label="Close"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

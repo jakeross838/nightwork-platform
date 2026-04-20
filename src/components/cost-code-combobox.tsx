@@ -127,17 +127,17 @@ export default function CostCodeCombobox({
   }
 
   const pad = size === "sm" ? "px-2 py-1 text-[12px]" : "px-3 py-2 text-sm";
-  const triggerClasses = `flex items-center justify-between w-full ${pad} bg-brand-surface border transition-colors cursor-pointer ${
-    open ? "border-teal" : aiFilled ? "border-teal/40" : "border-brand-border"
-  } ${disabled ? "opacity-50 pointer-events-none" : "hover:border-teal/60"} ${className}`;
+  const triggerClasses = `flex items-center justify-between w-full ${pad} bg-[var(--bg-subtle)] border transition-colors cursor-pointer ${
+    open ? "border-[var(--nw-stone-blue)]" : aiFilled ? "border-[rgba(91,134,153,0.35)]" : "border-[var(--border-default)]"
+  } ${disabled ? "opacity-50 pointer-events-none" : "hover:border-[rgba(91,134,153,0.5)]"} ${className}`;
 
   return (
     <div ref={rootRef} className="relative">
       {label && (
-        <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">
+        <label className="flex items-center gap-2 text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5">
           {label}
           {aiFilled && (
-            <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-teal border border-teal normal-case tracking-normal">
+            <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)] normal-case tracking-normal">
               AI
             </span>
           )}
@@ -159,7 +159,7 @@ export default function CostCodeCombobox({
         }}
         className={triggerClasses}
       >
-        <span className={`flex-1 truncate ${selected ? "text-cream" : "text-cream-dim"}`}>
+        <span className={`flex-1 truncate ${selected ? "text-[color:var(--text-primary)]" : "text-[color:var(--text-secondary)]"}`}>
           {selected ? `${selected.code} — ${selected.description}` : placeholder}
         </span>
         <div className="flex items-center gap-1 ml-2">
@@ -170,7 +170,7 @@ export default function CostCodeCombobox({
                 e.stopPropagation();
                 onChange(null);
               }}
-              className="text-cream-dim hover:text-cream"
+              className="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
               aria-label="Clear cost code"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -179,7 +179,7 @@ export default function CostCodeCombobox({
             </button>
           )}
           <svg
-            className={`w-4 h-4 text-cream-dim transition-transform ${open ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-[color:var(--text-secondary)] transition-transform ${open ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -191,8 +191,8 @@ export default function CostCodeCombobox({
       </div>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full min-w-[280px] bg-brand-card border border-brand-border shadow-2xl">
-          <div className="p-2 border-b border-brand-border bg-brand-surface">
+        <div className="absolute z-50 mt-1 w-full min-w-[280px] bg-[var(--bg-card)] border border-[var(--border-default)] shadow-2xl">
+          <div className="p-2 border-b border-[var(--border-default)] bg-[var(--bg-subtle)]">
             <input
               ref={inputRef}
               value={search}
@@ -201,7 +201,7 @@ export default function CostCodeCombobox({
                 setHighlight(0);
               }}
               placeholder="Type code, description, or category…"
-              className="w-full px-2 py-1.5 bg-brand-card border border-brand-border text-sm text-cream placeholder-cream-dim focus:outline-none focus:border-teal"
+              className="w-full px-2 py-1.5 bg-[var(--bg-card)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   e.preventDefault();
@@ -221,11 +221,11 @@ export default function CostCodeCombobox({
           </div>
           <div ref={listRef} className="max-h-72 overflow-y-auto" role="listbox">
             {grouped.length === 0 ? (
-              <div className="px-3 py-4 text-sm text-cream-dim text-center">No matches</div>
+              <div className="px-3 py-4 text-sm text-[color:var(--text-secondary)] text-center">No matches</div>
             ) : (
               grouped.map(([cat, items]) => (
                 <div key={cat}>
-                  <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold text-cream-dim uppercase tracking-wider bg-brand-surface border-b border-brand-border">
+                  <div className="sticky top-0 px-3 py-1.5 text-[10px] font-semibold text-[color:var(--text-secondary)] uppercase tracking-wider bg-[var(--bg-subtle)] border-b border-[var(--border-default)]">
                     {cat}
                   </div>
                   {items.map((o) => {
@@ -242,8 +242,8 @@ export default function CostCodeCombobox({
                         onMouseEnter={() => setHighlight(idx)}
                         onClick={() => commit(o.id)}
                         className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-baseline gap-2 ${
-                          isHighlighted ? "bg-teal-muted" : ""
-                        } ${isSelected ? "text-teal font-medium" : "text-cream"}`}
+                          isHighlighted ? "bg-[rgba(91,134,153,0.12)]" : ""
+                        } ${isSelected ? "text-[color:var(--nw-stone-blue)] font-medium" : "text-[color:var(--text-primary)]"}`}
                       >
                         <span className="font-mono text-[12px] shrink-0 w-14">{o.code}</span>
                         <span className="flex-1 truncate">{o.description}</span>

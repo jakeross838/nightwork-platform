@@ -383,13 +383,13 @@ export default function ImportPageContent() {
 
         {/* Status / progress card */}
         {batch && (
-          <section className="mt-8 border border-brand-border bg-brand-surface">
-            <header className="px-5 py-4 border-b border-brand-border flex items-center justify-between">
+          <section className="mt-8 border border-[var(--border-default)] bg-[var(--bg-subtle)]">
+            <header className="px-5 py-4 border-b border-[var(--border-default)] flex items-center justify-between">
               <div>
-                <div className="text-xs uppercase tracking-[0.1em] text-cream-dim">
+                <div className="text-xs uppercase tracking-[0.1em] text-[color:var(--text-secondary)]">
                   Batch
                 </div>
-                <div className="text-cream font-medium">
+                <div className="text-[color:var(--text-primary)] font-medium">
                   {counts.parsed + counts.errors + counts.duplicates + counts.sent} of {batch.total_files} processed
                 </div>
               </div>
@@ -402,9 +402,9 @@ export default function ImportPageContent() {
             </header>
 
             {/* Progress bar */}
-            <div className="h-1 bg-brand-border">
+            <div className="h-1 bg-[var(--border-default)]">
               <div
-                className="h-full bg-teal transition-all duration-500"
+                className="h-full bg-[var(--nw-stone-blue)] transition-all duration-500"
                 style={{
                   width: `${
                     batch.total_files > 0
@@ -420,12 +420,12 @@ export default function ImportPageContent() {
             </div>
 
             {/* Actions toolbar */}
-            <div className="px-5 py-3 bg-brand-bg/40 border-b border-brand-border flex items-center gap-3 flex-wrap">
+            <div className="px-5 py-3 bg-[var(--bg-page)]/40 border-b border-[var(--border-default)] flex items-center gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={doSendToQueue}
                 disabled={!done || counts.parsed === 0}
-                className="px-4 py-2 bg-teal text-white text-xs tracking-[0.08em] uppercase hover:bg-teal-hover disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-xs tracking-[0.08em] uppercase hover:bg-[var(--nw-gulf-blue)] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Send {counts.parsed} to Approval Queue
               </button>
@@ -433,20 +433,20 @@ export default function ImportPageContent() {
                 type="button"
                 onClick={doDeleteErrors}
                 disabled={!done || counts.errors === 0}
-                className="px-4 py-2 border border-brand-border text-xs tracking-[0.08em] uppercase text-cream hover:bg-brand-surface-hover disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 border border-[var(--border-default)] text-xs tracking-[0.08em] uppercase text-[color:var(--text-primary)] hover:bg-[rgba(91,134,153,0.08)] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Delete {counts.errors} Errors
               </button>
               <div className="flex-1" />
               {selected.size > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-cream-dim">
+                  <span className="text-xs text-[color:var(--text-secondary)]">
                     {selected.size} selected
                   </span>
                   <select
                     value={assignJobId}
                     onChange={(e) => setAssignJobId(e.target.value)}
-                    className="px-2 py-1.5 bg-brand-bg border border-brand-border text-xs text-cream"
+                    className="px-2 py-1.5 bg-[var(--bg-page)] border border-[var(--border-default)] text-xs text-[color:var(--text-primary)]"
                   >
                     <option value="">Assign job…</option>
                     {jobs.map((j) => (
@@ -472,7 +472,7 @@ export default function ImportPageContent() {
                 sent_to_queue_count counter above). */}
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-[0.1em] text-cream-dim border-b border-brand-border">
+                <tr className="text-left text-xs uppercase tracking-[0.1em] text-[color:var(--text-secondary)] border-b border-[var(--border-default)]">
                   <th className="px-4 py-2 w-8">
                     <input
                       type="checkbox"
@@ -497,7 +497,7 @@ export default function ImportPageContent() {
               <tbody>
                 {visibleRows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-cream-dim text-sm">
+                    <td colSpan={7} className="px-4 py-8 text-center text-[color:var(--text-secondary)] text-sm">
                       All processed rows have been sent to the approval queue.
                       Batch history kept in <span className="font-mono text-xs">sent_to_queue_count</span> above.
                     </td>
@@ -550,12 +550,12 @@ function DropZone({
       }}
       className={`cursor-pointer border border-dashed transition-all ${
         dragOver
-          ? "border-teal bg-teal/5"
-          : "border-brand-border hover:border-brand-border-hover bg-brand-surface/50"
+          ? "border-[var(--nw-stone-blue)] bg-[rgba(91,134,153,0.08)]"
+          : "border-[var(--border-default)] hover:border-[var(--border-strong)] bg-[rgba(91,134,153,0.04)]"
       } ${disabled ? "opacity-50 cursor-not-allowed" : ""} px-8 py-12 text-center`}
     >
       <svg
-        className="w-10 h-10 mx-auto text-cream-dim mb-3"
+        className="w-10 h-10 mx-auto text-[color:var(--text-secondary)] mb-3"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -563,10 +563,10 @@ function DropZone({
       >
         <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
       </svg>
-      <div className="text-cream font-medium">
+      <div className="text-[color:var(--text-primary)] font-medium">
         {disabled ? "Processing…" : "Drop invoices here or click to browse"}
       </div>
-      <div className="text-xs text-cream-dim mt-1">
+      <div className="text-xs text-[color:var(--text-secondary)] mt-1">
         PDF or image · up to 50 files · 10MB each
       </div>
     </div>
@@ -584,31 +584,31 @@ function Stat({
 }) {
   const color =
     tone === "ok"
-      ? "text-status-success"
+      ? "text-[color:var(--nw-success)]"
       : tone === "warn"
       ? "text-brass"
       : tone === "err"
-      ? "text-status-danger"
-      : "text-cream-dim";
+      ? "text-[color:var(--nw-danger)]"
+      : "text-[color:var(--text-secondary)]";
   return (
     <div className="text-center">
       <div className={`text-lg ${color} font-medium`}>{value}</div>
-      <div className="text-[10px] uppercase tracking-[0.1em] text-cream-dim">{label}</div>
+      <div className="text-[10px] uppercase tracking-[0.1em] text-[color:var(--text-secondary)]">{label}</div>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; tone: string }> = {
-    import_queued: { label: "Queued", tone: "bg-brand-border/50 text-cream-dim" },
-    import_parsing: { label: "Parsing…", tone: "bg-teal/20 text-teal" },
-    import_parsed: { label: "Parsed", tone: "bg-status-success/20 text-status-success" },
-    import_error: { label: "Error", tone: "bg-status-danger/20 text-status-danger" },
+    import_queued: { label: "Queued", tone: "bg-[var(--border-default)]/50 text-[color:var(--text-secondary)]" },
+    import_parsing: { label: "Parsing…", tone: "bg-[rgba(91,134,153,0.24)] text-[color:var(--nw-stone-blue)]" },
+    import_parsed: { label: "Parsed", tone: "bg-[rgba(74,138,111,0.24)] text-[color:var(--nw-success)]" },
+    import_error: { label: "Error", tone: "bg-[rgba(176,85,78,0.24)] text-[color:var(--nw-danger)]" },
     import_duplicate: { label: "Duplicate", tone: "bg-brass/20 text-brass" },
-    pm_review: { label: "Sent → PM", tone: "bg-cream/10 text-cream-dim" },
-    qa_review: { label: "Sent → QA", tone: "bg-cream/10 text-cream-dim" },
+    pm_review: { label: "Sent → PM", tone: "bg-cream/10 text-[color:var(--text-secondary)]" },
+    qa_review: { label: "Sent → QA", tone: "bg-cream/10 text-[color:var(--text-secondary)]" },
   };
-  const v = map[status] ?? { label: status, tone: "bg-brand-border/30 text-cream-dim" };
+  const v = map[status] ?? { label: status, tone: "bg-[var(--border-default)]/30 text-[color:var(--text-secondary)]" };
   return (
     <span className={`inline-block px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] ${v.tone}`}>
       {v.label}
@@ -628,7 +628,7 @@ function RowView({
   const canSelect =
     row.status === "import_parsed" || row.status === "import_duplicate";
   return (
-    <tr className="border-b border-brand-border/40 hover:bg-brand-surface-hover/30">
+    <tr className="border-b border-[var(--border-default)]/40 hover:bg-[rgba(91,134,153,0.02)]">
       <td className="px-4 py-2">
         <input
           type="checkbox"
@@ -638,11 +638,11 @@ function RowView({
         />
       </td>
       <td className="px-3 py-2">
-        <div className="text-cream text-sm truncate max-w-[320px]" title={row.original_filename ?? ""}>
+        <div className="text-[color:var(--text-primary)] text-sm truncate max-w-[320px]" title={row.original_filename ?? ""}>
           {row.original_filename ?? "—"}
         </div>
         {row.import_error && (
-          <div className="text-[11px] text-status-danger mt-0.5 truncate max-w-[320px]" title={row.import_error}>
+          <div className="text-[11px] text-[color:var(--nw-danger)] mt-0.5 truncate max-w-[320px]" title={row.import_error}>
             {row.import_error}
           </div>
         )}
@@ -650,19 +650,19 @@ function RowView({
       <td className="px-3 py-2">
         <StatusBadge status={row.status} />
       </td>
-      <td className="px-3 py-2 text-cream-dim text-sm">
+      <td className="px-3 py-2 text-[color:var(--text-secondary)] text-sm">
         {row.vendor_name_raw ?? (row.status === "import_queued" || row.status === "import_parsing" ? "…" : "—")}
       </td>
-      <td className="px-3 py-2 text-right text-cream-dim text-sm">
+      <td className="px-3 py-2 text-right text-[color:var(--text-secondary)] text-sm">
         {row.total_amount && row.total_amount > 0 ? formatCents(row.total_amount) : "—"}
       </td>
       <td className="px-3 py-2 text-sm">
         {row.jobs?.name ? (
-          <span className="text-cream">{row.jobs.name}</span>
+          <span className="text-[color:var(--text-primary)]">{row.jobs.name}</span>
         ) : row.status === "import_parsed" ? (
           <span className="text-brass text-xs">Unmatched — assign</span>
         ) : (
-          <span className="text-cream-dim">—</span>
+          <span className="text-[color:var(--text-secondary)]">—</span>
         )}
       </td>
       <td className="px-3 py-2 text-sm">
@@ -671,7 +671,7 @@ function RowView({
             {Math.round(row.confidence_score * 100)}% — {confidenceLabel(row.confidence_score)}
           </span>
         ) : (
-          <span className="text-cream-dim">—</span>
+          <span className="text-[color:var(--text-secondary)]">—</span>
         )}
       </td>
     </tr>

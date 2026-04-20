@@ -238,23 +238,23 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   if (authorized === false) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-        <h2 className="font-display text-2xl text-cream">Access denied</h2>
-        <p className="mt-2 text-sm text-cream-dim">Jobs management is restricted to administrators.</p>
+        <h2 className="font-display text-2xl text-[color:var(--text-primary)]">Access denied</h2>
+        <p className="mt-2 text-sm text-[color:var(--text-secondary)]">Jobs management is restricted to administrators.</p>
       </main>
     );
   }
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin mx-auto" />
       </main>
     );
   }
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-        <h2 className="font-display text-2xl text-cream">Job not found</h2>
-        <Link href="/jobs" className="inline-block mt-4 text-sm text-teal hover:underline">Back to jobs</Link>
+        <h2 className="font-display text-2xl text-[color:var(--text-primary)]">Job not found</h2>
+        <Link href="/jobs" className="inline-block mt-4 text-sm text-[color:var(--nw-stone-blue)] hover:underline">Back to jobs</Link>
       </main>
     );
   }
@@ -400,7 +400,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     setForm({ ...form, starting_application_number: Number(e.target.value) })
                   }
                 />
-                <p className="text-[11px] text-cream-dim mt-1">
+                <p className="text-[11px] text-[color:var(--text-secondary)] mt-1">
                   For jobs that started before Nightwork. Set this to the AIA pay app number of
                   the first draw Nightwork will generate (e.g. 11 if the last manual draw was #10).
                 </p>
@@ -416,7 +416,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     setForm({ ...form, previous_certificates_total: Math.round((parseFloat(e.target.value) || 0) * 100) })
                   }
                 />
-                <p className="text-[11px] text-cream-dim mt-1">
+                <p className="text-[11px] text-[color:var(--text-secondary)] mt-1">
                   Total certified payments from draws completed before Nightwork. Feeds G702 Line 6.
                 </p>
               </EditField>
@@ -430,7 +430,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                     setForm({ ...form, previous_change_orders_total: Math.round((parseFloat(e.target.value) || 0) * 100) })
                   }
                 />
-                <p className="text-[11px] text-cream-dim mt-1">
+                <p className="text-[11px] text-[color:var(--text-secondary)] mt-1">
                   Net change order total (including GC fees) from before Nightwork. Feeds G702 Line 2.
                 </p>
               </EditField>
@@ -444,7 +444,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               </EditField>
             </div>
             {formError && (
-              <div className="border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">{formError}</div>
+              <div className="border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-4 py-2 text-sm text-[color:var(--nw-danger)]">{formError}</div>
             )}
             <div className="flex items-center justify-end gap-3 pt-3 border-t" style={{ borderColor: "var(--border-default)" }}>
               <NwButton
@@ -498,14 +498,14 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             </div>
           </div>
           {importError && (
-            <div className="mt-3 border border-status-danger/40 bg-status-danger/5 px-4 py-3 text-sm text-status-danger">
+            <div className="mt-3 border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-4 py-3 text-sm text-[color:var(--nw-danger)]">
               <p className="font-medium">Import failed</p>
               <p className="mt-1">{importError}</p>
             </div>
           )}
           {importResult && (
-            <div className="mt-3 border border-teal/40 bg-teal/5 px-4 py-3 text-sm text-cream">
-              <p className="font-medium text-teal">
+            <div className="mt-3 border border-[rgba(91,134,153,0.35)] bg-[rgba(91,134,153,0.08)] px-4 py-3 text-sm text-[color:var(--text-primary)]">
+              <p className="font-medium text-[color:var(--nw-stone-blue)]">
                 {importResult.pay_app?.detected ? "Pay app import complete" : "Import complete"}
               </p>
               <p className="mt-1">
@@ -516,18 +516,18 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   ` · ${importResult.unmatched_codes.length} unmatched codes`}
               </p>
               {importResult.pay_app?.detected && (
-                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-cream-dim">
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-[color:var(--text-secondary)]">
                   {importResult.pay_app.application_number != null && (
-                    <div>Application #: <span className="text-cream">{importResult.pay_app.application_number}</span></div>
+                    <div>Application #: <span className="text-[color:var(--text-primary)]">{importResult.pay_app.application_number}</span></div>
                   )}
                   {importResult.pay_app.original_contract_sum != null && (
-                    <div>Original contract: <span className="text-cream">${importResult.pay_app.original_contract_sum.toLocaleString()}</span></div>
+                    <div>Original contract: <span className="text-[color:var(--text-primary)]">${importResult.pay_app.original_contract_sum.toLocaleString()}</span></div>
                   )}
                   {importResult.pay_app.contract_sum_to_date != null && (
-                    <div>Contract sum to date: <span className="text-cream">${importResult.pay_app.contract_sum_to_date.toLocaleString()}</span></div>
+                    <div>Contract sum to date: <span className="text-[color:var(--text-primary)]">${importResult.pay_app.contract_sum_to_date.toLocaleString()}</span></div>
                   )}
                   {importResult.pay_app.total_completed_to_date != null && (
-                    <div>Total completed: <span className="text-cream">${importResult.pay_app.total_completed_to_date.toLocaleString()}</span></div>
+                    <div>Total completed: <span className="text-[color:var(--text-primary)]">${importResult.pay_app.total_completed_to_date.toLocaleString()}</span></div>
                   )}
                 </div>
               )}

@@ -96,8 +96,8 @@ export default async function Root() {
       >
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-16">
-            <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Capabilities</span>
-            <h2 className="mt-2 font-display text-3xl md:text-4xl text-cream tracking-tight">
+            <span className="text-[10px] tracking-[0.12em] uppercase text-[color:var(--text-secondary)]">Capabilities</span>
+            <h2 className="mt-2 font-display text-3xl md:text-4xl text-[color:var(--text-primary)] tracking-tight">
               Built around how builders actually work
             </h2>
           </div>
@@ -122,8 +122,8 @@ export default async function Root() {
       <section className="px-6 py-20">
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-16">
-            <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Workflow</span>
-            <h2 className="mt-2 font-display text-3xl md:text-4xl text-cream tracking-tight">
+            <span className="text-[10px] tracking-[0.12em] uppercase text-[color:var(--text-secondary)]">Workflow</span>
+            <h2 className="mt-2 font-display text-3xl md:text-4xl text-[color:var(--text-primary)] tracking-tight">
               Four steps from invoice to draw
             </h2>
           </div>
@@ -143,8 +143,8 @@ export default async function Root() {
       >
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-12">
-            <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Pricing</span>
-            <h2 className="mt-2 font-display text-3xl md:text-4xl text-cream tracking-tight">
+            <span className="text-[10px] tracking-[0.12em] uppercase text-[color:var(--text-secondary)]">Pricing</span>
+            <h2 className="mt-2 font-display text-3xl md:text-4xl text-[color:var(--text-primary)] tracking-tight">
               Priced for every stage
             </h2>
           </div>
@@ -156,7 +156,7 @@ export default async function Root() {
           <div className="mt-10 text-center">
             <Link
               href="/pricing"
-              className="text-[13px] tracking-[0.08em] uppercase text-cream hover:text-teal border-b border-cream/40 hover:border-teal pb-0.5"
+              className="text-[13px] tracking-[0.08em] uppercase text-[color:var(--text-primary)] hover:text-[color:var(--nw-stone-blue)] border-b border-cream/40 hover:border-[var(--nw-stone-blue)] pb-0.5"
             >
               See all plans &amp; features →
             </Link>
@@ -172,8 +172,8 @@ export default async function Root() {
 function FeatureCard({ title, body }: { title: string; body: string }) {
   return (
     <div className="p-6 border nw-panel">
-      <h3 className="font-display text-lg text-cream">{title}</h3>
-      <p className="mt-3 text-sm text-cream-muted leading-relaxed">{body}</p>
+      <h3 className="font-display text-lg text-[color:var(--text-primary)]">{title}</h3>
+      <p className="mt-3 text-sm text-[color:var(--text-muted)] leading-relaxed">{body}</p>
     </div>
   );
 }
@@ -182,28 +182,28 @@ function Step({ n, title, body }: { n: number; title: string; body: string }) {
   return (
     <li className="relative pl-0">
       <div className="flex items-baseline gap-3 mb-2">
-        <span className="font-display text-3xl text-teal">0{n}</span>
-        <h3 className="font-display text-lg text-cream">{title}</h3>
+        <span className="font-display text-3xl text-[color:var(--nw-stone-blue)]">0{n}</span>
+        <h3 className="font-display text-lg text-[color:var(--text-primary)]">{title}</h3>
       </div>
-      <p className="text-sm text-cream-muted leading-relaxed">{body}</p>
+      <p className="text-sm text-[color:var(--text-muted)] leading-relaxed">{body}</p>
     </li>
   );
 }
 
 function PricePreview({ name, price, tagline, highlight }: { name: string; price: string; tagline: string; highlight?: boolean }) {
   return (
-    <div className={`p-6 border bg-white ${highlight ? "border-teal shadow-[0_8px_24px_-12px_rgba(63,88,98,0.25)]" : "border-brand-border"}`}>
+    <div className={`p-6 border bg-white ${highlight ? "border-[var(--nw-stone-blue)] shadow-[0_8px_24px_-12px_rgba(63,88,98,0.25)]" : "border-[var(--border-default)]"}`}>
       {highlight && (
-        <span className="inline-block px-2 py-0.5 bg-teal text-white text-[10px] tracking-[0.12em] uppercase mb-3">
+        <span className="inline-block px-2 py-0.5 bg-[var(--nw-stone-blue)] text-white text-[10px] tracking-[0.12em] uppercase mb-3">
           Most Popular
         </span>
       )}
-      <h3 className="font-display text-xl text-cream">{name}</h3>
-      <p className="mt-4 font-display text-4xl text-cream">
+      <h3 className="font-display text-xl text-[color:var(--text-primary)]">{name}</h3>
+      <p className="mt-4 font-display text-4xl text-[color:var(--text-primary)]">
         {price}
-        <span className="text-sm text-cream-dim font-body">/mo</span>
+        <span className="text-sm text-[color:var(--text-secondary)] font-body">/mo</span>
       </p>
-      <p className="mt-3 text-sm text-cream-muted">{tagline}</p>
+      <p className="mt-3 text-sm text-[color:var(--text-muted)]">{tagline}</p>
     </div>
   );
 }

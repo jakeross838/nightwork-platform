@@ -111,8 +111,8 @@ export default function DrawChangeOrders({
   if (loading) {
     return (
       <section className="mt-6">
-        <h3 className="font-display text-lg text-cream mb-2">Change orders</h3>
-        <div className="text-sm text-cream-dim">Loading…</div>
+        <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-2">Change orders</h3>
+        <div className="text-sm text-[color:var(--text-secondary)]">Loading…</div>
       </section>
     );
   }
@@ -121,8 +121,8 @@ export default function DrawChangeOrders({
   if (!hasAny) {
     return (
       <section className="mt-6">
-        <h3 className="font-display text-lg text-cream mb-2">Change orders</h3>
-        <p className="text-sm text-cream-dim">
+        <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-2">Change orders</h3>
+        <p className="text-sm text-[color:var(--text-secondary)]">
           No approved change orders for this job yet.
         </p>
       </section>
@@ -132,12 +132,12 @@ export default function DrawChangeOrders({
   return (
     <section className="mt-6">
       <header className="flex items-center justify-between mb-3">
-        <h3 className="font-display text-lg text-cream">Change orders</h3>
+        <h3 className="font-display text-lg text-[color:var(--text-primary)]">Change orders</h3>
         {editable && selected.size > 0 && (
           <button
             onClick={attach}
             disabled={working}
-            className="px-3 py-1.5 bg-teal text-white text-xs font-medium hover:bg-teal/90 disabled:opacity-60"
+            className="px-3 py-1.5 bg-[var(--nw-stone-blue)] text-white text-xs font-medium hover:bg-[var(--nw-gulf-blue)] disabled:opacity-60"
           >
             {working ? "Attaching…" : `Attach ${selected.size} (${formatCents(pendingTotal)})`}
           </button>
@@ -145,13 +145,13 @@ export default function DrawChangeOrders({
       </header>
 
       {attached.length > 0 && (
-        <div className="border border-brand-border bg-brand-card overflow-hidden mb-4">
-          <div className="px-3 py-2 bg-brand-surface/60 text-[11px] uppercase tracking-wider text-cream-dim">
+        <div className="border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden mb-4">
+          <div className="px-3 py-2 bg-[rgba(91,134,153,0.08)] text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">
             On this draw
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-cream-dim border-b border-brand-border">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)] border-b border-[var(--border-default)]">
                 <th className="px-3 py-1.5">PCCO #</th>
                 <th className="px-3 py-1.5">Description</th>
                 <th className="px-3 py-1.5 text-right">Amount</th>
@@ -165,25 +165,25 @@ export default function DrawChangeOrders({
                 const co = a.change_orders;
                 if (!co) return null;
                 return (
-                  <tr key={a.id} className="border-b border-brand-row-border last:border-0">
-                    <td className="px-3 py-2 text-cream">#{co.pcco_number}</td>
-                    <td className="px-3 py-2 text-cream-dim">
+                  <tr key={a.id} className="border-b border-[var(--border-default)] last:border-0">
+                    <td className="px-3 py-2 text-[color:var(--text-primary)]">#{co.pcco_number}</td>
+                    <td className="px-3 py-2 text-[color:var(--text-secondary)]">
                       {co.title ?? co.description ?? "—"}
                     </td>
-                    <td className="px-3 py-2 text-right text-cream-dim tabular-nums">
+                    <td className="px-3 py-2 text-right text-[color:var(--text-secondary)] tabular-nums">
                       {formatCents(co.amount)}
                     </td>
-                    <td className="px-3 py-2 text-right text-cream-dim tabular-nums">
+                    <td className="px-3 py-2 text-right text-[color:var(--text-secondary)] tabular-nums">
                       {formatCents(co.gc_fee_amount)} ({Math.round(Number(co.gc_fee_rate) * 100)}%)
                     </td>
-                    <td className="px-3 py-2 text-right text-cream tabular-nums font-medium">
+                    <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums font-medium">
                       {formatCents(co.total_with_fee)}
                     </td>
                     <td className="px-3 py-2 text-right">
                       {editable && (
                         <button
                           onClick={() => detach(co.id)}
-                          className="text-xs text-status-danger hover:underline"
+                          className="text-xs text-[color:var(--nw-danger)] hover:underline"
                         >
                           Remove
                         </button>
@@ -198,13 +198,13 @@ export default function DrawChangeOrders({
       )}
 
       {editable && available.length > 0 && (
-        <div className="border border-brand-border bg-brand-card overflow-hidden">
-          <div className="px-3 py-2 bg-brand-surface/60 text-[11px] uppercase tracking-wider text-cream-dim">
+        <div className="border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
+          <div className="px-3 py-2 bg-[rgba(91,134,153,0.08)] text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">
             Available to attach (approved, not yet on any draw)
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-cream-dim border-b border-brand-border">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)] border-b border-[var(--border-default)]">
                 <th className="px-3 py-1.5 w-8" />
                 <th className="px-3 py-1.5">PCCO #</th>
                 <th className="px-3 py-1.5">Description</th>
@@ -215,7 +215,7 @@ export default function DrawChangeOrders({
             </thead>
             <tbody>
               {available.map((co) => (
-                <tr key={co.id} className="border-b border-brand-row-border last:border-0">
+                <tr key={co.id} className="border-b border-[var(--border-default)] last:border-0">
                   <td className="px-3 py-2">
                     <input
                       type="checkbox"
@@ -223,17 +223,17 @@ export default function DrawChangeOrders({
                       onChange={() => toggle(co.id)}
                     />
                   </td>
-                  <td className="px-3 py-2 text-cream">#{co.pcco_number}</td>
-                  <td className="px-3 py-2 text-cream-dim">
+                  <td className="px-3 py-2 text-[color:var(--text-primary)]">#{co.pcco_number}</td>
+                  <td className="px-3 py-2 text-[color:var(--text-secondary)]">
                     {co.title ?? co.description ?? "—"}
                   </td>
-                  <td className="px-3 py-2 text-right text-cream-dim tabular-nums">
+                  <td className="px-3 py-2 text-right text-[color:var(--text-secondary)] tabular-nums">
                     {formatCents(co.amount)}
                   </td>
-                  <td className="px-3 py-2 text-right text-cream-dim tabular-nums">
+                  <td className="px-3 py-2 text-right text-[color:var(--text-secondary)] tabular-nums">
                     {formatCents(co.gc_fee_amount)} ({Math.round(Number(co.gc_fee_rate) * 100)}%)
                   </td>
-                  <td className="px-3 py-2 text-right text-cream tabular-nums">
+                  <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums">
                     {formatCents(co.total_with_fee)}
                   </td>
                 </tr>
@@ -244,7 +244,7 @@ export default function DrawChangeOrders({
       )}
 
       {error && (
-        <div className="mt-3 border border-status-danger/40 bg-status-danger/5 px-3 py-2 text-sm text-status-danger">
+        <div className="mt-3 border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-3 py-2 text-sm text-[color:var(--nw-danger)]">
           {error}
         </div>
       )}

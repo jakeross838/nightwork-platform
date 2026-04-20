@@ -115,7 +115,7 @@ export default function InvoiceAllocationsEditor({
   }
 
   if (loading) {
-    return <div className="text-xs text-cream-dim py-2">Loading allocations...</div>;
+    return <div className="text-xs text-[color:var(--text-secondary)] py-2">Loading allocations...</div>;
   }
 
   const canEdit = !readOnly && !locked;
@@ -169,10 +169,10 @@ export default function InvoiceAllocationsEditor({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-b border-brand-row-border last:border-0">
+            <tr key={i} className="border-b border-[var(--border-default)] last:border-0">
               <td className="py-1 pr-2">
                 <select
-                  className={`input text-xs${!r.cost_code_id ? " border-status-danger/60" : ""}`}
+                  className={`input text-xs${!r.cost_code_id ? " border-[rgba(176,85,78,0.55)]" : ""}`}
                   value={r.cost_code_id ?? ""}
                   onChange={(e) => updateRow(i, { cost_code_id: e.target.value || null })}
                   disabled={!canEdit}
@@ -210,7 +210,7 @@ export default function InvoiceAllocationsEditor({
                 {canEdit && rows.length > 1 && (
                   <button
                     onClick={() => removeRow(i)}
-                    className="text-[11px] text-status-danger hover:underline"
+                    className="text-[11px] text-[color:var(--nw-danger)] hover:underline"
                   >
                     Remove
                   </button>
@@ -241,7 +241,7 @@ export default function InvoiceAllocationsEditor({
       </table>
 
       {error && (
-        <div className="mt-2 border border-status-danger/40 bg-status-danger/5 px-2 py-1 text-xs text-status-danger">
+        <div className="mt-2 border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-2 py-1 text-xs text-[color:var(--nw-danger)]">
           {error}
         </div>
       )}

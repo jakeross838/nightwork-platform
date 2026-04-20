@@ -47,7 +47,7 @@ export default function PricingCheckoutButton({
         {busy ? "Redirecting…" : label}
       </button>
       {err && (
-        <p className="mt-2 text-xs text-status-danger border border-status-danger/40 bg-status-danger/5 px-2 py-1">
+        <p className="mt-2 text-xs text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-2 py-1">
           {err}
         </p>
       )}

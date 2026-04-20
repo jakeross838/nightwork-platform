@@ -145,34 +145,34 @@ export default function PaymentBatchByVendorPanel({
   return (
     <div className="space-y-5 animate-fade-up">
       {error && (
-        <div className="bg-status-danger/10 border border-status-danger/40 px-4 py-3 text-sm text-status-danger">
+        <div className="bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.35)] px-4 py-3 text-sm text-[color:var(--nw-danger)]">
           {error}
         </div>
       )}
 
-      <div className="bg-brand-card border border-brand-border p-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="font-display text-cream">Batch Payments by Vendor</p>
-          <p className="text-xs text-cream-dim mt-0.5">
+          <p className="font-display text-[color:var(--text-primary)]">Batch Payments by Vendor</p>
+          <p className="text-xs text-[color:var(--text-secondary)] mt-0.5">
             Pay every unpaid invoice for one or more vendors at once. Reference is per-vendor.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-sm">
-          <label className="flex items-center gap-2 text-cream-dim">
+          <label className="flex items-center gap-2 text-[color:var(--text-secondary)]">
             Payment date
             <input
               type="date"
               value={paymentDate}
               onChange={(e) => setPaymentDate(e.target.value)}
-              className="flex-1 sm:flex-none px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
+              className="flex-1 sm:flex-none px-2 py-1.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)]"
             />
           </label>
-          <label className="flex items-center gap-2 text-cream-dim">
+          <label className="flex items-center gap-2 text-[color:var(--text-secondary)]">
             Default method
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as Method)}
-              className="flex-1 sm:flex-none px-2 py-1.5 bg-brand-surface border border-brand-border text-sm text-cream"
+              className="flex-1 sm:flex-none px-2 py-1.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)]"
             >
               <option value="check">Check</option>
               <option value="ach">ACH</option>
@@ -184,14 +184,14 @@ export default function PaymentBatchByVendorPanel({
       </div>
 
       {groups.length === 0 ? (
-        <div className="border border-brand-border p-10 text-center text-cream-dim text-sm">
+        <div className="border border-[var(--border-default)] p-10 text-center text-[color:var(--text-secondary)] text-sm">
           No unpaid invoices to batch.
         </div>
       ) : (
-        <div className="overflow-x-auto border border-brand-border">
+        <div className="overflow-x-auto border border-[var(--border-default)]">
           <table className="w-full min-w-[700px] text-sm">
             <thead>
-              <tr className="bg-brand-surface text-left">
+              <tr className="bg-[var(--bg-subtle)] text-left">
                 <th className="py-3 px-4 w-10">
                   <input
                     type="checkbox"
@@ -213,8 +213,8 @@ export default function PaymentBatchByVendorPanel({
                 return (
                   <tr
                     key={g.vendor_id}
-                    className={`border-t border-brand-row-border ${
-                      sel ? "bg-teal/5" : "hover:bg-brand-elevated/40"
+                    className={`border-t border-[var(--border-default)] ${
+                      sel ? "bg-[rgba(91,134,153,0.08)]" : "hover:bg-[var(--bg-muted)]"
                     }`}
                   >
                     <td className="py-3 px-4">
@@ -224,9 +224,9 @@ export default function PaymentBatchByVendorPanel({
                         onChange={() => toggleVendor(g.vendor_id)}
                       />
                     </td>
-                    <td className="py-3 px-4 text-cream">{g.vendor_name}</td>
-                    <td className="py-3 px-4 text-cream-muted text-right">{g.invoices.length}</td>
-                    <td className="py-3 px-4 text-cream text-right font-display font-medium">
+                    <td className="py-3 px-4 text-[color:var(--text-primary)]">{g.vendor_name}</td>
+                    <td className="py-3 px-4 text-[color:var(--text-muted)] text-right">{g.invoices.length}</td>
+                    <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display font-medium">
                       {formatCents(g.total)}
                     </td>
                     <td className="py-3 px-4">
@@ -239,7 +239,7 @@ export default function PaymentBatchByVendorPanel({
                             [g.vendor_id]: e.target.value as Method,
                           }))
                         }
-                        className="px-2 py-1 bg-brand-surface border border-brand-border text-xs text-cream disabled:opacity-50"
+                        className="px-2 py-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs text-[color:var(--text-primary)] disabled:opacity-50"
                       >
                         <option value="check">Check</option>
                         <option value="ach">ACH</option>
@@ -256,7 +256,7 @@ export default function PaymentBatchByVendorPanel({
                           setRefs((prev) => ({ ...prev, [g.vendor_id]: e.target.value }))
                         }
                         placeholder="Check # or ref"
-                        className="w-32 px-2 py-1 bg-brand-surface border border-brand-border text-xs text-cream font-mono disabled:opacity-50"
+                        className="w-32 px-2 py-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs text-[color:var(--text-primary)] font-mono disabled:opacity-50"
                       />
                     </td>
                   </tr>
@@ -268,15 +268,15 @@ export default function PaymentBatchByVendorPanel({
       )}
 
       {selected.size > 0 && (
-        <div className="sticky bottom-0 -mx-4 px-4 sm:-mx-6 sm:px-6 py-4 bg-brand-bg/95 backdrop-blur border-t border-teal/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-sm text-cream">
+        <div className="sticky bottom-0 -mx-4 px-4 sm:-mx-6 sm:px-6 py-4 bg-[var(--bg-page)]/95 backdrop-blur border-t border-[rgba(91,134,153,0.35)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-sm text-[color:var(--text-primary)]">
             <span className="font-medium">Pay {selected.size} vendors</span> ·{" "}
-            <span className="text-cream-dim">{selectedInvoiceCount} invoices</span> · Total{" "}
+            <span className="text-[color:var(--text-secondary)]">{selectedInvoiceCount} invoices</span> · Total{" "}
             <span className="text-brass font-display">{formatCents(selectedTotal)}</span>
           </p>
           <button
             onClick={() => setShowConfirm(true)}
-            className="w-full sm:w-auto px-5 py-2.5 bg-teal hover:bg-teal-hover text-white text-sm font-medium uppercase tracking-wider"
+            className="w-full sm:w-auto px-5 py-2.5 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] text-white text-sm font-medium uppercase tracking-wider"
           >
             Process Batch
           </button>
@@ -322,18 +322,18 @@ function ConfirmModal({
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={onCancel}>
       <div
-        className="bg-brand-card border border-brand-border max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6"
+        className="bg-[var(--bg-card)] border border-[var(--border-default)] max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="font-display text-lg text-cream mb-1">Confirm Batch Payment</h3>
-        <p className="text-sm text-cream-dim mb-4">
-          Payment date: <span className="text-cream">{formatDate(paymentDate)}</span> · {groups.length}{" "}
+        <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-1">Confirm Batch Payment</h3>
+        <p className="text-sm text-[color:var(--text-secondary)] mb-4">
+          Payment date: <span className="text-[color:var(--text-primary)]">{formatDate(paymentDate)}</span> · {groups.length}{" "}
           vendors · {formatCents(total)}
         </p>
-        <div className="border border-brand-border max-h-72 overflow-auto">
+        <div className="border border-[var(--border-default)] max-h-72 overflow-auto">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
-              <tr className="bg-brand-surface text-left sticky top-0">
+              <tr className="bg-[var(--bg-subtle)] text-left sticky top-0">
                 <Th>Vendor</Th>
                 <Th right>Invoices</Th>
                 <Th right>Total</Th>
@@ -343,12 +343,12 @@ function ConfirmModal({
             </thead>
             <tbody>
               {groups.map((g) => (
-                <tr key={g.vendor_id} className="border-t border-brand-row-border">
-                  <td className="py-2 px-3 text-cream">{g.vendor_name}</td>
-                  <td className="py-2 px-3 text-cream-muted text-right">{g.invoices.length}</td>
-                  <td className="py-2 px-3 text-cream text-right font-display">{formatCents(g.total)}</td>
-                  <td className="py-2 px-3 text-cream-muted">{methods[g.vendor_id] ?? defaultMethod}</td>
-                  <td className="py-2 px-3 text-cream-muted font-mono text-xs">
+                <tr key={g.vendor_id} className="border-t border-[var(--border-default)]">
+                  <td className="py-2 px-3 text-[color:var(--text-primary)]">{g.vendor_name}</td>
+                  <td className="py-2 px-3 text-[color:var(--text-muted)] text-right">{g.invoices.length}</td>
+                  <td className="py-2 px-3 text-[color:var(--text-primary)] text-right font-display">{formatCents(g.total)}</td>
+                  <td className="py-2 px-3 text-[color:var(--text-muted)]">{methods[g.vendor_id] ?? defaultMethod}</td>
+                  <td className="py-2 px-3 text-[color:var(--text-muted)] font-mono text-xs">
                     {refs[g.vendor_id]?.trim() || "—"}
                   </td>
                 </tr>
@@ -359,14 +359,14 @@ function ConfirmModal({
         <div className="mt-5 flex items-center justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-cream-dim hover:text-cream text-sm"
+            className="px-4 py-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] text-sm"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={submitting}
-            className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium"
+            className="px-4 py-2 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 text-white text-sm font-medium"
           >
             {submitting ? "Processing…" : `Pay ${groups.length} vendors`}
           </button>
@@ -388,10 +388,10 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
           {receipts.reduce((s, r) => s + r.invoice_count, 0)} invoices · {formatCents(total)}
         </p>
       </div>
-      <div className="bg-status-success/10 border border-status-success/40 p-4 flex items-center justify-between gap-3 flex-wrap print:hidden">
+      <div className="bg-[rgba(74,138,111,0.12)] border border-[rgba(74,138,111,0.35)] p-4 flex items-center justify-between gap-3 flex-wrap print:hidden">
         <div>
-          <p className="text-status-success font-display text-lg">Batch payment complete</p>
-          <p className="text-xs text-cream-dim mt-0.5">
+          <p className="text-[color:var(--nw-success)] font-display text-lg">Batch payment complete</p>
+          <p className="text-xs text-[color:var(--text-secondary)] mt-0.5">
             {receipts.length} vendors · {receipts.reduce((s, r) => s + r.invoice_count, 0)} invoices ·{" "}
             {formatCents(total)}
           </p>
@@ -399,23 +399,23 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
         <div className="flex items-center gap-2">
           <button
             onClick={() => window.print()}
-            className="px-3 py-1.5 border border-brand-border text-cream text-sm hover:bg-brand-elevated"
+            className="px-3 py-1.5 border border-[var(--border-default)] text-[color:var(--text-primary)] text-sm hover:bg-[var(--bg-muted)]"
           >
             Print
           </button>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 bg-teal hover:bg-teal-hover text-white text-sm"
+            className="px-3 py-1.5 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] text-white text-sm"
           >
             Done
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto border border-brand-border">
+      <div className="overflow-x-auto border border-[var(--border-default)]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-brand-surface text-left">
+            <tr className="bg-[var(--bg-subtle)] text-left">
               <Th>Vendor</Th>
               <Th right>Invoices</Th>
               <Th right>Total</Th>
@@ -427,15 +427,15 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
           </thead>
           <tbody>
             {receipts.map((r) => (
-              <tr key={r.vendor_id} className="border-t border-brand-row-border">
-                <td className="py-3 px-4 text-cream">{r.vendor_name}</td>
-                <td className="py-3 px-4 text-cream-muted text-right">{r.invoice_count}</td>
-                <td className="py-3 px-4 text-cream text-right font-display">{formatCents(r.total)}</td>
-                <td className="py-3 px-4 text-cream-muted">{r.payment_method}</td>
-                <td className="py-3 px-4 text-cream-muted font-mono text-xs">
+              <tr key={r.vendor_id} className="border-t border-[var(--border-default)]">
+                <td className="py-3 px-4 text-[color:var(--text-primary)]">{r.vendor_name}</td>
+                <td className="py-3 px-4 text-[color:var(--text-muted)] text-right">{r.invoice_count}</td>
+                <td className="py-3 px-4 text-[color:var(--text-primary)] text-right font-display">{formatCents(r.total)}</td>
+                <td className="py-3 px-4 text-[color:var(--text-muted)]">{r.payment_method}</td>
+                <td className="py-3 px-4 text-[color:var(--text-muted)] font-mono text-xs">
                   {r.payment_reference ?? "—"}
                 </td>
-                <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(r.payment_date)}</td>
+                <td className="py-3 px-4 text-[color:var(--text-muted)] text-xs">{formatDate(r.payment_date)}</td>
                 <td className="py-3 px-4">
                   {r.missing_lien_release && r.draw_ids.length > 0 ? (
                     <Link
@@ -445,7 +445,7 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
                       Lien missing
                     </Link>
                   ) : (
-                    <span className="text-cream-dim text-xs">—</span>
+                    <span className="text-[color:var(--text-secondary)] text-xs">—</span>
                   )}
                 </td>
               </tr>
@@ -460,7 +460,7 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
     <th
-      className={`py-3 px-4 text-[10px] text-cream font-bold uppercase tracking-wider ${
+      className={`py-3 px-4 text-[10px] text-[color:var(--text-primary)] font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
       }`}
     >

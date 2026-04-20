@@ -58,12 +58,12 @@ export function confidenceColor(score: number): string {
 
 /** Outline-style status badge: transparent bg, 1px solid border, matching text color. */
 export function statusBadgeOutline(status: string): string {
- if (["pm_approved", "qa_approved", "pushed_to_qb"].includes(status)) return "bg-transparent text-status-success border border-status-success";
- if (["in_draw", "paid"].includes(status)) return "bg-transparent text-teal border border-teal";
+ if (["pm_approved", "qa_approved", "pushed_to_qb"].includes(status)) return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
+ if (["in_draw", "paid"].includes(status)) return "bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)]";
  if (["pm_review", "ai_processed", "qa_review", "received", "info_requested"].includes(status)) return "bg-transparent text-brass border border-brass";
  if (["pm_held"].includes(status)) return "bg-transparent text-brass border border-brass";
- if (["qa_kicked_back", "pm_denied", "void", "qb_failed"].includes(status)) return "bg-transparent text-status-danger border border-status-danger";
- return "bg-transparent text-cream-muted border border-brand-border-light";
+ if (["qa_kicked_back", "pm_denied", "void", "qb_failed"].includes(status)) return "bg-transparent text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.5)]";
+ return "bg-transparent text-[color:var(--text-muted)] border border-[var(--border-strong)]";
 }
 
 export function confidenceLabel(score: number): string {

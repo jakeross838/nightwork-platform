@@ -328,7 +328,7 @@ export default function JobsPage() {
                         </div>
                         <div>
                           <div className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Budget Used</div>
-                          <div className={`tabular-nums ${j.budget_used_pct > 100 ? "text-status-danger" : "text-[var(--text-primary)]"}`}>
+                          <div className={`tabular-nums ${j.budget_used_pct > 100 ? "text-[color:var(--nw-danger)]" : "text-[var(--text-primary)]"}`}>
                             {formatPercent(j.budget_used_pct)}
                           </div>
                         </div>
@@ -336,7 +336,7 @@ export default function JobsPage() {
                           <div className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Open Invoices</div>
                           <div className="text-[var(--text-primary)] tabular-nums">
                             {j.open_invoices > 0 ? (
-                              <span className={j.oldest_invoice_days >= 7 ? "text-status-danger" : "text-brass"}>
+                              <span className={j.oldest_invoice_days >= 7 ? "text-[color:var(--nw-danger)]" : "text-brass"}>
                                 {j.open_invoices}
                               </span>
                             ) : (
@@ -391,7 +391,7 @@ export default function JobsPage() {
                         {formatPercent(j.pct_complete)}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">
-                        <span className={j.budget_used_pct > 100 ? "text-status-danger" : "text-[var(--text-primary)]"}>
+                        <span className={j.budget_used_pct > 100 ? "text-[color:var(--nw-danger)]" : "text-[var(--text-primary)]"}>
                           {formatPercent(j.budget_used_pct)}
                         </span>
                         <div className="text-[10px] text-[var(--text-tertiary)]">

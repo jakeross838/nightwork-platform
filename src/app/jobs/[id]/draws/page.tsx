@@ -65,14 +65,14 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin mx-auto" />
       </main>
     );
   }
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <p className="text-cream">Job not found</p>
+        <p className="text-[color:var(--text-primary)]">Job not found</p>
       </main>
     );
   }
@@ -140,10 +140,10 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
             primaryAction={{ label: "+ Create Draw", href: `/draws/new?jobId=${job.id}` }}
           />
         ) : (
-          <div className="bg-brand-card border border-brand-border overflow-x-auto">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium bg-brand-surface/50">
+                <tr className="border-b border-[var(--border-default)] text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-secondary)] font-medium bg-[rgba(91,134,153,0.04)]">
                   <th className="text-left px-4 py-3 font-medium">Draw #</th>
                   <th className="text-left px-4 py-3 font-medium">Period</th>
                   <th className="text-left px-4 py-3 font-medium">Application Date</th>
@@ -155,19 +155,19 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
                 {draws.map((d) => (
                   <tr
                     key={d.id}
-                    className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface/40 cursor-pointer"
+                    className="border-b border-[var(--border-default)] last:border-0 hover:bg-[rgba(91,134,153,0.06)] cursor-pointer"
                     onClick={() => router.push(`/draws/${d.id}`)}
                   >
-                    <td className="px-4 py-3 text-cream font-display font-medium">
+                    <td className="px-4 py-3 text-[color:var(--text-primary)] font-display font-medium">
                       #{d.draw_number}
                       {d.revision_number > 0 && (
                         <span className="text-brass ml-1 text-xs">Rev {d.revision_number}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-cream-muted">
+                    <td className="px-4 py-3 text-[color:var(--text-muted)]">
                       {formatDate(d.period_start)} — {formatDate(d.period_end)}
                     </td>
-                    <td className="px-4 py-3 text-cream-muted">{formatDate(d.application_date)}</td>
+                    <td className="px-4 py-3 text-[color:var(--text-muted)]">{formatDate(d.application_date)}</td>
                     <td className="px-4 py-3">
                       <NwBadge variant={drawBadgeVariant(d.status)} size="sm">
                         {formatStatus(d.status)}

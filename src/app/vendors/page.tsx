@@ -138,8 +138,8 @@ export default function VendorsPage() {
     <AppShell>
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
         <header className="mb-6">
-          <h1 className="font-display text-3xl text-cream tracking-tight">Admin</h1>
-          <p className="mt-1 text-sm text-cream-dim">Settings, reference data, and system tools.</p>
+          <h1 className="font-display text-3xl text-[color:var(--text-primary)] tracking-tight">Admin</h1>
+          <p className="mt-1 text-sm text-[color:var(--text-secondary)]">Settings, reference data, and system tools.</p>
         </header>
         <AdminMobileNav role={userRole} />
         <div className="flex gap-8">
@@ -186,13 +186,13 @@ export default function VendorsPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 mb-6">
-          <div className="bg-brand-card border border-brand-border p-4">
-            <p className="text-xs text-cream-dim uppercase tracking-wider mb-1">Total Vendors</p>
-            <p className="text-2xl font-display text-cream">{totalVendors}</p>
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4">
+            <p className="text-xs text-[color:var(--text-secondary)] uppercase tracking-wider mb-1">Total Vendors</p>
+            <p className="text-2xl font-display text-[color:var(--text-primary)]">{totalVendors}</p>
           </div>
-          <div className="bg-brand-card border border-brand-border p-4">
-            <p className="text-xs text-cream-dim uppercase tracking-wider mb-1">No Invoices</p>
-            <p className="text-2xl font-display text-cream">{vendorsNoInvoices}</p>
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4">
+            <p className="text-xs text-[color:var(--text-secondary)] uppercase tracking-wider mb-1">No Invoices</p>
+            <p className="text-2xl font-display text-[color:var(--text-primary)]">{vendorsNoInvoices}</p>
           </div>
         </div>
 
@@ -202,7 +202,7 @@ export default function VendorsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search vendors by name..."
-            className="w-full sm:w-80 px-4 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder:text-cream-dim focus:outline-none focus:border-teal"
+            className="w-full sm:w-80 px-4 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
           />
         </div>
 
@@ -224,46 +224,46 @@ export default function VendorsPage() {
             />
           )
         ) : (
-          <div className="overflow-x-auto border border-brand-border animate-fade-up">
+          <div className="overflow-x-auto border border-[var(--border-default)] animate-fade-up">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-brand-surface text-left">
+                <tr className="bg-[var(--bg-subtle)] text-left">
                   <th className="py-3 px-4 w-10">
                     <span className="sr-only">Select</span>
                   </th>
-                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Name</th>
-                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Default Cost Code</th>
-                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right">Invoices</th>
-                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right">Total Billed</th>
+                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)]">Name</th>
+                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)]">Default Cost Code</th>
+                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] text-right">Invoices</th>
+                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] text-right">Total Billed</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((v) => {
                   const agg = invoiceAgg[v.id];
                   return (
-                    <tr key={v.id} className="border-t border-brand-row-border hover:bg-brand-elevated/50 transition-colors">
+                    <tr key={v.id} className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] transition-colors">
                       <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selected.has(v.id)}
                           onChange={() => toggleSelect(v.id)}
-                          className="w-4 h-4 border-brand-border bg-brand-surface text-teal focus:ring-teal accent-teal"
+                          className="w-4 h-4 border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--nw-stone-blue)] focus:ring-teal accent-teal"
                         />
                       </td>
                       <td className="py-4 px-5">
                         <Link
                           href={`/vendors/${v.id}`}
-                          className="text-cream font-medium hover:text-teal transition-colors"
+                          className="text-[color:var(--text-primary)] font-medium hover:text-[color:var(--nw-stone-blue)] transition-colors"
                         >
                           {v.name}
                         </Link>
                       </td>
-                      <td className="py-4 px-5 text-cream-muted">
+                      <td className="py-4 px-5 text-[color:var(--text-muted)]">
                         {v.cost_codes
                           ? `${v.cost_codes.code} - ${v.cost_codes.description}`
                           : "—"}
                       </td>
-                      <td className="py-4 px-5 text-cream text-right">{agg?.count ?? 0}</td>
+                      <td className="py-4 px-5 text-[color:var(--text-primary)] text-right">{agg?.count ?? 0}</td>
                       <td className="py-4 px-5 text-right">
                         <NwMoney cents={agg?.total ?? 0} />
                       </td>
@@ -277,9 +277,9 @@ export default function VendorsPage() {
 
         {showMerge && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-brand-card border border-brand-border shadow-2xl max-w-lg w-full mx-4 p-6">
-              <h3 className="font-display text-lg text-cream mb-4">Merge Vendors</h3>
-              <p className="text-sm text-cream-dim mb-4">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] shadow-2xl max-w-lg w-full mx-4 p-6">
+              <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-4">Merge Vendors</h3>
+              <p className="text-sm text-[color:var(--text-secondary)] mb-4">
                 Select which vendor name to keep as the primary. All invoices from the other vendors will be
                 reassigned to the primary, and the others will be removed.
               </p>
@@ -291,8 +291,8 @@ export default function VendorsPage() {
                       key={v.id}
                       className={`flex items-center gap-3 p-3 border cursor-pointer transition-colors ${
                         mergePrimaryId === v.id
-                          ? "border-teal bg-teal/10"
-                          : "border-brand-border bg-brand-surface hover:bg-brand-elevated/50"
+                          ? "border-[var(--nw-stone-blue)] bg-[rgba(91,134,153,0.12)]"
+                          : "border-[var(--border-default)] bg-[var(--bg-subtle)] hover:bg-[var(--bg-muted)]"
                       }`}
                     >
                       <input
@@ -304,8 +304,8 @@ export default function VendorsPage() {
                         className="accent-teal"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-cream font-medium truncate">{v.name}</p>
-                        <p className="text-xs text-cream-dim">
+                        <p className="text-sm text-[color:var(--text-primary)] font-medium truncate">{v.name}</p>
+                        <p className="text-xs text-[color:var(--text-secondary)]">
                           {agg?.count ?? 0} invoice{(agg?.count ?? 0) !== 1 ? "s" : ""} &middot;{" "}
                           {formatCents(agg?.total ?? 0)}
                         </p>
@@ -317,14 +317,14 @@ export default function VendorsPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowMerge(false)}
-                  className="px-4 py-2 bg-brand-surface hover:bg-brand-elevated text-cream-dim text-sm transition-colors border border-brand-border"
+                  className="px-4 py-2 bg-[var(--bg-subtle)] hover:bg-[var(--bg-muted)] text-[color:var(--text-secondary)] text-sm transition-colors border border-[var(--border-default)]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleMerge}
                   disabled={!mergePrimaryId || merging}
-                  className="px-4 py-2 bg-brass hover:bg-brass/80 text-brand-bg text-sm font-medium transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-brass hover:bg-brass/80 text-[color:var(--bg-page)] text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   {merging ? "Merging..." : "Confirm Merge"}
                 </button>

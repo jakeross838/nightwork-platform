@@ -770,7 +770,7 @@ export default function AllInvoicesPage() {
  <button
  onClick={(e) => { e.stopPropagation(); handleInlinePickedUpToggle(inv.id, inv.picked_up); }}
  disabled={savingInline === inv.id}
- className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${inv.picked_up ? "bg-status-success" : "bg-[var(--border-default)]"}`}>
+ className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${inv.picked_up ? "bg-[var(--nw-success)]" : "bg-[var(--border-default)]"}`}>
  <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${inv.picked_up ? "translate-x-5" : "translate-x-1"}`} />
  </button>
  </td>

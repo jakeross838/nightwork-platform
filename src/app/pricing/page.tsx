@@ -190,8 +190,8 @@ export default async function PricingPage() {
           >
             {FAQ.map((f) => (
               <div key={f.q} className="py-5">
-                <p className="font-medium text-cream text-[15px]">{f.q}</p>
-                <p className="mt-2 text-sm text-cream-muted leading-relaxed">{f.a}</p>
+                <p className="font-medium text-[color:var(--text-primary)] text-[15px]">{f.q}</p>
+                <p className="mt-2 text-sm text-[color:var(--text-muted)] leading-relaxed">{f.a}</p>
               </div>
             ))}
           </div>
@@ -273,10 +273,10 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
         <SpecRow label="Storage" value={plan.storage} />
         <SpecRow label="Jobs" value={plan.jobs} />
       </dl>
-      <ul className="mt-6 space-y-2 text-sm text-cream-muted flex-1">
+      <ul className="mt-6 space-y-2 text-sm text-[color:var(--text-muted)] flex-1">
         {plan.features.map((f) => (
           <li key={f} className="flex gap-2">
-            <span className="text-teal mt-0.5">✓</span>
+            <span className="text-[color:var(--nw-stone-blue)] mt-0.5">✓</span>
             <span>{f}</span>
           </li>
         ))}
@@ -284,7 +284,7 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
       {isContact ? (
         <a
           href={plan.ctaHref}
-          className="mt-8 block text-center px-4 py-3 border border-brand-border text-[13px] tracking-[0.08em] uppercase hover:bg-brand-surface"
+          className="mt-8 block text-center px-4 py-3 border border-[var(--border-default)] text-[13px] tracking-[0.08em] uppercase hover:bg-[var(--bg-subtle)]"
         >
           {plan.cta}
         </a>
@@ -308,9 +308,9 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
 
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4 border-b border-brand-border/70 pb-1.5">
-      <dt className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">{label}</dt>
-      <dd className="text-cream text-sm">{value}</dd>
+    <div className="flex justify-between gap-4 border-b border-[var(--border-default)]/70 pb-1.5">
+      <dt className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">{label}</dt>
+      <dd className="text-[color:var(--text-primary)] text-sm">{value}</dd>
     </div>
   );
 }

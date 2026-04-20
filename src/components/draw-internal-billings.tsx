@@ -172,7 +172,7 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
   }
 
   if (loading) {
-    return <div className="text-cream-dim text-sm py-8 text-center">Loading internal billings...</div>;
+    return <div className="text-[color:var(--text-secondary)] text-sm py-8 text-center">Loading internal billings...</div>;
   }
 
   // Compute live total for all selected
@@ -188,32 +188,32 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
       {/* Already attached */}
       {attachedBillings.length > 0 && (
         <div>
-          <h3 className="text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-3">
+          <h3 className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-3">
             Attached to This Draw
           </h3>
-          <div className="border border-brand-border divide-y divide-brand-border">
+          <div className="border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
             {attachedBillings.map((b) => (
-              <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-brand-card">
+              <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-[var(--bg-card)]">
                 <div className="flex items-center gap-3">
-                  <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-teal/20 text-teal">
+                  <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-[rgba(91,134,153,0.24)] text-[color:var(--nw-stone-blue)]">
                     INTERNAL
                   </span>
-                  <span className="text-sm text-cream">
+                  <span className="text-sm text-[color:var(--text-primary)]">
                     {b.internal_billing_types?.name ?? "—"}
                   </span>
                   {b.description && (
-                    <span className="text-sm text-cream-dim">— {b.description}</span>
+                    <span className="text-sm text-[color:var(--text-secondary)]">— {b.description}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-cream tabular-nums">
+                  <span className="text-sm text-[color:var(--text-primary)] tabular-nums">
                     {formatCents(b.amount_cents)}
                   </span>
                   {isDraft && (
                     <button
                       onClick={() => handleDetach(b.id)}
                       disabled={detachingId === b.id}
-                      className="text-xs text-status-danger hover:underline disabled:opacity-50"
+                      className="text-xs text-[color:var(--nw-danger)] hover:underline disabled:opacity-50"
                     >
                       {detachingId === b.id ? "..." : "Detach"}
                     </button>
@@ -221,9 +221,9 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
                 </div>
               </div>
             ))}
-            <div className="flex justify-between px-4 py-2 bg-brand-surface text-sm">
-              <span className="text-cream-dim">Attached total</span>
-              <span className="text-cream font-medium tabular-nums">{formatCents(attachedTotal)}</span>
+            <div className="flex justify-between px-4 py-2 bg-[var(--bg-subtle)] text-sm">
+              <span className="text-[color:var(--text-secondary)]">Attached total</span>
+              <span className="text-[color:var(--text-primary)] font-medium tabular-nums">{formatCents(attachedTotal)}</span>
             </div>
           </div>
         </div>
@@ -232,16 +232,16 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
       {/* Draft billings available to attach */}
       {isDraft && draftBillings.length > 0 && (
         <div>
-          <h3 className="text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-3">
+          <h3 className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-3">
             Available to Attach
           </h3>
 
           {/* Base display */}
-          <div className="mb-3 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream-dim">
-            Draw base (budget + CO lines): <span className="text-cream font-medium">{formatCents(baseCents)}</span>
+          <div className="mb-3 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-secondary)]">
+            Draw base (budget + CO lines): <span className="text-[color:var(--text-primary)] font-medium">{formatCents(baseCents)}</span>
           </div>
 
-          <div className="border border-brand-border divide-y divide-brand-border">
+          <div className="border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
             {draftBillings.map((b) => {
               const method = getMethodLabel(b);
               const checked = selected.has(b.id);
@@ -251,7 +251,7 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
                 <label
                   key={b.id}
                   className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                    checked ? "bg-teal/5" : "bg-brand-card hover:bg-brand-surface"
+                    checked ? "bg-[rgba(91,134,153,0.08)]" : "bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -261,11 +261,11 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
                       onChange={() => toggleSelect(b.id)}
                       className="accent-teal"
                     />
-                    <span className="text-sm text-cream">
+                    <span className="text-sm text-[color:var(--text-primary)]">
                       {b.internal_billing_types?.name ?? "—"}
                     </span>
                     {b.description && (
-                      <span className="text-sm text-cream-dim">— {b.description}</span>
+                      <span className="text-sm text-[color:var(--text-secondary)]">— {b.description}</span>
                     )}
                     {method === "percentage" && b.percentage && (
                       <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-amber-500/20 text-amber-300">
@@ -273,11 +273,11 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-cream tabular-nums">
+                  <div className="text-sm text-[color:var(--text-primary)] tabular-nums">
                     {method === "percentage" && b.percentage ? (
                       <span>
                         {formatCents(amount)}{" "}
-                        <span className="text-cream-dim text-xs">
+                        <span className="text-[color:var(--text-secondary)] text-xs">
                           (= base × {(b.percentage * 100).toFixed(0)}%)
                         </span>
                       </span>
@@ -290,14 +290,14 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
             })}
 
             {selected.size > 0 && (
-              <div className="flex justify-between items-center px-4 py-3 bg-brand-surface">
-                <span className="text-sm text-cream-dim">
-                  {selected.size} selected — total: <span className="text-cream font-medium">{formatCents(selectedTotal)}</span>
+              <div className="flex justify-between items-center px-4 py-3 bg-[var(--bg-subtle)]">
+                <span className="text-sm text-[color:var(--text-secondary)]">
+                  {selected.size} selected — total: <span className="text-[color:var(--text-primary)] font-medium">{formatCents(selectedTotal)}</span>
                 </span>
                 <button
                   onClick={handleAttach}
                   disabled={attaching}
-                  className="bg-teal text-white px-4 py-1.5 text-sm disabled:opacity-50"
+                  className="bg-[var(--nw-stone-blue)] text-white px-4 py-1.5 text-sm disabled:opacity-50"
                 >
                   {attaching ? "Attaching..." : "Attach Selected"}
                 </button>
@@ -308,9 +308,9 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
       )}
 
       {isDraft && draftBillings.length === 0 && attachedBillings.length === 0 && (
-        <div className="text-center py-8 text-cream-dim text-sm">
+        <div className="text-center py-8 text-[color:var(--text-secondary)] text-sm">
           No internal billings for this job.{" "}
-          <a href={`/jobs/${jobId}/internal-billings`} className="text-teal hover:underline">
+          <a href={`/jobs/${jobId}/internal-billings`} className="text-[color:var(--nw-stone-blue)] hover:underline">
             Add billings
           </a>{" "}
           first, then attach them here.
@@ -318,7 +318,7 @@ export default function DrawInternalBillings({ drawId, jobId, isDraft, onChange 
       )}
 
       {!isDraft && attachedBillings.length === 0 && (
-        <div className="text-center py-8 text-cream-dim text-sm">
+        <div className="text-center py-8 text-[color:var(--text-secondary)] text-sm">
           No internal billings attached to this draw.
         </div>
       )}

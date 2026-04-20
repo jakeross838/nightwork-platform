@@ -24,14 +24,14 @@ export default function EmptyState({
   secondaryAction,
   variant = "default",
 }: EmptyStateProps) {
-  const iconColor = variant === "success" ? "text-status-success" : "text-cream-dim";
+  const iconColor = variant === "success" ? "text-[color:var(--nw-success)]" : "text-[color:var(--text-secondary)]";
   return (
-    <div className="text-center py-16 px-6 border border-dashed border-brand-border bg-brand-card">
+    <div className="text-center py-16 px-6 border border-dashed border-[var(--border-default)] bg-[var(--bg-card)]">
       <div className={`inline-flex items-center justify-center w-12 h-12 ${iconColor}`}>
         {icon ?? <DefaultEmptyIcon />}
       </div>
-      <h3 className="mt-4 text-cream font-display text-lg">{title}</h3>
-      <p className="mt-1 text-cream-dim text-sm max-w-md mx-auto">{message}</p>
+      <h3 className="mt-4 text-[color:var(--text-primary)] font-display text-lg">{title}</h3>
+      <p className="mt-1 text-[color:var(--text-secondary)] text-sm max-w-md mx-auto">{message}</p>
       {(primaryAction || secondaryAction) && (
         <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
           {primaryAction && <ActionButton {...primaryAction} variant="primary" />}
@@ -55,8 +55,8 @@ function ActionButton({
 }) {
   const cls =
     variant === "primary"
-      ? "px-4 py-2 bg-teal text-white text-sm hover:bg-teal-hover transition-colors"
-      : "px-4 py-2 border border-brand-border bg-brand-card text-cream text-sm hover:border-teal/60 transition-colors";
+      ? "px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-sm hover:bg-[var(--nw-gulf-blue)] transition-colors"
+      : "px-4 py-2 border border-[var(--border-default)] bg-[var(--bg-card)] text-[color:var(--text-primary)] text-sm hover:border-[rgba(91,134,153,0.5)] transition-colors";
   if (href) {
     return (
       <Link href={href} className={cls}>

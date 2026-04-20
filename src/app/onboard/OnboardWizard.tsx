@@ -224,7 +224,7 @@ export default function OnboardWizard({
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg">
+    <div className="min-h-screen bg-[var(--bg-page)]">
       <header className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
         <div className="max-w-[900px] mx-auto px-6 py-4 flex items-center justify-between">
           <span className="font-display text-lg tracking-[0.12em] uppercase text-[color:var(--text-primary)]">
@@ -504,7 +504,7 @@ function StepRail({ step }: { step: number }) {
               {done ? "✓" : num}
             </div>
             <span className={`text-sm ${active ? "text-[color:var(--text-primary)] font-medium" : "text-[color:var(--text-secondary)]"}`}>{label}</span>
-            {i < steps.length - 1 && <span className="w-8 h-px bg-brand-border" />}
+            {i < steps.length - 1 && <span className="w-8 h-px bg-[var(--border-default)]" />}
           </div>
         );
       })}

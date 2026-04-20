@@ -98,8 +98,8 @@ type StatusFilter = "pending" | "held" | "denied" | "kicked_back" | "info_reques
 type AmountRange = "all" | "0-5k" | "5k-25k" | "25k-100k" | "100k+";
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
- if (!active) return <span className="ml-1 text-cream-dim">&#8597;</span>;
- return <span className="ml-1 text-teal">{dir === "asc" ? "\u2191" : "\u2193"}</span>;
+ if (!active) return <span className="ml-1 text-[color:var(--text-secondary)]">&#8597;</span>;
+ return <span className="ml-1 text-[color:var(--nw-stone-blue)]">{dir === "asc" ? "\u2191" : "\u2193"}</span>;
 }
 
 function OverheadBadge() {
@@ -748,7 +748,7 @@ export default function QueuePage() {
  {/* Search */}
  <div className="relative flex-1">
  <svg
- className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cream-dim"
+ className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--text-secondary)]"
  fill="none"
  viewBox="0 0 24 24"
  stroke="currentColor"
@@ -765,12 +765,12 @@ export default function QueuePage() {
  value={search}
  onChange={(e) => setSearch(e.target.value)}
  placeholder="Search vendor or invoice #..."
- className="w-full pl-9 pr-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none"
+ className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
  />
  {search && (
  <button
  onClick={() => setSearch("")}
- className="absolute right-3 top-1/2 -translate-y-1/2 text-cream-dim hover:text-cream"
+ className="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
  >
  <svg
  className="w-4 h-4"
@@ -793,7 +793,7 @@ export default function QueuePage() {
  <select
  value={jobFilter}
  onChange={(e) => setJobFilter(e.target.value)}
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-48"
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none md:w-48"
  >
  <option value="">All Jobs</option>
  {jobNames.map((name) => (
@@ -807,7 +807,7 @@ export default function QueuePage() {
  <select
  value={pmFilter}
  onChange={(e) => setPmFilter(e.target.value)}
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-48"
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none md:w-48"
  >
  <option value="">All PMs</option>
  <option value="__unassigned__">Unassigned</option>
@@ -824,7 +824,7 @@ export default function QueuePage() {
  onChange={(e) =>
  setConfidenceFilter(e.target.value as ConfidenceFilter)
  }
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-40"
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none md:w-40"
  >
  <option value="all">All Confidence</option>
  <option value="high">High (&ge;85%)</option>
@@ -838,7 +838,7 @@ export default function QueuePage() {
  <div className="flex items-center gap-3">
  <button
  onClick={() => setShowMoreFilters((v) => !v)}
- className="flex items-center gap-1.5 px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border hover:border-brand-border-light transition-colors"
+ className="flex items-center gap-1.5 px-3 py-2 text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] transition-colors"
  >
  <svg
  className={`w-4 h-4 transition-transform ${showMoreFilters ? "rotate-180" : ""}`}
@@ -855,7 +855,7 @@ export default function QueuePage() {
  </svg>
  More Filters
  {!showMoreFilters && advancedFilterCount > 0 && (
- <span className="ml-1 inline-flex items-center justify-center w-5 h-5 bg-teal/20 text-teal text-xs font-semibold">
+ <span className="ml-1 inline-flex items-center justify-center w-5 h-5 bg-[rgba(91,134,153,0.24)] text-[color:var(--nw-stone-blue)] text-xs font-semibold">
  {advancedFilterCount}
  </span>
  )}
@@ -865,7 +865,7 @@ export default function QueuePage() {
  {isFiltered && (
  <button
  onClick={clearAllFilters}
- className="px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border hover:border-brand-border-light transition-colors whitespace-nowrap"
+ className="px-3 py-2 text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] transition-colors whitespace-nowrap"
  >
  Clear filters
  </button>
@@ -880,7 +880,7 @@ export default function QueuePage() {
  onChange={(e) =>
  setStatusFilter(e.target.value as StatusFilter)
  }
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-44"
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none md:w-44"
  >
  <option value="pending">Pending Review</option>
  <option value="needs_attention">Needs Attention</option>
@@ -897,7 +897,7 @@ export default function QueuePage() {
  onChange={(e) =>
  setAmountRange(e.target.value as AmountRange)
  }
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-40"
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none md:w-40"
  >
  <option value="all">All Amounts</option>
  <option value="0-5k">$0 - $5K</option>
@@ -908,27 +908,27 @@ export default function QueuePage() {
 
  {/* Date range start */}
  <div className="flex items-center gap-2">
- <label className="text-xs text-cream-dim whitespace-nowrap">
+ <label className="text-xs text-[color:var(--text-secondary)] whitespace-nowrap">
  From
  </label>
  <input
  type="date"
  value={dateStart}
  onChange={(e) => setDateStart(e.target.value)}
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
  />
  </div>
 
  {/* Date range end */}
  <div className="flex items-center gap-2">
- <label className="text-xs text-cream-dim whitespace-nowrap">
+ <label className="text-xs text-[color:var(--text-secondary)] whitespace-nowrap">
  To
  </label>
  <input
  type="date"
  value={dateEnd}
  onChange={(e) => setDateEnd(e.target.value)}
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
  />
  </div>
  </div>
@@ -938,12 +938,12 @@ export default function QueuePage() {
  {/* No results after filtering */}
  {filtered.length === 0 && (
  <div className="text-center py-16 animate-fade-up">
- <p className="text-cream-muted text-sm">
+ <p className="text-[color:var(--text-muted)] text-sm">
  No invoices match your filters
  </p>
  <button
  onClick={clearAllFilters}
- className="mt-2 text-sm text-teal hover:text-teal-hover transition-colors"
+ className="mt-2 text-sm text-[color:var(--nw-stone-blue)] hover:text-[color:var(--nw-gulf-blue)] transition-colors"
  >
  Clear all filters
  </button>
@@ -957,14 +957,14 @@ export default function QueuePage() {
  {filtered.map((inv, i) => (
  <div
  key={inv.id}
- className={`bg-brand-card border p-4 cursor-pointer active:opacity-80 transition-all duration-300 animate-fade-up ${selectedIds.has(inv.id) ? "border-teal/60 bg-teal/5" : "border-brand-border"} ${animatingOutIds.has(inv.id) ? "opacity-0 scale-95" : ""}`}
+ className={`bg-[var(--bg-card)] border p-4 cursor-pointer active:opacity-80 transition-all duration-300 animate-fade-up ${selectedIds.has(inv.id) ? "border-[rgba(91,134,153,0.5)] bg-[rgba(91,134,153,0.08)]" : "border-[var(--border-default)]"} ${animatingOutIds.has(inv.id) ? "opacity-0 scale-95" : ""}`}
  style={{ animationDelay: `${0.05 + i * 0.03}s` }}
  onClick={() =>
  (window.location.href = `/invoices/${inv.id}`)
  }
  >
  <div className="flex items-start justify-between">
- <span className="text-cream font-medium text-base inline-flex items-center gap-2">
+ <span className="text-[color:var(--text-primary)] font-medium text-base inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
  <NwBadge variant="info" size="sm">Receipt</NwBadge>
@@ -996,7 +996,7 @@ export default function QueuePage() {
  ) : inv.document_category === "overhead" ? (
  <OverheadBadge />
  ) : (
- <span className="text-cream-dim text-xs">
+ <span className="text-[color:var(--text-secondary)] text-xs">
  Unmatched
  </span>
  )}
@@ -1010,7 +1010,7 @@ export default function QueuePage() {
  const aging = agingBadgeInfo(d);
  return (
  <>
- <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
+ <span className={`text-sm font-medium ${d > 5 ? "text-[color:var(--nw-danger)]" : d > 2 ? "text-brass" : "text-[color:var(--text-secondary)]"}`}>
  {d}d
  </span>
  {aging && <NwBadge variant={aging.variant} size="sm">{aging.label}</NwBadge>}
@@ -1020,8 +1020,8 @@ export default function QueuePage() {
  </div>
  </div>
  {/* PM name + invoice details */}
- <div className="flex items-center gap-2 mt-2 text-xs text-cream-muted">
- <span className={inv.assigned_pm ? "text-cream-muted" : "text-cream-dim"}>
+ <div className="flex items-center gap-2 mt-2 text-xs text-[color:var(--text-muted)]">
+ <span className={inv.assigned_pm ? "text-[color:var(--text-muted)]" : "text-[color:var(--text-secondary)]"}>
  {inv.assigned_pm?.full_name ?? "Unassigned"}
  </span>
  {(inv.invoice_number || inv.invoice_date) && (
@@ -1054,13 +1054,13 @@ export default function QueuePage() {
  )}
  {/* Quick Approve — mobile card */}
  {isQuickApproveEligible(inv) && (
- <div className="mt-3 pt-3 border-t border-brand-border/60">
+ <div className="mt-3 pt-3 border-t border-[var(--border-default)]/60">
  {quickApproveConfirmId === inv.id ? (
  <div
  className="flex items-center justify-between gap-2"
  onClick={(e) => e.stopPropagation()}
  >
- <span className="text-xs text-cream-dim truncate">
+ <span className="text-xs text-[color:var(--text-secondary)] truncate">
  Approve {inv.vendor_name_raw ?? "invoice"} {formatCents(inv.total_amount)}
  {inv.jobs?.name ? ` to ${inv.jobs.name}` : ""}?
  </span>
@@ -1112,10 +1112,10 @@ export default function QueuePage() {
  </div>
 
  {/* Desktop table layout */}
- <div className={`hidden md:block overflow-x-auto border border-brand-border animate-fade-up ${selectedIds.size > 0 ? "mb-20" : ""}`}>
+ <div className={`hidden md:block overflow-x-auto border border-[var(--border-default)] animate-fade-up ${selectedIds.size > 0 ? "mb-20" : ""}`}>
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-brand-surface text-left">
+ <tr className="bg-[var(--bg-subtle)] text-left">
  {batchEnabled && (
  <th className="py-3 px-3 w-10">
  <input
@@ -1129,7 +1129,7 @@ export default function QueuePage() {
  </th>
  )}
  <th
- className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] cursor-pointer select-none hover:text-[color:var(--nw-stone-blue)] transition-colors"
  onClick={() => toggleSort("vendor")}
  >
  Vendor
@@ -1138,11 +1138,11 @@ export default function QueuePage() {
  dir={sortDir}
  />
  </th>
- <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)]">
  Invoice #
  </th>
  <th
- className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] cursor-pointer select-none hover:text-[color:var(--nw-stone-blue)] transition-colors"
  onClick={() => toggleSort("date")}
  >
  Date
@@ -1151,11 +1151,11 @@ export default function QueuePage() {
  dir={sortDir}
  />
  </th>
- <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)]">
  Job
  </th>
  <th
- className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] cursor-pointer select-none hover:text-[color:var(--nw-stone-blue)] transition-colors"
  onClick={() => toggleSort("pm")}
  >
  PM
@@ -1165,7 +1165,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] text-right cursor-pointer select-none hover:text-[color:var(--nw-stone-blue)] transition-colors"
  onClick={() => toggleSort("amount")}
  >
  Amount
@@ -1175,7 +1175,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] cursor-pointer select-none hover:text-[color:var(--nw-stone-blue)] transition-colors"
  onClick={() => toggleSort("confidence")}
  >
  Confidence
@@ -1185,7 +1185,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-[color:var(--text-secondary)] text-right cursor-pointer select-none hover:text-[color:var(--nw-stone-blue)] transition-colors"
  onClick={() => toggleSort("waiting")}
  >
  Waiting
@@ -1201,7 +1201,7 @@ export default function QueuePage() {
  {filtered.map((inv) => (
  <tr
  key={inv.id}
- className={`border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-all duration-300 ${selectedIds.has(inv.id) ? "bg-teal/5" : ""} ${animatingOutIds.has(inv.id) ? "opacity-0" : ""}`}
+ className={`border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] cursor-pointer transition-all duration-300 ${selectedIds.has(inv.id) ? "bg-[rgba(91,134,153,0.08)]" : ""} ${animatingOutIds.has(inv.id) ? "opacity-0" : ""}`}
  onClick={() =>
  (window.location.href = `/invoices/${inv.id}`)
  }
@@ -1218,7 +1218,7 @@ export default function QueuePage() {
  />
  </td>
  )}
- <td className="py-4 px-5 text-cream font-medium">
+ <td className="py-4 px-5 text-[color:var(--text-primary)] font-medium">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && <span className="ml-2"><NwBadge variant="info" size="sm">Receipt</NwBadge></span>}
  {inv.status === "pm_held" && <span className="ml-2"><NwBadge variant="warning" size="sm">Held</NwBadge></span>}
@@ -1227,16 +1227,16 @@ export default function QueuePage() {
  {inv.is_potential_duplicate && !inv.duplicate_dismissed_at && <span className="ml-2"><NwBadge variant="warning" size="sm">Duplicate?</NwBadge></span>}
  <MissingDataBadges inv={inv} />
  </td>
- <td className="py-4 px-5 text-cream-muted font-mono text-xs">
+ <td className="py-4 px-5 text-[color:var(--text-muted)] font-mono text-xs">
  {inv.invoice_number ?? (
- <span className="text-status-danger">No #</span>
+ <span className="text-[color:var(--nw-danger)]">No #</span>
  )}
  </td>
- <td className="py-4 px-5 text-cream-muted">
+ <td className="py-4 px-5 text-[color:var(--text-muted)]">
  {inv.invoice_date ? (
  formatDate(inv.invoice_date)
  ) : (
- <span className="text-status-danger">No Date</span>
+ <span className="text-[color:var(--nw-danger)]">No Date</span>
  )}
  </td>
  <td className="py-4 px-5">
@@ -1245,15 +1245,15 @@ export default function QueuePage() {
  ) : inv.document_category === "overhead" ? (
  <OverheadBadge />
  ) : (
- <span className="text-cream-dim">Unmatched</span>
+ <span className="text-[color:var(--text-secondary)]">Unmatched</span>
  )}
  </td>
  <td className="py-4 px-5">
  <span
  className={
  inv.assigned_pm
- ? "text-cream-muted text-sm"
- : "text-cream-dim text-sm"
+ ? "text-[color:var(--text-muted)] text-sm"
+ : "text-[color:var(--text-secondary)] text-sm"
  }
  >
  {inv.assigned_pm?.full_name ?? "Unassigned"}
@@ -1273,7 +1273,7 @@ export default function QueuePage() {
  const aging = agingBadgeInfo(d);
  return (
  <div className="flex items-center justify-end gap-1.5">
- <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
+ <span className={`text-sm font-medium ${d > 5 ? "text-[color:var(--nw-danger)]" : d > 2 ? "text-brass" : "text-[color:var(--text-secondary)]"}`}>
  {d}d
  </span>
  {aging && <NwBadge variant={aging.variant} size="sm">{aging.label}</NwBadge>}
@@ -1330,18 +1330,18 @@ export default function QueuePage() {
  )}
  {/* Floating batch action bar */}
  {batchEnabled && selectedIds.size > 0 && (
- <div className="fixed bottom-0 left-0 right-0 z-50 bg-brand-surface/95 backdrop-blur-sm border-t border-brand-border px-4 py-3 animate-fade-up">
+ <div className="fixed bottom-0 left-0 right-0 z-50 bg-[rgba(91,134,153,0.1)] backdrop-blur-sm border-t border-[var(--border-default)] px-4 py-3 animate-fade-up">
  <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
  <div className="flex items-baseline justify-between sm:justify-start gap-3">
- <span className="text-sm text-cream font-medium">
+ <span className="text-sm text-[color:var(--text-primary)] font-medium">
  {selectedIds.size} selected
  </span>
- <span className="text-xs text-cream-dim">
- Total: <span className="text-cream font-medium font-display">{formatCents(selectedTotalCents)}</span>
+ <span className="text-xs text-[color:var(--text-secondary)]">
+ Total: <span className="text-[color:var(--text-primary)] font-medium font-display">{formatCents(selectedTotalCents)}</span>
  </span>
  <button
  onClick={() => setSelectedIds(new Set())}
- className="sm:hidden text-xs text-cream-dim hover:text-cream underline underline-offset-2"
+ className="sm:hidden text-xs text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] underline underline-offset-2"
  >
  Clear
  </button>
@@ -1388,7 +1388,7 @@ export default function QueuePage() {
  {/* Toast */}
  {toast && (
  <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] animate-fade-up">
- <div className={`px-5 py-3 border shadow-lg text-sm font-medium ${toast.kind === "ok" ? "bg-status-success text-white border-status-success" : "bg-status-danger text-white border-status-danger"}`}>
+ <div className={`px-5 py-3 border shadow-lg text-sm font-medium ${toast.kind === "ok" ? "bg-[var(--nw-success)] text-white border-[rgba(74,138,111,0.5)]" : "bg-[var(--nw-danger)] text-white border-[rgba(176,85,78,0.5)]"}`}>
  {toast.text}
  </div>
  </div>
@@ -1397,29 +1397,29 @@ export default function QueuePage() {
  {/* Hold Note Modal */}
  {showHoldNoteModal && (
  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
- <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up">
- <h3 className="font-display text-lg text-cream mb-1">Batch Hold</h3>
- <p className="text-sm text-cream-dim mb-4">
+ <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up">
+ <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-1">Batch Hold</h3>
+ <p className="text-sm text-[color:var(--text-secondary)] mb-4">
  Hold {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""}. Add a note explaining why.
  </p>
  <textarea
  value={holdNote}
  onChange={(e) => setHoldNote(e.target.value)}
  placeholder="Add a note (required)..."
- className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
+ className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
  autoFocus
  />
  <div className="flex gap-2 mt-4">
  <button
  onClick={() => setShowHoldNoteModal(false)}
- className="flex-1 px-4 py-2.5 text-sm text-cream-dim border border-brand-border hover:text-cream hover:border-brand-border-light transition-colors"
+ className="flex-1 px-4 py-2.5 text-sm text-[color:var(--text-secondary)] border border-[var(--border-default)] hover:text-[color:var(--text-primary)] hover:border-[var(--border-strong)] transition-colors"
  >
  Cancel
  </button>
  <button
  onClick={handleBatchHold}
  disabled={!holdNote.trim() || batchProcessing}
- className="flex-1 px-4 py-2.5 text-sm font-medium bg-brass text-brand-bg hover:bg-brass-hover transition-colors disabled:opacity-50"
+ className="flex-1 px-4 py-2.5 text-sm font-medium bg-brass text-[color:var(--bg-page)] hover:bg-brass-hover transition-colors disabled:opacity-50"
  >
  Hold
  </button>
@@ -1431,29 +1431,29 @@ export default function QueuePage() {
  {/* Deny Note Modal */}
  {showDenyNoteModal && (
  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
- <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up">
- <h3 className="font-display text-lg text-cream mb-1">Batch Deny</h3>
- <p className="text-sm text-cream-dim mb-4">
+ <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up">
+ <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-1">Batch Deny</h3>
+ <p className="text-sm text-[color:var(--text-secondary)] mb-4">
  Deny {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""}. A reason is required and will apply to each.
  </p>
  <textarea
  value={denyNote}
  onChange={(e) => setDenyNote(e.target.value)}
  placeholder="Reason for denial (required)..."
- className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none"
+ className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
  autoFocus
  />
  <div className="flex gap-2 mt-4">
  <button
  onClick={() => setShowDenyNoteModal(false)}
- className="flex-1 px-4 py-2.5 text-sm text-cream-dim border border-brand-border hover:text-cream hover:border-brand-border-light transition-colors"
+ className="flex-1 px-4 py-2.5 text-sm text-[color:var(--text-secondary)] border border-[var(--border-default)] hover:text-[color:var(--text-primary)] hover:border-[var(--border-strong)] transition-colors"
  >
  Cancel
  </button>
  <button
  onClick={handleBatchDeny}
  disabled={!denyNote.trim() || batchProcessing}
- className="flex-1 px-4 py-2.5 text-sm font-medium bg-status-danger text-white hover:bg-status-danger/90 transition-colors disabled:opacity-50"
+ className="flex-1 px-4 py-2.5 text-sm font-medium bg-[var(--nw-danger)] text-white hover:bg-[var(--nw-danger)]/90 transition-colors disabled:opacity-50"
  >
  Deny
  </button>
@@ -1465,31 +1465,31 @@ export default function QueuePage() {
  {/* Approve Confirmation Modal */}
  {showApproveConfirm && (
  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
- <div className="bg-brand-card border border-brand-border p-6 w-full max-w-xl animate-fade-up">
- <h3 className="font-display text-lg text-cream mb-1">
+ <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-xl animate-fade-up">
+ <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-1">
  {approvalExcluded.length === 0
  ? `Approve ${approvalEligible.length} invoice${approvalEligible.length !== 1 ? "s" : ""}?`
  : `${approvalEligible.length} of ${approvalEligible.length + approvalExcluded.length} invoices can be batch approved`}
  </h3>
- <p className="text-sm text-cream-dim mb-4">
+ <p className="text-sm text-[color:var(--text-secondary)] mb-4">
  {approvalEligible.length > 0 && (
- <>Total: <span className="text-cream font-display font-medium">{formatCents(approvalEligible.reduce((s, i) => s + i.total_amount, 0))}</span></>
+ <>Total: <span className="text-[color:var(--text-primary)] font-display font-medium">{formatCents(approvalEligible.reduce((s, i) => s + i.total_amount, 0))}</span></>
  )}
  </p>
 
  {approvalEligible.length > 0 && (
  <div className="mb-4">
- <div className="text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-2">Will be approved</div>
+ <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-2">Will be approved</div>
  <div className="max-h-48 overflow-y-auto space-y-1.5">
  {approvalEligible.map((inv) => (
- <div key={inv.id} className="flex items-center justify-between px-3 py-2 bg-brand-surface border border-brand-border text-sm">
+ <div key={inv.id} className="flex items-center justify-between px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm">
  <div className="min-w-0 truncate">
- <span className="text-cream">{inv.vendor_name_raw ?? "Unknown"}</span>
+ <span className="text-[color:var(--text-primary)]">{inv.vendor_name_raw ?? "Unknown"}</span>
  {inv.jobs?.name && (
- <span className="ml-2 text-cream-dim text-xs">{inv.jobs.name}</span>
+ <span className="ml-2 text-[color:var(--text-secondary)] text-xs">{inv.jobs.name}</span>
  )}
  </div>
- <span className="text-cream font-display ml-2 shrink-0">{formatCents(inv.total_amount)}</span>
+ <span className="text-[color:var(--text-primary)] font-display ml-2 shrink-0">{formatCents(inv.total_amount)}</span>
  </div>
  ))}
  </div>
@@ -1498,23 +1498,23 @@ export default function QueuePage() {
 
  {approvalExcluded.length > 0 && (
  <div className="mb-4">
- <div className="text-[11px] tracking-[0.08em] uppercase text-status-danger mb-2">
+ <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--nw-danger)] mb-2">
  Excluded from batch ({approvalExcluded.length})
  </div>
  <div className="max-h-48 overflow-y-auto space-y-1.5">
  {approvalExcluded.map(({ invoice, reasons }) => (
- <div key={invoice.id} className="px-3 py-2 bg-status-danger-muted border border-status-danger/40 text-sm">
+ <div key={invoice.id} className="px-3 py-2 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.35)] text-sm">
  <div className="flex items-center justify-between gap-2">
- <span className="text-cream truncate">{invoice.vendor_name_raw ?? "Unknown"}</span>
- <span className="text-cream-dim font-display text-xs shrink-0">{formatCents(invoice.total_amount)}</span>
+ <span className="text-[color:var(--text-primary)] truncate">{invoice.vendor_name_raw ?? "Unknown"}</span>
+ <span className="text-[color:var(--text-secondary)] font-display text-xs shrink-0">{formatCents(invoice.total_amount)}</span>
  </div>
- <div className="text-xs text-status-danger mt-1">
+ <div className="text-xs text-[color:var(--nw-danger)] mt-1">
  {reasons.join(" · ")}
  </div>
  </div>
  ))}
  </div>
- <p className="text-xs text-cream-dim mt-2">
+ <p className="text-xs text-[color:var(--text-secondary)] mt-2">
  Open these invoices individually to fix the issues, then try again.
  </p>
  </div>
@@ -1523,14 +1523,14 @@ export default function QueuePage() {
  <div className="flex gap-2 mt-4">
  <button
  onClick={() => setShowApproveConfirm(false)}
- className="flex-1 px-4 py-2.5 text-sm text-cream-dim border border-brand-border hover:text-cream hover:border-brand-border-light transition-colors"
+ className="flex-1 px-4 py-2.5 text-sm text-[color:var(--text-secondary)] border border-[var(--border-default)] hover:text-[color:var(--text-primary)] hover:border-[var(--border-strong)] transition-colors"
  >
  Cancel
  </button>
  <button
  onClick={confirmBatchApprove}
  disabled={approvalEligible.length === 0 || batchProcessing}
- className="flex-1 px-4 py-2.5 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors disabled:opacity-50"
+ className="flex-1 px-4 py-2.5 text-sm font-medium bg-[var(--nw-success)] text-white hover:bg-[var(--nw-success)]/90 transition-colors disabled:opacity-50"
  >
  {batchProcessing
  ? "Processing..."

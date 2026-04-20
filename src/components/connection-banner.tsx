@@ -93,7 +93,7 @@ export default function ConnectionBanner() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed top-0 inset-x-0 z-[60] bg-status-danger text-white text-center text-sm py-2 px-4 shadow-md"
+      className="fixed top-0 inset-x-0 z-[60] bg-[var(--nw-danger)] text-white text-center text-sm py-2 px-4 shadow-md"
     >
       <strong className="font-semibold">Database connection lost</strong>
       <span className="mx-2 opacity-80">·</span>
