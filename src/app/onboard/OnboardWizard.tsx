@@ -4,6 +4,17 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
 
+if (typeof document !== "undefined" && !document.getElementById("nw-onboard-styles")) {
+  const s = document.createElement("style");
+  s.id = "nw-onboard-styles";
+  s.textContent = `
+    .nw-panel { background: var(--bg-card); border-color: var(--border-default); }
+    .nw-primary-btn { font-family: var(--font-jetbrains-mono); letter-spacing: 0.12em; font-weight: 500; font-size: 11px; text-transform: uppercase; background: var(--nw-stone-blue); color: var(--nw-white-sand); border: 1px solid var(--nw-stone-blue); }
+    .nw-primary-btn:hover:not(:disabled) { background: var(--nw-gulf-blue); border-color: var(--nw-gulf-blue); }
+  `;
+  document.head.appendChild(s);
+}
+
 type Initial = {
   name: string;
   company_address: string | null;
@@ -243,7 +254,7 @@ export default function OnboardWizard({
                 <select
                   value={company.builder_type ?? ""}
                   onChange={(e) => setCompany({ ...company, builder_type: e.target.value || null })}
-                  className="w-full px-3 py-2.5 border border-brand-border bg-white text-sm"
+                  className="w-full px-3 py-2.5 border nw-panel text-sm"
                 >
                   <option value="">Select…</option>
                   {BUILDER_TYPES.map((b) => (
@@ -379,12 +390,12 @@ export default function OnboardWizard({
                     value={inv.email}
                     placeholder="teammate@company.com"
                     onChange={(e) => setInvites(invites.map((x, xi) => (xi === i ? { ...x, email: e.target.value } : x)))}
-                    className="px-3 py-2 border border-brand-border bg-white text-sm"
+                    className="px-3 py-2 border nw-panel text-sm"
                   />
                   <select
                     value={inv.role}
                     onChange={(e) => setInvites(invites.map((x, xi) => (xi === i ? { ...x, role: e.target.value as InviteRow["role"] } : x)))}
-                    className="px-3 py-2 border border-brand-border bg-white text-sm"
+                    className="px-3 py-2 border nw-panel text-sm"
                   >
                     <option value="pm">Project Manager</option>
                     <option value="accounting">Accounting</option>
@@ -548,7 +559,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2.5 border border-brand-border bg-white text-sm"
+        className="w-full px-3 py-2.5 border nw-panel text-sm"
       />
     </label>
   );
@@ -578,7 +589,7 @@ function CurrencyField({
           value={display}
           onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, ""))}
           placeholder={placeholder}
-          className="w-full px-3 py-2.5 border border-brand-border bg-white text-sm"
+          className="w-full px-3 py-2.5 border nw-panel text-sm"
         />
       </div>
     </label>
@@ -597,7 +608,7 @@ function PctField({ label, value, onChange, help }: { label: string; value: numb
           step="0.1"
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-3 py-2.5 border border-brand-border bg-white text-sm"
+          className="w-full px-3 py-2.5 border nw-panel text-sm"
         />
         <span className="text-cream-dim text-sm">%</span>
       </div>

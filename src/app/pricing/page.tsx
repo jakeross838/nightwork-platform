@@ -132,11 +132,28 @@ export default async function PricingPage() {
 
       <section className="px-6 pt-16 pb-8">
         <div className="max-w-[1200px] mx-auto text-center">
-          <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Plans</span>
-          <h1 className="mt-2 font-display text-4xl md:text-5xl text-cream tracking-tight">
+          <span
+            className="text-[10px] uppercase"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              letterSpacing: "0.14em",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            Plans
+          </span>
+          <h1
+            className="mt-2 m-0 text-4xl md:text-5xl tracking-tight"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
             Pricing that scales with your jobs
           </h1>
-          <p className="mt-4 text-cream-muted max-w-2xl mx-auto">
+          <p className="mt-4 max-w-2xl mx-auto" style={{ color: "var(--text-secondary)" }}>
             Start free. Upgrade when your portfolio grows. Every plan includes unlimited draws and cost codes — you only pay for users and AI volume.
           </p>
         </div>
@@ -150,10 +167,27 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 bg-brand-surface border-y border-brand-border">
+      <section
+        className="px-6 py-16 border-y"
+        style={{ background: "var(--bg-subtle)", borderColor: "var(--border-default)" }}
+      >
         <div className="max-w-[820px] mx-auto">
-          <h2 className="font-display text-2xl text-cream mb-6">Frequently asked</h2>
-          <div className="divide-y divide-brand-border border-y border-brand-border">
+          <h2
+            className="m-0 mb-6"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "24px",
+              letterSpacing: "-0.01em",
+              color: "var(--text-primary)",
+            }}
+          >
+            Frequently asked
+          </h2>
+          <div
+            className="divide-y border-y"
+            style={{ borderColor: "var(--border-default)" }}
+          >
             {FAQ.map((f) => (
               <div key={f.q} className="py-5">
                 <p className="font-medium text-cream text-[15px]">{f.q}</p>
@@ -176,28 +210,61 @@ function PlanCard({ plan, isAuthed }: { plan: Plan; isAuthed: boolean }) {
   // /signup like always — they have to have an org before they can subscribe.
   const goesToCheckout = isAuthed && !isContact && plan.key !== "free_trial";
 
-  const buttonClass =
-    plan.highlight
-      ? "bg-teal text-white hover:bg-teal-hover"
-      : "border border-brand-border text-cream hover:bg-brand-surface";
+  const buttonClass = plan.highlight ? "nw-primary-btn" : "nw-secondary-btn";
 
   return (
     <div
-      className={`flex flex-col p-6 border bg-white ${
-        plan.highlight ? "border-teal shadow-[0_12px_32px_-16px_rgba(63,88,98,0.35)]" : "border-brand-border"
-      }`}
+      className="flex flex-col p-6 border"
+      style={{
+        background: "var(--bg-card)",
+        borderColor: plan.highlight ? "var(--nw-stone-blue)" : "var(--border-default)",
+        boxShadow: plan.highlight ? "0 12px 32px -16px rgba(63,88,98,0.35)" : undefined,
+      }}
     >
+      <style dangerouslySetInnerHTML={{ __html: `
+        .nw-primary-btn { font-family: var(--font-jetbrains-mono); letter-spacing: 0.12em; font-weight: 500; font-size: 11px; text-transform: uppercase; background: var(--nw-stone-blue); color: var(--nw-white-sand); border: 1px solid var(--nw-stone-blue); }
+        .nw-primary-btn:hover { background: var(--nw-gulf-blue); border-color: var(--nw-gulf-blue); }
+        .nw-secondary-btn { font-family: var(--font-jetbrains-mono); letter-spacing: 0.12em; font-weight: 500; font-size: 11px; text-transform: uppercase; background: transparent; color: var(--text-primary); border: 1px solid var(--border-strong); }
+        .nw-secondary-btn:hover { background: var(--bg-subtle); }
+      ` }} />
       {plan.highlight && (
-        <span className="self-start px-2 py-0.5 bg-teal text-white text-[10px] tracking-[0.12em] uppercase mb-3">
+        <span
+          className="self-start px-2 py-0.5 text-[10px] uppercase mb-3"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono)",
+            letterSpacing: "0.14em",
+            background: "var(--nw-stone-blue)",
+            color: "var(--nw-white-sand)",
+          }}
+        >
           Most Popular
         </span>
       )}
-      <h2 className="font-display text-xl text-cream">{plan.name}</h2>
-      <p className="mt-3 text-sm text-cream-muted h-10">{plan.blurb}</p>
+      <h2
+        className="m-0"
+        style={{
+          fontFamily: "var(--font-space-grotesk)",
+          fontWeight: 500,
+          fontSize: "20px",
+          color: "var(--text-primary)",
+        }}
+      >
+        {plan.name}
+      </h2>
+      <p className="mt-3 text-sm h-10" style={{ color: "var(--text-secondary)" }}>{plan.blurb}</p>
       <div className="mt-5">
-        <span className="font-display text-4xl text-cream">{plan.price}</span>
+        <span
+          className="text-4xl tabular-nums"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono)",
+            fontWeight: 500,
+            color: "var(--text-primary)",
+          }}
+        >
+          {plan.price}
+        </span>
         {plan.key !== "enterprise" && plan.price !== "$0" && (
-          <span className="text-cream-dim text-sm font-body"> /mo</span>
+          <span className="text-sm" style={{ color: "var(--text-tertiary)" }}> /mo</span>
         )}
       </div>
       <dl className="mt-6 space-y-2 text-sm">

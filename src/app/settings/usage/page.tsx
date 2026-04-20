@@ -4,6 +4,10 @@ import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
 import { checkPlanLimit, planDisplayName } from "@/lib/plan-limits";
 
+const USAGE_STYLES = `
+.nw-panel { background: var(--bg-card); border-color: var(--border-default); }
+`;
+
 export const dynamic = "force-dynamic";
 
 type UsageRow = {
@@ -126,7 +130,8 @@ export default async function UsageDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="bg-white border border-brand-border p-6">
+      <style dangerouslySetInnerHTML={{ __html: USAGE_STYLES }} />
+      <section className="border nw-panel p-6">
         <div className="flex items-baseline justify-between flex-wrap gap-3">
           <div>
             <p className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">Current Plan</p>
@@ -167,7 +172,7 @@ export default async function UsageDashboardPage() {
             limit={storageCheck.limit}
           />
         ) : (
-          <div className="bg-white border border-brand-border p-5">
+          <div className="border nw-panel p-5">
             <p className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">Storage</p>
             <p className="mt-2 font-display text-2xl text-cream">Coming soon</p>
             <p className="mt-2 text-xs text-cream-dim">
@@ -177,7 +182,7 @@ export default async function UsageDashboardPage() {
         )}
       </div>
 
-      <section className="bg-white border border-brand-border p-6">
+      <section className="border nw-panel p-6">
         <h3 className="font-display text-lg text-cream">Last 3 months</h3>
         <p className="mt-1 text-xs text-cream-dim">
           AI call volume and estimated cost by calendar month.
@@ -204,7 +209,7 @@ export default async function UsageDashboardPage() {
         </div>
       </section>
 
-      <section className="bg-white border border-brand-border p-6">
+      <section className="border nw-panel p-6">
         <h3 className="font-display text-lg text-cream">Recent API Calls</h3>
         <p className="mt-1 text-xs text-cream-dim">
           Last 50 calls. Each invoice parse and future AI feature is logged here.
@@ -274,7 +279,7 @@ function UsageCard({
   const valueColor = atCap || nearCap ? "text-status-danger" : "text-cream";
 
   return (
-    <div className="bg-white border border-brand-border p-5">
+    <div className="border nw-panel p-5">
       <p className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">{label}</p>
       <p className={`mt-2 font-display text-2xl ${valueColor}`}>
         {current.toLocaleString()}

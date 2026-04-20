@@ -281,7 +281,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
       >
         <div className="py-3 space-y-4">
           <label className="block">
-            <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+            <span className="block text-[10px] uppercase mb-1 nw-eyebrow">
               Max batch size
             </span>
             <input
@@ -290,7 +290,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
               max={200}
               value={form.import_max_batch_size}
               onChange={(e) => patch("import_max_batch_size", Math.max(1, Math.min(200, Number(e.target.value) || 50)))}
-              className="w-32 px-3 py-2 border border-brand-border bg-white text-sm"
+              className="w-32 px-3 py-2 border nw-input text-sm"
             />
             <p className="text-xs text-cream-dim mt-1">
               Largest number of files a single upload can contain (1–200). Default 50.
@@ -298,13 +298,13 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
           </label>
 
           <label className="block">
-            <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+            <span className="block text-[10px] uppercase mb-1 nw-eyebrow">
               Default PM for unmatched jobs
             </span>
             <select
               value={form.import_default_pm_id}
               onChange={(e) => patch("import_default_pm_id", e.target.value)}
-              className="w-full max-w-sm px-3 py-2 border border-brand-border bg-white text-sm"
+              className="w-full max-w-sm px-3 py-2 border nw-input text-sm"
             >
               <option value="">— None (leave unassigned) —</option>
               {pms.map((p) => (
@@ -317,7 +317,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
           </label>
 
           <label className="block">
-            <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+            <span className="block text-[10px] uppercase mb-1 nw-eyebrow">
               Auto-route confidence threshold (%)
             </span>
             <input
@@ -326,7 +326,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
               max={100}
               value={form.import_auto_route_threshold}
               onChange={(e) => patch("import_auto_route_threshold", Math.max(0, Math.min(100, Number(e.target.value) || 85)))}
-              className="w-32 px-3 py-2 border border-brand-border bg-white text-sm"
+              className="w-32 px-3 py-2 border nw-input text-sm"
             />
             <p className="text-xs text-cream-dim mt-1">
               Confidence above this routes to <strong>PM Review</strong>; below routes to <strong>Accounting QA</strong>. <strong>Never auto-approves</strong> — every invoice is reviewed by a human before it enters a draw.
@@ -381,14 +381,54 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border border-brand-border bg-white p-6">
+    <section
+      className="border p-6"
+      style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
+    >
       <header className="mb-4">
-        <h2 className="section-label">{title}</h2>
+        <h2
+          className="m-0 text-[10px] uppercase"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono)",
+            letterSpacing: "0.14em",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {title}
+        </h2>
         {subtitle && (
-          <p className="text-xs text-cream-dim mt-1">{subtitle}</p>
+          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>{subtitle}</p>
         )}
       </header>
-      <div className="divide-y divide-brand-border/60">{children}</div>
+      <div className="divide-y divide-[var(--border-default)]">{children}</div>
+      <style jsx>{`
+        :global(.nw-eyebrow) {
+          font-family: var(--font-jetbrains-mono);
+          letter-spacing: 0.14em;
+          color: var(--text-tertiary);
+        }
+        :global(.nw-input) {
+          background: var(--bg-subtle);
+          border-color: var(--border-default);
+          color: var(--text-primary);
+        }
+        :global(.nw-input:focus) {
+          outline: none;
+          border-color: var(--nw-stone-blue);
+        }
+        :global(.nw-primary-btn) {
+          font-family: var(--font-jetbrains-mono);
+          letter-spacing: 0.12em;
+          font-weight: 500;
+          background: var(--nw-stone-blue);
+          color: var(--nw-white-sand);
+          border: 1px solid var(--nw-stone-blue);
+        }
+        :global(.nw-primary-btn:hover:not(:disabled)) {
+          background: var(--nw-gulf-blue);
+          border-color: var(--nw-gulf-blue);
+        }
+      `}</style>
     </section>
   );
 }
@@ -460,7 +500,7 @@ function DropdownField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+      <span className="block text-[10px] uppercase mb-1 nw-eyebrow">
         {label}
       </span>
       <select
