@@ -5,42 +5,15 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* Backgrounds */
-    --bg-page: #F7F5ED;
-    --bg-subtle: #F5F5F5;
-    --bg-muted: #E8E8E8;
-    --bg-inverse: var(--nw-slate-deep);
-
-    /* Text */
-    --text-primary: var(--nw-slate-tile);
-    --text-body: #3D3D3D;
-    --text-secondary: #878787;
-    --text-inverse: #FFFFFF;
-
-    /* Borders */
-    --border-default: #E8E8E8;
-    --border-strong: #A0A0A0;
-    --border-brand: var(--nw-stone-blue);
-
-    /* Semantic */
-    --color-white: #FFFFFF;
-    --color-success: #2E7D32;
-    --color-warning: #E65100;
-    --color-error: #c0392b;
-    --color-money: var(--nw-slate-tile);
-
-    /* Nightwork brand tokens — additive. Existing components keep their
-       current colors; new chrome work should reach for these instead. */
-    --nightwork-navy: #0F1E36;
-    --nightwork-amber: #E89A2B;
-    --nightwork-cream: #EDE3CE;
-  }
+  /* All theme tokens live in colors_and_type.css (imported above).
+     Previous :root block here re-declared the same tokens with slightly
+     different light-mode values, creating subtle mismatches in dark mode.
+     Removed intentionally — colors_and_type.css is the single source. */
 
   body {
     background: var(--bg-page);
     color: var(--text-body);
-    font-family: "Century Gothic", "CenturyGothic", "AppleGothic", sans-serif;
+    font-family: var(--font-body, "Inter"), system-ui, -apple-system, sans-serif;
     font-size: 15px;
     line-height: 1.5;
   }
