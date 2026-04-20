@@ -42,18 +42,18 @@ const ALIAS: Record<string, string> = {
 
 const BRANCH_COLORS: Record<string, string> = {
   pm_held: "bg-brass",
-  pm_denied: "bg-status-danger",
-  qa_kicked_back: "bg-status-danger",
-  void: "bg-status-danger",
+  pm_denied: "bg-[var(--nw-danger)]",
+  qa_kicked_back: "bg-[var(--nw-danger)]",
+  void: "bg-[var(--nw-danger)]",
   info_requested: "bg-brass",
 };
 
 function statusColor(key: string): string {
-  if (["received", "pm_review", "qa_review"].includes(key)) return "bg-teal";
-  if (["pm_approved", "qa_approved"].includes(key)) return "bg-status-success";
-  if (key === "in_draw") return "bg-teal";
-  if (key === "paid") return "bg-status-success";
-  return "bg-teal";
+  if (["received", "pm_review", "qa_review"].includes(key)) return "bg-[var(--nw-stone-blue)]";
+  if (["pm_approved", "qa_approved"].includes(key)) return "bg-[var(--nw-success)]";
+  if (key === "in_draw") return "bg-[var(--nw-stone-blue)]";
+  if (key === "paid") return "bg-[var(--nw-success)]";
+  return "bg-[var(--nw-stone-blue)]";
 }
 
 function formatDateTime(iso: string | null): string {
@@ -115,9 +115,9 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
   }, [history]);
 
   return (
-    <div className="border border-brand-border bg-brand-card p-4">
+    <div className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">
+        <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider brass-underline">
           Status Timeline
         </p>
       </div>
@@ -132,8 +132,8 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                 <div
                   className={`absolute top-[11px] left-0 right-1/2 h-px ${
                     stage.isPast || stage.isCurrent
-                      ? "bg-teal"
-                      : "border-t border-dashed border-brand-border"
+                      ? "bg-[var(--nw-stone-blue)]"
+                      : "border-t border-dashed border-[var(--border-default)]"
                   }`}
                   style={
                     !stage.isPast && !stage.isCurrent
@@ -147,8 +147,8 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                 <div
                   className={`absolute top-[11px] left-1/2 right-0 h-px ${
                     stage.isPast
-                      ? "bg-teal"
-                      : "border-t border-dashed border-brand-border"
+                      ? "bg-[var(--nw-stone-blue)]"
+                      : "border-t border-dashed border-[var(--border-default)]"
                   }`}
                   style={
                     !stage.isPast
@@ -158,10 +158,10 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                 />
               )}
               <TimelineDot stage={stage} userNames={userNames} />
-              <div className="mt-2 text-[10px] text-center text-cream-dim leading-tight px-1">
+              <div className="mt-2 text-[10px] text-center text-[color:var(--text-secondary)] leading-tight px-1">
                 {stage.label}
                 {stage.entry?.when ? (
-                  <div className="mt-0.5 text-[9px] text-cream-dim/70">
+                  <div className="mt-0.5 text-[9px] text-[color:var(--text-secondary)]/70">
                     {formatDateTime(String(stage.entry.when))}
                   </div>
                 ) : null}
@@ -172,10 +172,10 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
 
         {/* Branch indicators */}
         {branches.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-brand-border flex flex-wrap gap-2">
+          <div className="mt-4 pt-3 border-t border-[var(--border-default)] flex flex-wrap gap-2">
             {branches.map((b, i) => {
               const ns = String(b.new_status ?? "");
-              const color = BRANCH_COLORS[ns] ?? "bg-brand-border";
+              const color = BRANCH_COLORS[ns] ?? "bg-[var(--border-default)]";
               return (
                 <span
                   key={i}
@@ -199,7 +199,7 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
               {i < stages.length - 1 && (
                 <div
                   className={`absolute left-[7px] top-4 bottom-0 w-px ${
-                    stage.isPast ? "bg-teal" : "border-l border-dashed border-brand-border"
+                    stage.isPast ? "bg-[var(--nw-stone-blue)]" : "border-l border-dashed border-[var(--border-default)]"
                   }`}
                   style={
                     !stage.isPast
@@ -212,17 +212,17 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
                 <TimelineDot stage={stage} userNames={userNames} />
               </div>
               <div className="text-xs">
-                <p className={`font-medium ${stage.isCurrent ? "text-cream" : stage.isPast ? "text-cream-muted" : "text-cream-dim"}`}>
+                <p className={`font-medium ${stage.isCurrent ? "text-[color:var(--text-primary)]" : stage.isPast ? "text-[color:var(--text-muted)]" : "text-[color:var(--text-secondary)]"}`}>
                   {stage.label}
                 </p>
                 {stage.entry?.when ? (
-                  <p className="text-cream-dim text-[10px] mt-0.5">
+                  <p className="text-[color:var(--text-secondary)] text-[10px] mt-0.5">
                     {formatDateTime(String(stage.entry.when))}
                     {stage.entry.who ? ` — ${formatWho(String(stage.entry.who), userNames)}` : ""}
                   </p>
                 ) : null}
                 {stage.entry?.note ? (
-                  <p className="text-cream-dim/80 mt-1 italic text-[10px] leading-relaxed">
+                  <p className="text-[color:var(--text-secondary)]/80 mt-1 italic text-[10px] leading-relaxed">
                     {String(stage.entry.note)}
                   </p>
                 ) : null}
@@ -231,10 +231,10 @@ export default function InvoiceStatusTimeline({ currentStatus, history, userName
           ))}
         </div>
         {branches.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-brand-border space-y-1.5">
+          <div className="mt-3 pt-3 border-t border-[var(--border-default)] space-y-1.5">
             {branches.map((b, i) => {
               const ns = String(b.new_status ?? "");
-              const color = BRANCH_COLORS[ns] ?? "bg-brand-border";
+              const color = BRANCH_COLORS[ns] ?? "bg-[var(--border-default)]";
               return (
                 <div key={i} className={`flex items-center gap-2 px-2 py-1 ${color} text-white text-[10px]`}>
                   <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
@@ -272,7 +272,7 @@ function TimelineDot({
     ? `${base} border-2 border-white shadow`
     : stage.isPast
       ? `${base} border border-white/80`
-      : "bg-transparent border-2 border-brand-border";
+      : "bg-transparent border-2 border-[var(--border-default)]";
   return (
     <div
       className="relative"
@@ -281,16 +281,16 @@ function TimelineDot({
     >
       <div className={`${size} ${fill} rounded-full z-10`} />
       {hovered && stage.entry && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 bg-brand-bg/95 border border-brand-border p-2 text-[11px] text-cream min-w-[180px] shadow-lg pointer-events-none">
+        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-30 bg-[var(--bg-page)]/95 border border-[var(--border-default)] p-2 text-[11px] text-[color:var(--text-primary)] min-w-[180px] shadow-lg pointer-events-none">
           <p className="font-medium">{stage.label}</p>
           {stage.entry.when ? (
-            <p className="text-cream-dim mt-0.5">
+            <p className="text-[color:var(--text-secondary)] mt-0.5">
               {formatDateTime(String(stage.entry.when))}
               {stage.entry.who ? ` — ${formatWho(String(stage.entry.who), userNames)}` : ""}
             </p>
           ) : null}
           {stage.entry.note ? (
-            <p className="text-cream-dim/80 mt-1 italic leading-relaxed">
+            <p className="text-[color:var(--text-secondary)]/80 mt-1 italic leading-relaxed">
               {String(stage.entry.note)}
             </p>
           ) : null}

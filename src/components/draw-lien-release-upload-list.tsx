@@ -104,12 +104,12 @@ export default function DrawLienReleaseUploadList({
 
   return (
     <div className="space-y-4 animate-fade-up">
-      <div className="bg-brand-card border border-brand-border p-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4 flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="font-display text-cream">Lien Release Documents</p>
-          <p className="text-xs text-cream-dim mt-0.5">
+          <p className="font-display text-[color:var(--text-primary)]">Lien Release Documents</p>
+          <p className="text-xs text-[color:var(--text-secondary)] mt-0.5">
             Upload signed waivers per vendor. Required for draw approval when{" "}
-            <Link className="text-teal hover:underline" href="/settings/workflow">
+            <Link className="text-[color:var(--nw-stone-blue)] hover:underline" href="/settings/workflow">
               workflow setting
             </Link>{" "}
             is on.
@@ -117,11 +117,11 @@ export default function DrawLienReleaseUploadList({
         </div>
         <div className="flex items-center gap-2">
           {missingCount > 0 ? (
-            <span className="text-xs text-status-danger font-medium">
+            <span className="text-xs text-[color:var(--nw-danger)] font-medium">
               {missingCount} document(s) missing
             </span>
           ) : releases.length > 0 ? (
-            <span className="text-xs text-status-success">All documents uploaded</span>
+            <span className="text-xs text-[color:var(--nw-success)]">All documents uploaded</span>
           ) : null}
           <input
             ref={bulkInput}
@@ -134,7 +134,7 @@ export default function DrawLienReleaseUploadList({
           <button
             onClick={() => bulkInput.current?.click()}
             disabled={bulkBusy || releases.length === 0}
-            className="px-3 py-1.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium"
+            className="px-3 py-1.5 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 text-white text-sm font-medium"
           >
             {bulkBusy ? "Uploading…" : "Upload All"}
           </button>
@@ -142,8 +142,8 @@ export default function DrawLienReleaseUploadList({
       </div>
 
       {bulkResults && (
-        <div className="bg-brand-card border border-teal/30 p-3 text-sm text-cream space-y-1">
-          <p className="text-status-success">Matched and uploaded {bulkResults.matched} file(s).</p>
+        <div className="bg-[var(--bg-card)] border border-[rgba(91,134,153,0.3)] p-3 text-sm text-[color:var(--text-primary)] space-y-1">
+          <p className="text-[color:var(--nw-success)]">Matched and uploaded {bulkResults.matched} file(s).</p>
           {bulkResults.missing.length > 0 && (
             <p className="text-brass">
               Could not match: {bulkResults.missing.join(", ")}. Use the per-row upload to assign
@@ -154,14 +154,14 @@ export default function DrawLienReleaseUploadList({
       )}
 
       {releases.length === 0 ? (
-        <div className="border border-brand-border p-6 text-center text-cream-dim text-sm">
+        <div className="border border-[var(--border-default)] p-6 text-center text-[color:var(--text-secondary)] text-sm">
           No lien releases yet. They auto-generate when this draw is submitted.
         </div>
       ) : (
-        <div className="overflow-x-auto border border-brand-border">
+        <div className="overflow-x-auto border border-[var(--border-default)]">
           <table className="w-full min-w-[800px] text-sm">
             <thead>
-              <tr className="bg-brand-surface text-left">
+              <tr className="bg-[var(--bg-subtle)] text-left">
                 <Th>Vendor</Th>
                 <Th>Type</Th>
                 <Th right>Amount</Th>
@@ -177,12 +177,12 @@ export default function DrawLienReleaseUploadList({
                 const required = r.status === "pending" || r.status === "received";
                 const missing = required && !has;
                 return (
-                  <tr key={r.id} className="border-t border-brand-row-border">
-                    <td className="py-2.5 px-3 text-cream">{r.vendors?.name ?? "—"}</td>
-                    <td className="py-2.5 px-3 text-cream-muted text-xs">
+                  <tr key={r.id} className="border-t border-[var(--border-default)]">
+                    <td className="py-2.5 px-3 text-[color:var(--text-primary)]">{r.vendors?.name ?? "—"}</td>
+                    <td className="py-2.5 px-3 text-[color:var(--text-muted)] text-xs">
                       {humanReleaseType(r.release_type)}
                     </td>
-                    <td className="py-2.5 px-3 text-cream text-right font-display">
+                    <td className="py-2.5 px-3 text-[color:var(--text-primary)] text-right font-display">
                       {r.amount != null ? formatCents(r.amount) : "—"}
                     </td>
                     <td className="py-2.5 px-3">
@@ -190,26 +190,26 @@ export default function DrawLienReleaseUploadList({
                         {r.status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-cream-muted text-xs">{formatDate(r.through_date)}</td>
+                    <td className="py-2.5 px-3 text-[color:var(--text-muted)] text-xs">{formatDate(r.through_date)}</td>
                     <td className="py-2.5 px-3">
                       {has ? (
-                        <span className="inline-flex items-center gap-1.5 text-status-success">
+                        <span className="inline-flex items-center gap-1.5 text-[color:var(--nw-success)]">
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
-                          <a href={r.document_url!} target="_blank" rel="noreferrer" className="text-xs text-teal hover:underline">
+                          <a href={r.document_url!} target="_blank" rel="noreferrer" className="text-xs text-[color:var(--nw-stone-blue)] hover:underline">
                             View
                           </a>
                         </span>
                       ) : missing ? (
-                        <span className="inline-flex items-center gap-1.5 text-status-danger">
+                        <span className="inline-flex items-center gap-1.5 text-[color:var(--nw-danger)]">
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                           </svg>
                           <span className="text-xs">Missing</span>
                         </span>
                       ) : (
-                        <span className="text-cream-dim text-xs">—</span>
+                        <span className="text-[color:var(--text-secondary)] text-xs">—</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-right">
@@ -228,7 +228,7 @@ export default function DrawLienReleaseUploadList({
                       <button
                         onClick={() => fileInputs.current[r.id]?.click()}
                         disabled={busyId === r.id}
-                        className="px-2.5 py-1 border border-brand-border text-cream hover:bg-brand-elevated disabled:opacity-50 text-xs"
+                        className="px-2.5 py-1 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-muted)] disabled:opacity-50 text-xs"
                       >
                         {busyId === r.id ? "Uploading…" : has ? "Replace" : "Upload"}
                       </button>
@@ -247,7 +247,7 @@ export default function DrawLienReleaseUploadList({
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
     <th
-      className={`py-2.5 px-3 text-[10px] text-cream font-bold uppercase tracking-wider ${
+      className={`py-2.5 px-3 text-[10px] text-[color:var(--text-primary)] font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
       }`}
     >
@@ -257,9 +257,9 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
 }
 
 function badge(status: string): string {
-  if (status === "received") return "bg-transparent text-status-success border border-status-success";
+  if (status === "received") return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
   if (status === "pending") return "bg-transparent text-brass border border-brass";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+  return "bg-transparent text-[color:var(--text-secondary)] border border-[var(--border-strong)]";
 }
 
 function humanReleaseType(t: string): string {

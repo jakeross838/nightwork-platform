@@ -66,7 +66,7 @@ export default function VendorContactPopover({
         aria-expanded={open}
         aria-haspopup="dialog"
         title="Vendor contact info"
-        className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-brand-border bg-brand-surface text-cream-dim hover:text-teal hover:border-teal transition-colors"
+        className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-secondary)] hover:text-[color:var(--nw-stone-blue)] hover:border-[var(--nw-stone-blue)] transition-colors"
       >
         <svg
           className="w-3.5 h-3.5"
@@ -83,23 +83,23 @@ export default function VendorContactPopover({
         <div
           role="dialog"
           aria-label="Vendor contact info"
-          className="fixed left-3 right-3 top-1/2 -translate-y-1/2 z-[90] bg-brand-card border border-brand-border shadow-xl p-3 text-sm animate-fade-up sm:absolute sm:left-0 sm:right-auto sm:top-full sm:translate-y-0 sm:mt-2 sm:w-72"
+          className="fixed left-3 right-3 top-1/2 -translate-y-1/2 z-[90] bg-[var(--bg-card)] border border-[var(--border-default)] shadow-xl p-3 text-sm animate-fade-up sm:absolute sm:left-0 sm:right-auto sm:top-full sm:translate-y-0 sm:mt-2 sm:w-72"
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="font-medium text-cream truncate">
+          <p className="font-medium text-[color:var(--text-primary)] truncate">
             {vendor?.name ?? vendorName ?? "Vendor"}
           </p>
           {!vendorId && (
-            <p className="text-xs text-cream-dim mt-2">
+            <p className="text-xs text-[color:var(--text-secondary)] mt-2">
               This invoice isn&rsquo;t linked to a vendor record yet.
             </p>
           )}
           {vendorId && !hasContact && (
-            <p className="text-xs text-cream-dim mt-2 leading-relaxed">
+            <p className="text-xs text-[color:var(--text-secondary)] mt-2 leading-relaxed">
               No contact info.{" "}
               <Link
                 href={editHref}
-                className="text-teal hover:underline font-medium"
+                className="text-[color:var(--nw-stone-blue)] hover:underline font-medium"
               >
                 Add &rarr;
               </Link>
@@ -110,7 +110,7 @@ export default function VendorContactPopover({
               {vendor?.phone && (
                 <a
                   href={`tel:${vendor.phone}`}
-                  className="flex items-center gap-2 text-teal hover:underline"
+                  className="flex items-center gap-2 text-[color:var(--nw-stone-blue)] hover:underline"
                 >
                   <svg
                     className="w-3.5 h-3.5 shrink-0"
@@ -131,7 +131,7 @@ export default function VendorContactPopover({
               {vendor?.email && (
                 <a
                   href={`mailto:${vendor.email}`}
-                  className="flex items-center gap-2 text-teal hover:underline break-all"
+                  className="flex items-center gap-2 text-[color:var(--nw-stone-blue)] hover:underline break-all"
                 >
                   <svg
                     className="w-3.5 h-3.5 shrink-0"
@@ -150,7 +150,7 @@ export default function VendorContactPopover({
                 </a>
               )}
               {vendor?.address && (
-                <div className="flex items-start gap-2 text-cream-muted">
+                <div className="flex items-start gap-2 text-[color:var(--text-muted)]">
                   <svg
                     className="w-3.5 h-3.5 shrink-0 mt-0.5"
                     fill="none"
@@ -172,10 +172,10 @@ export default function VendorContactPopover({
                   <span className="leading-relaxed">{vendor.address}</span>
                 </div>
               )}
-              <div className="pt-2 mt-2 border-t border-brand-border">
+              <div className="pt-2 mt-2 border-t border-[var(--border-default)]">
                 <Link
                   href={editHref}
-                  className="text-[11px] text-teal hover:underline"
+                  className="text-[11px] text-[color:var(--nw-stone-blue)] hover:underline"
                 >
                   Edit vendor &rarr;
                 </Link>

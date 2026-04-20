@@ -7,14 +7,14 @@ export default function OperationsPage() {
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs items={[{ label: "Operations" }]} />
         <div className="mb-6">
-          <h1 className="font-display text-2xl text-cream">Operations</h1>
-          <p className="text-sm text-cream-dim mt-1">
+          <h1 className="font-display text-2xl text-[color:var(--text-primary)]">Operations</h1>
+          <p className="text-sm text-[color:var(--text-secondary)] mt-1">
             Scheduling, site activity, and PM workload tools.
           </p>
         </div>
 
-        <div className="bg-brand-card border border-brand-border p-8 text-center">
-          <p className="text-sm text-cream-dim">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-8 text-center">
+          <p className="text-sm text-[color:var(--text-secondary)]">
             Operations features are coming in a future release. This section will
             include scheduling, daily logs, site documentation, and PM workload views.
           </p>

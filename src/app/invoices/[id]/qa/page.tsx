@@ -34,10 +34,10 @@ interface InvoiceData {
 }
 
 function statusDotColor(newStatus: string): string {
- if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-status-success";
+ if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-[var(--nw-success)]";
  if (["pm_held", "request_info"].includes(newStatus)) return "bg-brass";
- if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-status-danger";
- return "bg-teal";
+ if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-[var(--nw-danger)]";
+ return "bg-[var(--nw-stone-blue)]";
 }
 
 export default function QaReviewPage() {
@@ -134,10 +134,10 @@ export default function QaReviewPage() {
  };
 
  if (loading) return (
- <AppShell><div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin" /></div></AppShell>
+ <AppShell><div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin" /></div></AppShell>
  );
  if (!invoice) return (
- <AppShell><div className="flex items-center justify-center py-32"><p className="text-status-danger font-display text-lg">Invoice not found</p></div></AppShell>
+ <AppShell><div className="flex items-center justify-center py-32"><p className="text-[color:var(--nw-danger)] font-display text-lg">Invoice not found</p></div></AppShell>
  );
 
  const isQaReviewable = ["qa_review", "pm_approved"].includes(invoice.status);
@@ -146,10 +146,10 @@ export default function QaReviewPage() {
  <AppShell>
 
  {/* Sub-header */}
- <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
+ <div className="border-b border-[var(--border-default)] bg-[rgba(91,134,153,0.04)] px-6 py-3">
  <div className="max-w-[1600px] mx-auto flex items-center gap-4 flex-wrap">
- <h1 className="font-display text-xl text-cream">
- {invoice.vendor_name_raw ?? "Invoice"} <span className="text-cream-dim">&mdash;</span> {invoice.invoice_number ?? "No #"}
+ <h1 className="font-display text-xl text-[color:var(--text-primary)]">
+ {invoice.vendor_name_raw ?? "Invoice"} <span className="text-[color:var(--text-secondary)]">&mdash;</span> {invoice.invoice_number ?? "No #"}
  </h1>
  <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${statusBadgeOutline(invoice.status)}`}>
  {formatStatus(invoice.status)}
@@ -162,18 +162,18 @@ export default function QaReviewPage() {
  {/* ── Left: Document Preview ── */}
  <div className="xl:col-span-1">
  <div className="sticky top-28">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 brass-underline">Original Document</p>
+ <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-3 brass-underline">Original Document</p>
  <div className="mt-5">
  {invoice.signed_file_url ? (
  invoice.original_file_type === "image" ? (
  // eslint-disable-next-line @next/next/no-img-element
- <img src={invoice.signed_file_url} alt="Invoice" className="w-full border border-brand-border" />
+ <img src={invoice.signed_file_url} alt="Invoice" className="w-full border border-[var(--border-default)]" />
  ) : (
- <iframe src={invoice.signed_file_url} className="w-full h-[700px] border border-brand-border bg-brand-surface" title="Invoice PDF" />
+ <iframe src={invoice.signed_file_url} className="w-full h-[700px] border border-[var(--border-default)] bg-[var(--bg-subtle)]" title="Invoice PDF" />
  )
  ) : (
- <div className="h-64 border border-brand-border bg-brand-surface flex items-center justify-center">
- <p className="text-cream-dim text-sm">No preview available</p>
+ <div className="h-64 border border-[var(--border-default)] bg-[var(--bg-subtle)] flex items-center justify-center">
+ <p className="text-[color:var(--text-secondary)] text-sm">No preview available</p>
  </div>
  )}
  </div>
@@ -182,33 +182,33 @@ export default function QaReviewPage() {
 
  {/* ── Middle: QA Form ── */}
  <div className="xl:col-span-1 space-y-6 animate-fade-up stagger-2">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider brass-underline">QA Review</p>
+ <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider brass-underline">QA Review</p>
 
  <div className="mt-5 space-y-4">
  {/* Vendor — editable by QA */}
  <div>
- <label className="flex items-center gap-2 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5">
+ <label className="flex items-center gap-2 text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5">
  Vendor Name
- <span className="text-[10px] text-teal normal-case tracking-normal">(editable — match to QuickBooks)</span>
+ <span className="text-[10px] text-[color:var(--nw-stone-blue)] normal-case tracking-normal">(editable — match to QuickBooks)</span>
  </label>
  <input value={vendorName} onChange={(e) => setVendorName(e.target.value)}
  disabled={!isQaReviewable}
- className="w-full px-3 py-2.5 bg-brand-surface border border-teal/30 text-sm text-cream focus:border-teal focus:outline-none disabled:opacity-50" />
+ className="w-full px-3 py-2.5 bg-[var(--bg-subtle)] border border-[rgba(91,134,153,0.3)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none disabled:opacity-50" />
  </div>
 
  {/* QB Notes */}
  <div>
- <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">QB Mapping Notes</label>
+ <label className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5 block">QB Mapping Notes</label>
  <textarea value={qbNotes} onChange={(e) => setQbNotes(e.target.value)} rows={2} placeholder="Optional notes for QuickBooks entry..."
  disabled={!isQaReviewable}
- className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none disabled:opacity-50 resize-none" />
+ className="w-full px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none disabled:opacity-50 resize-none" />
  </div>
 
  {/* Locked PM-approved fields */}
- <div className="border-t border-brand-border pt-4">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1 flex items-center gap-2">
+ <div className="border-t border-[var(--border-default)] pt-4">
+ <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1 flex items-center gap-2">
  PM Approved Fields
- <svg className="w-3.5 h-3.5 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-3.5 h-3.5 text-[color:var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
  </svg>
  </p>
@@ -216,7 +216,7 @@ export default function QaReviewPage() {
  const approvalEntry = [...(invoice.status_history ?? [])].reverse().find(e => String(e.new_status) === "pm_approved");
  if (!approvalEntry) return null;
  return (
- <p className="text-[11px] text-cream-dim mb-3">
+ <p className="text-[11px] text-[color:var(--text-secondary)] mb-3">
  Approved by {String(approvalEntry.who)} &mdash; {formatDateTime(String(approvalEntry.when))}
  </p>
  );
@@ -238,31 +238,31 @@ export default function QaReviewPage() {
 
  {/* Line Items — read-only with assigned cost codes (PM owns these) */}
  {invoice.invoice_line_items?.length > 0 ? (
- <div className="border-t border-brand-border pt-4">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2 flex items-center gap-2">
+ <div className="border-t border-[var(--border-default)] pt-4">
+ <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-2 flex items-center gap-2">
  Line Items
- <svg className="w-3.5 h-3.5 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-3.5 h-3.5 text-[color:var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
  </svg>
- <span className="text-[10px] text-cream-dim normal-case tracking-normal">PM-assigned — kick back to change</span>
+ <span className="text-[10px] text-[color:var(--text-secondary)] normal-case tracking-normal">PM-assigned — kick back to change</span>
  </p>
- <div className="overflow-x-auto border border-brand-border">
+ <div className="overflow-x-auto border border-[var(--border-default)]">
  <table className="w-full text-xs">
- <thead><tr className="bg-brand-surface">
- <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
- <th className="py-2 px-3 text-left text-cream font-semibold">Cost Code</th>
- <th className="py-2 px-3 text-center text-cream font-semibold">CO</th>
- <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
+ <thead><tr className="bg-[var(--bg-subtle)]">
+ <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold">Description</th>
+ <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold">Cost Code</th>
+ <th className="py-2 px-3 text-center text-[color:var(--text-primary)] font-semibold">CO</th>
+ <th className="py-2 px-3 text-right text-[color:var(--text-primary)] font-semibold">Amount</th>
  </tr></thead>
  <tbody>
  {invoice.invoice_line_items.map((li) => (
- <tr key={li.id} className="border-t border-brand-row-border">
- <td className="py-2 px-3 text-cream">{li.description ?? <span className="text-cream-dim italic">(no description)</span>}</td>
- <td className="py-2 px-3 text-cream-muted">
+ <tr key={li.id} className="border-t border-[var(--border-default)]">
+ <td className="py-2 px-3 text-[color:var(--text-primary)]">{li.description ?? <span className="text-[color:var(--text-secondary)] italic">(no description)</span>}</td>
+ <td className="py-2 px-3 text-[color:var(--text-muted)]">
  {li.cost_codes ? (
- <span className="font-mono text-teal">{li.cost_codes.code}</span>
+ <span className="font-mono text-[color:var(--nw-stone-blue)]">{li.cost_codes.code}</span>
  ) : (
- <span className="text-cream-dim">—</span>
+ <span className="text-[color:var(--text-secondary)]">—</span>
  )}
  {li.cost_codes && <span className="ml-1">{li.cost_codes.description}</span>}
  </td>
@@ -272,10 +272,10 @@ export default function QaReviewPage() {
  {li.co_reference || "CO"}
  </span>
  ) : (
- <span className="text-cream-dim">—</span>
+ <span className="text-[color:var(--text-secondary)]">—</span>
  )}
  </td>
- <td className="py-2 px-3 text-right text-cream font-medium">{formatCents(li.amount_cents)}</td>
+ <td className="py-2 px-3 text-right text-[color:var(--text-primary)] font-medium">{formatCents(li.amount_cents)}</td>
  </tr>
  ))}
  </tbody>
@@ -283,19 +283,19 @@ export default function QaReviewPage() {
  </div>
  </div>
  ) : invoice.line_items?.length > 0 && (
- <div className="border-t border-brand-border pt-4">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">Line Items</p>
- <div className="overflow-x-auto border border-brand-border">
+ <div className="border-t border-[var(--border-default)] pt-4">
+ <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-2">Line Items</p>
+ <div className="overflow-x-auto border border-[var(--border-default)]">
  <table className="w-full text-xs">
- <thead><tr className="bg-brand-surface">
- <th className="py-2 px-3 text-left text-cream font-semibold">Description</th>
- <th className="py-2 px-3 text-right text-cream font-semibold">Amount</th>
+ <thead><tr className="bg-[var(--bg-subtle)]">
+ <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold">Description</th>
+ <th className="py-2 px-3 text-right text-[color:var(--text-primary)] font-semibold">Amount</th>
  </tr></thead>
  <tbody>
  {invoice.line_items.map((item, i) => (
- <tr key={i} className="border-t border-brand-row-border">
- <td className="py-2 px-3 text-cream">{item.description}</td>
- <td className="py-2 px-3 text-right text-cream font-medium">{item.amount ? formatDollars(item.amount) : "—"}</td>
+ <tr key={i} className="border-t border-[var(--border-default)]">
+ <td className="py-2 px-3 text-[color:var(--text-primary)]">{item.description}</td>
+ <td className="py-2 px-3 text-right text-[color:var(--text-primary)] font-medium">{item.amount ? formatDollars(item.amount) : "—"}</td>
  </tr>
  ))}
  </tbody>
@@ -307,14 +307,14 @@ export default function QaReviewPage() {
 
  {/* Actions */}
  {isQaReviewable && (
- <div className="border-t border-brand-border pt-6 space-y-3">
+ <div className="border-t border-[var(--border-default)] pt-6 space-y-3">
  <div className="flex gap-3">
  <button onClick={handleQaApprove} disabled={saving}
- className="flex-1 px-4 py-3 bg-status-success hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
+ className="flex-1 px-4 py-3 bg-[var(--nw-success)] hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
  {saving ? "Saving..." : "QA Approve"}
  </button>
  <button onClick={() => setShowKickBack(true)} disabled={saving}
- className="flex-1 px-4 py-3 bg-status-danger hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
+ className="flex-1 px-4 py-3 bg-[var(--nw-danger)] hover:brightness-110 disabled:opacity-50 text-white font-medium transition-all">
  Kick Back to PM
  </button>
  </div>
@@ -326,25 +326,25 @@ export default function QaReviewPage() {
  <div className="xl:col-span-1 animate-fade-up stagger-4">
  <div className="sticky top-28 space-y-5">
  {/* Payment */}
- <div className="bg-brand-card border border-brand-border p-5">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">Payment</p>
+ <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5">
+ <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-4 brass-underline">Payment</p>
  <div className="mt-5 space-y-2.5 text-sm">
- <div className="flex justify-between"><span className="text-cream-dim">Received</span><span className="text-cream">{formatDate(invoice.received_date)}</span></div>
- <div className="flex justify-between"><span className="text-cream-dim">Scheduled</span><span className="text-cream">{formatDate(invoice.payment_date)}</span></div>
- <div className="flex justify-between border-t border-brand-border pt-2.5"><span className="text-cream-dim">Amount</span><span className="text-brass font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
+ <div className="flex justify-between"><span className="text-[color:var(--text-secondary)]">Received</span><span className="text-[color:var(--text-primary)]">{formatDate(invoice.received_date)}</span></div>
+ <div className="flex justify-between"><span className="text-[color:var(--text-secondary)]">Scheduled</span><span className="text-[color:var(--text-primary)]">{formatDate(invoice.payment_date)}</span></div>
+ <div className="flex justify-between border-t border-[var(--border-default)] pt-2.5"><span className="text-[color:var(--text-secondary)]">Amount</span><span className="text-brass font-display text-base font-medium">{formatCents(invoice.total_amount)}</span></div>
  </div>
  </div>
 
  {/* AI Confidence */}
  {invoice.confidence_details && (
- <div className="bg-brand-card border border-brand-border p-5">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">AI Confidence</p>
+ <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5">
+ <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-4 brass-underline">AI Confidence</p>
  <div className="mt-5 space-y-2">
  {Object.entries(invoice.confidence_details)
  .filter(([f, s]) => f !== "auto_fills" && typeof s === "number")
  .map(([field, score]) => (
  <div key={field} className="flex items-center justify-between text-sm">
- <span className="text-cream-dim">{formatFlag(field)}</span>
+ <span className="text-[color:var(--text-secondary)]">{formatFlag(field)}</span>
  <span className={`px-2 py-0.5 text-xs ${confidenceColor(score as number)}`}>{Math.round((score as number) * 100)}%</span>
  </div>
  ))}
@@ -354,19 +354,19 @@ export default function QaReviewPage() {
 
  {/* Status History */}
  {invoice.status_history?.length > 0 && (
- <div className="bg-brand-card border border-brand-border p-5">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4 brass-underline">Status History</p>
+ <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-5">
+ <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-4 brass-underline">Status History</p>
  <div className="mt-5 space-y-0">
  {[...invoice.status_history].reverse().map((entry, i) => {
  const ns = String(entry.new_status);
  return (
  <div key={i} className="relative pl-6 pb-4 last:pb-0">
- {i < invoice.status_history.length - 1 && <div className="absolute left-[7px] top-3 bottom-0 w-px bg-brand-border" />}
- <div className={`absolute left-0 top-1 w-[15px] h-[15px] border-2 border-brand-card ${statusDotColor(ns)}`} />
+ {i < invoice.status_history.length - 1 && <div className="absolute left-[7px] top-3 bottom-0 w-px bg-[var(--border-default)]" />}
+ <div className={`absolute left-0 top-1 w-[15px] h-[15px] border-2 border-[var(--bg-card)] ${statusDotColor(ns)}`} />
  <div className="text-xs">
- <p className="text-cream font-medium">{formatStatus(String(entry.old_status))} &rarr; {formatStatus(ns)}</p>
- <p className="text-cream-dim mt-0.5">{formatWho(String(entry.who), userNames)} &mdash; {formatDateTime(String(entry.when))}</p>
- {entry.note ? <p className="text-cream-dim/80 mt-1 italic text-[11px]">{String(entry.note)}</p> : null}
+ <p className="text-[color:var(--text-primary)] font-medium">{formatStatus(String(entry.old_status))} &rarr; {formatStatus(ns)}</p>
+ <p className="text-[color:var(--text-secondary)] mt-0.5">{formatWho(String(entry.who), userNames)} &mdash; {formatDateTime(String(entry.when))}</p>
+ {entry.note ? <p className="text-[color:var(--text-secondary)]/80 mt-1 italic text-[11px]">{String(entry.note)}</p> : null}
  </div>
  </div>
  );
@@ -382,18 +382,18 @@ export default function QaReviewPage() {
  {/* Kick Back Modal */}
  {showKickBack && (
  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
- <div className="bg-brand-card border border-brand-border p-6 w-full max-w-md animate-fade-up shadow-2xl">
- <h3 className="font-display text-xl text-cream mb-2">Kick Back to PM</h3>
- <p className="text-sm text-cream-dim mb-4">This invoice will be sent back to the PM queue with your note.</p>
+ <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <h3 className="font-display text-xl text-[color:var(--text-primary)] mb-2">Kick Back to PM</h3>
+ <p className="text-sm text-[color:var(--text-secondary)] mb-4">This invoice will be sent back to the PM queue with your note.</p>
  <textarea value={kickBackNote} onChange={(e) => setKickBackNote(e.target.value)} placeholder="Reason for kick back (required)..."
- className="w-full h-24 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none resize-none" />
+ className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none" />
  <div className="flex gap-3 mt-4">
  <button onClick={handleKickBack} disabled={!kickBackNote.trim() || saving}
- className="flex-1 px-4 py-2.5 bg-status-danger text-white font-medium disabled:opacity-50 transition-all">
+ className="flex-1 px-4 py-2.5 bg-[var(--nw-danger)] text-white font-medium disabled:opacity-50 transition-all">
  Kick Back
  </button>
  <button onClick={() => { setShowKickBack(false); setKickBackNote(""); }}
- className="flex-1 px-4 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light transition-colors">
+ className="flex-1 px-4 py-2.5 border border-[var(--border-default)] text-[color:var(--text-muted)] hover:border-[var(--border-strong)] transition-colors">
  Cancel
  </button>
  </div>
@@ -407,13 +407,13 @@ export default function QaReviewPage() {
 function LockedField({ label, value }: { label: string; value: string }) {
  return (
  <div>
- <label className="flex items-center gap-1.5 text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1">
+ <label className="flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1">
  {label}
- <svg className="w-3 h-3 text-cream-dim/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-3 h-3 text-[color:var(--text-secondary)]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
  </svg>
  </label>
- <div className="px-3 py-2.5 bg-brand-surface/50 border border-brand-border text-sm text-cream-muted" title="PM approved — kick back to change">
+ <div className="px-3 py-2.5 bg-[rgba(91,134,153,0.04)] border border-[var(--border-default)] text-sm text-[color:var(--text-muted)]" title="PM approved — kick back to change">
  {value}
  </div>
  </div>

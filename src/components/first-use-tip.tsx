@@ -26,13 +26,13 @@ export default function FirstUseTip({
   }
 
   return (
-    <div className="mb-4 border border-teal/30 bg-teal/5 px-4 py-3 flex items-start gap-3">
-      <span className="text-teal text-sm mt-0.5 shrink-0">i</span>
-      <div className="flex-1 text-sm text-cream-muted">{children}</div>
+    <div className="mb-4 border border-[rgba(91,134,153,0.3)] bg-[rgba(91,134,153,0.08)] px-4 py-3 flex items-start gap-3">
+      <span className="text-[color:var(--nw-stone-blue)] text-sm mt-0.5 shrink-0">i</span>
+      <div className="flex-1 text-sm text-[color:var(--text-muted)]">{children}</div>
       <button
         type="button"
         onClick={dismiss}
-        className="text-xs text-cream-dim hover:text-cream shrink-0"
+        className="text-xs text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] shrink-0"
       >
         Dismiss
       </button>

@@ -67,8 +67,8 @@ export default function NewJobPage() {
   if (authorized === false) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-        <h2 className="font-display text-2xl text-cream">Access denied</h2>
-        <p className="mt-2 text-sm text-cream-dim">
+        <h2 className="font-display text-2xl text-[color:var(--text-primary)]">Access denied</h2>
+        <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
           Jobs management is restricted to administrators.
         </p>
       </main>
@@ -127,15 +127,15 @@ export default function NewJobPage() {
       <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-display text-2xl text-cream">New Job</h2>
-            <p className="text-sm text-cream-dim mt-1">Create a new construction project</p>
+            <h2 className="font-display text-2xl text-[color:var(--text-primary)]">New Job</h2>
+            <p className="text-sm text-[color:var(--text-secondary)] mt-1">Create a new construction project</p>
           </div>
-          <Link href="/jobs" className="text-sm text-cream-dim hover:text-cream underline-offset-4 hover:underline">
+          <Link href="/jobs" className="text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] underline-offset-4 hover:underline">
             Cancel
           </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-brand-card border border-brand-border p-6">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-[var(--bg-card)] border border-[var(--border-default)] p-6">
           <Section title="Project">
             <Field label="Name *">
               <input
@@ -267,22 +267,22 @@ export default function NewJobPage() {
           </Section>
 
           {error && (
-            <div className="border border-status-danger/40 bg-status-danger/5 px-4 py-3 text-sm text-status-danger">
+            <div className="border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-4 py-3 text-sm text-[color:var(--nw-danger)]">
               {error}
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-brand-border">
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--border-default)]">
             <Link
               href="/jobs"
-              className="px-4 py-2 text-sm text-cream-dim hover:text-cream transition-colors"
+              className="px-4 py-2 text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+              className="px-5 py-2 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
             >
               {saving ? "Creating…" : "Create Job"}
             </button>
@@ -311,7 +311,7 @@ export default function NewJobPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3 pb-2 border-b border-brand-border">
+      <h3 className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-3 pb-2 border-b border-[var(--border-default)]">
         {title}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
@@ -322,7 +322,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <label className={`flex flex-col gap-1 ${full ? "md:col-span-2" : ""}`}>
-      <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">{label}</span>
       {children}
     </label>
   );

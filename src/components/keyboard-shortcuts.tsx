@@ -86,12 +86,12 @@ export default function KeyboardShortcutsModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-brand-card border border-brand-border w-full max-w-md mx-4 p-6 animate-fade-up">
+      <div className="relative bg-[var(--bg-card)] border border-[var(--border-default)] w-full max-w-md mx-4 p-6 animate-fade-up">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg text-cream">Keyboard Shortcuts</h2>
+          <h2 className="font-display text-lg text-[color:var(--text-primary)]">Keyboard Shortcuts</h2>
           <button
             onClick={onClose}
-            className="text-cream-dim hover:text-cream text-xs"
+            className="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] text-xs"
           >
             Esc
           </button>
@@ -101,7 +101,7 @@ export default function KeyboardShortcutsModal({
         <Section title="Invoice Queue" items={QUEUE_SHORTCUTS} />
         <Section title="Invoice Detail" items={DETAIL_SHORTCUTS} />
 
-        <p className="mt-4 text-[11px] text-cream-dim">
+        <p className="mt-4 text-[11px] text-[color:var(--text-secondary)]">
           Shortcuts are disabled when typing in a text field.
         </p>
       </div>
@@ -118,12 +118,12 @@ function Section({
 }) {
   return (
     <div className="mb-4">
-      <h3 className="text-[10px] uppercase tracking-wider text-cream-dim mb-2">{title}</h3>
+      <h3 className="text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)] mb-2">{title}</h3>
       <div className="space-y-1">
         {items.map((s) => (
           <div key={s.keys} className="flex items-center justify-between py-1">
-            <span className="text-sm text-cream-muted">{s.description}</span>
-            <kbd className="px-2 py-0.5 text-xs font-mono border border-brand-border bg-brand-surface text-cream">
+            <span className="text-sm text-[color:var(--text-muted)]">{s.description}</span>
+            <kbd className="px-2 py-0.5 text-xs font-mono border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)]">
               {s.keys}
             </kbd>
           </div>

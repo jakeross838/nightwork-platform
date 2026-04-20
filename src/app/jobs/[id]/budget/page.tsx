@@ -668,15 +668,15 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin mx-auto" />
       </main>
     );
   }
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <p className="text-cream">Job not found</p>
-        <Link href="/jobs" className="text-teal hover:underline text-sm">Back to jobs</Link>
+        <p className="text-[color:var(--text-primary)]">Job not found</p>
+        <Link href="/jobs" className="text-[color:var(--nw-stone-blue)] hover:underline text-sm">Back to jobs</Link>
       </main>
     );
   }
@@ -695,12 +695,12 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         />
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">{job.name}</h2>
-            <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
+            <h2 className="font-display text-2xl text-[color:var(--text-primary)]">{job.name}</h2>
+            <p className="text-sm text-[color:var(--text-secondary)] mt-1">{job.address ?? "No address"}</p>
           </div>
           <button
             onClick={() => window.print()}
-            className="px-3 py-1.5 border border-brand-border text-cream hover:bg-brand-elevated text-xs uppercase tracking-[0.06em] transition-colors print:hidden"
+            className="px-3 py-1.5 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-muted)] text-xs uppercase tracking-[0.06em] transition-colors print:hidden"
             aria-label="Print this budget"
           >
             Print
@@ -714,26 +714,26 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
 
         {showCompareStats && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-            <div className="border border-status-success/40 bg-status-success/5 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">
+            <div className="border border-[rgba(74,138,111,0.35)] bg-[rgba(74,138,111,0.08)] p-3">
+              <p className="text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)] font-medium">
                 Under Budget
               </p>
-              <p className="text-base text-cream tabular-nums font-display mt-1">
+              <p className="text-base text-[color:var(--text-primary)] tabular-nums font-display mt-1">
                 {compareStats.underCount} line{compareStats.underCount === 1 ? "" : "s"}
-                <span className="text-cream-dim"> · </span>
-                <span className="text-status-success">{formatCents(compareStats.savings)}</span>
-                <span className="text-cream-dim"> savings</span>
+                <span className="text-[color:var(--text-secondary)]"> · </span>
+                <span className="text-[color:var(--nw-success)]">{formatCents(compareStats.savings)}</span>
+                <span className="text-[color:var(--text-secondary)]"> savings</span>
               </p>
             </div>
-            <div className="border border-status-danger/40 bg-status-danger/5 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">
+            <div className="border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] p-3">
+              <p className="text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)] font-medium">
                 Over Budget
               </p>
-              <p className="text-base text-cream tabular-nums font-display mt-1">
+              <p className="text-base text-[color:var(--text-primary)] tabular-nums font-display mt-1">
                 {compareStats.overCount} line{compareStats.overCount === 1 ? "" : "s"}
-                <span className="text-cream-dim"> · </span>
-                <span className="text-status-danger">{formatCents(compareStats.overage)}</span>
-                <span className="text-cream-dim"> overage</span>
+                <span className="text-[color:var(--text-secondary)]"> · </span>
+                <span className="text-[color:var(--nw-danger)]">{formatCents(compareStats.overage)}</span>
+                <span className="text-[color:var(--text-secondary)]"> overage</span>
               </p>
             </div>
           </div>
@@ -757,10 +757,10 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search code, description, category…"
-                  className="w-full pl-8 pr-2 py-2 bg-brand-surface border border-brand-border text-sm text-cream placeholder:text-cream-dim focus:outline-none focus:border-teal"
+                  className="w-full pl-8 pr-2 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
                 />
                 <svg
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-cream-dim"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--text-secondary)]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -778,7 +778,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="px-2 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  className="px-2 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
                   aria-label="Filter by category"
                 >
                   <option value="">All categories</option>
@@ -791,7 +791,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                  className="px-2 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  className="px-2 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
                   aria-label="Filter by status"
                 >
                   {(Object.keys(STATUS_FILTER_LABELS) as StatusFilter[]).map((k) => (
@@ -801,7 +801,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   ))}
                 </select>
               </div>
-              <label className="flex items-center gap-2 text-[13px] text-cream cursor-pointer select-none min-h-[44px] sm:min-h-0">
+              <label className="flex items-center gap-2 text-[13px] text-[color:var(--text-primary)] cursor-pointer select-none min-h-[44px] sm:min-h-0">
                 <input
                   type="checkbox"
                   checked={activeOnly}
@@ -811,14 +811,14 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                 Active only
               </label>
 
-              <span className="block text-[12px] text-cream-dim tabular-nums">
+              <span className="block text-[12px] text-[color:var(--text-secondary)] tabular-nums">
                 Showing {filteredRows.length} of {rows.length} line
                 {rows.length === 1 ? "" : "s"}
                 {filtersActive && (
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="ml-3 text-[12px] text-cream-dim hover:text-cream underline underline-offset-2"
+                    className="ml-3 text-[12px] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] underline underline-offset-2"
                   >
                     Clear all filters
                   </button>
@@ -831,8 +831,8 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   onClick={() => setViewMode(viewMode === "detail" ? "compare" : "detail")}
                   className={`text-[12px] px-3 py-2 border transition-colors ${
                     viewMode === "compare"
-                      ? "bg-teal text-white border-teal"
-                      : "border-brand-border text-cream hover:bg-brand-surface"
+                      ? "bg-[var(--nw-stone-blue)] text-white border-[var(--nw-stone-blue)]"
+                      : "border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)]"
                   }`}
                   aria-pressed={viewMode === "compare"}
                   title="Toggle owner-meeting comparison view"
@@ -843,7 +843,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                   type="button"
                   onClick={handleExport}
                   disabled={exporting}
-                  className="text-[12px] px-3 py-2 border border-brand-border text-cream hover:bg-brand-surface disabled:opacity-60 transition-colors"
+                  className="text-[12px] px-3 py-2 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)] disabled:opacity-60 transition-colors"
                   title="Download budget as Excel (.xlsx)"
                 >
                   {exporting ? "Exporting…" : "Export Excel"}
@@ -853,14 +853,14 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                     <button
                       type="button"
                       onClick={collapseAll}
-                      className="text-[12px] px-3 py-2 border border-brand-border text-cream hover:bg-brand-surface transition-colors"
+                      className="text-[12px] px-3 py-2 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
                     >
                       Collapse All
                     </button>
                     <button
                       type="button"
                       onClick={expandAll}
-                      className="text-[12px] px-3 py-2 border border-brand-border text-cream hover:bg-brand-surface transition-colors"
+                      className="text-[12px] px-3 py-2 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
                     >
                       Expand All
                     </button>
@@ -870,7 +870,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
             </div>
 
             {editError && (
-              <div className="mb-3 border border-status-danger/40 bg-status-danger/5 px-3 py-2 text-[12px] text-status-danger">
+              <div className="mb-3 border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-3 py-2 text-[12px] text-[color:var(--nw-danger)]">
                 {editError}
               </div>
             )}
@@ -878,11 +878,11 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
             {viewMode === "compare" ? (
               <CompareTable rows={filteredRows} />
             ) : (
-              <div className="bg-brand-card border border-brand-border overflow-x-auto">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-default)] overflow-x-auto">
                 <table className="w-full min-w-[1100px] text-sm">
                   <thead>
-                    <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
-                      <th className="text-left px-3 py-3 font-medium sticky left-0 bg-brand-surface/90 z-10">Code</th>
+                    <tr className="border-b border-[var(--border-default)] text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)] bg-[rgba(91,134,153,0.04)]">
+                      <th className="text-left px-3 py-3 font-medium sticky left-0 bg-[rgba(91,134,153,0.1)] z-10">Code</th>
                       <th className="text-left px-3 py-3 font-medium">Description</th>
                       <th className="text-right px-3 py-3 font-medium">Original</th>
                       <th className="text-right px-3 py-3 font-medium">CO +/-</th>
@@ -949,28 +949,28 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                         />
                       );
                     })}
-                    <tr className="border-t-2 border-brand-border bg-brand-surface font-medium">
-                      <td colSpan={2} className="px-3 py-3 text-[11px] uppercase tracking-wider text-cream-dim font-medium sticky left-0 bg-brand-surface z-[1]">
+                    <tr className="border-t-2 border-[var(--border-default)] bg-[var(--bg-subtle)] font-medium">
+                      <td colSpan={2} className="px-3 py-3 text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)] font-medium sticky left-0 bg-[var(--bg-subtle)] z-[1]">
                         Project Totals
                       </td>
-                      <td className="px-3 py-3 text-right text-cream tabular-nums font-display">{formatCents(grandTotals.original)}</td>
-                      <td className="px-3 py-3 text-right text-teal tabular-nums font-display">
+                      <td className="px-3 py-3 text-right text-[color:var(--text-primary)] tabular-nums font-display">{formatCents(grandTotals.original)}</td>
+                      <td className="px-3 py-3 text-right text-[color:var(--nw-stone-blue)] tabular-nums font-display">
                         {grandTotals.approved_cos ? formatCents(grandTotals.approved_cos) : "—"}
                       </td>
-                      <td className="px-3 py-3 text-right text-cream tabular-nums font-display">{formatCents(grandTotals.revised)}</td>
-                      <td className="px-3 py-3 text-right text-cream tabular-nums">
+                      <td className="px-3 py-3 text-right text-[color:var(--text-primary)] tabular-nums font-display">{formatCents(grandTotals.revised)}</td>
+                      <td className="px-3 py-3 text-right text-[color:var(--text-primary)] tabular-nums">
                         {grandTotals.committed > 0 ? formatCents(grandTotals.committed) : "—"}
                       </td>
-                      <td className="px-3 py-3 text-right text-cream tabular-nums font-display">
+                      <td className="px-3 py-3 text-right text-[color:var(--text-primary)] tabular-nums font-display">
                         {formatCents(grandTotals.invoiced_with_po + grandTotals.invoiced_without_po)}
                       </td>
-                      <td className="px-3 py-3 text-right text-cream-muted tabular-nums">
+                      <td className="px-3 py-3 text-right text-[color:var(--text-muted)] tabular-nums">
                         {formatCents(Math.max(0, grandTotals.committed - grandTotals.invoiced_with_po))}
                       </td>
-                      <td className="px-3 py-3 text-right text-cream tabular-nums">
+                      <td className="px-3 py-3 text-right text-[color:var(--text-primary)] tabular-nums">
                         {formatCents(grandTotals.revised - grandTotals.committed - grandTotals.invoiced_without_po)}
                       </td>
-                      <td className="px-3 py-3 text-right text-cream tabular-nums">
+                      <td className="px-3 py-3 text-right text-[color:var(--text-primary)] tabular-nums">
                         {formatCents(
                           grandTotals.invoiced_with_po +
                             grandTotals.invoiced_without_po +
@@ -985,8 +985,8 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
                               grandTotals.invoiced_without_po +
                               Math.max(0, grandTotals.committed - grandTotals.invoiced_with_po)) <
                           0
-                            ? "text-status-danger"
-                            : "text-cream"
+                            ? "text-[color:var(--nw-danger)]"
+                            : "text-[color:var(--text-primary)]"
                         }`}
                       >
                         {formatCents(
@@ -1003,7 +1003,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
               </div>
             )}
 
-            <p className="mt-4 text-[11px] text-cream-dim">
+            <p className="mt-4 text-[11px] text-[color:var(--text-secondary)]">
               Double-click Original to edit. Click Committed / Invoiced / CO / description to
               drill in. Calculated columns are read-only.
             </p>
@@ -1022,7 +1022,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
 
       {readOnlyToast && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-3 py-2 bg-brand-card border border-brand-border text-[12px] text-cream shadow-lg"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-default)] text-[12px] text-[color:var(--text-primary)] shadow-lg"
           role="status"
         >
           {readOnlyToast}
@@ -1108,12 +1108,12 @@ function CategoryBlock({
     <>
       {/* Category header row */}
       <tr
-        className="border-b border-brand-border bg-brand-surface/80 cursor-pointer hover:bg-brand-surface transition-colors"
+        className="border-b border-[var(--border-default)] bg-[rgba(91,134,153,0.1)] cursor-pointer hover:bg-[var(--bg-subtle)] transition-colors"
         onClick={onToggle}
       >
         <td
           colSpan={2}
-          className="px-3 py-2 text-[12px] font-semibold uppercase tracking-wider text-cream sticky left-0 bg-brand-surface z-[1]"
+          className="px-3 py-2 text-[12px] font-semibold uppercase tracking-wider text-[color:var(--text-primary)] sticky left-0 bg-[var(--bg-subtle)] z-[1]"
         >
           <span className="inline-flex items-center gap-2">
             <svg
@@ -1127,42 +1127,42 @@ function CategoryBlock({
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
             {category}
-            <span className="text-[10px] text-cream-dim font-normal normal-case tracking-normal">
+            <span className="text-[10px] text-[color:var(--text-secondary)] font-normal normal-case tracking-normal">
               ({rowCount} {rowCount === 1 ? "line" : "lines"})
             </span>
           </span>
         </td>
-        <td className="px-3 py-2 text-right text-cream tabular-nums text-[12px] font-semibold">
+        <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums text-[12px] font-semibold">
           {formatCents(subtotals.original)}
         </td>
-        <td className="px-3 py-2 text-right text-[12px] tabular-nums font-semibold text-teal">
+        <td className="px-3 py-2 text-right text-[12px] tabular-nums font-semibold text-[color:var(--nw-stone-blue)]">
           {subtotals.approved_cos ? formatCents(subtotals.approved_cos) : "—"}
         </td>
-        <td className="px-3 py-2 text-right text-cream tabular-nums text-[12px] font-semibold">
+        <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums text-[12px] font-semibold">
           {formatCents(subtotals.revised)}
         </td>
-        <td className="px-3 py-2 text-right text-cream tabular-nums text-[12px] font-semibold">
+        <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums text-[12px] font-semibold">
           {subtotals.committed > 0 ? formatCents(subtotals.committed) : "—"}
         </td>
-        <td className="px-3 py-2 text-right text-cream tabular-nums text-[12px] font-semibold">
+        <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums text-[12px] font-semibold">
           {formatCents(subtotals.invoiced)}
         </td>
-        <td className="px-3 py-2 text-right text-cream-muted tabular-nums text-[12px] font-semibold">
+        <td className="px-3 py-2 text-right text-[color:var(--text-muted)] tabular-nums text-[12px] font-semibold">
           {subtotals.remainingPo > 0 ? formatCents(subtotals.remainingPo) : "—"}
         </td>
         <td
           className={`px-3 py-2 text-right tabular-nums text-[12px] font-semibold ${
-            subtotals.uncommitted < 0 ? "text-status-warning" : "text-cream"
+            subtotals.uncommitted < 0 ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-primary)]"
           }`}
         >
           {formatCents(subtotals.uncommitted)}
         </td>
-        <td className="px-3 py-2 text-right text-cream tabular-nums text-[12px] font-semibold">
+        <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums text-[12px] font-semibold">
           {formatCents(subtotals.projected)}
         </td>
         <td
           className={`px-3 py-2 text-right tabular-nums text-[12px] font-semibold ${
-            subtotals.variance < 0 ? "text-status-danger" : "text-cream"
+            subtotals.variance < 0 ? "text-[color:var(--nw-danger)]" : "text-[color:var(--text-primary)]"
           }`}
         >
           {formatCents(subtotals.variance)}
@@ -1183,23 +1183,23 @@ function CategoryBlock({
           const badBand = r.revised_estimate > 0 && variancePct < -0.05;
           const tightBand = r.revised_estimate > 0 && variancePct <= 0 && !badBand;
           const rowBg = badBand
-            ? "bg-status-danger/10"
+            ? "bg-[rgba(176,85,78,0.12)]"
             : tightBand
-              ? "bg-status-warning/10"
+              ? "bg-[rgba(201,138,59,0.12)]"
               : r.revised_estimate > 0
-                ? "bg-status-success/5"
+                ? "bg-[rgba(74,138,111,0.08)]"
                 : "";
           const stickyBg = badBand
-            ? "bg-status-danger/10"
+            ? "bg-[rgba(176,85,78,0.12)]"
             : tightBand
-              ? "bg-status-warning/10"
+              ? "bg-[rgba(201,138,59,0.12)]"
               : r.revised_estimate > 0
-                ? "bg-status-success/10"
-                : "bg-brand-card";
+                ? "bg-[rgba(74,138,111,0.12)]"
+                : "bg-[var(--bg-card)]";
           return (
             <tr
               key={r.id}
-              className={`border-b border-brand-row-border last:border-0 ${rowBg}`}
+              className={`border-b border-[var(--border-default)] last:border-0 ${rowBg}`}
             >
               <td
                 className={`px-3 py-2 font-mono text-xs sticky left-0 z-[1] ${stickyBg}`}
@@ -1207,11 +1207,11 @@ function CategoryBlock({
               >
                 {r.code}
               </td>
-              <td className="px-3 py-2 text-cream-muted">
+              <td className="px-3 py-2 text-[color:var(--text-muted)]">
                 <button
                   type="button"
                   onClick={() => onDrill(r.id, r.code, r.description, "full")}
-                  className="text-left hover:text-teal hover:underline underline-offset-2 transition-colors"
+                  className="text-left hover:text-[color:var(--nw-stone-blue)] hover:underline underline-offset-2 transition-colors"
                 >
                   {r.description}
                 </button>
@@ -1234,13 +1234,13 @@ function CategoryBlock({
               </td>
               {/* CO +/- — read-only, but clickable → drill */}
               <td
-                className={`px-3 py-2 text-right tabular-nums ${r.approved_cos ? "" : "text-cream-dim"}`}
+                className={`px-3 py-2 text-right tabular-nums ${r.approved_cos ? "" : "text-[color:var(--text-secondary)]"}`}
               >
                 {r.approved_cos ? (
                   <button
                     type="button"
                     onClick={() => onDrill(r.id, r.code, r.description, "co")}
-                    className="text-teal hover:underline underline-offset-2 transition-colors"
+                    className="text-[color:var(--nw-stone-blue)] hover:underline underline-offset-2 transition-colors"
                   >
                     {formatCents(r.approved_cos)}
                   </button>
@@ -1248,7 +1248,7 @@ function CategoryBlock({
                   <button
                     type="button"
                     onClick={() => onShowReadOnlyTip("CO +/−")}
-                    className="text-cream-dim hover:text-cream transition-colors"
+                    className="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors"
                     title="Calculated automatically from approved COs"
                   >
                     —
@@ -1257,7 +1257,7 @@ function CategoryBlock({
               </td>
               {/* Revised — read-only */}
               <td
-                className="px-3 py-2 text-right text-cream font-medium tabular-nums"
+                className="px-3 py-2 text-right text-[color:var(--text-primary)] font-medium tabular-nums"
                 onClick={() => onShowReadOnlyTip("Revised")}
                 title="Calculated automatically (Original + CO +/−)"
               >
@@ -1269,7 +1269,7 @@ function CategoryBlock({
                   <button
                     type="button"
                     onClick={() => onDrill(r.id, r.code, r.description, "committed")}
-                    className="text-cream hover:text-teal hover:underline underline-offset-2 transition-colors"
+                    className="text-[color:var(--text-primary)] hover:text-[color:var(--nw-stone-blue)] hover:underline underline-offset-2 transition-colors"
                   >
                     {formatCents(r.committed)}
                   </button>
@@ -1277,7 +1277,7 @@ function CategoryBlock({
                   <button
                     type="button"
                     onClick={() => onShowReadOnlyTip("Committed")}
-                    className="text-cream-dim hover:text-cream transition-colors"
+                    className="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors"
                     title="Calculated automatically from open POs"
                   >
                     —
@@ -1290,7 +1290,7 @@ function CategoryBlock({
                   <button
                     type="button"
                     onClick={() => onDrill(r.id, r.code, r.description, "invoiced")}
-                    className="text-cream hover:text-teal hover:underline underline-offset-2 transition-colors"
+                    className="text-[color:var(--text-primary)] hover:text-[color:var(--nw-stone-blue)] hover:underline underline-offset-2 transition-colors"
                   >
                     {formatCents(invoiced)}
                   </button>
@@ -1298,7 +1298,7 @@ function CategoryBlock({
                   <button
                     type="button"
                     onClick={() => onShowReadOnlyTip("Invoiced")}
-                    className="text-cream transition-colors"
+                    className="text-[color:var(--text-primary)] transition-colors"
                     title="Calculated automatically from approved invoices"
                   >
                     {formatCents(invoiced)}
@@ -1307,15 +1307,15 @@ function CategoryBlock({
               </td>
               {/* Remaining PO — read-only */}
               <td
-                className="px-3 py-2 text-right text-cream-muted tabular-nums"
+                className="px-3 py-2 text-right text-[color:var(--text-muted)] tabular-nums"
                 onClick={() => onShowReadOnlyTip("Remaining PO")}
                 title="Calculated automatically (Committed − Invoiced on POs)"
               >
-                {remainingPo > 0 ? formatCents(remainingPo) : <span className="text-cream-dim">—</span>}
+                {remainingPo > 0 ? formatCents(remainingPo) : <span className="text-[color:var(--text-secondary)]">—</span>}
               </td>
               {/* Uncommitted — read-only */}
               <td
-                className={`px-3 py-2 text-right tabular-nums ${uncommitted < 0 ? "text-status-warning" : "text-cream"}`}
+                className={`px-3 py-2 text-right tabular-nums ${uncommitted < 0 ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-primary)]"}`}
                 onClick={() => onShowReadOnlyTip("Uncommitted")}
                 title="Calculated automatically (Revised − Committed − direct invoices)"
               >
@@ -1323,7 +1323,7 @@ function CategoryBlock({
               </td>
               {/* Projected — read-only */}
               <td
-                className="px-3 py-2 text-right text-cream tabular-nums"
+                className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums"
                 onClick={() => onShowReadOnlyTip("Projected")}
                 title="Calculated automatically"
               >
@@ -1333,12 +1333,12 @@ function CategoryBlock({
               <td
                 className={`px-3 py-2 text-right tabular-nums font-medium ${
                   badBand
-                    ? "text-status-danger"
+                    ? "text-[color:var(--nw-danger)]"
                     : tightBand
-                      ? "text-status-warning"
+                      ? "text-[color:var(--nw-warn)]"
                       : variance > 0
-                        ? "text-status-success"
-                        : "text-cream"
+                        ? "text-[color:var(--nw-success)]"
+                        : "text-[color:var(--text-primary)]"
                 }`}
                 onClick={() => onShowReadOnlyTip("Variance")}
                 title="Calculated automatically (Revised − Projected)"
@@ -1351,13 +1351,13 @@ function CategoryBlock({
 
       {/* Add-line row */}
       {!isCollapsed && (
-        <tr className="border-b border-brand-row-border bg-brand-card/50">
+        <tr className="border-b border-[var(--border-default)] bg-[var(--bg-card)]/50">
           <td className="px-3 py-1.5" colSpan={11}>
             {!isAdding ? (
               <button
                 type="button"
                 onClick={onBeginAdd}
-                className="inline-flex items-center gap-1 text-[12px] text-cream-dim hover:text-teal transition-colors"
+                className="inline-flex items-center gap-1 text-[12px] text-[color:var(--text-secondary)] hover:text-[color:var(--nw-stone-blue)] transition-colors"
               >
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -1370,7 +1370,7 @@ function CategoryBlock({
                   autoFocus
                   value={addLineCostCode}
                   onChange={(e) => setAddLineCostCode(e.target.value)}
-                  className="px-2 py-1 bg-brand-surface border border-teal text-sm text-cream focus:outline-none"
+                  className="px-2 py-1 bg-[var(--bg-subtle)] border border-[var(--nw-stone-blue)] text-sm text-[color:var(--text-primary)] focus:outline-none"
                   aria-label="Cost code"
                   disabled={addLineBusy}
                 >
@@ -1397,7 +1397,7 @@ function CategoryBlock({
                     }
                   }}
                   placeholder="0.00"
-                  className="w-28 px-2 py-1 bg-brand-surface border border-teal text-sm text-cream text-right tabular-nums focus:outline-none"
+                  className="w-28 px-2 py-1 bg-[var(--bg-subtle)] border border-[var(--nw-stone-blue)] text-sm text-[color:var(--text-primary)] text-right tabular-nums focus:outline-none"
                   aria-label="Original amount"
                   disabled={addLineBusy}
                 />
@@ -1405,7 +1405,7 @@ function CategoryBlock({
                   type="button"
                   onClick={onSubmitAdd}
                   disabled={addLineBusy}
-                  className="text-[12px] px-2 py-1 bg-teal text-white hover:bg-teal-hover disabled:opacity-60 transition-colors"
+                  className="text-[12px] px-2 py-1 bg-[var(--nw-stone-blue)] text-white hover:bg-[var(--nw-gulf-blue)] disabled:opacity-60 transition-colors"
                 >
                   {addLineBusy ? "Saving…" : "Save"}
                 </button>
@@ -1413,12 +1413,12 @@ function CategoryBlock({
                   type="button"
                   onClick={onCancelAdd}
                   disabled={addLineBusy}
-                  className="text-[12px] px-2 py-1 border border-brand-border text-cream hover:bg-brand-surface transition-colors"
+                  className="text-[12px] px-2 py-1 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
                 >
                   Cancel
                 </button>
                 {addLineError && (
-                  <span className="text-[12px] text-status-danger">{addLineError}</span>
+                  <span className="text-[12px] text-[color:var(--nw-danger)]">{addLineError}</span>
                 )}
               </div>
             )}
@@ -1433,11 +1433,11 @@ function CompareTable({ rows }: { rows: BudgetRow[] }) {
   // Simplified layout for the owner-meeting view: 7 columns, full-row
   // background color based on variance band.
   return (
-    <div className="bg-brand-card border border-brand-border overflow-x-auto">
+    <div className="bg-[var(--bg-card)] border border-[var(--border-default)] overflow-x-auto">
       <table className="w-full min-w-[700px] text-sm">
         <thead>
-          <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
-            <th className="text-left px-3 py-3 font-medium sticky left-0 bg-brand-surface/90 z-10">Code</th>
+          <tr className="border-b border-[var(--border-default)] text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)] bg-[rgba(91,134,153,0.04)]">
+            <th className="text-left px-3 py-3 font-medium sticky left-0 bg-[rgba(91,134,153,0.1)] z-10">Code</th>
             <th className="text-left px-3 py-3 font-medium">Description</th>
             <th className="text-right px-3 py-3 font-medium">Original</th>
             <th className="text-right px-3 py-3 font-medium">Revised</th>
@@ -1459,43 +1459,43 @@ function CompareTable({ rows }: { rows: BudgetRow[] }) {
             const goodBand = r.revised_estimate > 0 && variance > 0;
 
             const rowBg = badBand
-              ? "bg-status-danger/15"
+              ? "bg-[rgba(176,85,78,0.18)]"
               : tightBand
-                ? "bg-status-warning/15"
+                ? "bg-[rgba(201,138,59,0.18)]"
                 : goodBand
-                  ? "bg-status-success/10"
+                  ? "bg-[rgba(74,138,111,0.12)]"
                   : "";
             const stickyBg = badBand
-              ? "bg-status-danger/15"
+              ? "bg-[rgba(176,85,78,0.18)]"
               : tightBand
-                ? "bg-status-warning/15"
+                ? "bg-[rgba(201,138,59,0.18)]"
                 : goodBand
-                  ? "bg-status-success/15"
-                  : "bg-brand-card";
+                  ? "bg-[rgba(74,138,111,0.18)]"
+                  : "bg-[var(--bg-card)]";
             const varTone = badBand
-              ? "text-status-danger"
+              ? "text-[color:var(--nw-danger)]"
               : tightBand
-                ? "text-status-warning"
+                ? "text-[color:var(--nw-warn)]"
                 : goodBand
-                  ? "text-status-success"
-                  : "text-cream";
+                  ? "text-[color:var(--nw-success)]"
+                  : "text-[color:var(--text-primary)]";
 
             return (
-              <tr key={r.id} className={`border-b border-brand-row-border last:border-0 ${rowBg}`}>
+              <tr key={r.id} className={`border-b border-[var(--border-default)] last:border-0 ${rowBg}`}>
                 <td
                   className={`px-3 py-2 font-mono text-xs sticky left-0 z-[1] ${stickyBg}`}
                   style={{ color: "var(--text-primary)" }}
                 >
                   {r.code}
                 </td>
-                <td className="px-3 py-2 text-cream-muted">{r.description}</td>
-                <td className="px-3 py-2 text-right text-cream tabular-nums">
+                <td className="px-3 py-2 text-[color:var(--text-muted)]">{r.description}</td>
+                <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums">
                   {formatCents(r.original_estimate)}
                 </td>
-                <td className="px-3 py-2 text-right text-cream tabular-nums font-medium">
+                <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums font-medium">
                   {formatCents(r.revised_estimate)}
                 </td>
-                <td className="px-3 py-2 text-right text-cream tabular-nums">
+                <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums">
                   {formatCents(projected)}
                 </td>
                 <td className={`px-3 py-2 text-right tabular-nums font-medium ${varTone}`}>

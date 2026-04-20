@@ -39,7 +39,7 @@ interface CoLine {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "text-[color:var(--text-secondary)] border-cream-dim/40",
+  draft: "text-[color:var(--text-secondary)] border-[rgba(59,88,100,0.28)]",
   pending: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
   pending_approval: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
   approved: "text-[color:var(--nw-success)] border-[rgba(74,138,111,0.35)]",

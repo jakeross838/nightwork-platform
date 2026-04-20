@@ -194,7 +194,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
     return (
       <AppShell>
         <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-          <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin mx-auto" />
         </main>
       </AppShell>
     );
@@ -203,9 +203,9 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
     return (
       <AppShell>
         <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-          <p className="text-cream">Vendor not found</p>
-          {loadError && <p className="text-status-danger text-xs mt-2">{loadError}</p>}
-          <Link href="/vendors" className="text-teal hover:underline text-sm mt-3 inline-block">Back to vendors</Link>
+          <p className="text-[color:var(--text-primary)]">Vendor not found</p>
+          {loadError && <p className="text-[color:var(--nw-danger)] text-xs mt-2">{loadError}</p>}
+          <Link href="/vendors" className="text-[color:var(--nw-stone-blue)] hover:underline text-sm mt-3 inline-block">Back to vendors</Link>
         </main>
       </AppShell>
     );
@@ -314,12 +314,12 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
             </EditField>
           </div>
           {error && (
-            <div className="mt-4 border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">
+            <div className="mt-4 border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-4 py-2 text-sm text-[color:var(--nw-danger)]">
               {error}
             </div>
           )}
           <div className="mt-4 flex items-center justify-end gap-3">
-            {saved && <span className="text-[11px] text-status-success uppercase tracking-wider">Saved</span>}
+            {saved && <span className="text-[11px] text-[color:var(--nw-success)] uppercase tracking-wider">Saved</span>}
             <button
               onClick={handleSave}
               disabled={saving}
@@ -354,12 +354,12 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
             Invoice History
           </h3>
           {invoices.length === 0 ? (
-            <p className="text-sm text-cream-dim">No invoices from this vendor yet.</p>
+            <p className="text-sm text-[color:var(--text-secondary)]">No invoices from this vendor yet.</p>
           ) : (
-            <div className="border border-brand-border overflow-x-auto">
+            <div className="border border-[var(--border-default)] overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
+                  <tr className="border-b border-[var(--border-default)] text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)] bg-[rgba(91,134,153,0.04)]">
                     <th className="text-left px-3 py-3 font-medium">Date</th>
                     <th className="text-left px-3 py-3 font-medium">Inv #</th>
                     <th className="text-left px-3 py-3 font-medium">Job</th>
@@ -372,16 +372,16 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
                   {invoices.map((inv) => (
                     <tr
                       key={inv.id}
-                      className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface/40 cursor-pointer"
+                      className="border-b border-[var(--border-default)] last:border-0 hover:bg-[rgba(91,134,153,0.06)] cursor-pointer"
                       onClick={() => router.push(`/invoices/${inv.id}`)}
                     >
-                      <td className="px-3 py-2 text-cream-muted">{formatDate(inv.invoice_date)}</td>
-                      <td className="px-3 py-2 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
-                      <td className="px-3 py-2 text-cream">{inv.jobs?.name ?? "—"}</td>
-                      <td className="px-3 py-2 text-cream-muted text-xs">
+                      <td className="px-3 py-2 text-[color:var(--text-muted)]">{formatDate(inv.invoice_date)}</td>
+                      <td className="px-3 py-2 text-[color:var(--text-muted)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                      <td className="px-3 py-2 text-[color:var(--text-primary)]">{inv.jobs?.name ?? "—"}</td>
+                      <td className="px-3 py-2 text-[color:var(--text-muted)] text-xs">
                         {inv.cost_codes ? `${inv.cost_codes.code} ${inv.cost_codes.description}` : "—"}
                       </td>
-                      <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(inv.total_amount)}</td>
+                      <td className="px-3 py-2 text-right text-[color:var(--text-primary)] tabular-nums">{formatCents(inv.total_amount)}</td>
                       <td className="px-3 py-2">
                         <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${statusBadgeOutline(inv.status)}`}>
                           {formatStatus(inv.status)}
@@ -414,7 +414,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 function EditField({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <label className={`flex flex-col gap-1 ${full ? "md:col-span-2" : ""}`}>
-      <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">{label}</span>
       {children}
     </label>
   );
@@ -422,9 +422,9 @@ function EditField({ label, children, full }: { label: string; children: React.R
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border border-brand-border bg-brand-card p-3">
-      <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
-      <p className="text-sm mt-1 tabular-nums text-cream font-medium truncate" title={value}>{value}</p>
+    <div className="border border-[var(--border-default)] bg-[var(--bg-card)] p-3">
+      <p className="text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)] font-medium">{label}</p>
+      <p className="text-sm mt-1 tabular-nums text-[color:var(--text-primary)] font-medium truncate" title={value}>{value}</p>
     </div>
   );
 }

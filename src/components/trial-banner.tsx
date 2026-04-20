@@ -54,14 +54,14 @@ export default function TrialBanner() {
     const daysLeft = daysUntil(info.trial_ends_at);
     if (daysLeft == null || daysLeft < 0) return null;
     return (
-      <div className="bg-teal-muted border-b border-teal/40 px-6 py-2 text-sm text-cream">
+      <div className="bg-[rgba(91,134,153,0.12)] border-b border-[rgba(91,134,153,0.35)] px-6 py-2 text-sm text-[color:var(--text-primary)]">
         <div className="max-w-[1240px] mx-auto flex items-center justify-between gap-3 flex-wrap">
           <span>
             You&apos;re on a free trial — <strong>{daysLeft} day{daysLeft === 1 ? "" : "s"}</strong> remaining.
           </span>
           <Link
             href="/settings/billing"
-            className="px-3 py-1 bg-teal text-white text-[11px] tracking-[0.08em] uppercase hover:bg-teal-hover transition-colors"
+            className="px-3 py-1 bg-[var(--nw-stone-blue)] text-white text-[11px] tracking-[0.08em] uppercase hover:bg-[var(--nw-gulf-blue)] transition-colors"
           >
             Upgrade
           </Link>
@@ -72,12 +72,12 @@ export default function TrialBanner() {
 
   if (info.status === "past_due") {
     return (
-      <div className="bg-status-warning-muted border-b border-status-warning/40 px-6 py-2 text-sm text-status-warning">
+      <div className="bg-[rgba(201,138,59,0.12)] border-b border-[rgba(201,138,59,0.35)] px-6 py-2 text-sm text-[color:var(--nw-warn)]">
         <div className="max-w-[1240px] mx-auto flex items-center justify-between gap-3 flex-wrap">
           <span>Payment failed. Update your payment method to keep your account active.</span>
           <Link
             href="/settings/billing"
-            className="px-3 py-1 border border-status-warning text-[11px] tracking-[0.08em] uppercase hover:bg-status-warning hover:text-white transition-colors"
+            className="px-3 py-1 border border-[rgba(201,138,59,0.5)] text-[11px] tracking-[0.08em] uppercase hover:bg-[var(--nw-warn)] hover:text-white transition-colors"
           >
             Fix Billing
           </Link>
@@ -88,12 +88,12 @@ export default function TrialBanner() {
 
   if (info.status === "cancelled") {
     return (
-      <div className="bg-status-danger-muted border-b border-status-danger/40 px-6 py-2 text-sm text-status-danger">
+      <div className="bg-[rgba(176,85,78,0.12)] border-b border-[rgba(176,85,78,0.35)] px-6 py-2 text-sm text-[color:var(--nw-danger)]">
         <div className="max-w-[1240px] mx-auto flex items-center justify-between gap-3 flex-wrap">
           <span>Your subscription is cancelled. You have read-only access.</span>
           <Link
             href="/settings/billing"
-            className="px-3 py-1 border border-status-danger text-[11px] tracking-[0.08em] uppercase hover:bg-status-danger hover:text-white transition-colors"
+            className="px-3 py-1 border border-[rgba(176,85,78,0.5)] text-[11px] tracking-[0.08em] uppercase hover:bg-[var(--nw-danger)] hover:text-white transition-colors"
           >
             Reactivate
           </Link>

@@ -130,14 +130,14 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
   if (loading) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin mx-auto" />
       </main>
     );
   }
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <p className="text-cream">Job not found</p>
+        <p className="text-[color:var(--text-primary)]">Job not found</p>
       </main>
     );
   }
@@ -187,32 +187,32 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
             placeholder="Search vendor or invoice number…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-[200px] px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+            className="flex-1 min-w-[200px] px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+            className="px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
           >
             <option value="all">All statuses</option>
             {statuses.map((s) => (
               <option key={s} value={s}>{formatStatus(s)}</option>
             ))}
           </select>
-          <p className="text-[11px] text-cream-dim uppercase tracking-wider">
+          <p className="text-[11px] text-[color:var(--text-secondary)] uppercase tracking-wider">
             {totals.count} · {formatCents(totals.sum)}
           </p>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="bg-brand-card border border-brand-border p-12 text-center">
-            <p className="text-cream-dim text-sm">No invoices match the current filters.</p>
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-12 text-center">
+            <p className="text-[color:var(--text-secondary)] text-sm">No invoices match the current filters.</p>
           </div>
         ) : (
-          <div className="bg-brand-card border border-brand-border overflow-x-auto">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium bg-brand-surface/50">
+                <tr className="border-b border-[var(--border-default)] text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-secondary)] font-medium bg-[rgba(91,134,153,0.04)]">
                   <th className="text-left px-3 py-3 font-medium">Date</th>
                   <th className="text-left px-3 py-3 font-medium">Vendor</th>
                   <th className="text-left px-3 py-3 font-medium">Inv #</th>
@@ -227,11 +227,11 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
                   return (
                     <tr
                       key={inv.id}
-                      className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface/40 cursor-pointer"
+                      className="border-b border-[var(--border-default)] last:border-0 hover:bg-[rgba(91,134,153,0.06)] cursor-pointer"
                       onClick={() => router.push(`/invoices/${inv.id}`)}
                     >
-                      <td className="px-3 py-2 text-cream-muted">{formatDate(inv.invoice_date)}</td>
-                      <td className="px-3 py-2 text-cream">
+                      <td className="px-3 py-2 text-[color:var(--text-muted)]">{formatDate(inv.invoice_date)}</td>
+                      <td className="px-3 py-2 text-[color:var(--text-primary)]">
                         <span className="inline-flex items-center gap-1.5">
                           {vendor}
                           {inv.document_type === "receipt" && (
@@ -239,8 +239,8 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
                           )}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
-                      <td className="px-3 py-2 text-cream-muted text-xs">
+                      <td className="px-3 py-2 text-[color:var(--text-muted)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
+                      <td className="px-3 py-2 text-[color:var(--text-muted)] text-xs">
                         {inv.cost_codes ? `${inv.cost_codes.code} ${inv.cost_codes.description}` : "—"}
                       </td>
                       <td className="px-3 py-2 text-right">
@@ -264,8 +264,8 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
           </div>
         )}
 
-        <p className="mt-4 text-[11px] text-cream-dim">
-          <Link href={`/invoices?jobId=${job.id}`} className="text-teal hover:underline">
+        <p className="mt-4 text-[11px] text-[color:var(--text-secondary)]">
+          <Link href={`/invoices?jobId=${job.id}`} className="text-[color:var(--nw-stone-blue)] hover:underline">
             Open in All Invoices →
           </Link>
         </p>

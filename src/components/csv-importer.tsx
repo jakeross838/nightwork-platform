@@ -183,11 +183,11 @@ export default function CsvImporter({
   }
 
   return (
-    <div className="bg-brand-card border border-brand-border p-6">
+    <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6">
       {step === "upload" && (
         <div>
           <div
-            className="border-2 border-dashed border-brand-border p-10 text-center hover:border-teal transition-colors cursor-pointer"
+            className="border-2 border-dashed border-[var(--border-default)] p-10 text-center hover:border-[var(--nw-stone-blue)] transition-colors cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); }}
             onDrop={(e) => {
@@ -196,8 +196,8 @@ export default function CsvImporter({
               if (f) handleFile(f);
             }}
           >
-            <p className="text-cream text-sm">Drop a .csv or .xlsx file, or click to choose</p>
-            {hint && <p className="text-[11px] text-cream-dim mt-2">{hint}</p>}
+            <p className="text-[color:var(--text-primary)] text-sm">Drop a .csv or .xlsx file, or click to choose</p>
+            {hint && <p className="text-[11px] text-[color:var(--text-secondary)] mt-2">{hint}</p>}
             <input
               ref={fileInputRef}
               type="file"
@@ -210,7 +210,7 @@ export default function CsvImporter({
             />
           </div>
           {error && (
-            <p className="text-status-danger text-sm mt-3">{error}</p>
+            <p className="text-[color:var(--nw-danger)] text-sm mt-3">{error}</p>
           )}
         </div>
       )}
@@ -219,12 +219,12 @@ export default function CsvImporter({
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-medium text-cream uppercase tracking-wider">Map Columns</h3>
-              <p className="text-[11px] text-cream-dim">{fileName} · {rows.length} rows detected</p>
+              <h3 className="text-sm font-medium text-[color:var(--text-primary)] uppercase tracking-wider">Map Columns</h3>
+              <p className="text-[11px] text-[color:var(--text-secondary)]">{fileName} · {rows.length} rows detected</p>
             </div>
             <button
               onClick={reset}
-              className="text-[11px] text-cream-dim hover:text-cream"
+              className="text-[11px] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
             >
               ← Change file
             </button>
@@ -233,13 +233,13 @@ export default function CsvImporter({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
             {fields.map((f) => (
               <div key={f.key} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                <div className="text-sm text-cream-dim text-right">
+                <div className="text-sm text-[color:var(--text-secondary)] text-right">
                   {f.label}
-                  {f.required && <span className="text-status-danger">*</span>}
+                  {f.required && <span className="text-[color:var(--nw-danger)]">*</span>}
                 </div>
-                <span className="text-cream-dim">→</span>
+                <span className="text-[color:var(--text-secondary)]">→</span>
                 <select
-                  className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  className="px-2 py-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
                   value={mapping[f.key] ?? ""}
                   onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
                 >
@@ -253,7 +253,7 @@ export default function CsvImporter({
           </div>
 
           {!canContinueMapping && (
-            <p className="text-status-warning text-xs mb-3">Map all required fields to continue.</p>
+            <p className="text-[color:var(--nw-warn)] text-xs mb-3">Map all required fields to continue.</p>
           )}
 
           <div className="flex justify-end gap-2">
@@ -267,13 +267,13 @@ export default function CsvImporter({
                 setError(null);
               }}
               disabled={!canContinueMapping}
-              className="px-4 py-2 bg-teal text-white text-sm hover:bg-teal-hover disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-sm hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 transition-colors"
             >
               Preview →
             </button>
           </div>
 
-          {error && <p className="text-status-danger text-sm mt-3">{error}</p>}
+          {error && <p className="text-[color:var(--nw-danger)] text-sm mt-3">{error}</p>}
         </div>
       )}
 
@@ -281,23 +281,23 @@ export default function CsvImporter({
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-medium text-cream uppercase tracking-wider">Preview</h3>
-              <p className="text-[11px] text-cream-dim">
+              <h3 className="text-sm font-medium text-[color:var(--text-primary)] uppercase tracking-wider">Preview</h3>
+              <p className="text-[11px] text-[color:var(--text-secondary)]">
                 First {preview.length} of {rows.length} rows · validation {rowValidationErrors.filter((e) => e).length > 0 ? "errors below" : "passed"}
               </p>
             </div>
             <button
               onClick={() => setStep("map")}
-              className="text-[11px] text-cream-dim hover:text-cream"
+              className="text-[11px] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
             >
               ← Back to mapping
             </button>
           </div>
 
-          <div className="overflow-x-auto border border-brand-border">
+          <div className="overflow-x-auto border border-[var(--border-default)]">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-brand-surface/50 border-b border-brand-border text-[10px] uppercase tracking-wider text-cream-dim">
+                <tr className="bg-[rgba(91,134,153,0.04)] border-b border-[var(--border-default)] text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)]">
                   <th className="text-left px-2 py-1.5 font-medium">#</th>
                   {fields.map((f) => (
                     <th key={f.key} className="text-left px-2 py-1.5 font-medium">{f.label}</th>
@@ -307,16 +307,16 @@ export default function CsvImporter({
               </thead>
               <tbody>
                 {preview.map((r, i) => (
-                  <tr key={i} className={`border-b border-brand-row-border last:border-0 ${rowValidationErrors[i] ? "bg-status-danger/10" : ""}`}>
-                    <td className="px-2 py-1 text-cream-dim">{i + 1}</td>
+                  <tr key={i} className={`border-b border-[var(--border-default)] last:border-0 ${rowValidationErrors[i] ? "bg-[rgba(176,85,78,0.12)]" : ""}`}>
+                    <td className="px-2 py-1 text-[color:var(--text-secondary)]">{i + 1}</td>
                     {fields.map((f) => (
-                      <td key={f.key} className="px-2 py-1 text-cream">{r[f.key] || <span className="text-cream-dim">—</span>}</td>
+                      <td key={f.key} className="px-2 py-1 text-[color:var(--text-primary)]">{r[f.key] || <span className="text-[color:var(--text-secondary)]">—</span>}</td>
                     ))}
                     <td className="px-2 py-1 text-[11px]">
                       {rowValidationErrors[i] ? (
-                        <span className="text-status-danger">{rowValidationErrors[i]}</span>
+                        <span className="text-[color:var(--nw-danger)]">{rowValidationErrors[i]}</span>
                       ) : (
-                        <span className="text-status-success">OK</span>
+                        <span className="text-[color:var(--nw-success)]">OK</span>
                       )}
                     </td>
                   </tr>
@@ -329,25 +329,25 @@ export default function CsvImporter({
             <button
               onClick={doImport}
               disabled={importing}
-              className="px-5 py-2 bg-teal text-white text-sm font-medium hover:bg-teal-hover disabled:opacity-50 transition-colors"
+              className="px-5 py-2 bg-[var(--nw-stone-blue)] text-white text-sm font-medium hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 transition-colors"
             >
               {importing ? "Importing…" : importLabel}
             </button>
           </div>
 
-          {error && <p className="text-status-danger text-sm mt-3">{error}</p>}
+          {error && <p className="text-[color:var(--nw-danger)] text-sm mt-3">{error}</p>}
         </div>
       )}
 
       {step === "done" && (
         <div className="text-center py-6">
-          <p className="text-status-success text-lg">Import complete</p>
-          <p className="text-sm text-cream-dim mt-1">
+          <p className="text-[color:var(--nw-success)] text-lg">Import complete</p>
+          <p className="text-sm text-[color:var(--text-secondary)] mt-1">
             Imported {result?.imported ?? rows.length} rows.
           </p>
           <button
             onClick={reset}
-            className="mt-4 px-4 py-2 border border-brand-border text-sm text-cream hover:bg-brand-surface transition-colors"
+            className="mt-4 px-4 py-2 border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
           >
             Import another file
           </button>
