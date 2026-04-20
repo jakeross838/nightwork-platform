@@ -498,10 +498,10 @@ export default function NewDrawWizardPage() {
         }}
         className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors ${
           active
-            ? "bg-teal text-white"
+            ? "bg-[var(--nw-stone-blue)] text-white"
             : done
-              ? "bg-brand-elevated text-cream"
-              : "bg-brand-surface text-cream-muted"
+              ? "bg-[var(--bg-muted)] text-[color:var(--text-primary)]"
+              : "bg-[var(--bg-subtle)] text-[color:var(--text-muted)]"
         }`}
       >
         <span className="font-mono">
@@ -565,7 +565,7 @@ export default function NewDrawWizardPage() {
         </div>
 
         {error && (
-          <div className="mb-4 bg-status-danger/10 border border-status-danger/40 px-4 py-3 text-sm text-status-danger">
+          <div className="mb-4 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.35)] px-4 py-3 text-sm text-[color:var(--nw-danger)]">
             {error}
           </div>
         )}
@@ -573,15 +573,15 @@ export default function NewDrawWizardPage() {
         {/* ─────────────────────────  STEP 1  ───────────────────────── */}
         {step === 1 && (
           <div className="space-y-6 animate-fade-up">
-            <div className="bg-brand-card border border-brand-border p-6 space-y-4">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 space-y-4">
               <div>
-                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
                   Job
                 </label>
                 <select
                   value={jobId}
                   onChange={(e) => setJobId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
                 >
                   <option value="">Select a job…</option>
                   {jobs.map((j) => (
@@ -593,7 +593,7 @@ export default function NewDrawWizardPage() {
               </div>
 
               {jobMeta && job && (
-                <div className="bg-teal/5 border border-teal/30 p-4 space-y-2">
+                <div className="bg-[rgba(91,134,153,0.08)] border border-[rgba(91,134,153,0.3)] p-4 space-y-2">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <Stat label="Contract" value={formatCents(jobMeta.contractAmount)} />
                     <Stat label="Billed to date" value={formatCents(jobMeta.billedToDate)} />
@@ -630,7 +630,7 @@ export default function NewDrawWizardPage() {
               )}
 
               {blockingOpenDraw && (
-                <div className="bg-status-danger/10 border border-status-danger/40 px-4 py-3 text-sm text-status-danger">
+                <div className="bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.35)] px-4 py-3 text-sm text-[color:var(--nw-danger)]">
                   Draw #{blockingOpenDraw.draw_number} is still in{" "}
                   <span className="font-medium">{blockingOpenDraw.status}</span> status — approve
                   or void it before creating Draw #{nextDrawNumber}.
@@ -653,17 +653,17 @@ export default function NewDrawWizardPage() {
         {/* ─────────────────────────  STEP 2  ───────────────────────── */}
         {step === 2 && (
           <div className="space-y-6 animate-fade-up">
-            <div className="bg-brand-card border border-brand-border p-6 space-y-4">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <DateField label="Application Date" value={appDate} onChange={setAppDate} />
                 <DateField label="Period Start" value={periodStart} onChange={setPeriodStart} />
                 <DateField label="Period End" value={periodEnd} onChange={setPeriodEnd} />
               </div>
-              <div className="text-xs text-cream-dim">
+              <div className="text-xs text-[color:var(--text-secondary)]">
                 Default period start = day after the last locked draw&apos;s period end. Default end =
                 today.
               </div>
-              <div className="bg-teal/5 border border-teal/30 px-4 py-3 text-sm text-cream">
+              <div className="bg-[rgba(91,134,153,0.08)] border border-[rgba(91,134,153,0.3)] px-4 py-3 text-sm text-[color:var(--text-primary)]">
                 <span className="font-medium">{periodInvoices.length}</span> approved invoice(s)
                 received between {formatDate(periodStart)} and {formatDate(periodEnd)}.
               </div>
@@ -672,7 +672,7 @@ export default function NewDrawWizardPage() {
             <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(1)}
-                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-[var(--border-default)] text-[color:var(--text-muted)] hover:border-[var(--border-default)]-light"
               >
                 Back
               </button>
@@ -680,7 +680,7 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-muted)] text-sm"
                 >
                   Save Draft
                 </button>
@@ -700,18 +700,18 @@ export default function NewDrawWizardPage() {
         {step === 3 && (
           <div className="space-y-6 animate-fade-up">
             {periodInvoices.length === 0 ? (
-              <div className="bg-brand-card border border-brand-border p-8 text-center text-cream">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-8 text-center text-[color:var(--text-primary)]">
                 No invoices found in this period.
               </div>
             ) : (
-              <div className="bg-brand-card border border-brand-border p-4">
-                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-4">
+                <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-3">
                   {selected.size} of {periodInvoices.length} invoice(s) selected
                 </p>
-                <div className="overflow-x-auto border border-brand-border max-h-72">
+                <div className="overflow-x-auto border border-[var(--border-default)] max-h-72">
                   <table className="w-full min-w-[520px] text-sm">
                     <thead>
-                      <tr className="bg-brand-surface text-left sticky top-0">
+                      <tr className="bg-[var(--bg-subtle)] text-left sticky top-0">
                         <th className="py-2 px-3 w-8">
                           <input
                             type="checkbox"
@@ -735,7 +735,7 @@ export default function NewDrawWizardPage() {
                       {periodInvoices.map((inv) => (
                         <tr
                           key={inv.id}
-                          className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer"
+                          className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)]/50 cursor-pointer"
                           onClick={() => toggleInvoice(inv.id)}
                         >
                           <td className="py-2 px-3">
@@ -745,16 +745,16 @@ export default function NewDrawWizardPage() {
                               onChange={() => toggleInvoice(inv.id)}
                             />
                           </td>
-                          <td className="py-2 px-3 text-cream">
+                          <td className="py-2 px-3 text-[color:var(--text-primary)]">
                             {inv.vendor_name_raw ?? "Unknown"}
                           </td>
-                          <td className="py-2 px-3 text-cream-muted font-mono text-xs">
+                          <td className="py-2 px-3 text-[color:var(--text-muted)] font-mono text-xs">
                             {inv.invoice_number ?? "—"}
                           </td>
-                          <td className="py-2 px-3 text-cream-muted text-xs">
+                          <td className="py-2 px-3 text-[color:var(--text-muted)] text-xs">
                             {inv.cost_codes ? `${inv.cost_codes.code}` : "—"}
                           </td>
-                          <td className="py-2 px-3 text-cream text-right font-display">
+                          <td className="py-2 px-3 text-[color:var(--text-primary)] text-right font-display">
                             {formatCents(inv.total_amount)}
                           </td>
                         </tr>
@@ -766,19 +766,19 @@ export default function NewDrawWizardPage() {
             )}
 
             {/* G703-style preview */}
-            <div className="bg-brand-card border border-brand-border">
-              <div className="px-4 py-3 border-b border-brand-border flex items-center justify-between">
-                <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)]">
+              <div className="px-4 py-3 border-b border-[var(--border-default)] flex items-center justify-between">
+                <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">
                   G703 Continuation Sheet — Preview
                 </p>
                 {previewLoading && (
-                  <div className="w-3 h-3 border border-teal border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3 h-3 border border-[var(--nw-stone-blue)] border-t-transparent rounded-full animate-spin" />
                 )}
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[900px] text-sm">
                   <thead>
-                    <tr className="bg-brand-surface text-left">
+                    <tr className="bg-[var(--bg-subtle)] text-left">
                       <Th>Code</Th>
                       <Th>Description</Th>
                       <Th right>Scheduled</Th>
@@ -791,8 +791,8 @@ export default function NewDrawWizardPage() {
                   </thead>
                   <tbody>
                     {baseLines.length > 0 && (
-                      <tr className="bg-brand-surface/40">
-                        <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-cream-dim font-semibold">
+                      <tr className="bg-[rgba(91,134,153,0.06)]">
+                        <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)] font-semibold">
                           Base Contract
                         </td>
                       </tr>
@@ -812,7 +812,7 @@ export default function NewDrawWizardPage() {
                           <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-brass font-semibold">
                             Change Orders
                             {preview?.change_orders.some((c) => c.pcco_number != null) && (
-                              <span className="ml-2 text-cream-dim font-normal normal-case">
+                              <span className="ml-2 text-[color:var(--text-secondary)] font-normal normal-case">
                                 {preview!.change_orders
                                   .filter((c) => c.pcco_number != null)
                                   .map((c) => `PCCO #${c.pcco_number}`)
@@ -835,7 +835,7 @@ export default function NewDrawWizardPage() {
                     )}
                     {(!preview || preview.lines.length === 0) && (
                       <tr>
-                        <td colSpan={8} className="py-6 text-center text-cream-dim text-xs">
+                        <td colSpan={8} className="py-6 text-center text-[color:var(--text-secondary)] text-xs">
                           {previewLoading ? "Calculating…" : "No line items yet."}
                         </td>
                       </tr>
@@ -848,7 +848,7 @@ export default function NewDrawWizardPage() {
             <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(2)}
-                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-[var(--border-default)] text-[color:var(--text-muted)] hover:border-[var(--border-default)]-light"
               >
                 Back
               </button>
@@ -856,7 +856,7 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-muted)] text-sm"
                 >
                   Save Draft
                 </button>
@@ -875,8 +875,8 @@ export default function NewDrawWizardPage() {
         {/* ─────────────────────────  STEP 4  ───────────────────────── */}
         {step === 4 && preview && (
           <div className="space-y-6 animate-fade-up">
-            <div className="bg-brand-card border border-brand-border p-6">
-              <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-4">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6">
+              <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-4">
                 G702 Summary — Application for Payment{" "}
                 {isFinal && <span className="text-brass">(FINAL)</span>}
               </p>
@@ -885,7 +885,7 @@ export default function NewDrawWizardPage() {
                 <G702Line num="1a" label="Deposit" value={preview.totals.deposit_amount} sub />
                 <G702Line num="2" label="Net Change by Change Orders" value={preview.totals.net_change_orders} />
                 <G702Line num="3" label="Contract Sum to Date" value={preview.totals.contract_sum_to_date} highlight />
-                <div className="border-t border-brand-border my-2" />
+                <div className="border-t border-[var(--border-default)] my-2" />
                 <G702Line num="4" label="Total Completed & Stored to Date" value={preview.totals.total_completed_to_date} />
                 <G702Line num="5a" label="Retainage on Completed Work" value={preview.totals.retainage_on_completed} sub />
                 <G702Line num="5b" label="Retainage on Stored Material" value={preview.totals.retainage_on_stored} sub />
@@ -893,7 +893,7 @@ export default function NewDrawWizardPage() {
                 <G702Line num="6" label="Total Earned Less Retainage" value={preview.totals.total_earned_less_retainage} />
                 <G702Line num="7" label="Less Previous Certificates" value={preview.totals.less_previous_certificates} />
                 <G702Line num="8" label="Current Payment Due" value={preview.totals.current_payment_due} highlight />
-                <div className="border-t border-brand-border my-2" />
+                <div className="border-t border-[var(--border-default)] my-2" />
                 <G702Line num="9" label="Balance to Finish + Retainage" value={preview.totals.balance_to_finish} />
               </div>
             </div>
@@ -908,7 +908,7 @@ export default function NewDrawWizardPage() {
                     <li
                       key={i}
                       className={
-                        w.kind === "warn" ? "text-brass" : "text-cream-muted"
+                        w.kind === "warn" ? "text-brass" : "text-[color:var(--text-muted)]"
                       }
                     >
                       {w.kind === "warn" ? "⚠" : "ℹ"} {w.text}
@@ -918,24 +918,24 @@ export default function NewDrawWizardPage() {
               </div>
             )}
 
-            <div className="bg-brand-card border border-brand-border p-6">
-              <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-3">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6">
+              <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-3">
                 Draw Details
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <div className="text-cream-dim">Job</div>
-                  <div className="text-cream">{preview.job.name}</div>
+                  <div className="text-[color:var(--text-secondary)]">Job</div>
+                  <div className="text-[color:var(--text-primary)]">{preview.job.name}</div>
                 </div>
                 <div>
-                  <div className="text-cream-dim">Period</div>
-                  <div className="text-cream">
+                  <div className="text-[color:var(--text-secondary)]">Period</div>
+                  <div className="text-[color:var(--text-primary)]">
                     {formatDate(periodStart)} → {formatDate(periodEnd)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-cream-dim">Invoices</div>
-                  <div className="text-cream">{selected.size}</div>
+                  <div className="text-[color:var(--text-secondary)]">Invoices</div>
+                  <div className="text-[color:var(--text-primary)]">{selected.size}</div>
                 </div>
               </div>
             </div>
@@ -943,7 +943,7 @@ export default function NewDrawWizardPage() {
             <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
               <button
                 onClick={() => setStep(3)}
-                className="w-full sm:w-auto px-6 py-2.5 border border-brand-border text-cream-muted hover:border-brand-border-light"
+                className="w-full sm:w-auto px-6 py-2.5 border border-[var(--border-default)] text-[color:var(--text-muted)] hover:border-[var(--border-default)]-light"
               >
                 Back
               </button>
@@ -951,7 +951,7 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-brand-border text-cream hover:bg-brand-elevated text-sm"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-muted)] text-sm"
                 >
                   Save Draft
                 </button>
@@ -990,9 +990,9 @@ export default function NewDrawWizardPage() {
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div>
-      <div className="text-[11px] uppercase tracking-wider text-cream-dim">{label}</div>
-      <div className="text-cream font-display font-medium">{value}</div>
-      {sub && <div className="text-xs text-cream-dim mt-0.5">{sub}</div>}
+      <div className="text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">{label}</div>
+      <div className="text-[color:var(--text-primary)] font-display font-medium">{value}</div>
+      {sub && <div className="text-xs text-[color:var(--text-secondary)] mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -1008,14 +1008,14 @@ function DateField({
 }) {
   return (
     <div>
-      <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
+      <label className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
         {label}
       </label>
       <input
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+        className="w-full px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
       />
     </div>
   );
@@ -1024,7 +1024,7 @@ function DateField({
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
     <th
-      className={`py-2 px-3 text-[10px] text-cream font-bold uppercase tracking-wider ${
+      className={`py-2 px-3 text-[10px] text-[color:var(--text-primary)] font-bold uppercase tracking-wider ${
         right ? "text-right" : ""
       }`}
     >
@@ -1049,14 +1049,14 @@ function G702Line({
   return (
     <div className={`flex items-center justify-between ${sub ? "pl-6 opacity-80" : ""}`}>
       <div className="flex items-center gap-3">
-        <span className="text-cream-dim text-xs font-mono w-6">{num}</span>
-        <span className={`text-sm ${highlight ? "text-cream font-medium" : "text-cream-muted"}`}>
+        <span className="text-[color:var(--text-secondary)] text-xs font-mono w-6">{num}</span>
+        <span className={`text-sm ${highlight ? "text-[color:var(--text-primary)] font-medium" : "text-[color:var(--text-muted)]"}`}>
           {label}
         </span>
       </div>
       <span
         className={`font-display ${
-          highlight ? "text-brass font-medium text-base" : "text-cream text-sm"
+          highlight ? "text-brass font-medium text-base" : "text-[color:var(--text-primary)] text-sm"
         }`}
       >
         {formatCents(value)}
@@ -1085,17 +1085,17 @@ function G703EditRow({
 
   return (
     <>
-      <tr className={`border-t border-brand-row-border ${hasOverride ? "bg-brass/5" : ""}`}>
-        <td className={`py-2 px-3 font-mono text-xs font-bold ${isCo ? "text-brass" : "text-teal"}`}>
+      <tr className={`border-t border-[var(--border-default)] ${hasOverride ? "bg-brass/5" : ""}`}>
+        <td className={`py-2 px-3 font-mono text-xs font-bold ${isCo ? "text-brass" : "text-[color:var(--nw-stone-blue)]"}`}>
           {line.code}
         </td>
-        <td className="py-2 px-3 text-cream">
+        <td className="py-2 px-3 text-[color:var(--text-primary)]">
           {line.description}
           {isCo && <span className="ml-2 text-[10px] text-brass">CO</span>}
         </td>
-        <td className="py-2 px-3 text-cream text-right">{formatCents(line.scheduled_value)}</td>
-        <td className="py-2 px-3 text-cream text-right">
-          {line.previous_applications > 0 ? formatCents(line.previous_applications) : <span className="text-cream-dim">—</span>}
+        <td className="py-2 px-3 text-[color:var(--text-primary)] text-right">{formatCents(line.scheduled_value)}</td>
+        <td className="py-2 px-3 text-[color:var(--text-primary)] text-right">
+          {line.previous_applications > 0 ? formatCents(line.previous_applications) : <span className="text-[color:var(--text-secondary)]">—</span>}
         </td>
         <td className="py-2 px-3 text-right">
           <input
@@ -1103,13 +1103,13 @@ function G703EditRow({
             step="0.01"
             value={dollars}
             onChange={(e) => onChange(e.target.value, reason)}
-            className="w-24 px-1.5 py-1 bg-brand-surface border border-brand-border text-sm text-cream text-right font-display focus:border-teal focus:outline-none"
+            className="w-24 px-1.5 py-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] text-right font-display focus:border-[var(--nw-stone-blue)] focus:outline-none"
           />
         </td>
-        <td className={`py-2 px-3 text-right ${overrun ? "text-status-danger font-medium" : "text-cream"}`}>
+        <td className={`py-2 px-3 text-right ${overrun ? "text-[color:var(--nw-danger)] font-medium" : "text-[color:var(--text-primary)]"}`}>
           {formatCents(line.total_completed)}
         </td>
-        <td className={`py-2 px-3 text-right ${line.balance_to_finish < 0 ? "text-status-danger" : "text-cream"}`}>
+        <td className={`py-2 px-3 text-right ${line.balance_to_finish < 0 ? "text-[color:var(--nw-danger)]" : "text-[color:var(--text-primary)]"}`}>
           {formatCents(line.balance_to_finish)}
         </td>
         <td className="py-2 px-3 text-right text-brass">{formatCents(line.retainage)}</td>
@@ -1122,8 +1122,8 @@ function G703EditRow({
               placeholder="Reason for adjustment (required)"
               value={reason}
               onChange={(e) => onChange(dollars, e.target.value)}
-              className={`w-full px-2 py-1 bg-brand-surface border text-xs text-cream focus:border-teal focus:outline-none ${
-                reason.trim() ? "border-brand-border" : "border-status-danger/40"
+              className={`w-full px-2 py-1 bg-[var(--bg-subtle)] border text-xs text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none ${
+                reason.trim() ? "border-[var(--border-default)]" : "border-[rgba(176,85,78,0.35)]"
               }`}
             />
           </td>
