@@ -134,15 +134,15 @@ export default async function UsageDashboardPage() {
       <section className="border nw-panel p-6">
         <div className="flex items-baseline justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">Current Plan</p>
-            <h2 className="mt-1 font-display text-3xl text-cream">{planDisplayName(aiCheck.plan)}</h2>
-            <p className="mt-1 text-sm text-cream-muted">
+            <p className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">Current Plan</p>
+            <h2 className="mt-1 font-display text-3xl text-[color:var(--text-primary)]">{planDisplayName(aiCheck.plan)}</h2>
+            <p className="mt-1 text-sm text-[color:var(--text-muted)]">
               Usage resets on the 1st of each month.
             </p>
           </div>
           <Link
             href="/settings/billing"
-            className="px-4 py-2 border border-brand-border text-[12px] tracking-[0.08em] uppercase text-cream hover:bg-brand-surface transition-colors"
+            className="px-4 py-2 border border-[var(--border-default)] text-[12px] tracking-[0.08em] uppercase text-[color:var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
           >
             Change Plan
           </Link>
@@ -173,9 +173,9 @@ export default async function UsageDashboardPage() {
           />
         ) : (
           <div className="border nw-panel p-5">
-            <p className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">Storage</p>
-            <p className="mt-2 font-display text-2xl text-cream">Coming soon</p>
-            <p className="mt-2 text-xs text-cream-dim">
+            <p className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">Storage</p>
+            <p className="mt-2 font-display text-2xl text-[color:var(--text-primary)]">Coming soon</p>
+            <p className="mt-2 text-xs text-[color:var(--text-secondary)]">
               We&apos;ll surface per-org storage usage once the Supabase Storage tracking pipeline lands.
             </p>
           </div>
@@ -183,14 +183,14 @@ export default async function UsageDashboardPage() {
       </div>
 
       <section className="border nw-panel p-6">
-        <h3 className="font-display text-lg text-cream">Last 3 months</h3>
-        <p className="mt-1 text-xs text-cream-dim">
+        <h3 className="font-display text-lg text-[color:var(--text-primary)]">Last 3 months</h3>
+        <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
           AI call volume and estimated cost by calendar month.
         </p>
         <div className="mt-4 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-cream-dim border-b border-brand-border">
+              <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] border-b border-[var(--border-default)]">
                 <th className="py-2 font-medium">Month</th>
                 <th className="py-2 font-medium">AI calls</th>
                 <th className="py-2 font-medium">Estimated cost</th>
@@ -198,10 +198,10 @@ export default async function UsageDashboardPage() {
             </thead>
             <tbody>
               {monthly.map((m) => (
-                <tr key={m.label} className="border-b border-brand-border last:border-b-0">
-                  <td className="py-2 text-cream">{m.label}</td>
-                  <td className="py-2 text-cream">{m.calls.toLocaleString()}</td>
-                  <td className="py-2 text-cream">{formatCents(m.cost_cents)}</td>
+                <tr key={m.label} className="border-b border-[var(--border-default)] last:border-b-0">
+                  <td className="py-2 text-[color:var(--text-primary)]">{m.label}</td>
+                  <td className="py-2 text-[color:var(--text-primary)]">{m.calls.toLocaleString()}</td>
+                  <td className="py-2 text-[color:var(--text-primary)]">{formatCents(m.cost_cents)}</td>
                 </tr>
               ))}
             </tbody>
@@ -210,19 +210,19 @@ export default async function UsageDashboardPage() {
       </section>
 
       <section className="border nw-panel p-6">
-        <h3 className="font-display text-lg text-cream">Recent API Calls</h3>
-        <p className="mt-1 text-xs text-cream-dim">
+        <h3 className="font-display text-lg text-[color:var(--text-primary)]">Recent API Calls</h3>
+        <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
           Last 50 calls. Each invoice parse and future AI feature is logged here.
         </p>
         {recent.length === 0 ? (
-          <p className="mt-6 text-sm text-cream-dim">
+          <p className="mt-6 text-sm text-[color:var(--text-secondary)]">
             No API calls yet this billing period. Upload an invoice to see activity here.
           </p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-cream-dim border-b border-brand-border">
+                <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] border-b border-[var(--border-default)]">
                   <th className="py-2 font-medium">Time</th>
                   <th className="py-2 font-medium">Function</th>
                   <th className="py-2 font-medium">Tokens</th>
@@ -233,17 +233,17 @@ export default async function UsageDashboardPage() {
               </thead>
               <tbody>
                 {recent.map((r) => (
-                  <tr key={r.id} className="border-b border-brand-border last:border-b-0">
-                    <td className="py-2 text-cream whitespace-nowrap">{formatDateTime(r.created_at)}</td>
-                    <td className="py-2 text-cream">{formatFunctionType(r.function_type)}</td>
-                    <td className="py-2 text-cream-muted tabular-nums">
+                  <tr key={r.id} className="border-b border-[var(--border-default)] last:border-b-0">
+                    <td className="py-2 text-[color:var(--text-primary)] whitespace-nowrap">{formatDateTime(r.created_at)}</td>
+                    <td className="py-2 text-[color:var(--text-primary)]">{formatFunctionType(r.function_type)}</td>
+                    <td className="py-2 text-[color:var(--text-muted)] tabular-nums">
                       {(r.total_tokens ?? 0).toLocaleString()}
                     </td>
-                    <td className="py-2 text-cream-muted tabular-nums">{formatCents(r.estimated_cost_cents)}</td>
+                    <td className="py-2 text-[color:var(--text-muted)] tabular-nums">{formatCents(r.estimated_cost_cents)}</td>
                     <td className="py-2">
                       <StatusPill status={r.status} />
                     </td>
-                    <td className="py-2 text-cream-muted">
+                    <td className="py-2 text-[color:var(--text-muted)]">
                       {r.user_id ? (profileById.get(r.user_id) ?? "—") : "System"}
                     </td>
                   </tr>
@@ -272,24 +272,24 @@ function UsageCard({
   const atCap = !unlimited && current >= limit;
 
   const barColor = atCap
-    ? "bg-status-danger"
+    ? "bg-[var(--nw-danger)]"
     : nearCap
-      ? "bg-status-danger"
-      : "bg-teal";
-  const valueColor = atCap || nearCap ? "text-status-danger" : "text-cream";
+      ? "bg-[var(--nw-danger)]"
+      : "bg-[var(--nw-stone-blue)]";
+  const valueColor = atCap || nearCap ? "text-[color:var(--nw-danger)]" : "text-[color:var(--text-primary)]";
 
   return (
     <div className="border nw-panel p-5">
-      <p className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">{label}</p>
+      <p className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">{label}</p>
       <p className={`mt-2 font-display text-2xl ${valueColor}`}>
         {current.toLocaleString()}
-        <span className="text-cream-dim text-base font-normal">
+        <span className="text-[color:var(--text-secondary)] text-base font-normal">
           {" / "}
           {unlimited ? "Unlimited" : limit.toLocaleString()}
         </span>
       </p>
       {!unlimited && (
-        <div className="mt-3 h-2 bg-brand-surface rounded-sm overflow-hidden">
+        <div className="mt-3 h-2 bg-[var(--bg-subtle)] rounded-sm overflow-hidden">
           <div
             className={`h-full ${barColor} transition-all`}
             style={{ width: `${pct}%` }}
@@ -297,12 +297,12 @@ function UsageCard({
         </div>
       )}
       {nearCap && !atCap && (
-        <p className="mt-2 text-[11px] text-status-danger">
+        <p className="mt-2 text-[11px] text-[color:var(--nw-danger)]">
           Approaching your plan limit.
         </p>
       )}
       {atCap && (
-        <p className="mt-2 text-[11px] text-status-danger">
+        <p className="mt-2 text-[11px] text-[color:var(--nw-danger)]">
           Limit reached. Upgrade to keep going.
         </p>
       )}
@@ -312,11 +312,11 @@ function UsageCard({
 
 function StatusPill({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    success: "bg-status-success-muted text-status-success border-status-success",
-    error: "bg-status-danger-muted text-status-danger border-status-danger",
-    timeout: "bg-status-warning-muted text-status-warning border-status-warning",
+    success: "bg-[rgba(74,138,111,0.12)] text-[color:var(--nw-success)] border-[rgba(74,138,111,0.35)]",
+    error: "bg-[rgba(176,85,78,0.12)] text-[color:var(--nw-danger)] border-[rgba(176,85,78,0.35)]",
+    timeout: "bg-[rgba(201,138,59,0.12)] text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
   };
-  const cls = styles[status] ?? "bg-brand-surface text-cream-muted border-brand-border";
+  const cls = styles[status] ?? "bg-[var(--bg-subtle)] text-[color:var(--text-muted)] border-[var(--border-default)]";
   return (
     <span className={`px-2 py-0.5 border text-[10px] tracking-[0.08em] uppercase ${cls}`}>
       {status}

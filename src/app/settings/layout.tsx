@@ -19,8 +19,8 @@ export default async function SettingsLayout({
       <main className="flex-1">
         <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
           <header className="mb-6">
-            <h1 className="font-display text-3xl text-cream tracking-tight">Admin</h1>
-            <p className="mt-1 text-sm text-cream-dim">
+            <h1 className="font-display text-3xl text-[color:var(--text-primary)] tracking-tight">Admin</h1>
+            <p className="mt-1 text-sm text-[color:var(--text-secondary)]">
               Settings, reference data, and system tools.
             </p>
           </header>

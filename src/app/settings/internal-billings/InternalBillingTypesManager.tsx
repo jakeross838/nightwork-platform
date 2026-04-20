@@ -319,7 +319,7 @@ export default function InternalBillingTypesManager() {
 
   if (loading) {
     return (
-      <div className="text-cream-dim text-sm py-12 text-center">
+      <div className="text-[color:var(--text-secondary)] text-sm py-12 text-center">
         Loading billing types...
       </div>
     );
@@ -330,10 +330,10 @@ export default function InternalBillingTypesManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-cream">
+          <h2 className="text-lg font-medium text-[color:var(--text-primary)]">
             Internal Billing Types
           </h2>
-          <p className="text-sm text-cream-dim mt-0.5">
+          <p className="text-sm text-[color:var(--text-secondary)] mt-0.5">
             Define reusable billing categories (GC Fee, Supervision, Permits,
             etc.) that can be applied per-job.
           </p>
@@ -341,7 +341,7 @@ export default function InternalBillingTypesManager() {
         <button
           type="button"
           onClick={openAdd}
-          className="px-4 py-2 bg-teal text-white text-sm shrink-0"
+          className="px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-sm shrink-0"
         >
           + Add Type
         </button>
@@ -351,7 +351,7 @@ export default function InternalBillingTypesManager() {
       {message && (
         <p
           className={`text-xs ${
-            message.kind === "ok" ? "text-status-success" : "text-status-danger"
+            message.kind === "ok" ? "text-[color:var(--nw-success)]" : "text-[color:var(--nw-danger)]"
           }`}
         >
           {message.text}
@@ -360,28 +360,28 @@ export default function InternalBillingTypesManager() {
 
       {/* Form */}
       {showForm && (
-        <div className="border border-brand-border bg-brand-card p-4 space-y-4">
-          <h3 className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">
+        <div className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-4">
+          <h3 className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">
             {editingId ? "Edit Billing Type" : "New Billing Type"}
           </h3>
 
           <div className="grid sm:grid-cols-2 gap-3">
             {/* Name */}
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                 Name
               </span>
               <input
                 value={form.name}
                 onChange={(e) => updateField("name", e.target.value)}
                 placeholder="e.g. GC Fee, Supervision, Permit Fee"
-                className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
               />
             </label>
 
             {/* Calculation Method */}
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                 Calculation Method
               </span>
               <select
@@ -392,7 +392,7 @@ export default function InternalBillingTypesManager() {
                     e.target.value as CalculationMethod
                   )
                 }
-                className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
               >
                 <option value="fixed">Fixed Amount</option>
                 <option value="rate_x_quantity">Rate x Quantity</option>
@@ -405,7 +405,7 @@ export default function InternalBillingTypesManager() {
             {form.calculation_method === "fixed" && (
               <>
                 <label className="block">
-                  <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+                  <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                     Default Amount ($)
                   </span>
                   <input
@@ -417,11 +417,11 @@ export default function InternalBillingTypesManager() {
                       updateField("default_amount_cents", e.target.value)
                     }
                     placeholder="4000.00"
-                    className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                    className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+                  <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                     Unit
                   </span>
                   <select
@@ -429,7 +429,7 @@ export default function InternalBillingTypesManager() {
                     onChange={(e) =>
                       updateField("default_quantity_unit", e.target.value)
                     }
-                    className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                    className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
                   >
                     {FIXED_UNITS.map((u) => (
                       <option key={u} value={u}>
@@ -444,7 +444,7 @@ export default function InternalBillingTypesManager() {
             {form.calculation_method === "rate_x_quantity" && (
               <>
                 <label className="block">
-                  <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+                  <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                     Default Rate ($)
                   </span>
                   <input
@@ -456,11 +456,11 @@ export default function InternalBillingTypesManager() {
                       updateField("default_rate_cents", e.target.value)
                     }
                     placeholder="35.00"
-                    className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                    className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+                  <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                     Unit
                   </span>
                   <select
@@ -468,7 +468,7 @@ export default function InternalBillingTypesManager() {
                     onChange={(e) =>
                       updateField("default_quantity_unit", e.target.value)
                     }
-                    className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                    className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
                   >
                     {RATE_UNITS.map((u) => (
                       <option key={u} value={u}>
@@ -482,7 +482,7 @@ export default function InternalBillingTypesManager() {
 
             {form.calculation_method === "percentage" && (
               <label className="block sm:col-span-2">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                   Default Percentage
                 </span>
                 <input
@@ -495,9 +495,9 @@ export default function InternalBillingTypesManager() {
                     updateField("default_percentage", e.target.value)
                   }
                   placeholder="18"
-                  className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                  className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
                 />
-                <span className="text-[10px] text-cream-dim mt-1 block">
+                <span className="text-[10px] text-[color:var(--text-secondary)] mt-1 block">
                   Enter as whole number (e.g. 18 for 18%)
                 </span>
               </label>
@@ -505,7 +505,7 @@ export default function InternalBillingTypesManager() {
 
             {/* Cost code picker -- all methods */}
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                 Default Cost Code (optional)
               </span>
               <select
@@ -513,7 +513,7 @@ export default function InternalBillingTypesManager() {
                 onChange={(e) =>
                   updateField("default_cost_code_id", e.target.value)
                 }
-                className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
               >
                 <option value="">-- None --</option>
                 {costCodes.map((cc) => (
@@ -526,14 +526,14 @@ export default function InternalBillingTypesManager() {
 
             {/* Sort order */}
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                 Sort Order
               </span>
               <input
                 type="number"
                 value={form.sort_order}
                 onChange={(e) => updateField("sort_order", e.target.value)}
-                className="w-full border border-brand-border bg-brand-surface text-cream text-sm px-3 py-2"
+                className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2"
               />
             </label>
           </div>
@@ -543,14 +543,14 @@ export default function InternalBillingTypesManager() {
               type="button"
               onClick={handleSave}
               disabled={saving || !form.name.trim()}
-              className="px-4 py-2 bg-teal text-white text-sm disabled:opacity-60"
+              className="px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-sm disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save"}
             </button>
             <button
               type="button"
               onClick={cancelForm}
-              className="px-4 py-2 border border-brand-border text-cream text-sm"
+              className="px-4 py-2 border border-[var(--border-default)] text-[color:var(--text-primary)] text-sm"
             >
               Cancel
             </button>
@@ -559,10 +559,10 @@ export default function InternalBillingTypesManager() {
       )}
 
       {/* Table */}
-      <div className="border border-brand-border bg-brand-card overflow-hidden">
+      <div className="border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-brand-surface">
-            <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-cream-dim">
+          <thead className="bg-[var(--bg-subtle)]">
+            <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">
               <th className="px-3 py-2 font-medium">Name</th>
               <th className="px-3 py-2 font-medium">Method</th>
               <th className="px-3 py-2 font-medium">Default Value</th>
@@ -572,8 +572,8 @@ export default function InternalBillingTypesManager() {
           </thead>
           <tbody>
             {types.map((t, idx) => (
-              <tr key={t.id} className="border-t border-brand-row-border">
-                <td className="px-3 py-2 text-cream font-medium">
+              <tr key={t.id} className="border-t border-[var(--border-default)]">
+                <td className="px-3 py-2 text-[color:var(--text-primary)] font-medium">
                   {t.name}
                 </td>
                 <td className="px-3 py-2">
@@ -584,7 +584,7 @@ export default function InternalBillingTypesManager() {
                     {METHOD_LABELS[t.calculation_method]}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-cream-dim">
+                <td className="px-3 py-2 text-[color:var(--text-secondary)]">
                   {defaultValueDisplay(t)}
                 </td>
                 <td className="px-3 py-2 text-center">
@@ -610,7 +610,7 @@ export default function InternalBillingTypesManager() {
                       type="button"
                       onClick={() => swapOrder(idx, idx - 1)}
                       disabled={idx === 0}
-                      className="text-xs px-1.5 py-1 border border-brand-border hover:bg-brand-surface disabled:opacity-30"
+                      className="text-xs px-1.5 py-1 border border-[var(--border-default)] hover:bg-[var(--bg-subtle)] disabled:opacity-30"
                       title="Move up"
                     >
                       &#9650;
@@ -619,7 +619,7 @@ export default function InternalBillingTypesManager() {
                       type="button"
                       onClick={() => swapOrder(idx, idx + 1)}
                       disabled={idx === types.length - 1}
-                      className="text-xs px-1.5 py-1 border border-brand-border hover:bg-brand-surface disabled:opacity-30"
+                      className="text-xs px-1.5 py-1 border border-[var(--border-default)] hover:bg-[var(--bg-subtle)] disabled:opacity-30"
                       title="Move down"
                     >
                       &#9660;
@@ -627,7 +627,7 @@ export default function InternalBillingTypesManager() {
                     <button
                       type="button"
                       onClick={() => openEdit(t)}
-                      className="text-xs px-2 py-1 border border-brand-border hover:bg-brand-surface text-cream"
+                      className="text-xs px-2 py-1 border border-[var(--border-default)] hover:bg-[var(--bg-subtle)] text-[color:var(--text-primary)]"
                     >
                       Edit
                     </button>
@@ -639,7 +639,7 @@ export default function InternalBillingTypesManager() {
               <tr>
                 <td
                   colSpan={5}
-                  className="px-3 py-8 text-center text-cream-dim text-sm"
+                  className="px-3 py-8 text-center text-[color:var(--text-secondary)] text-sm"
                 >
                   No billing types yet. Click &quot;+ Add Type&quot; to create
                   one.
@@ -650,7 +650,7 @@ export default function InternalBillingTypesManager() {
         </table>
       </div>
 
-      <p className="text-xs text-cream-dim">
+      <p className="text-xs text-[color:var(--text-secondary)]">
         {types.length} billing type{types.length !== 1 ? "s" : ""} total.
       </p>
     </div>

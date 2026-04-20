@@ -199,7 +199,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
           {message && (
             <span
               className={`text-xs tracking-[0.04em] ${
-                message.kind === "ok" ? "text-status-success" : "text-status-danger"
+                message.kind === "ok" ? "text-[color:var(--nw-success)]" : "text-[color:var(--nw-danger)]"
               }`}
             >
               {message.text}
@@ -275,7 +275,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
         {label}
       </span>
       <input
@@ -283,7 +283,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-brand-border bg-white text-sm text-cream focus-teal"
+        className="w-full px-3 py-2 border border-[var(--border-default)] bg-white text-sm text-[color:var(--text-primary)] focus-teal"
       />
     </label>
   );

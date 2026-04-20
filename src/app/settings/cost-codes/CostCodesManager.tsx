@@ -321,7 +321,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="px-3 py-2 border border-brand-border text-sm"
+            className="px-3 py-2 border border-[var(--border-default)] text-sm"
           >
             Import CSV
           </button>
@@ -335,7 +335,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
           <button
             type="button"
             onClick={exportCsv}
-            className="px-3 py-2 border border-brand-border text-sm"
+            className="px-3 py-2 border border-[var(--border-default)] text-sm"
           >
             Export CSV
           </button>
@@ -343,22 +343,22 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
       </div>
 
       {selected.size > 0 && (
-        <div className="flex items-center gap-3 px-3 py-2 bg-brand-surface border border-brand-border text-sm">
-          <span className="text-cream">{selected.size} selected</span>
-          <button type="button" onClick={bulkCategory} disabled={busy} className="px-3 py-1 border border-brand-border">
+        <div className="flex items-center gap-3 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm">
+          <span className="text-[color:var(--text-primary)]">{selected.size} selected</span>
+          <button type="button" onClick={bulkCategory} disabled={busy} className="px-3 py-1 border border-[var(--border-default)]">
             Change category
           </button>
-          <button type="button" onClick={bulkDelete} disabled={busy} className="px-3 py-1 border border-brand-border text-status-danger">
+          <button type="button" onClick={bulkDelete} disabled={busy} className="px-3 py-1 border border-[var(--border-default)] text-[color:var(--nw-danger)]">
             Delete
           </button>
-          <button type="button" onClick={() => setSelected(new Set())} className="ml-auto text-xs text-cream-dim">
+          <button type="button" onClick={() => setSelected(new Set())} className="ml-auto text-xs text-[color:var(--text-secondary)]">
             Clear
           </button>
         </div>
       )}
 
       {message && (
-        <p className={`text-xs ${message.kind === "ok" ? "text-status-success" : "text-status-danger"}`}>
+        <p className={`text-xs ${message.kind === "ok" ? "text-[color:var(--nw-success)]" : "text-[color:var(--nw-danger)]"}`}>
           {message.text}
         </p>
       )}
@@ -369,7 +369,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
           <div className="max-h-[240px] overflow-auto mt-2 text-sm">
             <table className="w-full">
               <thead>
-                <tr className="text-left text-xs text-cream-dim">
+                <tr className="text-left text-xs text-[color:var(--text-secondary)]">
                   <th className="px-2 py-1">Code</th>
                   <th className="px-2 py-1">Description</th>
                   <th className="px-2 py-1">Category</th>
@@ -379,7 +379,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               </thead>
               <tbody>
                 {importPreview.map((d, i) => (
-                  <tr key={i} className="border-t border-brand-row-border">
+                  <tr key={i} className="border-t border-[var(--border-default)]">
                     <td className="px-2 py-1 font-mono">{d.code}</td>
                     <td className="px-2 py-1">{d.description}</td>
                     <td className="px-2 py-1">{d.category}</td>
@@ -402,12 +402,12 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
             <button
               type="button"
               onClick={() => setImportPreview(null)}
-              className="px-3 py-2 border border-brand-border text-sm"
+              className="px-3 py-2 border border-[var(--border-default)] text-sm"
             >
               Cancel
             </button>
           </div>
-          <p className="mt-2 text-xs text-cream-dim">
+          <p className="mt-2 text-xs text-[color:var(--text-secondary)]">
             Rows with matching <code>code</code> values will be updated. New codes will be inserted.
           </p>
         </div>
@@ -418,7 +418,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
           <h3 className="section-label">{editing.id ? "Edit Cost Code" : "New Cost Code"}</h3>
           <div className="grid sm:grid-cols-2 gap-3 mt-2">
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">Code</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">Code</span>
               <input
                 value={editing.code}
                 onChange={(e) => setEditing({ ...editing, code: e.target.value })}
@@ -426,7 +426,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               />
             </label>
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">Description</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">Description</span>
               <input
                 value={editing.description}
                 onChange={(e) => setEditing({ ...editing, description: e.target.value })}
@@ -434,7 +434,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               />
             </label>
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">Category</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">Category</span>
               <input
                 value={editing.category}
                 onChange={(e) => setEditing({ ...editing, category: e.target.value })}
@@ -442,7 +442,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               />
             </label>
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">Sort Order</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">Sort Order</span>
               <input
                 type="number"
                 value={editing.sort_order}
@@ -450,7 +450,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
                 className="w-full px-3 py-2 border nw-panel text-sm"
               />
             </label>
-            <label className="flex items-center gap-2 sm:col-span-2 text-sm text-cream">
+            <label className="flex items-center gap-2 sm:col-span-2 text-sm text-[color:var(--text-primary)]">
               <input
                 type="checkbox"
                 checked={editing.is_change_order}
@@ -471,7 +471,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
             <button
               type="button"
               onClick={() => setEditing(null)}
-              className="px-3 py-2 border border-brand-border text-sm"
+              className="px-3 py-2 border border-[var(--border-default)] text-sm"
             >
               Cancel
             </button>
@@ -481,8 +481,8 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
 
       <div className="border nw-panel overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-brand-surface">
-            <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-cream-dim">
+          <thead className="bg-[var(--bg-subtle)]">
+            <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">
               <th className="px-3 py-2 w-8"></th>
               <th className="px-3 py-2 font-medium">Code</th>
               <th className="px-3 py-2 font-medium">Description</th>
@@ -494,7 +494,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
           </thead>
           <tbody>
             {filtered.map((c) => (
-              <tr key={c.id} className="border-t border-brand-row-border">
+              <tr key={c.id} className="border-t border-[var(--border-default)]">
                 <td className="px-3 py-2">
                   <input
                     type="checkbox"
@@ -502,23 +502,23 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
                     onChange={() => toggleSelect(c.id)}
                   />
                 </td>
-                <td className="px-3 py-2 font-mono text-cream">{c.code}</td>
-                <td className="px-3 py-2 text-cream">{c.description}</td>
-                <td className="px-3 py-2 text-cream-dim">{c.category ?? ""}</td>
-                <td className="px-3 py-2 text-cream-dim">{c.sort_order}</td>
-                <td className="px-3 py-2 text-cream-dim">{c.is_change_order ? "Yes" : ""}</td>
+                <td className="px-3 py-2 font-mono text-[color:var(--text-primary)]">{c.code}</td>
+                <td className="px-3 py-2 text-[color:var(--text-primary)]">{c.description}</td>
+                <td className="px-3 py-2 text-[color:var(--text-secondary)]">{c.category ?? ""}</td>
+                <td className="px-3 py-2 text-[color:var(--text-secondary)]">{c.sort_order}</td>
+                <td className="px-3 py-2 text-[color:var(--text-secondary)]">{c.is_change_order ? "Yes" : ""}</td>
                 <td className="px-3 py-2 text-right">
                   <button
                     type="button"
                     onClick={() => startEdit(c)}
-                    className="text-xs px-2 py-1 border border-brand-border hover:bg-brand-surface"
+                    className="text-xs px-2 py-1 border border-[var(--border-default)] hover:bg-[var(--bg-subtle)]"
                   >
                     Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => deleteOne(c.id)}
-                    className="ml-1 text-xs px-2 py-1 border border-brand-border text-status-danger hover:bg-brand-surface"
+                    className="ml-1 text-xs px-2 py-1 border border-[var(--border-default)] text-[color:var(--nw-danger)] hover:bg-[var(--bg-subtle)]"
                   >
                     Delete
                   </button>
@@ -527,7 +527,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-cream-dim text-sm">
+                <td colSpan={7} className="px-3 py-6 text-center text-[color:var(--text-secondary)] text-sm">
                   {search ? "No matching cost codes." : "No cost codes yet. Click + Add or Import CSV."}
                 </td>
               </tr>
@@ -536,7 +536,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
         </table>
       </div>
 
-      <p className="text-xs text-cream-dim">
+      <p className="text-xs text-[color:var(--text-secondary)]">
         {filtered.length} of {codes.length} codes shown.
       </p>
     </div>

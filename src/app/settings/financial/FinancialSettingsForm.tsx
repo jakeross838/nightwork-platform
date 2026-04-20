@@ -220,9 +220,9 @@ function PctField({
           onChange={(e) => onChange(Number(e.target.value))}
           className="w-full px-3 py-2 border nw-field text-sm"
         />
-        <span className="text-cream-dim text-sm">%</span>
+        <span className="text-[color:var(--text-secondary)] text-sm">%</span>
       </div>
-      {help && <p className="text-xs text-cream-dim mt-1">{help}</p>}
+      {help && <p className="text-xs text-[color:var(--text-secondary)] mt-1">{help}</p>}
     </label>
   );
 }
@@ -253,7 +253,7 @@ function IntField({
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full px-3 py-2 border nw-field text-sm"
       />
-      {help && <p className="text-xs text-cream-dim mt-1">{help}</p>}
+      {help && <p className="text-xs text-[color:var(--text-secondary)] mt-1">{help}</p>}
     </label>
   );
 }
