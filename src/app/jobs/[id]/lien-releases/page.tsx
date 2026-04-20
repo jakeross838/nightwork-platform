@@ -51,6 +51,7 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
   const [job, setJob] = useState<Job | null>(null);
   const [releases, setReleases] = useState<LienRelease[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [drawFilter, setDrawFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUSES)[number]>("all");
@@ -59,13 +60,22 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
   const [bulkBusy, setBulkBusy] = useState(false);
 
   async function refresh() {
-    const [jobRes, lrRes] = await Promise.all([
-      supabase.from("jobs").select("id, name").eq("id", params.id).single(),
-      fetch(`/api/lien-releases?job_id=${params.id}`).then((r) => r.json()),
-    ]);
-    if (jobRes.data) setJob(jobRes.data as Job);
-    setReleases(Array.isArray(lrRes) ? (lrRes as LienRelease[]) : []);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const [jobRes, lrRes] = await Promise.all([
+        supabase.from("jobs").select("id, name").eq("id", params.id).single(),
+        fetch(`/api/lien-releases?job_id=${params.id}`).then((r) => {
+          if (!r.ok) throw new Error(`Failed to load lien releases (${r.status})`);
+          return r.json();
+        }),
+      ]);
+      if (jobRes.data) setJob(jobRes.data as Job);
+      setReleases(Array.isArray(lrRes) ? (lrRes as LienRelease[]) : []);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -172,6 +182,38 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
         {loading ? (
           <div className="py-16 text-center">
             <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+          </div>
+        ) : loadError ? (
+          <div
+            className="border p-6 max-w-[640px]"
+            style={{
+              background: "var(--bg-card)",
+              borderColor: "var(--nw-danger)",
+              color: "var(--text-primary)",
+            }}
+          >
+            <p
+              className="text-[10px] uppercase mb-2"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--nw-danger)",
+              }}
+            >
+              Couldn&apos;t load
+            </p>
+            <p className="text-sm mb-4">{loadError}</p>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 border px-3 py-1.5 text-sm"
+              style={{ borderColor: "var(--border-default)" }}
+              onClick={() => {
+                setLoading(true);
+                refresh();
+              }}
+            >
+              Retry
+            </button>
           </div>
         ) : (
           <>

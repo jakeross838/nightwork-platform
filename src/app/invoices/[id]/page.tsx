@@ -492,15 +492,16 @@ export default function InvoiceReviewPage() {
  const [savingPayment, setSavingPayment] = useState(false);
 
  // Fetch invoice
- async function fetchInvoice() {
+ async function fetchInvoice(signal?: AbortSignal) {
  setLoading(true);
  setLoadError(null);
  try {
- const res = await fetch(`/api/invoices/${invoiceId}`);
+ const res = await fetch(`/api/invoices/${invoiceId}`, { signal });
  if (!res.ok) {
  const body = await res.json().catch(() => ({}));
  throw new Error(body?.error ?? `Invoice failed to load (${res.status})`);
  }
+ if (signal?.aborted) return;
  const data: InvoiceData = await res.json();
  setInvoice(data);
  // If this is a partial-approval split (either parent or child),
@@ -568,13 +569,16 @@ export default function InvoiceReviewPage() {
  );
  }
  } catch (err) {
+ if ((err as Error)?.name === "AbortError") return;
  setLoadError(err instanceof Error ? err.message : "Couldn't load invoice");
  } finally {
- setLoading(false);
+ if (!signal?.aborted) setLoading(false);
  }
  }
  useEffect(() => {
- fetchInvoice();
+ const controller = new AbortController();
+ fetchInvoice(controller.signal);
+ return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [invoiceId]);
 
@@ -591,12 +595,13 @@ export default function InvoiceReviewPage() {
  if (uuidRe.test(who) && !userNames.has(who)) ids.add(who);
  }
  if (ids.size === 0) return;
+ let cancelled = false;
  (async () => {
  const { data } = await supabase
  .from("profiles")
  .select("id, full_name")
  .in("id", Array.from(ids));
- if (!data) return;
+ if (cancelled || !data) return;
  setUserNames((prev) => {
  const next = new Map(prev);
  for (const row of data as Array<{ id: string; full_name: string | null }>) {
@@ -605,6 +610,7 @@ export default function InvoiceReviewPage() {
  return next;
  });
  })();
+ return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [invoice?.status_history]);
 
@@ -617,27 +623,32 @@ export default function InvoiceReviewPage() {
  setDrawInfo(null);
  return;
  }
+ let cancelled = false;
  (async () => {
  const { data } = await supabase
  .from("draws")
  .select("id, draw_number, status")
  .eq("id", drawId)
  .maybeSingle();
- if (data) setDrawInfo(data as { id: string; draw_number: number; status: string });
+ if (!cancelled && data) setDrawInfo(data as { id: string; draw_number: number; status: string });
  })();
+ return () => { cancelled = true; };
  }, [invoice?.draw_id]);
 
  // Fetch lookups (cost codes with category + is_change_order)
  useEffect(() => {
+ let cancelled = false;
  async function fetchLookups() {
  const [jobsRes, codesRes] = await Promise.all([
  supabase.from("jobs").select("id, name, address").is("deleted_at", null).eq("status", "active").order("name"),
  supabase.from("cost_codes").select("id, code, description, category, is_change_order").is("deleted_at", null).order("sort_order"),
  ]);
+ if (cancelled) return;
  if (jobsRes.data) setJobs(jobsRes.data);
  if (codesRes.data) setCostCodes(codesRes.data as CostCode[]);
  }
  fetchLookups();
+ return () => { cancelled = true; };
  }, []);
 
  // Fetch workflow settings (Phase 8e) — drives badge color / approval gates.
@@ -667,6 +678,7 @@ export default function InvoiceReviewPage() {
 
  // Fetch POs
  useEffect(() => {
+ let cancelled = false;
  async function fetchPOs() {
  if (!jobId) { setPurchaseOrders([]); return; }
  const { data } = await supabase
@@ -676,13 +688,15 @@ export default function InvoiceReviewPage() {
  .is("deleted_at", null)
  .in("status", ["issued", "partially_invoiced", "fully_invoiced"])
  .order("po_number");
- if (data) setPurchaseOrders(data);
+ if (!cancelled && data) setPurchaseOrders(data);
  }
  fetchPOs();
+ return () => { cancelled = true; };
  }, [jobId]);
 
  // Fetch budget (legacy single-cost-code sidebar — retained for fallback)
  useEffect(() => {
+ let cancelled = false;
  async function fetchBudget() {
  if (!jobId || !costCodeId) { setBudgetInfo(null); return; }
  // Parallel: budget line + spent invoices
@@ -690,11 +704,13 @@ export default function InvoiceReviewPage() {
  supabase.from("budget_lines").select("original_estimate, revised_estimate, is_allowance").eq("job_id", jobId).eq("cost_code_id", costCodeId).is("deleted_at", null).maybeSingle(),
  supabase.from("invoices").select("total_amount").eq("job_id", jobId).eq("cost_code_id", costCodeId).in("status", ["pm_approved","qa_review","qa_approved","pushed_to_qb","in_draw","paid"]).is("deleted_at", null),
  ]);
+ if (cancelled) return;
  if (!bl) { setBudgetInfo(null); return; }
  const totalSpent = spent?.reduce((s, i) => s + i.total_amount, 0) ?? 0;
  setBudgetInfo({ original_estimate: bl.original_estimate, revised_estimate: bl.revised_estimate, total_spent: totalSpent, remaining: bl.revised_estimate - totalSpent, is_allowance: !!bl.is_allowance });
  }
  fetchBudget();
+ return () => { cancelled = true; };
  }, [jobId, costCodeId]);
 
  // When the PM picks a default Cost Code, pre-fill any line item that has
@@ -711,6 +727,7 @@ export default function InvoiceReviewPage() {
  [lineItems]
  );
  useEffect(() => {
+ let cancelled = false;
  async function fetchMultiBudget() {
  if (!jobId || uniqueLineCostCodeIds.length === 0) {
  setBudgetByCostCode(new Map());
@@ -732,6 +749,7 @@ export default function InvoiceReviewPage() {
  .in("status", ["pm_approved", "qa_review", "qa_approved", "pushed_to_qb", "in_draw", "paid"])
  .is("deleted_at", null),
  ]);
+ if (cancelled) return;
  const spentByCode = new Map<string, number>();
  for (const row of spentData ?? []) {
  spentByCode.set(row.cost_code_id, (spentByCode.get(row.cost_code_id) ?? 0) + row.total_amount);
@@ -750,6 +768,7 @@ export default function InvoiceReviewPage() {
  setBudgetByCostCode(next);
  }
  fetchMultiBudget();
+ return () => { cancelled = true; };
  }, [jobId, uniqueLineCostCodeIds]);
 
  const handleReassignPm = async (newPmId: string) => {
@@ -934,7 +953,7 @@ export default function InvoiceReviewPage() {
  <NwEyebrow tone="danger" className="mb-2">Couldn&apos;t load</NwEyebrow>
  <p className="text-sm">{loadError ?? "Invoice not found"}</p>
  <div className="mt-4 flex gap-2">
- <NwButton variant="secondary" size="sm" onClick={fetchInvoice}>Retry</NwButton>
+ <NwButton variant="secondary" size="sm" onClick={() => { void fetchInvoice(); }}>Retry</NwButton>
  <NwButton variant="ghost" size="sm" onClick={() => router.push("/invoices")}>Back to Invoices</NwButton>
  </div>
  </div>

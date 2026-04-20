@@ -142,6 +142,7 @@ export default function JobInternalBillingsPage({
   const [billingTypes, setBillingTypes] = useState<BillingType[]>([]);
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Form state
   const [showForm, setShowForm] = useState(false);
@@ -153,28 +154,41 @@ export default function JobInternalBillingsPage({
   /* ---- Fetch ---- */
 
   const loadData = useCallback(async () => {
-    const [jobRes, billingsRes, typesRes, codesRes] = await Promise.all([
-      supabase
-        .from("jobs")
-        .select("id, name, address")
-        .eq("id", params.id)
-        .is("deleted_at", null)
-        .single(),
-      fetch(`/api/jobs/${params.id}/internal-billings`, {
-        cache: "no-store",
-      }).then((r) => r.json()),
-      fetch("/api/internal-billing-types", { cache: "no-store" }).then((r) =>
-        r.json()
-      ),
-      fetch("/api/cost-codes", { cache: "no-store" }).then((r) => r.json()),
-    ]);
+    setLoadError(null);
+    try {
+      const [jobRes, billingsRes, typesRes, codesRes] = await Promise.all([
+        supabase
+          .from("jobs")
+          .select("id, name, address")
+          .eq("id", params.id)
+          .is("deleted_at", null)
+          .single(),
+        fetch(`/api/jobs/${params.id}/internal-billings`, {
+          cache: "no-store",
+        }).then((r) => {
+          if (!r.ok) throw new Error(`Failed to load internal billings (${r.status})`);
+          return r.json();
+        }),
+        fetch("/api/internal-billing-types", { cache: "no-store" }).then((r) => {
+          if (!r.ok) throw new Error(`Failed to load billing types (${r.status})`);
+          return r.json();
+        }),
+        fetch("/api/cost-codes", { cache: "no-store" }).then((r) => {
+          if (!r.ok) throw new Error(`Failed to load cost codes (${r.status})`);
+          return r.json();
+        }),
+      ]);
 
-    if (jobRes.data) setJob(jobRes.data as Job);
-    setBillings(Array.isArray(billingsRes) ? billingsRes : []);
-    setBillingTypes(Array.isArray(typesRes) ? typesRes : []);
-    const codes = codesRes?.codes ?? codesRes;
-    setCostCodes(Array.isArray(codes) ? codes : []);
-    setLoading(false);
+      if (jobRes.data) setJob(jobRes.data as Job);
+      setBillings(Array.isArray(billingsRes) ? billingsRes : []);
+      setBillingTypes(Array.isArray(typesRes) ? typesRes : []);
+      const codes = codesRes?.codes ?? codesRes;
+      setCostCodes(Array.isArray(codes) ? codes : []);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   }, [params.id]);
 
   useEffect(() => {
@@ -409,6 +423,44 @@ export default function JobInternalBillingsPage({
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
         <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+      </main>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <main className="max-w-[640px] mx-auto px-6 py-20">
+        <div
+          className="border p-6"
+          style={{
+            background: "var(--bg-card)",
+            borderColor: "var(--nw-danger)",
+            color: "var(--text-primary)",
+          }}
+        >
+          <p
+            className="text-[10px] uppercase mb-2"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              letterSpacing: "0.14em",
+              color: "var(--nw-danger)",
+            }}
+          >
+            Couldn&apos;t load
+          </p>
+          <p className="text-sm mb-4">{loadError}</p>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 border px-3 py-1.5 text-sm"
+            style={{ borderColor: "var(--border-default)" }}
+            onClick={() => {
+              setLoading(true);
+              loadData();
+            }}
+          >
+            Retry
+          </button>
+        </div>
       </main>
     );
   }
