@@ -105,7 +105,7 @@ export default function TeamSettings({
       </div>
 
       {inviteOpen && (
-        <div className="border border-[var(--border-default)] bg-white p-4">
+        <div className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
           <h3 className="text-sm font-medium text-[color:var(--text-primary)] mb-3">Invite a new team member</h3>
           <div className="grid sm:grid-cols-[1fr_180px_auto] gap-3 items-end">
             <label className="block">
@@ -115,7 +115,7 @@ export default function TeamSettings({
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="teammate@company.com"
-                className="w-full px-3 py-2 border border-[var(--border-default)] bg-white text-sm"
+                className="w-full px-3 py-2 border border-[var(--border-default)] bg-[var(--bg-card)] text-sm"
               />
             </label>
             <label className="block">
@@ -123,7 +123,7 @@ export default function TeamSettings({
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as TeamMember["role"])}
-                className="w-full px-3 py-2 border border-[var(--border-default)] bg-white text-sm"
+                className="w-full px-3 py-2 border border-[var(--border-default)] bg-[var(--bg-card)] text-sm"
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
@@ -154,7 +154,7 @@ export default function TeamSettings({
         </p>
       )}
 
-      <div className="border border-[var(--border-default)] bg-white overflow-hidden">
+      <div className="border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-[var(--bg-subtle)]">
             <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">
@@ -183,7 +183,7 @@ export default function TeamSettings({
                       value={m.role}
                       disabled={isSelf || isLastOwner || busyId === m.id}
                       onChange={(e) => updateMember(m.id, { role: e.target.value as TeamMember["role"] })}
-                      className="px-2 py-1 border border-[var(--border-default)] bg-white text-sm"
+                      className="px-2 py-1 border border-[var(--border-default)] bg-[var(--bg-card)] text-sm"
                     >
                       {ROLE_OPTIONS.map((r) => (
                         <option key={r.value} value={r.value}>{r.label}</option>
@@ -216,7 +216,7 @@ export default function TeamSettings({
       {pending.length > 0 && (
         <section>
           <h2 className="section-label">Pending Invites ({pending.length})</h2>
-          <div className="border border-[var(--border-default)] bg-white overflow-hidden">
+          <div className="border border-[var(--border-default)] bg-[var(--bg-card)] overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-[var(--bg-subtle)]">
                 <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">

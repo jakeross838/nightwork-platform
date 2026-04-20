@@ -192,7 +192,7 @@ function Step({ n, title, body }: { n: number; title: string; body: string }) {
 
 function PricePreview({ name, price, tagline, highlight }: { name: string; price: string; tagline: string; highlight?: boolean }) {
   return (
-    <div className={`p-6 border bg-white ${highlight ? "border-[var(--nw-stone-blue)] shadow-[0_8px_24px_-12px_rgba(63,88,98,0.25)]" : "border-[var(--border-default)]"}`}>
+    <div className={`p-6 border bg-[var(--bg-card)] ${highlight ? "border-[var(--nw-stone-blue)] shadow-[0_8px_24px_-12px_rgba(63,88,98,0.25)]" : "border-[var(--border-default)]"}`}>
       {highlight && (
         <span className="inline-block px-2 py-0.5 bg-[var(--nw-stone-blue)] text-white text-[10px] tracking-[0.12em] uppercase mb-3">
           Most Popular
