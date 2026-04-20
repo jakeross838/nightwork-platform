@@ -4,6 +4,7 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConnectionBanner from "@/components/connection-banner";
 import ImpersonationBanner from "@/components/impersonation-banner";
+import FeedbackWidgetMount from "@/components/feedback-widget-mount";
 import { OrgBrandingProvider } from "@/components/org-branding-provider";
 import { ThemeProvider, type Theme } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/toast-provider";
@@ -90,6 +91,7 @@ export default async function RootLayout({
                 <ImpersonationBanner />
                 <ConnectionBanner />
                 {children}
+                <FeedbackWidgetMount />
               </KeyboardShortcutsProvider>
             </ToastProvider>
           </OrgBrandingProvider>
