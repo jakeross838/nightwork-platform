@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 import { getOrgPaymentSchedule, scheduledPaymentDate } from "@/lib/payment-schedule";
 import { notifyRole, sendNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
  * POST /api/invoices/:id/payment
@@ -29,6 +28,11 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
     const supabase = createServerClient();
     const body = (await request.json()) as Record<string, unknown>;
     const action = body.action as string;
@@ -39,9 +43,18 @@ export async function POST(
         "id, status, org_id, total_amount, received_date, payment_status, scheduled_payment_date, draw_id"
       )
       .eq("id", params.id)
+      .eq("org_id", membership.org_id)
       .single();
     if (fetchError || !invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+
+    const invoiceOrgId = invoice.org_id as string | null;
+    if (!invoiceOrgId) {
+      return NextResponse.json(
+        { error: "Invoice record missing org_id" },
+        { status: 500 }
+      );
     }
 
     // Paid/denied/pending invoices cannot be paid — must be approved first.
@@ -82,7 +95,7 @@ export async function POST(
         })
         .eq("id", params.id);
       await logActivity({
-        org_id: ORG_ID,
+        org_id: invoiceOrgId,
         entity_type: "invoice",
         entity_id: params.id,
         action: "updated",
@@ -106,14 +119,14 @@ export async function POST(
         if (vendorEmail) {
           await sendNotification({
             to_email: vendorEmail,
-            org_id: ORG_ID,
+            org_id: invoiceOrgId,
             notification_type: "payment_scheduled",
             subject: `Payment ${amt} scheduled for ${date}`,
             body: `Ross Built has scheduled a payment of ${amt} to ${vendorName} for ${date}.`,
             action_url: `/invoices/${params.id}`,
           });
         } else {
-          await notifyRole(ORG_ID, ["accounting"], {
+          await notifyRole(invoiceOrgId, ["accounting"], {
             notification_type: "payment_scheduled",
             subject: `Payment scheduled — ${vendorName}`,
             body: `Payment of ${amt} to ${vendorName} scheduled for ${date}.`,
@@ -145,7 +158,7 @@ export async function POST(
       if (isFullPay) updates.status = "paid";
       await supabase.from("invoices").update(updates).eq("id", params.id);
       await logActivity({
-        org_id: ORG_ID,
+        org_id: invoiceOrgId,
         entity_type: "invoice",
         entity_id: params.id,
         action: "status_changed",
@@ -188,7 +201,7 @@ export async function POST(
         })
         .eq("id", params.id);
       await logActivity({
-        org_id: ORG_ID,
+        org_id: invoiceOrgId,
         entity_type: "invoice",
         entity_id: params.id,
         action: "updated",

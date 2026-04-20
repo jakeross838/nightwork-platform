@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import {
  saveParsedInvoice,
  type SaveInvoiceRequest,
@@ -9,8 +10,17 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
  try {
+ const membership = await getCurrentMembership();
+ if (!membership) {
+ return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+ }
+
  const body = await request.json();
- const items: SaveInvoiceRequest[] = Array.isArray(body) ? body : [body];
+ const rawItems: Array<Omit<SaveInvoiceRequest, "org_id">> = Array.isArray(body) ? body : [body];
+ const items: SaveInvoiceRequest[] = rawItems.map((item) => ({
+ ...item,
+ org_id: membership.org_id,
+ }));
  // @supabase/ssr's server client and plain supabase-js share the same
  // query surface; the shared saveParsedInvoice helper only relies on that.
  const supabase = createServerClient() as unknown as Parameters<typeof saveParsedInvoice>[0];
