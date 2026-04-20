@@ -359,7 +359,7 @@ export default function BulkLienReleasesPage() {
             <div className="bg-brand-card border border-brand-border overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
+                  <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium">
                     <th className="text-left px-4 py-3 font-medium">Vendor</th>
                     <th className="text-left px-4 py-3 font-medium">Job</th>
                     <th className="text-left px-4 py-3 font-medium">Draw</th>
@@ -446,7 +446,7 @@ export default function BulkLienReleasesPage() {
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="bg-brand-card border border-brand-border p-4">
-      <p className="text-[11px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
+      <p className="text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium font-medium">{label}</p>
       <p className={`text-2xl mt-1 font-display tabular-nums ${highlight ? "text-status-danger" : "text-cream"}`}>{value}</p>
     </div>
   );

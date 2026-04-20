@@ -249,10 +249,10 @@ export default function VendorsPage() {
                   <th className="py-3 px-4 w-10">
                     <span className="sr-only">Select</span>
                   </th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Name</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Default Cost Code</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Invoices</th>
-                  <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Total Billed</th>
+                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Name</th>
+                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Default Cost Code</th>
+                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right">Invoices</th>
+                  <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right">Total Billed</th>
                 </tr>
               </thead>
               <tbody>

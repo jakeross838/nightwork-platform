@@ -354,7 +354,7 @@ export default function JobsPage() {
             <div className="hidden md:block border border-brand-border bg-brand-card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
+                  <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium">
                     <th className="text-left px-4 py-3 font-medium w-8" aria-label="Health"></th>
                     <th className="text-left px-4 py-3 font-medium">Name</th>
                     <th className="text-left px-4 py-3 font-medium">Client / PM</th>

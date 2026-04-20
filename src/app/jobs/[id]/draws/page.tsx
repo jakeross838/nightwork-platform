@@ -142,7 +142,7 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
           <div className="bg-brand-card border border-brand-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
+                <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium bg-brand-surface/50">
                   <th className="text-left px-4 py-3 font-medium">Draw #</th>
                   <th className="text-left px-4 py-3 font-medium">Period</th>
                   <th className="text-left px-4 py-3 font-medium">Application Date</th>

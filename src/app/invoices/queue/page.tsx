@@ -1161,7 +1161,7 @@ export default function QueuePage() {
  </th>
  )}
  <th
- className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("vendor")}
  >
  Vendor
@@ -1170,11 +1170,11 @@ export default function QueuePage() {
  dir={sortDir}
  />
  </th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">
  Invoice #
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("date")}
  >
  Date
@@ -1183,11 +1183,11 @@ export default function QueuePage() {
  dir={sortDir}
  />
  </th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">
  Job
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("pm")}
  >
  PM
@@ -1197,7 +1197,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("amount")}
  >
  Amount
@@ -1207,7 +1207,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("confidence")}
  >
  Confidence
@@ -1217,7 +1217,7 @@ export default function QueuePage() {
  />
  </th>
  <th
- className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors"
+ className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right cursor-pointer select-none hover:text-teal transition-colors"
  onClick={() => toggleSort("waiting")}
  >
  Waiting

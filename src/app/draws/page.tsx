@@ -122,11 +122,11 @@ export default function DrawsPage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Draw #</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Period</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Application Date</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Status</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Current Payment Due</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Draw #</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Period</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Application Date</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim">Status</th>
+ <th className="py-3 px-5 text-[10px] uppercase font-medium tracking-[0.14em] text-cream-dim text-right">Current Payment Due</th>
  </tr>
  </thead>
  <tbody>

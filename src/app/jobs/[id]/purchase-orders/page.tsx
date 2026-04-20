@@ -227,7 +227,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
           <div className="bg-brand-card border border-brand-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
+                <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium">
                   <th className="text-left px-4 py-3 font-medium">PO #</th>
                   <th className="text-left px-4 py-3 font-medium">Vendor</th>
                   <th className="text-left px-4 py-3 font-medium">Cost Code</th>
@@ -301,7 +301,7 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className={`border p-4 ${highlight ? "border-teal bg-teal-muted" : "border-brand-border bg-brand-card"}`}>
-      <p className="text-[11px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
+      <p className="text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium font-medium">{label}</p>
       <p className="text-lg text-cream mt-1 tabular-nums">{value}</p>
     </div>
   );

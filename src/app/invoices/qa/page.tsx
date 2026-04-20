@@ -95,14 +95,17 @@ export default function QaQueuePage() {
  <div className="overflow-x-auto border border-brand-border animate-fade-up">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-brand-surface text-left">
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Invoice #</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Job</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">Cost Code</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider">PM Approved</th>
- <th className="py-3 px-5 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Waiting</th>
+ <tr
+ className="text-left"
+ style={{ background: "var(--bg-subtle)", borderBottom: "1px solid var(--border-default)" }}
+ >
+ <th className="py-2.5 px-5 text-[10px] uppercase font-medium" style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em", color: "var(--text-tertiary)" }}>Vendor</th>
+ <th className="py-2.5 px-5 text-[10px] uppercase font-medium" style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em", color: "var(--text-tertiary)" }}>Invoice #</th>
+ <th className="py-2.5 px-5 text-[10px] uppercase font-medium" style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em", color: "var(--text-tertiary)" }}>Job</th>
+ <th className="py-2.5 px-5 text-[10px] uppercase font-medium" style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em", color: "var(--text-tertiary)" }}>Cost Code</th>
+ <th className="py-2.5 px-5 text-[10px] uppercase font-medium text-right" style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em", color: "var(--text-tertiary)" }}>Amount</th>
+ <th className="py-2.5 px-5 text-[10px] uppercase font-medium" style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em", color: "var(--text-tertiary)" }}>PM Approved</th>
+ <th className="py-2.5 px-5 text-[10px] uppercase font-medium text-right" style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em", color: "var(--text-tertiary)" }}>Waiting</th>
  </tr>
  </thead>
  <tbody>
