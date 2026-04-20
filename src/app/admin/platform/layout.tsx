@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getPlatformAdmin } from "@/lib/auth/platform-admin";
 import PlatformSidebar from "@/components/admin/platform-sidebar";
 import Eyebrow from "@/components/nw/Eyebrow";
+import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,13 @@ export default async function PlatformAdminLayout({
     // layout renders without a staff session, bail out.
     redirect("/dashboard");
   }
+
+  // Unresolved feedback count for the sidebar badge.
+  const supabase = createServerClient();
+  const { count: unresolvedFeedback } = await supabase
+    .from("feedback_notes")
+    .select("id", { count: "exact", head: true })
+    .in("status", ["new", "reviewing", "in_progress"]);
 
   return (
     <div
@@ -62,7 +70,7 @@ export default async function PlatformAdminLayout({
       </header>
 
       <div className="flex-1 flex">
-        <PlatformSidebar />
+        <PlatformSidebar unresolvedFeedback={unresolvedFeedback ?? 0} />
         <main className="flex-1 min-w-0">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8">
             {children}
