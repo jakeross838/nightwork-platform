@@ -106,6 +106,7 @@ function ImagePreview({ src, alt, downloadUrl, fileName }: { src: string; alt: s
 
   return (
     <>
+      {/* Document surface stays white — paper metaphor, intentional across themes. */}
       <div className="border border-brand-border bg-white">
         <div className="flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2">
           <span className="text-[11px] tracking-[0.08em] uppercase text-cream-dim truncate pr-2">
@@ -130,6 +131,7 @@ function ImagePreview({ src, alt, downloadUrl, fileName }: { src: string; alt: s
             </a>
           </div>
         </div>
+        {/* Document surface stays white — paper metaphor, intentional across themes. */}
         <button
           type="button"
           onClick={() => setZoomed(true)}
@@ -275,6 +277,7 @@ function DocxPreview({
           if (e.target === e.currentTarget) setExpanded(false);
         }}
       >
+        {/* Document surface stays white — paper metaphor, intentional across themes. */}
         <div className="bg-white w-full h-full md:w-[80vw] md:h-[85vh] flex flex-col shadow-2xl">
           {header}
           {body}
@@ -284,6 +287,7 @@ function DocxPreview({
   }
 
   return (
+    // Document surface stays white — paper metaphor, intentional across themes.
     <div className="border border-brand-border bg-white">
       {header}
       {body}

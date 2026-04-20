@@ -54,11 +54,14 @@ const METHOD_LABELS: Record<CalculationMethod, string> = {
   manual: "Manual",
 };
 
-const METHOD_BADGE: Record<CalculationMethod, string> = {
-  fixed: "bg-blue-500/20 text-blue-300",
-  rate_x_quantity: "bg-purple-500/20 text-purple-300",
-  percentage: "bg-amber-500/20 text-amber-300",
-  manual: "bg-gray-500/20 text-gray-300",
+const METHOD_BADGE: Record<CalculationMethod, React.CSSProperties> = {
+  fixed: { background: "var(--nw-oceanside)", color: "var(--nw-white-sand)" },
+  rate_x_quantity: {
+    background: "var(--nw-stone-blue)",
+    color: "var(--nw-white-sand)",
+  },
+  percentage: { background: "var(--nw-warn)", color: "var(--nw-slate-deepest)" },
+  manual: { background: "var(--bg-elevated)", color: "var(--text-secondary)" },
 };
 
 const FIXED_UNITS = ["month", "project", "draw"];
@@ -575,7 +578,8 @@ export default function InternalBillingTypesManager() {
                 </td>
                 <td className="px-3 py-2">
                   <span
-                    className={`inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider rounded ${METHOD_BADGE[t.calculation_method]}`}
+                    className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider rounded"
+                    style={METHOD_BADGE[t.calculation_method]}
                   >
                     {METHOD_LABELS[t.calculation_method]}
                   </span>
