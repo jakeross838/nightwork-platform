@@ -43,11 +43,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://nightwork.build"),
   alternates: { canonical: "https://nightwork.build" },
   icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
-    apple: "/apple-touch-icon.png",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
     title: "Nightwork — construction back-office, on autopilot",

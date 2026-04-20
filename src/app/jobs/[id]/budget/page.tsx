@@ -1190,18 +1190,23 @@ function CategoryBlock({
                 ? "bg-status-success/5"
                 : "";
           const stickyBg = badBand
-            ? "bg-[#FBE4E4]"
+            ? "bg-status-danger/10"
             : tightBand
-              ? "bg-[#FCF3DC]"
+              ? "bg-status-warning/10"
               : r.revised_estimate > 0
-                ? "bg-[#E9F4EB]"
+                ? "bg-status-success/10"
                 : "bg-brand-card";
           return (
             <tr
               key={r.id}
               className={`border-b border-brand-row-border last:border-0 ${rowBg}`}
             >
-              <td className={`px-3 py-2 font-mono text-cream text-xs sticky left-0 z-[1] ${stickyBg}`}>{r.code}</td>
+              <td
+                className={`px-3 py-2 font-mono text-xs sticky left-0 z-[1] ${stickyBg}`}
+                style={{ color: "var(--text-primary)" }}
+              >
+                {r.code}
+              </td>
               <td className="px-3 py-2 text-cream-muted">
                 <button
                   type="button"
@@ -1461,11 +1466,11 @@ function CompareTable({ rows }: { rows: BudgetRow[] }) {
                   ? "bg-status-success/10"
                   : "";
             const stickyBg = badBand
-              ? "bg-[#F7D0D0]"
+              ? "bg-status-danger/15"
               : tightBand
-                ? "bg-[#F8E9C7]"
+                ? "bg-status-warning/15"
                 : goodBand
-                  ? "bg-[#D3EDD9]"
+                  ? "bg-status-success/15"
                   : "bg-brand-card";
             const varTone = badBand
               ? "text-status-danger"
@@ -1477,7 +1482,10 @@ function CompareTable({ rows }: { rows: BudgetRow[] }) {
 
             return (
               <tr key={r.id} className={`border-b border-brand-row-border last:border-0 ${rowBg}`}>
-                <td className={`px-3 py-2 font-mono text-cream text-xs sticky left-0 z-[1] ${stickyBg}`}>
+                <td
+                  className={`px-3 py-2 font-mono text-xs sticky left-0 z-[1] ${stickyBg}`}
+                  style={{ color: "var(--text-primary)" }}
+                >
                   {r.code}
                 </td>
                 <td className="px-3 py-2 text-cream-muted">{r.description}</td>
