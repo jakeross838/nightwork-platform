@@ -76,6 +76,7 @@ export const POST = withApiError(
       .from("draws")
       .select("id, job_id, status")
       .eq("id", params.id)
+      .eq("org_id", membership.org_id)
       .single();
 
     if (!draw) throw new ApiError("Draw not found", 404);

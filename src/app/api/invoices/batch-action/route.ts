@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
           "total_amount, po_id, is_potential_duplicate, duplicate_dismissed_at"
       )
       .in("id", invoice_ids)
+      .eq("org_id", membership.org_id)
       .is("deleted_at", null);
 
     if (fetchError) {
@@ -213,7 +214,8 @@ export async function POST(request: NextRequest) {
             status: "qa_review",
             status_history: [...existingHistory, ...statusEntries],
           })
-          .eq("id", id);
+          .eq("id", id)
+          .eq("org_id", membership.org_id);
 
         if (updateError) {
           failed.push({ id, reason: updateError.message });
@@ -234,7 +236,8 @@ export async function POST(request: NextRequest) {
             status: "pm_held",
             status_history: [...existingHistory, statusEntry],
           })
-          .eq("id", id);
+          .eq("id", id)
+          .eq("org_id", membership.org_id);
         if (updateError) failed.push({ id, reason: updateError.message });
         else success.push(id);
       } else {
@@ -252,7 +255,8 @@ export async function POST(request: NextRequest) {
             status: "pm_denied",
             status_history: [...existingHistory, statusEntry],
           })
-          .eq("id", id);
+          .eq("id", id)
+          .eq("org_id", membership.org_id);
         if (updateError) failed.push({ id, reason: updateError.message });
         else success.push(id);
       }
@@ -287,7 +291,7 @@ export async function POST(request: NextRequest) {
               ? "pm_held"
               : "pm_denied";
         await logStatusChange({
-          org_id: inv.org_id ?? "00000000-0000-0000-0000-000000000001",
+          org_id: membership.org_id,
           user_id: user?.id ?? null,
           entity_type: "invoice",
           entity_id: id,

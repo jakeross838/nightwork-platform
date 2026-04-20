@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
  * Create a revision of a locked/submitted/approved/paid draw. The original
@@ -19,12 +18,19 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
 
     const { data: original, error: fetchError } = await supabase
       .from("draws")
       .select("*")
       .eq("id", params.id)
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .single();
     if (fetchError || !original) {
@@ -78,7 +84,7 @@ export async function POST(
             note: `Revision ${newRevisionNumber} created from Rev ${(original as { revision_number?: number }).revision_number ?? 0} (parent was ${original.status})`,
           },
         ],
-        org_id: ORG_ID,
+        org_id: orgId,
       })
       .select("id, draw_number, revision_number")
       .single();
@@ -97,6 +103,7 @@ export async function POST(
       .from("invoices")
       .select("id")
       .eq("draw_id", original.id)
+      .eq("org_id", orgId)
       .is("deleted_at", null);
     const invIds = (invs ?? []).map((i) => i.id as string);
     if (invIds.length > 0) {
@@ -104,6 +111,7 @@ export async function POST(
         .from("invoices")
         .update({ draw_id: revision.id })
         .in("id", invIds)
+        .eq("org_id", orgId)
         .select("id");
       if (relinkErr) {
         console.error("[revise] invoice re-link failed:", relinkErr.message);
@@ -115,7 +123,7 @@ export async function POST(
     }
 
     await logActivity({
-      org_id: ORG_ID,
+      org_id: orgId,
       entity_type: "draw",
       entity_id: revision.id as string,
       action: "created",

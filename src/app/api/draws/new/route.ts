@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity-log";
+import { getCurrentMembership } from "@/lib/org/session";
 import {
   computeDrawLines,
   lessPreviousCertificatesForJob,
@@ -10,8 +11,6 @@ import {
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 interface CreateDrawRequest {
   job_id: string;
@@ -25,6 +24,12 @@ interface CreateDrawRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const body: CreateDrawRequest = await request.json();
     const {
@@ -47,6 +52,7 @@ export async function POST(request: NextRequest) {
       .from("draws")
       .select("id, draw_number, status")
       .eq("job_id", job_id)
+      .eq("org_id", orgId)
       .in("status", ["draft", "pm_review", "submitted"])
       .is("deleted_at", null)
       .order("draw_number", { ascending: false })
@@ -67,6 +73,7 @@ export async function POST(request: NextRequest) {
       .from("draws")
       .select("draw_number")
       .eq("job_id", job_id)
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .eq("revision_number", 0)
       .order("draw_number", { ascending: false })
@@ -79,6 +86,7 @@ export async function POST(request: NextRequest) {
         "original_contract_amount, current_contract_amount, deposit_percentage, approved_cos_total, retainage_percent, previous_co_completed_amount"
       )
       .eq("id", job_id)
+      .eq("org_id", orgId)
       .single();
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
@@ -145,7 +153,7 @@ export async function POST(request: NextRequest) {
           },
         ],
         wizard_draft: wizard_draft ?? null,
-        org_id: ORG_ID,
+        org_id: orgId,
       })
       .select("id, draw_number")
       .single();
@@ -160,6 +168,7 @@ export async function POST(request: NextRequest) {
         .from("invoices")
         .update({ draw_id: draw.id })
         .in("id", invoice_ids)
+        .eq("org_id", orgId)
         .select("id");
       if (linkErr) {
         return NextResponse.json(
@@ -179,7 +188,7 @@ export async function POST(request: NextRequest) {
     }
 
     await logActivity({
-      org_id: ORG_ID,
+      org_id: orgId,
       entity_type: "draw",
       entity_id: draw.id as string,
       action: "created",

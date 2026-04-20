@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import {
   computeDrawLines,
   lessPreviousCertificatesForJob,
@@ -18,6 +19,12 @@ export const fetchCache = "force-no-store";
  */
 export async function POST(request: NextRequest) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const body = (await request.json()) as {
       job_id: string;
@@ -37,6 +44,7 @@ export async function POST(request: NextRequest) {
         "id, name, address, original_contract_amount, deposit_percentage, retainage_percent, previous_co_completed_amount"
       )
       .eq("id", job_id)
+      .eq("org_id", orgId)
       .single();
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
@@ -47,6 +55,7 @@ export async function POST(request: NextRequest) {
       .from("draws")
       .select("draw_number")
       .eq("job_id", job_id)
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .eq("revision_number", 0)
       .order("draw_number", { ascending: false })
@@ -58,6 +67,7 @@ export async function POST(request: NextRequest) {
       .from("change_orders")
       .select("total_with_fee, amount, co_type, status, pcco_number, description")
       .eq("job_id", job_id)
+      .eq("org_id", orgId)
       .in("status", ["approved", "executed"])
       .is("deleted_at", null);
     const netChangeOrders =
@@ -107,6 +117,7 @@ export async function POST(request: NextRequest) {
           "cost_codes:cost_code_id (code, description, sort_order, is_change_order)"
       )
       .eq("job_id", job_id)
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .in("cost_code_id", ccIds);
     const budgetMeta = (budgetMetaRaw ?? []) as unknown as Array<{
