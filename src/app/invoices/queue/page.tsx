@@ -705,10 +705,31 @@ export default function QueuePage() {
 
  <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-8">
  <FinancialViewTabs active="queue" />
- <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+ <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
  <div>
- <h2 className="font-display text-2xl text-cream">PM Queue</h2>
- <p className="text-sm text-cream-dim mt-1">
+ <span
+ className="block mb-2 text-[10px] uppercase"
+ style={{
+ fontFamily: "var(--font-jetbrains-mono)",
+ letterSpacing: "0.14em",
+ color: "var(--text-tertiary)",
+ }}
+ >
+ Financial · PM Queue
+ </span>
+ <h2
+ className="m-0"
+ style={{
+ fontFamily: "var(--font-space-grotesk)",
+ fontWeight: 500,
+ fontSize: "30px",
+ letterSpacing: "-0.02em",
+ color: "var(--text-primary)",
+ }}
+ >
+ PM Queue
+ </h2>
+ <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
  {isFiltered
  ? `Showing ${filtered.length} of ${invoices.length} invoice${invoices.length !== 1 ? "s" : ""}`
  : `${filtered.length} invoice${filtered.length !== 1 ? "s" : ""} pending PM review`}

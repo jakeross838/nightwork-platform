@@ -156,12 +156,42 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
         />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">{job.name}</h2>
-            <p className="text-sm text-cream-dim mt-1">{job.address ?? "No address"}</p>
+            <span
+              className="block mb-2 text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Job · Change Orders
+            </span>
+            <h2
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "30px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              {job.name}
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+              {job.address ?? "No address"}
+            </p>
           </div>
           <Link
             href={`/jobs/${job.id}/change-orders/new`}
-            className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-sm font-medium transition-colors"
+            className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              letterSpacing: "0.12em",
+              background: "var(--nw-stone-blue)",
+              borderColor: "var(--nw-stone-blue)",
+              color: "var(--nw-white-sand)",
+            }}
           >
             + New Change Order
           </Link>
