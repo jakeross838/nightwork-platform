@@ -506,7 +506,7 @@ function DropdownField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-[var(--border-default)] bg-white text-sm"
+        className="w-full px-3 py-2 border border-[var(--border-default)] bg-[var(--bg-card)] text-sm"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

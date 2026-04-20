@@ -8,9 +8,9 @@ import { fileKindFromUrl } from "@/lib/invoices/display";
 const PdfRenderer = dynamic(() => import("./pdf-renderer"), {
   ssr: false,
   loading: () => (
-    <div className="border border-brand-border bg-brand-surface p-8 text-center">
-      <div className="w-6 h-6 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
-      <p className="mt-2 text-xs text-cream-dim">Loading preview…</p>
+    <div className="border border-[var(--border-default)] bg-[var(--bg-subtle)] p-8 text-center">
+      <div className="w-6 h-6 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin mx-auto" />
+      <p className="mt-2 text-xs text-[color:var(--text-secondary)]">Loading preview…</p>
     </div>
   ),
 });
@@ -50,8 +50,8 @@ export default function InvoiceFilePreview({
 
   if (!fileUrl) {
     return (
-      <div className="h-48 xl:h-64 border border-brand-border bg-brand-surface flex items-center justify-center">
-        <p className="text-cream-dim text-sm">No preview available</p>
+      <div className="h-48 xl:h-64 border border-[var(--border-default)] bg-[var(--bg-subtle)] flex items-center justify-center">
+        <p className="text-[color:var(--text-secondary)] text-sm">No preview available</p>
       </div>
     );
   }
@@ -107,16 +107,16 @@ function ImagePreview({ src, alt, downloadUrl, fileName }: { src: string; alt: s
   return (
     <>
       {/* Document surface stays white — paper metaphor, intentional across themes. */}
-      <div className="border border-brand-border bg-white">
-        <div className="flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2">
-          <span className="text-[11px] tracking-[0.08em] uppercase text-cream-dim truncate pr-2">
+      <div className="border border-[var(--border-default)] bg-white">
+        <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-subtle)] px-3 py-2">
+          <span className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] truncate pr-2">
             Image{fileName ? ` · ${fileName}` : ""}
           </span>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setZoomed(true)}
-              className="px-2 py-1 text-[11px] border border-brand-border text-cream-dim hover:text-cream"
+              className="px-2 py-1 text-[11px] border border-[var(--border-default)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
               title="Expand"
               aria-label="Expand image"
             >
@@ -125,7 +125,7 @@ function ImagePreview({ src, alt, downloadUrl, fileName }: { src: string; alt: s
             <a
               href={downloadUrl ?? src}
               download={fileName ?? undefined}
-              className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-teal text-teal hover:bg-teal hover:text-white transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)] hover:bg-[var(--nw-stone-blue)] hover:text-[color:var(--nw-white-sand)] transition-colors whitespace-nowrap"
             >
               Download Original
             </a>
@@ -221,15 +221,15 @@ function DocxPreview({
   }, [expanded]);
 
   const header = (
-    <div className="flex items-center justify-between border-b border-brand-border bg-brand-surface px-3 py-2 gap-2">
-      <span className="text-[11px] tracking-[0.08em] uppercase text-cream-dim truncate">
+    <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-subtle)] px-3 py-2 gap-2">
+      <span className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] truncate">
         DOCX · {fileName}
       </span>
       <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="px-2 py-1 text-[11px] border border-brand-border text-cream-dim hover:text-cream"
+          className="px-2 py-1 text-[11px] border border-[var(--border-default)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
           title={expanded ? "Collapse" : "Expand"}
           aria-label={expanded ? "Collapse DOCX" : "Expand DOCX"}
         >
@@ -238,7 +238,7 @@ function DocxPreview({
         <a
           href={downloadUrl}
           download={fileName}
-          className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
+          className="inline-flex items-center gap-1 text-[11px] px-2 py-1 border border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)] hover:bg-[var(--nw-stone-blue)] hover:text-[color:var(--nw-white-sand)] transition-colors"
         >
           Download Original
         </a>
@@ -247,10 +247,10 @@ function DocxPreview({
   );
 
   const body = (
-    <div className={`${expanded ? "flex-1" : "max-h-[700px]"} overflow-auto p-6 text-sm text-cream leading-relaxed docx-html`}>
-      {loading && <p className="text-cream-dim text-sm">Rendering DOCX…</p>}
+    <div className={`${expanded ? "flex-1" : "max-h-[700px]"} overflow-auto p-6 text-sm text-[color:var(--text-primary)] leading-relaxed docx-html`}>
+      {loading && <p className="text-[color:var(--text-secondary)] text-sm">Rendering DOCX…</p>}
       {error && (
-        <p className="text-status-danger text-sm">
+        <p className="text-[color:var(--nw-danger)] text-sm">
           DOCX render failed: {error}. Use Download Original to open the file.
         </p>
       )}
@@ -258,7 +258,7 @@ function DocxPreview({
         <div dangerouslySetInnerHTML={{ __html: html }} />
       )}
       {!loading && !error && html === null && !invoiceId && (
-        <p className="text-cream-dim text-sm">
+        <p className="text-[color:var(--text-secondary)] text-sm">
           DOCX preview is only available after the invoice is saved.
           Use Download Original to view it now.
         </p>
@@ -288,7 +288,7 @@ function DocxPreview({
 
   return (
     // Document surface stays white — paper metaphor, intentional across themes.
-    <div className="border border-brand-border bg-white">
+    <div className="border border-[var(--border-default)] bg-white">
       {header}
       {body}
     </div>
@@ -298,15 +298,15 @@ function DocxPreview({
 /** ---------------- Unknown file fallback ---------------- */
 function UnknownPreview({ downloadUrl, fileName }: { downloadUrl: string; fileName: string }) {
   return (
-    <div className="border border-brand-border bg-brand-surface p-6 flex flex-col items-center gap-3 text-center">
-      <svg className="w-10 h-10 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <div className="border border-[var(--border-default)] bg-[var(--bg-subtle)] p-6 flex flex-col items-center gap-3 text-center">
+      <svg className="w-10 h-10 text-[color:var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
       </svg>
-      <p className="text-sm text-cream">Preview not available</p>
+      <p className="text-sm text-[color:var(--text-primary)]">Preview not available</p>
       <a
         href={downloadUrl}
         download={fileName}
-        className="inline-flex items-center gap-1 text-[12px] px-3 py-1.5 border border-teal text-teal hover:bg-teal hover:text-white transition-colors"
+        className="inline-flex items-center gap-1 text-[12px] px-3 py-1.5 border border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)] hover:bg-[var(--nw-stone-blue)] hover:text-[color:var(--nw-white-sand)] transition-colors"
       >
         Download {fileName}
       </a>

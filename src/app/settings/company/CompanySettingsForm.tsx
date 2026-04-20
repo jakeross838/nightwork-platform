@@ -283,7 +283,7 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-[var(--border-default)] bg-white text-sm text-[color:var(--text-primary)] focus-teal"
+        className="w-full px-3 py-2 border border-[var(--border-default)] bg-[var(--bg-card)] text-sm text-[color:var(--text-primary)] focus-teal"
       />
     </label>
   );
