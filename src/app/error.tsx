@@ -19,7 +19,7 @@ export default function RouteError({
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="max-w-md text-center border border-brand-border bg-white p-8">
+      <div className="max-w-md text-center border border-brand-border bg-brand-card p-8">
         <p className="text-[11px] tracking-[0.08em] uppercase text-status-danger">
           Something went wrong
         </p>

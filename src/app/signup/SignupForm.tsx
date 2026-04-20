@@ -62,7 +62,7 @@ function Field({
         name={name}
         type={type}
         {...rest}
-        className="px-3 py-2.5 border border-brand-border bg-white text-cream text-[14px] focus:outline-none focus:border-teal"
+        className="px-3 py-2.5 border border-brand-border bg-brand-card text-cream text-[14px] focus:outline-none focus:border-teal"
       />
     </div>
   );

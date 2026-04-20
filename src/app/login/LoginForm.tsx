@@ -36,7 +36,7 @@ export default function LoginForm() {
           type="email"
           autoComplete="email"
           required
-          className="px-3 py-2.5 border border-brand-border bg-white text-cream text-[14px] focus:outline-none focus:border-teal rounded-none"
+          className="px-3 py-2.5 border border-brand-border bg-brand-card text-cream text-[14px] focus:outline-none focus:border-teal rounded-none"
         />
       </div>
 
@@ -53,7 +53,7 @@ export default function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="px-3 py-2.5 border border-brand-border bg-white text-cream text-[14px] focus:outline-none focus:border-teal rounded-none"
+          className="px-3 py-2.5 border border-brand-border bg-brand-card text-cream text-[14px] focus:outline-none focus:border-teal rounded-none"
         />
       </div>
 
