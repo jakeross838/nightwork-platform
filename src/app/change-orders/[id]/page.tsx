@@ -148,9 +148,29 @@ export default function ChangeOrderDetailPage() {
 
         <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
           <div>
-            <p className="text-xs text-cream-dim uppercase tracking-wider">PCCO #{co.pcco_number}</p>
-            <h2 className="font-display text-2xl text-cream">{co.title ?? co.description ?? "Untitled CO"}</h2>
-            <p className="text-sm text-cream-dim mt-1">
+            <span
+              className="block mb-2 text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Change Order · PCCO #{co.pcco_number}
+            </span>
+            <h2
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "28px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              {co.title ?? co.description ?? "Untitled CO"}
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
               {co.jobs?.name} · {co.co_type === "owner" ? "Owner Change Order (contract)" : "Internal (budget only)"}
             </p>
           </div>
@@ -193,13 +213,13 @@ export default function ChangeOrderDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             {co.description && (
-              <div className="bg-brand-card border border-brand-border p-5">
+              <div className="border nw-panel p-5">
                 <h3 className="text-sm font-medium text-cream mb-2 uppercase tracking-wider">Description</h3>
                 <p className="text-sm text-cream-muted whitespace-pre-wrap">{co.description}</p>
               </div>
             )}
 
-            <div className="bg-brand-card border border-brand-border">
+            <div className="border nw-panel">
               <div className="border-b border-brand-border px-5 py-3">
                 <h3 className="text-sm font-medium text-cream uppercase tracking-wider">Budget Line Allocations</h3>
               </div>
@@ -241,7 +261,7 @@ export default function ChangeOrderDetailPage() {
             </div>
 
             {co.jobs && (co.status === "approved" || co.status === "executed") && (
-              <div className="bg-brand-card border border-brand-border p-5">
+              <div className="border nw-panel p-5">
                 <h3 className="text-sm font-medium text-cream mb-3 uppercase tracking-wider">Contract Impact</h3>
                 <dl className="grid grid-cols-3 gap-4 text-sm">
                   <div>
@@ -262,7 +282,7 @@ export default function ChangeOrderDetailPage() {
           </div>
 
           <aside className="space-y-4">
-            <div className="bg-brand-card border border-brand-border p-4">
+            <div className="border nw-panel p-4">
               <h3 className="text-sm font-medium text-cream uppercase tracking-wider mb-3">Actions</h3>
               <div className="flex flex-col gap-2">
                 {co.status === "draft" && (
@@ -325,7 +345,7 @@ export default function ChangeOrderDetailPage() {
               </div>
             </div>
 
-            <div className="bg-brand-card border border-brand-border p-4 text-sm">
+            <div className="border nw-panel p-4 text-sm">
               <h3 className="text-sm font-medium text-cream uppercase tracking-wider mb-3">Dates</h3>
               <dl className="space-y-2 text-xs">
                 <div className="flex justify-between">
@@ -348,7 +368,7 @@ export default function ChangeOrderDetailPage() {
             </div>
 
             {co.status_history && co.status_history.length > 0 && (
-              <div className="bg-brand-card border border-brand-border p-4">
+              <div className="border nw-panel p-4">
                 <h3 className="text-sm font-medium text-cream uppercase tracking-wider mb-3">History</h3>
                 <ul className="space-y-2 text-[11px] text-cream-dim">
                   {co.status_history.map((h, i) => (
@@ -369,6 +389,12 @@ export default function ChangeOrderDetailPage() {
           </aside>
         </div>
       </main>
+      <style jsx>{`
+        :global(.nw-panel) {
+          background: var(--bg-card);
+          border-color: var(--border-default);
+        }
+      `}</style>
     </AppShell>
   );
 }

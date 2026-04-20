@@ -215,8 +215,29 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
     <AppShell>
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
         <Breadcrumbs items={[{ label: "Vendors", href: "/vendors" }, { label: vendor.name }]} />
-        <h2 className="font-display text-2xl text-cream mb-1">{vendor.name}</h2>
-        <p className="text-sm text-cream-dim mb-6">Vendor Detail</p>
+        <span
+          className="block mb-2 text-[10px] uppercase"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono)",
+            letterSpacing: "0.14em",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          Admin · Vendor
+        </span>
+        <h2
+          className="m-0 mb-1"
+          style={{
+            fontFamily: "var(--font-space-grotesk)",
+            fontWeight: 500,
+            fontSize: "30px",
+            letterSpacing: "-0.02em",
+            color: "var(--text-primary)",
+          }}
+        >
+          {vendor.name}
+        </h2>
+        <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>Vendor Detail</p>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
           <Stat label="Invoices" value={String(stats.count)} />
@@ -228,8 +249,21 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
           />
         </div>
 
-        <section className="bg-brand-card border border-brand-border p-6 mb-6">
-          <h3 className="font-display text-lg text-cream mb-4">Vendor Info</h3>
+        <section
+          className="border p-6 mb-6"
+          style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
+        >
+          <h3
+            className="m-0 mb-4"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "16px",
+              color: "var(--text-primary)",
+            }}
+          >
+            Vendor Info
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <EditField label="Name">
               <input
@@ -289,15 +323,36 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-5 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="h-[36px] px-4 text-[11px] uppercase disabled:opacity-60 transition-colors"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.12em",
+                fontWeight: 500,
+                background: "var(--nw-stone-blue)",
+                color: "var(--nw-white-sand)",
+                border: "1px solid var(--nw-stone-blue)",
+              }}
             >
-              {saving ? "Saving…" : "Save Changes"}
+              {saving ? "Saving" : "Save Changes"}
             </button>
           </div>
         </section>
 
-        <section className="bg-brand-card border border-brand-border p-6">
-          <h3 className="font-display text-lg text-cream mb-4">Invoice History</h3>
+        <section
+          className="border p-6"
+          style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
+        >
+          <h3
+            className="m-0 mb-4"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "16px",
+              color: "var(--text-primary)",
+            }}
+          >
+            Invoice History
+          </h3>
           {invoices.length === 0 ? (
             <p className="text-sm text-cream-dim">No invoices from this vendor yet.</p>
           ) : (

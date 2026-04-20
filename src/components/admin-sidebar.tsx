@@ -55,7 +55,14 @@ export default function AdminSidebar({ role }: { role: Role }) {
           if (visible.length === 0) return null;
           return (
             <div key={group.title}>
-              <p className="text-[10px] tracking-[0.12em] uppercase text-cream-dim mb-2 px-3">
+              <p
+                className="text-[10px] uppercase mb-2 px-3"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono)",
+                  letterSpacing: "0.14em",
+                  color: "var(--text-tertiary)",
+                }}
+              >
                 {group.title}
               </p>
               <ul className="space-y-0.5">
@@ -65,11 +72,13 @@ export default function AdminSidebar({ role }: { role: Role }) {
                     <li key={item.href}>
                       <Link
                         href={item.href}
-                        className={`block px-3 py-1.5 text-sm transition-colors ${
-                          active
-                            ? "text-cream font-medium bg-brand-surface border-l-2 border-teal"
-                            : "text-cream-dim hover:text-cream hover:bg-brand-surface/50"
-                        }`}
+                        className="block px-3 py-1.5 text-sm transition-colors"
+                        style={{
+                          color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+                          fontWeight: active ? 500 : 400,
+                          background: active ? "var(--bg-subtle)" : "transparent",
+                          borderLeft: active ? "2px solid var(--nw-stone-blue)" : "2px solid transparent",
+                        }}
                       >
                         {item.label}
                       </Link>
@@ -91,7 +100,8 @@ export function AdminMobileNav({ role }: { role: Role }) {
 
   return (
     <nav
-      className="flex gap-1 md:hidden overflow-x-auto -mx-4 px-4 whitespace-nowrap border-b border-brand-border mb-4"
+      className="flex gap-1 md:hidden overflow-x-auto -mx-4 px-4 whitespace-nowrap border-b mb-4"
+      style={{ borderColor: "var(--border-default)" }}
       aria-label="Admin sections"
     >
       {allItems.map((item) => {
@@ -100,11 +110,12 @@ export function AdminMobileNav({ role }: { role: Role }) {
           <Link
             key={item.href}
             href={item.href}
-            className={`shrink-0 px-3 py-2 text-xs tracking-[0.04em] transition-colors border-b-2 -mb-px ${
-              active
-                ? "border-teal text-cream font-medium"
-                : "border-transparent text-cream-dim hover:text-cream"
-            }`}
+            className="shrink-0 px-3 py-2 text-xs transition-colors border-b-2 -mb-px"
+            style={{
+              color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+              fontWeight: active ? 500 : 400,
+              borderColor: active ? "var(--nw-stone-blue)" : "transparent",
+            }}
           >
             {item.label}
           </Link>

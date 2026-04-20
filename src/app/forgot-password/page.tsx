@@ -27,22 +27,43 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
-          <h1 className="font-display text-3xl text-cream tracking-tight">
+          <h1
+            className="m-0"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "28px",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
             Reset Password
           </h1>
-          <p className="mt-2 text-sm text-cream-dim">
+          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
             Enter your email and we&apos;ll send you a reset link.
           </p>
         </div>
 
-        <div className="p-6 border border-brand-border bg-white">
+        <div
+          className="p-6 border"
+          style={{
+            background: "var(--bg-card)",
+            borderColor: "var(--border-default)",
+          }}
+        >
           {submitted ? (
             <div className="text-center py-4">
-              <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center border-2 border-teal text-teal text-xl">
+              <div
+                className="w-12 h-12 mx-auto mb-4 flex items-center justify-center border-2 text-xl"
+                style={{
+                  borderColor: "var(--nw-success)",
+                  color: "var(--nw-success)",
+                }}
+              >
                 ✓
               </div>
-              <p className="text-sm text-cream mb-1">Check your email for a reset link.</p>
-              <p className="text-xs text-cream-dim">
+              <p className="text-sm mb-1" style={{ color: "var(--text-primary)" }}>Check your email for a reset link.</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
                 If an account exists for that email, you&apos;ll receive instructions shortly.
               </p>
             </div>
@@ -51,7 +72,12 @@ export default function ForgotPasswordPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="reset-email"
-                  className="text-[11px] tracking-[0.08em] uppercase text-cream-dim"
+                  className="text-[10px] uppercase"
+                  style={{
+                    fontFamily: "var(--font-jetbrains-mono)",
+                    letterSpacing: "0.14em",
+                    color: "var(--text-tertiary)",
+                  }}
                 >
                   Email
                 </label>
@@ -62,13 +88,26 @@ export default function ForgotPasswordPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="px-3 py-2.5 border border-brand-border bg-white text-cream text-[14px] focus:outline-none focus:border-teal rounded-none"
+                  className="px-3 py-2.5 border text-[14px] focus:outline-none rounded-none"
+                  style={{
+                    background: "var(--bg-subtle)",
+                    borderColor: "var(--border-default)",
+                    color: "var(--text-primary)",
+                  }}
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-teal text-white font-display text-[13px] tracking-[0.1em] uppercase hover:bg-teal/90 disabled:opacity-60 transition-colors rounded-none"
+                className="w-full py-3 text-[11px] uppercase disabled:opacity-60 transition-colors rounded-none"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono)",
+                  letterSpacing: "0.12em",
+                  fontWeight: 500,
+                  background: "var(--nw-stone-blue)",
+                  color: "var(--nw-white-sand)",
+                  border: "1px solid var(--nw-stone-blue)",
+                }}
               >
                 {loading ? "Sending…" : "Send Reset Link"}
               </button>
@@ -76,8 +115,12 @@ export default function ForgotPasswordPage() {
           )}
         </div>
 
-        <p className="mt-6 text-center text-sm text-cream-muted">
-          <Link href="/login" className="text-teal hover:underline underline-offset-4">
+        <p className="mt-6 text-center text-sm" style={{ color: "var(--text-tertiary)" }}>
+          <Link
+            href="/login"
+            className="hover:underline underline-offset-4"
+            style={{ color: "var(--nw-gulf-blue)" }}
+          >
             Back to sign in
           </Link>
         </p>
