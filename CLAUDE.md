@@ -392,6 +392,60 @@ The draw output must match AIA standard format. Reference: Drummond Pay App 8.
 /supabase/migrations — SQL migration files (numbered)
 ```
 
+## Platform admin (cross-tenant)
+
+Nightwork has a separate "platform admin" role for operators (Jake,
+Andrew, future support / engineering) who need cross-tenant access to
+debug customer issues. This is **not** an org role — it's stored in its
+own `platform_admins` table. See migration 00048.
+
+- **Who has it now:** Jake Ross, Andrew Ross (seeded in migration 00048).
+- **How to grant:** direct SQL insert. There is no UI to add platform
+  admins by design. Run something like:
+  ```sql
+  INSERT INTO public.platform_admins (user_id, role, notes)
+  VALUES ((SELECT id FROM auth.users WHERE email = 'NEW@rossbuilt.com'),
+          'staff', 'Hired YYYY-MM — responsibility note');
+  ```
+  Then create an audit row manually explaining the grant, since the
+  table's RLS blocks authenticated writes:
+  ```sql
+  -- via service role, from Supabase SQL editor
+  INSERT INTO public.platform_admin_audit
+    (admin_user_id, action, target_user_id, reason)
+  VALUES (<admin-granting>, 'grant_platform_admin', <new-user-id>,
+          'reason text');
+  ```
+- **Where the UI lives:** `/admin/platform`. Middleware redirects non-
+  staff visitors to `/dashboard`. Every admin action (extend trial,
+  reset password, mark churned, impersonate) opens a reason modal and
+  writes to `platform_admin_audit` before persisting the change.
+- **Impersonation:** staff can impersonate an org's owner for up to one
+  hour via a signed `nw_impersonate` cookie. The middleware overrides
+  `x-org-id` / `x-org-role` so the rest of the app renders as the target
+  org. A red banner at the top of every page makes the state visible.
+  End the session via the banner or automatically after 60 minutes.
+- **RLS posture:** platform admins can `SELECT` cross-org on every major
+  tenant table (via migration 00049). Writes / deletes are still
+  strictly org-scoped by RLS — cross-org mutations go through service-
+  role API routes that audit-log unconditionally.
+- **Audit log:** append-only. There is no UI or API path to edit or
+  delete rows. Query directly if you need to investigate history:
+  ```sql
+  SELECT * FROM public.platform_admin_audit
+  WHERE target_org_id = 'ORG_UUID'
+  ORDER BY created_at DESC;
+  ```
+- **Sentry tags:** middleware stamps every request's scope with
+  `user_id`, `org_id`, `impersonation_active`, `platform_admin`. When a
+  customer reports an error, filter Sentry by their org_id to find it.
+- **When NOT to use it:** don't impersonate for casual browsing — the
+  audit log is company-visible. Use it for reproducing a customer issue
+  you can't see from telemetry, or to repair stuck records they can't
+  fix themselves.
+
+See `docs/platform-admin-runbook.md` for common scenarios.
+
 ## Development Rules
 - Run `npm run build` before committing — no build errors allowed
 - Every database change is a numbered migration file

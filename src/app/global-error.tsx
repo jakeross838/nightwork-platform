@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 
 // Root-level error boundary. Catches errors inside the root layout
 // (where `error.tsx` cannot reach). Must render its own <html>/<body>.
@@ -12,6 +13,9 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Send to Sentry (no-op when DSN is unset) AND log to the browser
+    // console so local dev still sees the stack trace.
+    Sentry.captureException(error);
     // eslint-disable-next-line no-console
     console.error("[global error]", error);
   }, [error]);

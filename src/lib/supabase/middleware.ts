@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 /**
  * Billing gate evaluation returned alongside the user.
@@ -37,12 +38,17 @@ function isHotApiPath(pathname: string): boolean {
  * query, saving ~250-300ms per request.
  */
 export async function updateSession(request: NextRequest) {
-  // Strip any incoming x-org-* headers so a client can't forge them. We'll
-  // set the trusted versions ourselves once auth resolves.
+  // Strip any incoming x-org-* / x-platform-admin* headers so a client
+  // can't forge them. We'll set the trusted versions ourselves once auth
+  // resolves.
   const scrubbed = new Headers(request.headers);
   scrubbed.delete("x-user-id");
   scrubbed.delete("x-org-id");
   scrubbed.delete("x-org-role");
+  scrubbed.delete("x-platform-admin");
+  scrubbed.delete("x-platform-admin-role");
+  scrubbed.delete("x-impersonation-active");
+  scrubbed.delete("x-impersonation-target-org");
 
   // Track any cookies Supabase wants to set during token refresh. We apply
   // them to the final response at the very end.
@@ -133,13 +139,86 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // Platform admin lookup — cheap single-row read. We do this for
+  // every authenticated request (skipping hot API paths) so impersonation
+  // and /admin/platform route guards can check without extra queries.
+  let platformAdmin: { role: string } | null = null;
+  if (user && !isHotApi) {
+    const { data: pa } = await supabase
+      .from("platform_admins")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (pa) platformAdmin = { role: pa.role as string };
+  }
+
+  // Impersonation: if the cookie is present and the user is actually a
+  // platform admin, override the org context headers so downstream
+  // handlers see the target org as "current". Cookie value is JSON.
+  let impersonationActive = false;
+  let impersonationTargetOrg: string | null = null;
+  if (user && platformAdmin) {
+    const cookie = request.cookies.get("nw_impersonate")?.value;
+    if (cookie) {
+      try {
+        const parsed = JSON.parse(cookie) as {
+          admin_user_id?: string;
+          target_org_id?: string;
+          started_at?: string;
+        };
+        const startedAt = parsed.started_at ? new Date(parsed.started_at) : null;
+        const ageMs = startedAt ? Date.now() - startedAt.getTime() : Infinity;
+        const ONE_HOUR = 60 * 60 * 1000;
+        if (
+          parsed.admin_user_id === user.id &&
+          parsed.target_org_id &&
+          ageMs < ONE_HOUR
+        ) {
+          impersonationActive = true;
+          impersonationTargetOrg = parsed.target_org_id;
+        }
+      } catch {
+        // Malformed cookie — ignore. The end-impersonation endpoint
+        // will clear it on the next hit.
+      }
+    }
+  }
+
   // Set the trusted auth headers on the forwarded request. Building the
   // response LAST (after all mutations) ensures Next snapshots the full
   // header set at forward time.
   if (user) scrubbed.set("x-user-id", user.id);
-  if (membership) {
+  if (impersonationActive && impersonationTargetOrg) {
+    // Override org context to target org so standard handlers see
+    // membership as if the admin were a member of that org.
+    scrubbed.set("x-org-id", impersonationTargetOrg);
+    // Role defaults to "owner" so impersonation sees the most
+    // permissive app-level UI. The DB still rejects write attempts
+    // because app_private.user_org_id() returns the admin's real
+    // profile org, not the impersonated one.
+    scrubbed.set("x-org-role", "owner");
+    scrubbed.set("x-impersonation-active", "1");
+    scrubbed.set("x-impersonation-target-org", impersonationTargetOrg);
+  } else if (membership) {
     scrubbed.set("x-org-id", membership.org_id);
     scrubbed.set("x-org-role", membership.role);
+  }
+  if (platformAdmin) {
+    scrubbed.set("x-platform-admin", "1");
+    scrubbed.set("x-platform-admin-role", platformAdmin.role);
+  }
+
+  // Tag the current Sentry scope so any captured error carries tenant
+  // context. No-op when DSN isn't configured. Tags are scoped
+  // per-request via Sentry's AsyncLocalStorage integration, so this is
+  // safe to set from middleware.
+  try {
+    if (user) Sentry.setTag("user_id", user.id);
+    if (membership) Sentry.setTag("org_id", membership.org_id);
+    Sentry.setTag("impersonation_active", impersonationActive ? "1" : "0");
+    Sentry.setTag("platform_admin", platformAdmin ? "1" : "0");
+  } catch {
+    // Sentry not initialized — fine.
   }
 
   const response = NextResponse.next({ request: { headers: scrubbed } });
@@ -149,6 +228,16 @@ export async function updateSession(request: NextRequest) {
   }
   // Expose billing state to server components via a response header.
   response.headers.set("x-billing-gate", gate);
+  if (impersonationActive) {
+    response.headers.set("x-impersonation-active", "1");
+  }
 
-  return { response, user, gate };
+  return {
+    response,
+    user,
+    gate,
+    isPlatformAdmin: !!platformAdmin,
+    impersonationActive,
+    impersonationTargetOrg,
+  };
 }

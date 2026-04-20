@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
@@ -23,4 +25,21 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with Sentry so @sentry/nextjs can tree-shake the client SDK and
+// (later) upload source maps. Source-map upload requires SENTRY_AUTH_TOKEN
+// + project config — we intentionally leave that un-set here so local
+// builds never try to upload.
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  // Don't attempt source-map upload until the auth token + project slug
+  // are set in deploy-time env. Until then, just link error stack
+  // traces via the in-browser SDK.
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+  // Keep the automatic instrumentation on; it wraps server actions /
+  // route handlers / etc. so no per-file boilerplate is needed.
+  autoInstrumentServerFunctions: true,
+  hideSourceMaps: true,
+  disableLogger: true,
+});

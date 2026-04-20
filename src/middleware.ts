@@ -31,7 +31,7 @@ function canEscapeBillingGate(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const T0 = Date.now();
-  const { response, user, gate } = await updateSession(request);
+  const { response, user, gate, isPlatformAdmin } = await updateSession(request);
   const { pathname } = request.nextUrl;
   if (process.env.PERF_LOG === "1" && pathname.startsWith("/api/")) {
     console.log(`[perf] middleware ${pathname}: ${Date.now() - T0}ms`);
@@ -52,10 +52,40 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Platform admin route guard. Must run BEFORE the billing gate —
+  // staff need to access /admin/platform even when their own org is
+  // expired, and non-staff shouldn't see the page exists.
+  if (pathname === "/admin/platform" || pathname.startsWith("/admin/platform/")) {
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("redirect", "/admin/platform");
+      return NextResponse.redirect(loginUrl);
+    }
+    if (!isPlatformAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    // Authorized — fall through to response.
+  }
+
+  // Platform admin API routes: return JSON 401 instead of redirecting.
+  if (pathname.startsWith("/api/admin/platform")) {
+    if (!user || !isPlatformAdmin) {
+      return NextResponse.json(
+        { error: "Platform admin required" },
+        { status: 401 }
+      );
+    }
+  }
+
   // Billing enforcement: expired trial / cancelled sub → force to billing
   // page so they can resubscribe. Read-only mode is enforced at API-route
   // level (middleware stays GET-only friendly so pages can still render).
-  if (user && gate === "expired" && !canEscapeBillingGate(pathname)) {
+  // Platform admins are exempt — staff need to debug billing issues.
+  if (user && !isPlatformAdmin && gate === "expired" && !canEscapeBillingGate(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/settings/billing";
     url.search = "?trial_expired=1";
