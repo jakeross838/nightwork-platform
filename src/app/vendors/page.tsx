@@ -338,7 +338,7 @@ export default function VendorsPage() {
     <VendorImportModal open={importOpen} onClose={() => {
       setImportOpen(false);
       if (searchParams.get("action")) router.replace("/vendors");
-      window.location.reload();
+      router.refresh();
     }} />
     </AppShell>
   );
