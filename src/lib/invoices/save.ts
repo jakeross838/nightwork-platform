@@ -19,8 +19,6 @@ import { getWorkflowSettings } from "@/lib/workflow-settings";
 
 const INVOICES_BUCKET = "invoice-files";
 
-export const ORG_ID = "00000000-0000-0000-0000-000000000001";
-
 export interface SaveInvoiceRequest {
   parsed: ParsedInvoice;
   file_url: string;
@@ -29,6 +27,8 @@ export interface SaveInvoiceRequest {
   force_save?: boolean;
   /** User-selected document type: 'invoice' (default) or 'receipt'. */
   document_type?: "invoice" | "receipt";
+  /** Caller-resolved org_id — must be the authenticated user's membership org. */
+  org_id: string;
 }
 
 export interface SaveInvoiceResult {
@@ -100,14 +100,15 @@ async function matchVendor(supabase: SupabaseClient, vendorName: string) {
 
 async function findOrCreateVendor(
   supabase: SupabaseClient,
-  vendorName: string
+  vendorName: string,
+  orgId: string
 ): Promise<{ id: string; name: string }> {
   const matched = await matchVendor(supabase, vendorName);
   if (matched) return matched;
 
   const { data, error } = await supabase
     .from("vendors")
-    .insert({ name: vendorName.trim(), org_id: ORG_ID })
+    .insert({ name: vendorName.trim(), org_id: orgId })
     .select("id, name")
     .single();
 
@@ -202,7 +203,10 @@ export async function saveParsedInvoice(
   supabase: SupabaseClient,
   req: SaveInvoiceRequest
 ): Promise<SaveInvoiceResult> {
-  const { parsed, file_url, file_name, file_type, force_save, document_type } = req;
+  const { parsed, file_url, file_name, file_type, force_save, document_type, org_id: orgId } = req;
+  if (!orgId) {
+    throw new Error("saveParsedInvoice called without org_id");
+  }
 
   const totalAmountCents = dollarsToCents(parsed.total_amount);
 
@@ -231,7 +235,7 @@ export async function saveParsedInvoice(
   let matchedVendor: { id: string; name: string } | null = null;
   if (parsed.vendor_name) {
     try {
-      matchedVendor = await findOrCreateVendor(supabase, parsed.vendor_name);
+      matchedVendor = await findOrCreateVendor(supabase, parsed.vendor_name, orgId);
     } catch (err) {
       // Log so we can track why vendor linkage fails; don't fail the save —
       // invoice still enters the review queue, just without a vendor_id.
@@ -318,7 +322,7 @@ export async function saveParsedInvoice(
     invoiceDate: parsed.invoice_date,
     extension: ext,
   });
-  const desiredPath = storagePathFor(cleanName, ORG_ID);
+  const desiredPath = storagePathFor(cleanName, orgId);
 
   let finalFileUrl = file_url;
   try {
@@ -403,7 +407,7 @@ export async function saveParsedInvoice(
       original_file_type: mapFileType(file_type),
       document_category: overhead.isOverhead ? "overhead" : "job_cost",
       document_type: document_type ?? "invoice",
-      org_id: ORG_ID,
+      org_id: orgId,
     })
     .select("id")
     .single();
@@ -419,10 +423,10 @@ export async function saveParsedInvoice(
   // record within the configured sensitivity window. The hard duplicate block
   // above already caught exact matches before we ever wrote the row.
   try {
-    const settings = await getWorkflowSettings(ORG_ID);
+    const settings = await getWorkflowSettings(orgId);
     if (settings.duplicate_detection_enabled) {
       const match = await findPotentialDuplicate(supabase, {
-        org_id: ORG_ID,
+        org_id: orgId,
         vendor_name_raw: parsed.vendor_name ?? null,
         total_amount_cents: totalAmountCents,
         invoice_date: parsed.invoice_date,
@@ -506,7 +510,7 @@ export async function saveParsedInvoice(
           co_reference: li.co_reference ?? (invoiceIsChangeOrder ? parsed.co_reference : null),
           ai_suggested_cost_code_id: sugMatch?.id ?? null,
           ai_suggestion_confidence: sugConfidence,
-          org_id: ORG_ID,
+          org_id: orgId,
         };
       })
     );
@@ -549,7 +553,7 @@ export async function saveParsedInvoice(
     const jobName = match.job.name;
     const totalDollars = `$${Math.round(parsed.total_amount ?? 0).toLocaleString("en-US")}`;
     try {
-      await notifyPmsForJob(match.job.id, ORG_ID, {
+      await notifyPmsForJob(match.job.id, orgId, {
         notification_type: "invoice_uploaded",
         subject: `New invoice — ${vendorName} · ${totalDollars}`,
         body: `New invoice from ${vendorName} for ${totalDollars} on ${jobName} needs your review.`,

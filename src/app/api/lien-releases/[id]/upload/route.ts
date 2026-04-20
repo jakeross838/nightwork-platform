@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
 
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 const ACCEPTED = new Set(["application/pdf", "image/png", "image/jpeg", "image/jpg"]);
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -31,6 +31,11 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
     const supabase = createServerClient();
     const formData = await request.formData();
     const file = formData.get("file");
@@ -51,12 +56,19 @@ export async function POST(
       .from("lien_releases")
       .select("id, org_id, job_id, draw_id, vendor_id, status, document_url")
       .eq("id", params.id)
+      .eq("org_id", membership.org_id)
       .single();
     if (fetchErr || !release) {
       return NextResponse.json({ error: "Lien release not found" }, { status: 404 });
     }
 
-    const orgId = (release.org_id as string) ?? ORG_ID;
+    const orgId = release.org_id as string | null;
+    if (!orgId) {
+      return NextResponse.json(
+        { error: "Lien release record missing org_id" },
+        { status: 500 }
+      );
+    }
     const jobId = release.job_id as string;
     const drawId = (release.draw_id as string | null) ?? "no-draw";
     const vendorId = (release.vendor_id as string | null) ?? "no-vendor";

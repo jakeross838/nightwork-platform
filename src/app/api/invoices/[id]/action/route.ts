@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import {
   notifyRole,
   notifyUser,
@@ -42,6 +43,11 @@ export async function POST(
  { params }: { params: { id: string } }
 ) {
  try {
+ const membership = await getCurrentMembership();
+ if (!membership) {
+ return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+ }
+
  const supabase = createServerClient();
  const body: ActionRequest = await request.json();
  const { action, note, pm_overrides, qa_overrides, updates } = body;
@@ -61,10 +67,19 @@ export async function POST(
  .from("invoices")
  .select("status, status_history, pm_overrides, qa_overrides, job_id, cost_code_id, total_amount, ai_parsed_total_amount, org_id, vendor_name_raw, invoice_date, is_potential_duplicate, duplicate_dismissed_at, po_id, vendors(name), jobs(name, pm_id), created_by, assigned_pm_id")
  .eq("id", params.id)
+ .eq("org_id", membership.org_id)
  .single();
 
  if (fetchError || !invoice) {
  return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+ }
+
+ const invoiceOrgId = invoice.org_id as string | null;
+ if (!invoiceOrgId) {
+ return NextResponse.json(
+ { error: "Invoice record missing org_id" },
+ { status: 500 }
+ );
  }
 
  // Hard block: cannot approve without job and cost code
@@ -292,7 +307,7 @@ export async function POST(
 
  // Activity log — one row per user-visible status transition.
  await logStatusChange({
- org_id: (invoice.org_id as string | null) ?? "00000000-0000-0000-0000-000000000001",
+ org_id: invoiceOrgId,
  user_id: actor?.id ?? null,
  entity_type: "invoice",
  entity_id: params.id,

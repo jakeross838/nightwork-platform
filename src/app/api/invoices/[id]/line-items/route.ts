@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 
 export const dynamic = "force-dynamic";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 interface LineItemPayload {
  id?: string | null; // existing row id (UUID) — null/undefined = new row
@@ -33,6 +32,11 @@ export async function PUT(
  { params }: { params: { id: string } }
 ) {
  try {
+ const membership = await getCurrentMembership();
+ if (!membership) {
+ return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+ }
+
  const supabase = createServerClient();
  const body = (await request.json()) as { line_items: LineItemPayload[] };
  const payload = Array.isArray(body.line_items) ? body.line_items : [];
@@ -40,11 +44,19 @@ export async function PUT(
  // Fetch the parent invoice so we can resolve budget_line_id per line.
  const { data: invoice, error: invErr } = await supabase
  .from("invoices")
- .select("id, job_id")
+ .select("id, job_id, org_id")
  .eq("id", params.id)
+ .eq("org_id", membership.org_id)
  .single();
  if (invErr || !invoice) {
  return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+ }
+ const invoiceOrgId = invoice.org_id as string | null;
+ if (!invoiceOrgId) {
+ return NextResponse.json(
+ { error: "Invoice record missing org_id" },
+ { status: 500 }
+ );
  }
  const jobId = invoice.job_id as string | null;
 
@@ -116,7 +128,7 @@ export async function PUT(
  (p.cost_code_id ? budgetLineByCode.get(p.cost_code_id) ?? null : null),
  is_change_order: p.is_change_order,
  co_reference: p.co_reference,
- org_id: ORG_ID,
+ org_id: invoiceOrgId,
  // Revive rows if a prior soft-delete left this id dangling.
  deleted_at: null,
  }));

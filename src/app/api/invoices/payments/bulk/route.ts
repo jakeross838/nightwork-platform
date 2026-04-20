@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 import { getOrgPaymentSchedule, scheduledPaymentDate } from "@/lib/payment-schedule";
 
 export const dynamic = "force-dynamic";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
  * POST /api/invoices/payments/bulk
@@ -14,6 +13,12 @@ const ORG_ID = "00000000-0000-0000-0000-000000000001";
  */
 export async function POST(request: NextRequest) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const body = (await request.json()) as {
       ids?: string[];
@@ -27,10 +32,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.action === "schedule") {
-      const schedule = await getOrgPaymentSchedule(ORG_ID);
+      const schedule = await getOrgPaymentSchedule(orgId);
       const { data: invs } = await supabase
         .from("invoices")
         .select("id, received_date, payment_status")
+        .eq("org_id", orgId)
         .in("id", ids);
       let updated = 0;
       for (const inv of invs ?? []) {
@@ -44,7 +50,7 @@ export async function POST(request: NextRequest) {
         updated++;
       }
       await logActivity({
-        org_id: ORG_ID,
+        org_id: orgId,
         entity_type: "invoice",
         action: "updated",
         details: { bulk_schedule: updated },
@@ -58,6 +64,7 @@ export async function POST(request: NextRequest) {
       const { data: invs } = await supabase
         .from("invoices")
         .select("id, total_amount, vendor_id, draw_id, vendor_name_raw")
+        .eq("org_id", orgId)
         .in("id", ids);
       for (const inv of invs ?? []) {
         await supabase
@@ -100,7 +107,7 @@ export async function POST(request: NextRequest) {
       }
 
       await logActivity({
-        org_id: ORG_ID,
+        org_id: orgId,
         entity_type: "invoice",
         action: "status_changed",
         details: {

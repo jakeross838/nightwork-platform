@@ -168,6 +168,7 @@ async function processFile(
     file_url: storagePath,
     file_name: fileName,
     file_type: fileKind,
+    org_id: orgId,
   };
   const result = await saveParsedInvoice(supabase, req);
 

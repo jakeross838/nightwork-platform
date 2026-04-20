@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -13,6 +14,12 @@ export const fetchCache = "force-no-store";
  */
 export async function GET(request: NextRequest) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const { searchParams } = request.nextUrl;
     let query = supabase
@@ -24,6 +31,7 @@ export async function GET(request: NextRequest) {
          jobs:job_id (id, name),
          draws:draw_id (id, draw_number, revision_number)`
       )
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
@@ -54,6 +62,7 @@ export async function GET(request: NextRequest) {
       const { data: invs } = await supabase
         .from("invoices")
         .select("id, vendor_id, draw_id, payment_status, total_amount, payment_amount")
+        .eq("org_id", orgId)
         .in("vendor_id", Array.from(new Set(pairs.map((p) => p.vendor_id))) as string[])
         .in("draw_id", Array.from(new Set(pairs.map((p) => p.draw_id))) as string[])
         .is("deleted_at", null);

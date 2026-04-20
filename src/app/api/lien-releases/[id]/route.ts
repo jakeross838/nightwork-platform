@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
  * PATCH /api/lien-releases/:id
@@ -16,16 +15,30 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
     const supabase = createServerClient();
     const body = (await request.json()) as Record<string, unknown>;
 
     const { data: existing } = await supabase
       .from("lien_releases")
-      .select("id, status")
+      .select("id, status, org_id")
       .eq("id", params.id)
+      .eq("org_id", membership.org_id)
       .single();
     if (!existing) {
       return NextResponse.json({ error: "Lien release not found" }, { status: 404 });
+    }
+
+    const releaseOrgId = existing.org_id as string | null;
+    if (!releaseOrgId) {
+      return NextResponse.json(
+        { error: "Lien release record missing org_id" },
+        { status: 500 }
+      );
     }
 
     const updates: Record<string, unknown> = {};
@@ -48,7 +61,7 @@ export async function PATCH(
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     await logActivity({
-      org_id: ORG_ID,
+      org_id: releaseOrgId,
       entity_type: "draw",
       entity_id: params.id,
       action: "updated",

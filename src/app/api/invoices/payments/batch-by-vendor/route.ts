@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { recalcLinesAndPOs } from "@/lib/recalc";
 
 export const dynamic = "force-dynamic";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 interface VendorBatch {
   vendor_id: string;
@@ -30,6 +29,12 @@ interface BatchRequest {
  */
 export async function POST(request: NextRequest) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const body = (await request.json()) as BatchRequest;
     if (!body.vendors || body.vendors.length === 0) {
@@ -49,6 +54,7 @@ export async function POST(request: NextRequest) {
       .select(
         "id, vendor_id, total_amount, status, payment_status, draw_id, vendor_name_raw"
       )
+      .eq("org_id", orgId)
       .in("id", allInvoiceIds)
       .is("deleted_at", null);
     type InvRow = {
@@ -137,7 +143,7 @@ export async function POST(request: NextRequest) {
         const inv = invMap.get(invId);
         if (!inv) continue;
         await logStatusChange({
-          org_id: ORG_ID,
+          org_id: orgId,
           entity_type: "invoice",
           entity_id: invId,
           from: inv.payment_status as string,
@@ -174,7 +180,7 @@ export async function POST(request: NextRequest) {
     }
 
     await logActivity({
-      org_id: ORG_ID,
+      org_id: orgId,
       entity_type: "invoice",
       action: "status_changed",
       details: {

@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
  * POST /api/lien-releases/bulk
@@ -15,11 +14,35 @@ const ORG_ID = "00000000-0000-0000-0000-000000000001";
  */
 export async function POST(request: NextRequest) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const body = (await request.json()) as { ids?: string[]; action?: string };
     const ids = body.ids ?? [];
     if (ids.length === 0) {
       return NextResponse.json({ error: "No ids provided" }, { status: 400 });
+    }
+
+    // Confirm every target release belongs to the user's org. Reject the
+    // whole batch if any don't (rather than silently skipping) so the caller
+    // knows they passed a bad id.
+    const { data: targets, error: targetsErr } = await supabase
+      .from("lien_releases")
+      .select("id")
+      .eq("org_id", orgId)
+      .in("id", ids);
+    if (targetsErr) {
+      return NextResponse.json({ error: targetsErr.message }, { status: 500 });
+    }
+    if ((targets?.length ?? 0) !== ids.length) {
+      return NextResponse.json(
+        { error: "One or more lien releases not found in your organization" },
+        { status: 404 }
+      );
     }
 
     const updates: Record<string, unknown> = {};
@@ -32,11 +55,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    const { error } = await supabase.from("lien_releases").update(updates).in("id", ids);
+    const { error } = await supabase
+      .from("lien_releases")
+      .update(updates)
+      .eq("org_id", orgId)
+      .in("id", ids);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     await logActivity({
-      org_id: ORG_ID,
+      org_id: orgId,
       entity_type: "draw",
       entity_id: null,
       action: "updated",
