@@ -225,12 +225,12 @@ export default function OnboardWizard({
 
   return (
     <div className="min-h-screen bg-brand-bg">
-      <header className="border-b border-brand-border bg-white">
+      <header className="border-b border-[var(--border-default)] bg-[var(--bg-card)]">
         <div className="max-w-[900px] mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="font-display text-lg tracking-[0.12em] uppercase text-cream">
+          <span className="font-display text-lg tracking-[0.12em] uppercase text-[color:var(--text-primary)]">
             {PUBLIC_APP_NAME}
           </span>
-          <span className="text-xs text-cream-dim">Welcome{userFullName ? `, ${userFullName.split(" ")[0]}` : ""}</span>
+          <span className="text-xs text-[color:var(--text-secondary)]">Welcome{userFullName ? `, ${userFullName.split(" ")[0]}` : ""}</span>
         </div>
       </header>
 
@@ -238,7 +238,7 @@ export default function OnboardWizard({
         <StepRail step={step} />
 
         {error && (
-          <p className="mb-4 px-3 py-2 text-sm text-status-danger border border-status-danger/40 bg-status-danger/5">
+          <p className="mb-4 px-3 py-2 text-sm text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)]">
             {error}
           </p>
         )}
@@ -248,7 +248,7 @@ export default function OnboardWizard({
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Company Name" value={company.name} onChange={(v) => setCompany({ ...company, name: v })} />
               <label className="block">
-                <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+                <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                   Builder Type
                 </span>
                 <select
@@ -274,9 +274,9 @@ export default function OnboardWizard({
             <Field label="Website" value={company.company_website ?? ""} onChange={(v) => setCompany({ ...company, company_website: v })} placeholder="https://example.com" />
 
             <div>
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">Logo (optional)</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">Logo (optional)</span>
               <div className="flex items-center gap-4">
-                <div className="h-14 w-36 flex items-center justify-center border border-brand-border bg-[var(--nw-slate-deep)]">
+                <div className="h-14 w-36 flex items-center justify-center border border-[var(--border-default)] bg-[var(--nw-slate-deep)]">
                   {company.logo_url ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={company.logo_url} alt="Logo" className="max-h-10 max-w-[130px] object-contain" />
@@ -293,7 +293,7 @@ export default function OnboardWizard({
                 type="button"
                 onClick={saveCompany}
                 disabled={busy || !company.name.trim()}
-                className="px-5 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
+                className="px-5 py-2.5 bg-[var(--nw-stone-blue)] text-white text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
               >
                 {busy ? "Saving…" : "Next — Financial Defaults"}
               </button>
@@ -308,7 +308,7 @@ export default function OnboardWizard({
               <PctField label="Default Deposit" value={deposit} onChange={setDeposit} help="Client deposit as share of contract sum." />
             </div>
             <div>
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-2">Payment Schedule</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-2">Payment Schedule</span>
               <div className="grid sm:grid-cols-2 gap-3">
                 {PAYMENT_OPTIONS.map((opt) => (
                   <button
@@ -317,12 +317,12 @@ export default function OnboardWizard({
                     onClick={() => setPayment(opt.value)}
                     className={`text-left p-4 border transition-colors ${
                       payment === opt.value
-                        ? "border-teal bg-teal-muted"
-                        : "border-brand-border bg-white hover:bg-brand-surface"
+                        ? "border-[var(--nw-stone-blue)] bg-[rgba(91,134,153,0.12)]"
+                        : "border-[var(--border-default)] bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)]"
                     }`}
                   >
-                    <p className="font-display text-cream">{opt.title}</p>
-                    <p className="mt-1 text-xs text-cream-muted">{opt.detail}</p>
+                    <p className="font-display text-[color:var(--text-primary)]">{opt.title}</p>
+                    <p className="mt-1 text-xs text-[color:var(--text-muted)]">{opt.detail}</p>
                   </button>
                 ))}
               </div>
@@ -333,7 +333,7 @@ export default function OnboardWizard({
                 type="button"
                 onClick={saveFinancial}
                 disabled={busy}
-                className="px-5 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
+                className="px-5 py-2.5 bg-[var(--nw-stone-blue)] text-white text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
               >
                 {busy ? "Saving…" : "Next — Cost Codes"}
               </button>
@@ -372,7 +372,7 @@ export default function OnboardWizard({
                 type="button"
                 onClick={() => setStep(4)}
                 disabled={codeChoice === null}
-                className="px-5 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
+                className="px-5 py-2.5 bg-[var(--nw-stone-blue)] text-white text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
               >
                 Next — Invite Team
               </button>
@@ -404,7 +404,7 @@ export default function OnboardWizard({
                   <button
                     type="button"
                     onClick={() => setInvites(invites.filter((_, xi) => xi !== i))}
-                    className="px-2 text-cream-dim text-sm hover:text-cream"
+                    className="px-2 text-[color:var(--text-secondary)] text-sm hover:text-[color:var(--text-primary)]"
                   >
                     ×
                   </button>
@@ -413,7 +413,7 @@ export default function OnboardWizard({
               <button
                 type="button"
                 onClick={() => setInvites([...invites, { email: "", role: "pm" }])}
-                className="text-sm text-teal hover:underline underline-offset-4"
+                className="text-sm text-[color:var(--nw-stone-blue)] hover:underline underline-offset-4"
               >
                 + Add another
               </button>
@@ -423,7 +423,7 @@ export default function OnboardWizard({
               <button
                 type="button"
                 onClick={() => setStep(5)}
-                className="px-5 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase"
+                className="px-5 py-2.5 bg-[var(--nw-stone-blue)] text-white text-[13px] tracking-[0.08em] uppercase"
               >
                 Next — First Job
               </button>
@@ -453,7 +453,7 @@ export default function OnboardWizard({
                   type="button"
                   onClick={() => finish(false)}
                   disabled={busy}
-                  className="px-5 py-2.5 border border-brand-border text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
+                  className="px-5 py-2.5 border border-[var(--border-default)] text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
                 >
                   Skip — I&apos;ll do this later
                 </button>
@@ -461,7 +461,7 @@ export default function OnboardWizard({
                   type="button"
                   onClick={() => finish(true)}
                   disabled={busy || !job.name.trim()}
-                  className="px-5 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
+                  className="px-5 py-2.5 bg-[var(--nw-stone-blue)] text-white text-[13px] tracking-[0.08em] uppercase disabled:opacity-60"
                 >
                   {busy ? "Finishing…" : "Create Job & Finish"}
                 </button>
@@ -495,15 +495,15 @@ function StepRail({ step }: { step: number }) {
             <div
               className={`w-7 h-7 flex items-center justify-center text-[12px] font-medium ${
                 done
-                  ? "bg-teal text-white"
+                  ? "bg-[var(--nw-stone-blue)] text-white"
                   : active
-                  ? "border-2 border-teal text-cream"
-                  : "border border-brand-border text-cream-dim"
+                  ? "border-2 border-[var(--nw-stone-blue)] text-[color:var(--text-primary)]"
+                  : "border border-[var(--border-default)] text-[color:var(--text-secondary)]"
               }`}
             >
               {done ? "✓" : num}
             </div>
-            <span className={`text-sm ${active ? "text-cream font-medium" : "text-cream-dim"}`}>{label}</span>
+            <span className={`text-sm ${active ? "text-[color:var(--text-primary)] font-medium" : "text-[color:var(--text-secondary)]"}`}>{label}</span>
             {i < steps.length - 1 && <span className="w-8 h-px bg-brand-border" />}
           </div>
         );
@@ -514,16 +514,16 @@ function StepRail({ step }: { step: number }) {
 
 function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white border border-brand-border p-6 md:p-8">
-      <h1 className="font-display text-2xl text-cream">{title}</h1>
-      <p className="mt-1 text-sm text-cream-muted">{subtitle}</p>
+    <section className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 md:p-8">
+      <h1 className="font-display text-2xl text-[color:var(--text-primary)]">{title}</h1>
+      <p className="mt-1 text-sm text-[color:var(--text-muted)]">{subtitle}</p>
       <div className="mt-6 space-y-4">{children}</div>
     </section>
   );
 }
 
 function NavFooter({ children }: { children: React.ReactNode }) {
-  return <div className="mt-6 pt-6 border-t border-brand-border flex items-center justify-between gap-3 flex-wrap">{children}</div>;
+  return <div className="mt-6 pt-6 border-t border-[var(--border-default)] flex items-center justify-between gap-3 flex-wrap">{children}</div>;
 }
 
 function BackBtn({ onClick }: { onClick: () => void }) {
@@ -531,7 +531,7 @@ function BackBtn({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="px-4 py-2.5 text-[13px] tracking-[0.08em] uppercase text-cream-muted hover:text-cream"
+      className="px-4 py-2.5 text-[13px] tracking-[0.08em] uppercase text-[color:var(--text-muted)] hover:text-[color:var(--text-primary)]"
     >
       ← Back
     </button>
@@ -553,7 +553,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">{label}</span>
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">{label}</span>
       <input
         type={type}
         value={value}
@@ -580,9 +580,9 @@ function CurrencyField({
   const display = value ? Number(value).toLocaleString("en-US") : "";
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">{label}</span>
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">{label}</span>
       <div className="flex items-stretch">
-        <span className="flex items-center px-3 border border-r-0 border-brand-border bg-brand-surface text-cream-dim text-sm">$</span>
+        <span className="flex items-center px-3 border border-r-0 border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-secondary)] text-sm">$</span>
         <input
           type="text"
           inputMode="numeric"
@@ -599,7 +599,7 @@ function CurrencyField({
 function PctField({ label, value, onChange, help }: { label: string; value: number; onChange: (v: number) => void; help: string }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">{label}</span>
+      <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -610,9 +610,9 @@ function PctField({ label, value, onChange, help }: { label: string; value: numb
           onChange={(e) => onChange(Number(e.target.value))}
           className="w-full px-3 py-2.5 border nw-panel text-sm"
         />
-        <span className="text-cream-dim text-sm">%</span>
+        <span className="text-[color:var(--text-secondary)] text-sm">%</span>
       </div>
-      <p className="mt-1 text-xs text-cream-dim">{help}</p>
+      <p className="mt-1 text-xs text-[color:var(--text-secondary)]">{help}</p>
     </label>
   );
 }
@@ -636,12 +636,12 @@ function ChoiceCard({
       onClick={onClick}
       className={`group text-left p-5 border flex flex-col transition-colors ${
         selected
-          ? "border-teal bg-teal-muted"
-          : "border-brand-border bg-white hover:border-teal hover:bg-teal-muted/40"
+          ? "border-[var(--nw-stone-blue)] bg-[rgba(91,134,153,0.12)]"
+          : "border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--nw-stone-blue)] hover:bg-[rgba(91,134,153,0.06)]"
       }`}
     >
-      <h3 className="font-display text-lg text-cream">{title}</h3>
-      <p className="mt-2 text-sm text-cream-muted flex-1">{subtitle}</p>
+      <h3 className="font-display text-lg text-[color:var(--text-primary)]">{title}</h3>
+      <p className="mt-2 text-sm text-[color:var(--text-muted)] flex-1">{subtitle}</p>
       <span
         style={{
           color: "#3F5B62",
