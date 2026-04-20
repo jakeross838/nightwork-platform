@@ -395,6 +395,24 @@ The draw output must match AIA standard format. Reference: Drummond Pay App 8.
 ## Development Rules
 - Run `npm run build` before committing — no build errors allowed
 - Every database change is a numbered migration file
+- **Every API route uses `getCurrentMembership()` before DB access.** RLS
+  alone is a backstop, not a substitute for application-layer auth. A
+  dropped policy must not cause a leak. Filter every query by
+  `membership.org_id`.
+- **Never hardcode an ORG_ID as a fallback.** If a record's `org_id` is
+  null, fail with 500 "record missing org_id". The only legitimate
+  constant ORG_ID is `TEMPLATE_ORG_ID` in cost-codes/template/route.ts
+  for seed reads.
+- **Write endpoints accept `expected_updated_at`** for optimistic
+  locking. Use `updateWithLock()` in src/lib/api/optimistic-lock.ts.
+  Stale writes return 409 with the current row so the client can
+  reconcile.
+- **Design tokens use Slate semantics, not legacy namespaces.** Cream,
+  teal, brass, brand, status, nightwork tailwind color namespaces were
+  removed in Phase E. Use bracket-value utilities with CSS vars, e.g.
+  `bg-[var(--bg-card)]`, `text-[color:var(--text-primary)]`,
+  `border-[var(--border-default)]`, or the raw `nw-*` utilities
+  (`text-nw-slate-tile`, `bg-nw-stone-blue`, etc.).
 - Never store computed values — compute budget math on read.
   **Exception:** trigger-maintained caches are permitted when read-time
   recompute would be prohibitively expensive. Every such column must have an

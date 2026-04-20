@@ -4,14 +4,29 @@ Tracking non-blocking issues found during phase work that need
 attention later. Each entry links to the phase where it was
 discovered.
 
-## F-001: DEFAULT_ORG_ID hardcoded in budget-import route — RESOLVED
-**Discovered:** Phase A (commit pending)
-**Resolved:** Phase D Step 5 adopt
-**Fix:** Removed hardcoded DEFAULT_ORG_ID constant. Both import
-paths (simple budget sheet + pay-app) now resolve org_id from the
-job's own org_id column (NOT NULL in schema, 0 rows violate).
-Cost code lookups scoped by org_id to prevent cross-org resolution.
-If job somehow has no org_id, throws 400 instead of silent fallback.
+## F-001: DEFAULT_ORG_ID hardcoded — RESOLVED (full sweep)
+**Discovered:** Phase A (original)
+**Resolved:** Phase D Step 5 (budget-import) + 2026-04-20 comprehensive
+pass (SEC-C-2 in REVIEW_FINDINGS): 8 additional routes still had the
+`00000000-0000-0000-0000-000000000001` fallback when record.org_id was
+null. All 8 now reject with 500 "record missing org_id" and filter all
+queries by membership.org_id.
+
+**Final coverage (post-fix):**
+- src/app/api/lien-releases/[id]/upload/route.ts
+- src/app/api/lien-releases/[id]/route.ts
+- src/app/api/lien-releases/bulk/route.ts
+- src/app/api/invoices/[id]/payment/route.ts
+- src/app/api/invoices/[id]/line-items/route.ts
+- src/app/api/invoices/payments/bulk/route.ts
+- src/app/api/invoices/payments/batch-by-vendor/route.ts
+- src/lib/invoices/save.ts — now accepts org_id via SaveInvoiceRequest
+
+Only remaining hardcoded reference is `TEMPLATE_ORG_ID` in
+src/app/api/cost-codes/template/route.ts — that's intentional for
+seed-template reads.
+
+**Status: CLOSED.**
 
 ## F-002: PostgREST RLS join embedding failures
 **Discovered:** Pre-Phase-A (from commit 79ab01d)
@@ -35,22 +50,18 @@ budget_lines, cost_codes, draws. Likely missing policies for
 embedded-read scenarios. Fix policies, then remove service-role
 fallback across the 6 routes.
 
-## F-002a: "Owner" role missing from RLS SELECT policies
-**Discovered:** Phase C screenshot blocker
-**Tables affected:** draws (confirmed). Likely also: jobs, invoices,
-budget_lines, change_orders — needs full audit.
-**Issue:** RLS SELECT policies grant access to "admin" and "pm on
-own jobs" but not "owner" role. In dev this is masked by service-role
-fallback. In production, owner-role users would hit 500s on any
-route that doesn't use service-role.
-**Impact:** Production-blocking for any deploy where owner-role
-users need to view draws/jobs/invoices.
-**Severity:** HIGH for production.
-**Recommended fix:** Audit all RLS policies on multi-tenant tables.
-Add "owner" role to SELECT policies wherever "admin" appears.
-Should be a single migration: 00039_owner_rls_audit.sql.
-**Recommended timing:** Before deploy to nightwork.build. Not
-blocking dev work.
+## F-002a: "Owner" role missing from RLS SELECT policies — FIXED
+**Fixed:** Migration 00039 (2026-04-17) added owner to draws +
+draw_line_items SELECT policies. Other tables (jobs, invoices,
+budget_lines, change_orders) use `authenticated read` policies that
+cover all roles — no owner-specific gap remains.
+
+Wave E.1 (2026-04-20) tightened those same policies further:
+migration 00046 scopes `authenticated read` to `user_org_id()` for
+jobs/vendors/cost_codes so tenant isolation no longer depends on the
+RESTRICTIVE "org isolation" policy being present.
+
+**Status: FIXED.**
 
 ## F-003: CLOSED — Not a bug, matches real workflow
 **Discovered:** Phase D D1 (invoice allocations salvage)
@@ -355,33 +366,26 @@ that CSS-morphs between sidebar and drawer layouts. Likely ~1 hour.
 
 **Recommended:** Defer until performance is a felt problem.
 
-## F-016: Modal close triggers window.location.reload()
-**Discovered:** 2026-04-18 during action-pages-to-modals phase
-**Impact:** All 5 action modals (invoice upload, invoice import,
-vendor import, cost code import, PO import) use
-`window.location.reload()` on close/success to refresh the
-parent list. Full page refresh loses scroll position and
-re-executes all page-level queries unnecessarily.
+## F-016: Modal close triggers window.location.reload() — FIXED
+**Fixed:** 2026-04-20 (H.3 in comprehensive pass). All 5 modal close
+handlers now call `router.refresh()` instead of a full page reload.
+SPA state is preserved; Next.js server components re-execute to pull
+fresh data.
 
-**Severity:** Low. Works correctly, just not optimal UX.
+Sites fixed:
+- src/app/vendors/page.tsx (vendor import modal close)
+- src/app/invoices/page.tsx (upload + import modal close, 2 sites)
+- src/app/invoices/[id]/page.tsx (reopen action)
+- src/app/jobs/[id]/purchase-orders/page.tsx (PO import modal close)
 
-**Fix:** Pass onSuccess callback to each modal. Parent list
-page's data hook (SWR, React Query, or manual refetch) handles
-revalidation. Modal closes without reload.
+**Status: FIXED.**
 
-**Effort:** 1-2 hours (one helper, 5 call sites).
+## F-017: EmptyState primaryAction type — FIXED
+**Fixed:** 2026-04-20 (H.4). Prop type is now a discriminated
+union — either `{ label, href }` or `{ label, onClick }`, never both.
+Misuse surfaces at the type level.
 
-## F-017: EmptyState primaryAction type accepts href or onClick
-**Discovered:** 2026-04-18 during Tier 1 action modal work
-**Impact:** EmptyState component's primaryAction prop type
-accepts either href or onClick, but the type definition may
-not reflect both options cleanly. Didn't break the build,
-just untidy.
-
-**Severity:** Trivial.
-
-**Fix:** Clean up the prop type to explicitly union href-action
-vs click-action.
+**Status: FIXED.**
 
 ## F-021: Parser self-learning via correction capture
 **Discovered:** 2026-04-18 during Fish invoice dogfood
@@ -404,3 +408,59 @@ as few-shot examples.
 3-6 months of production correction data. Decide between
 prompt engineering, retrieval-augmented generation, or
 fine-tuning based on correction patterns observed.
+
+## F-018: API route auth-gate consistency — RESOLVED
+**Discovered:** 2026-04-20 comprehensive review (SEC-C-1)
+**Resolved:** 2026-04-20 same pass. 8 routes that previously relied
+on RLS alone now call `getCurrentMembership()` and filter every query
+by `membership.org_id`. Matches the pattern already used by
+batch-action, draws, and invoices/import/upload routes.
+
+**Routes fixed:**
+- /api/invoices/[id]/payment
+- /api/invoices/[id]/line-items
+- /api/invoices/[id]/action (already auth'd, now also scoped by org_id)
+- /api/invoices/save
+- /api/lien-releases (GET)
+- /api/lien-releases/[id]
+- /api/lien-releases/[id]/upload
+- /api/lien-releases/bulk
+
+**Status: CLOSED.**
+
+## F-022: Optimistic locking rollout — PARTIAL
+**Discovered:** 2026-04-20 comprehensive review (WI-C-3)
+**Status:** Server side done — 11 write endpoints now use the
+`updateWithLock` helper (src/lib/api/optimistic-lock.ts). When the
+client sends `expected_updated_at` in the body, a stale write returns
+409 with the current row. `expected_updated_at` is OPTIONAL for
+backward compatibility; legacy clients that don't send it silently
+skip the lock.
+
+**Client-side follow-up:** update the read-then-write UIs (invoices,
+draws, change-orders, purchase-orders, vendors, lien-releases) to
+include `expected_updated_at` in every mutation body. Once every
+calling surface is migrated, flip the field to required.
+
+**Severity:** Medium. Current state is strictly additive (no
+regression). Benefit accrues once clients opt in.
+
+## F-023: API rate limiting — DEFERRED
+**Discovered:** 2026-04-20 comprehensive review (SEC-L-2)
+**Scope exceeded comprehensive-pass budget.** A basic LRU-based
+per-user rate limiter on /api/* needs middleware work + Redis/KV
+decision + abuse-threshold tuning. Pre-demo risk is low (internal
+users only). Revisit post-demo before any external user onboarding.
+
+**Severity:** Low (dev) / Medium (prod).
+
+## F-024: Role matrix audit for RLS — DEFERRED
+**Discovered:** 2026-04-20 (DBM-H-002 in review)
+**Context:** Existing policies cover admin/owner writes everywhere
+and accounting writes on financial tables. PM writes are scoped to
+own-jobs. "Viewer" role doesn't exist yet. Full matrix audit
+(should accounting write COs? should PM write budget_lines?)
+requires product-level discussion — not a mechanical migration.
+
+**Severity:** Medium. No known leak today; hardening task.
+
