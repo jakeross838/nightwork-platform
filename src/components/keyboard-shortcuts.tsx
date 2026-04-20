@@ -86,7 +86,7 @@ export default function KeyboardShortcutsModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white border border-brand-border w-full max-w-md mx-4 p-6 animate-fade-up">
+      <div className="relative bg-brand-card border border-brand-border w-full max-w-md mx-4 p-6 animate-fade-up">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg text-cream">Keyboard Shortcuts</h2>
           <button
