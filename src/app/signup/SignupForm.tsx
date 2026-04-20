@@ -11,7 +11,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full mt-2 py-3 bg-teal text-white font-display text-[13px] tracking-[0.1em] uppercase hover:bg-teal-hover disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+      className="w-full mt-2 py-3 bg-[var(--nw-stone-blue)] text-white font-display text-[13px] tracking-[0.1em] uppercase hover:bg-[var(--nw-gulf-blue)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
     >
       {pending ? "Creating account…" : "Create Account"}
     </button>
@@ -30,13 +30,13 @@ export default function SignupForm({ plan }: { plan: string | null }) {
       <Field label="Company Name" name="company_name" type="text" autoComplete="organization" required />
 
       {state?.error && (
-        <p className="text-[13px] text-status-danger border border-status-danger/40 bg-status-danger/5 px-3 py-2">
+        <p className="text-[13px] text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-3 py-2">
           {state.error}
         </p>
       )}
 
       <SubmitButton />
-      <p className="text-[11px] text-cream-dim text-center leading-relaxed">
+      <p className="text-[11px] text-[color:var(--text-secondary)] text-center leading-relaxed">
         By creating an account, you agree to our Terms of Service and Privacy Policy.
       </p>
     </form>
@@ -53,7 +53,7 @@ function Field({
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={name}
-        className="text-[11px] tracking-[0.08em] uppercase text-cream-dim"
+        className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]"
       >
         {label}
       </label>
@@ -62,7 +62,7 @@ function Field({
         name={name}
         type={type}
         {...rest}
-        className="px-3 py-2.5 border border-brand-border bg-brand-card text-cream text-[14px] focus:outline-none focus:border-teal"
+        className="px-3 py-2.5 border border-[var(--border-default)] bg-[var(--bg-card)] text-[color:var(--text-primary)] text-[14px] focus:outline-none focus:border-[var(--nw-stone-blue)]"
       />
     </div>
   );

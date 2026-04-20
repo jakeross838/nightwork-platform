@@ -11,7 +11,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full mt-2 py-3 bg-teal text-white font-display text-[13px] tracking-[0.1em] uppercase hover:bg-teal/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors rounded-none"
+      className="w-full mt-2 py-3 bg-[var(--nw-stone-blue)] text-white font-display text-[13px] tracking-[0.1em] uppercase hover:bg-[var(--nw-gulf-blue)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors rounded-none"
     >
       {pending ? "Signing in…" : "Sign in"}
     </button>
@@ -26,7 +26,7 @@ export default function LoginForm() {
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor="email"
-          className="text-[11px] tracking-[0.08em] uppercase text-cream-dim"
+          className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]"
         >
           Email
         </label>
@@ -36,14 +36,14 @@ export default function LoginForm() {
           type="email"
           autoComplete="email"
           required
-          className="px-3 py-2.5 border border-brand-border bg-brand-card text-cream text-[14px] focus:outline-none focus:border-teal rounded-none"
+          className="px-3 py-2.5 border border-[var(--border-default)] bg-[var(--bg-card)] text-[color:var(--text-primary)] text-[14px] focus:outline-none focus:border-[var(--nw-stone-blue)] rounded-none"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor="password"
-          className="text-[11px] tracking-[0.08em] uppercase text-cream-dim"
+          className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]"
         >
           Password
         </label>
@@ -53,18 +53,18 @@ export default function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="px-3 py-2.5 border border-brand-border bg-brand-card text-cream text-[14px] focus:outline-none focus:border-teal rounded-none"
+          className="px-3 py-2.5 border border-[var(--border-default)] bg-[var(--bg-card)] text-[color:var(--text-primary)] text-[14px] focus:outline-none focus:border-[var(--nw-stone-blue)] rounded-none"
         />
       </div>
 
       <div className="text-right -mt-2">
-        <a href="/forgot-password" className="text-[12px] text-teal hover:underline underline-offset-4">
+        <a href="/forgot-password" className="text-[12px] text-[color:var(--nw-stone-blue)] hover:underline underline-offset-4">
           Forgot password?
         </a>
       </div>
 
       {state?.error && (
-        <p className="text-[13px] text-status-danger border border-status-danger/40 bg-status-danger/5 px-3 py-2">
+        <p className="text-[13px] text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-3 py-2">
           {state.error}
         </p>
       )}
