@@ -250,27 +250,27 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
           onChange={(v) => patch("payment_auto_scheduling", v)}
         />
         <div className="py-3">
-          <p className="text-sm text-cream font-medium">Draw cover letter template</p>
-          <p className="text-xs text-cream-dim mt-0.5 mb-2">
+          <p className="text-sm text-[color:var(--text-primary)] font-medium">Draw cover letter template</p>
+          <p className="text-xs text-[color:var(--text-secondary)] mt-0.5 mb-2">
             Used as the body of the auto-generated cover letter. Leave blank to use the built-in
-            default. Placeholders: <code className="text-teal">{"{{job_name}}"}</code>,{" "}
-            <code className="text-teal">{"{{job_address}}"}</code>,{" "}
-            <code className="text-teal">{"{{owner_name}}"}</code>,{" "}
-            <code className="text-teal">{"{{draw_number}}"}</code>,{" "}
-            <code className="text-teal">{"{{period_start}}"}</code>,{" "}
-            <code className="text-teal">{"{{period_end}}"}</code>,{" "}
-            <code className="text-teal">{"{{current_payment_due}}"}</code>,{" "}
-            <code className="text-teal">{"{{contract_sum_to_date}}"}</code>,{" "}
-            <code className="text-teal">{"{{total_completed}}"}</code>,{" "}
-            <code className="text-teal">{"{{percent_complete}}"}</code>,{" "}
-            <code className="text-teal">{"{{retainage}}"}</code>.
+            default. Placeholders: <code className="text-[color:var(--nw-stone-blue)]">{"{{job_name}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{job_address}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{owner_name}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{draw_number}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{period_start}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{period_end}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{current_payment_due}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{contract_sum_to_date}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{total_completed}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{percent_complete}}"}</code>,{" "}
+            <code className="text-[color:var(--nw-stone-blue)]">{"{{retainage}}"}</code>.
           </p>
           <textarea
             value={form.cover_letter_template}
             onChange={(e) => patch("cover_letter_template", e.target.value)}
             rows={10}
             placeholder="Leave blank to use the built-in default template."
-            className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream font-mono focus:border-teal focus:outline-none"
+            className="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] font-mono focus:border-[var(--nw-stone-blue)] focus:outline-none"
           />
         </div>
       </Section>
@@ -292,7 +292,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
               onChange={(e) => patch("import_max_batch_size", Math.max(1, Math.min(200, Number(e.target.value) || 50)))}
               className="w-32 px-3 py-2 border nw-input text-sm"
             />
-            <p className="text-xs text-cream-dim mt-1">
+            <p className="text-xs text-[color:var(--text-secondary)] mt-1">
               Largest number of files a single upload can contain (1–200). Default 50.
             </p>
           </label>
@@ -311,7 +311,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <p className="text-xs text-cream-dim mt-1">
+            <p className="text-xs text-[color:var(--text-secondary)] mt-1">
               When bulk import can&apos;t match an invoice to a job, assign this PM so they can review. Nullable — leave blank to require explicit assignment.
             </p>
           </label>
@@ -328,7 +328,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
               onChange={(e) => patch("import_auto_route_threshold", Math.max(0, Math.min(100, Number(e.target.value) || 85)))}
               className="w-32 px-3 py-2 border nw-input text-sm"
             />
-            <p className="text-xs text-cream-dim mt-1">
+            <p className="text-xs text-[color:var(--text-secondary)] mt-1">
               Confidence above this routes to <strong>PM Review</strong>; below routes to <strong>Accounting QA</strong>. <strong>Never auto-approves</strong> — every invoice is reviewed by a human before it enters a draw.
             </p>
           </label>
@@ -336,7 +336,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
       </Section>
 
       <div
-        className={`sticky bottom-0 -mx-4 px-4 md:-mx-6 md:px-6 py-4 bg-brand-bg/95 backdrop-blur border-t border-brand-border flex items-center gap-3 transition-opacity ${
+        className={`sticky bottom-0 -mx-4 px-4 md:-mx-6 md:px-6 py-4 bg-[var(--bg-page)]/95 backdrop-blur border-t border-[var(--border-default)] flex items-center gap-3 transition-opacity ${
           dirty || message ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
@@ -352,7 +352,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
           <button
             type="button"
             onClick={() => setForm(initial)}
-            className="px-3 py-2 text-sm text-cream-dim hover:text-cream"
+            className="px-3 py-2 text-sm text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
           >
             Discard
           </button>
@@ -360,7 +360,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
         {message && (
           <span
             className={`text-xs tracking-[0.04em] ${
-              message.kind === "ok" ? "text-status-success" : "text-status-danger"
+              message.kind === "ok" ? "text-[color:var(--nw-success)]" : "text-[color:var(--nw-danger)]"
             }`}
           >
             {message.text}
@@ -454,8 +454,8 @@ function Toggle({
       className="w-full flex items-start justify-between gap-4 py-4 sm:py-3 first:pt-0 last:pb-0 text-left"
     >
       <span className="flex-1 min-w-0">
-        <span className="block text-sm text-cream font-medium">{label}</span>
-        <span className="block text-xs text-cream-dim mt-0.5 leading-relaxed">
+        <span className="block text-sm text-[color:var(--text-primary)] font-medium">{label}</span>
+        <span className="block text-xs text-[color:var(--text-secondary)] mt-0.5 leading-relaxed">
           {description}
         </span>
       </span>
@@ -464,7 +464,7 @@ function Toggle({
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors border mt-0.5 ${
           checked
             ? "bg-[var(--nw-stone-blue)] border-[var(--nw-stone-blue)]"
-            : "bg-brand-border/40 border-brand-border"
+            : "bg-[rgba(59,88,100,0.08)] border-[var(--border-default)]"
         }`}
       >
         <span
@@ -506,7 +506,7 @@ function DropdownField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+        className="w-full px-3 py-2 border border-[var(--border-default)] bg-white text-sm"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -514,7 +514,7 @@ function DropdownField({
           </option>
         ))}
       </select>
-      {help && <p className="text-xs text-cream-dim mt-1">{help}</p>}
+      {help && <p className="text-xs text-[color:var(--text-secondary)] mt-1">{help}</p>}
     </label>
   );
 }

@@ -105,25 +105,25 @@ export default function TeamSettings({
       </div>
 
       {inviteOpen && (
-        <div className="border border-brand-border bg-white p-4">
-          <h3 className="text-sm font-medium text-cream mb-3">Invite a new team member</h3>
+        <div className="border border-[var(--border-default)] bg-white p-4">
+          <h3 className="text-sm font-medium text-[color:var(--text-primary)] mb-3">Invite a new team member</h3>
           <div className="grid sm:grid-cols-[1fr_180px_auto] gap-3 items-end">
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">Email</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">Email</span>
               <input
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="teammate@company.com"
-                className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+                className="w-full px-3 py-2 border border-[var(--border-default)] bg-white text-sm"
               />
             </label>
             <label className="block">
-              <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">Role</span>
+              <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">Role</span>
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as TeamMember["role"])}
-                className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+                className="w-full px-3 py-2 border border-[var(--border-default)] bg-white text-sm"
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
@@ -140,24 +140,24 @@ export default function TeamSettings({
             </button>
           </div>
           {inviteLink && (
-            <div className="mt-3 p-3 bg-brand-surface border border-brand-border text-xs">
-              <p className="text-cream-dim uppercase tracking-[0.08em] mb-1">Invite link</p>
-              <code className="block break-all text-cream">{inviteLink}</code>
+            <div className="mt-3 p-3 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs">
+              <p className="text-[color:var(--text-secondary)] uppercase tracking-[0.08em] mb-1">Invite link</p>
+              <code className="block break-all text-[color:var(--text-primary)]">{inviteLink}</code>
             </div>
           )}
         </div>
       )}
 
       {message && (
-        <p className={`text-xs ${message.kind === "ok" ? "text-status-success" : "text-status-danger"}`}>
+        <p className={`text-xs ${message.kind === "ok" ? "text-[color:var(--nw-success)]" : "text-[color:var(--nw-danger)]"}`}>
           {message.text}
         </p>
       )}
 
-      <div className="border border-brand-border bg-white overflow-hidden">
+      <div className="border border-[var(--border-default)] bg-white overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-brand-surface">
-            <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-cream-dim">
+          <thead className="bg-[var(--bg-subtle)]">
+            <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">
               <th className="px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Role</th>
@@ -172,18 +172,18 @@ export default function TeamSettings({
               const isLastOwner = m.role === "owner" && activeOwners <= 1;
               const canDeactivate = !isSelf && !(m.role === "owner" && activeOwners <= 1);
               return (
-                <tr key={m.id} className="border-t border-brand-row-border">
-                  <td className="px-4 py-3 text-cream">
+                <tr key={m.id} className="border-t border-[var(--border-default)]">
+                  <td className="px-4 py-3 text-[color:var(--text-primary)]">
                     {m.full_name}
-                    {isSelf && <span className="ml-2 text-[10px] text-cream-dim uppercase">(you)</span>}
+                    {isSelf && <span className="ml-2 text-[10px] text-[color:var(--text-secondary)] uppercase">(you)</span>}
                   </td>
-                  <td className="px-4 py-3 text-cream-dim">{m.email ?? ""}</td>
+                  <td className="px-4 py-3 text-[color:var(--text-secondary)]">{m.email ?? ""}</td>
                   <td className="px-4 py-3">
                     <select
                       value={m.role}
                       disabled={isSelf || isLastOwner || busyId === m.id}
                       onChange={(e) => updateMember(m.id, { role: e.target.value as TeamMember["role"] })}
-                      className="px-2 py-1 border border-brand-border bg-white text-sm"
+                      className="px-2 py-1 border border-[var(--border-default)] bg-white text-sm"
                     >
                       {ROLE_OPTIONS.map((r) => (
                         <option key={r.value} value={r.value}>{r.label}</option>
@@ -191,7 +191,7 @@ export default function TeamSettings({
                     </select>
                   </td>
                   <td className="px-4 py-3">{statusBadge(m)}</td>
-                  <td className="px-4 py-3 text-cream-dim text-xs">
+                  <td className="px-4 py-3 text-[color:var(--text-secondary)] text-xs">
                     {m.accepted_at ? new Date(m.accepted_at).toLocaleDateString() : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -200,7 +200,7 @@ export default function TeamSettings({
                         type="button"
                         onClick={() => updateMember(m.id, { is_active: !m.is_active })}
                         disabled={busyId === m.id}
-                        className="text-xs px-2 py-1 border border-brand-border hover:bg-brand-surface"
+                        className="text-xs px-2 py-1 border border-[var(--border-default)] hover:bg-[var(--bg-subtle)]"
                       >
                         {m.is_active ? "Deactivate" : "Reactivate"}
                       </button>
@@ -216,10 +216,10 @@ export default function TeamSettings({
       {pending.length > 0 && (
         <section>
           <h2 className="section-label">Pending Invites ({pending.length})</h2>
-          <div className="border border-brand-border bg-white overflow-hidden">
+          <div className="border border-[var(--border-default)] bg-white overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-brand-surface">
-                <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-cream-dim">
+              <thead className="bg-[var(--bg-subtle)]">
+                <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)]">
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Role</th>
                   <th className="px-4 py-3 font-medium">Sent</th>
@@ -229,13 +229,13 @@ export default function TeamSettings({
               </thead>
               <tbody>
                 {pending.map((inv) => (
-                  <tr key={inv.id} className="border-t border-brand-row-border">
-                    <td className="px-4 py-3 text-cream">{inv.email}</td>
-                    <td className="px-4 py-3 text-cream-dim capitalize">{inv.role}</td>
-                    <td className="px-4 py-3 text-cream-dim text-xs">
+                  <tr key={inv.id} className="border-t border-[var(--border-default)]">
+                    <td className="px-4 py-3 text-[color:var(--text-primary)]">{inv.email}</td>
+                    <td className="px-4 py-3 text-[color:var(--text-secondary)] capitalize">{inv.role}</td>
+                    <td className="px-4 py-3 text-[color:var(--text-secondary)] text-xs">
                       {new Date(inv.invited_at).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-cream-dim text-xs">
+                    <td className="px-4 py-3 text-[color:var(--text-secondary)] text-xs">
                       {new Date(inv.expires_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -243,7 +243,7 @@ export default function TeamSettings({
                         type="button"
                         onClick={() => revokeInvite(inv.id)}
                         disabled={busyId === inv.id}
-                        className="text-xs px-2 py-1 border border-brand-border hover:bg-brand-surface"
+                        className="text-xs px-2 py-1 border border-[var(--border-default)] hover:bg-[var(--bg-subtle)]"
                       >
                         Revoke
                       </button>

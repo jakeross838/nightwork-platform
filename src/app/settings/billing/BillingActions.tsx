@@ -61,7 +61,7 @@ export default function BillingActions(props: Props) {
         type="button"
         onClick={openPortal}
         disabled={busy}
-        className={props.inlineClassName ?? "underline underline-offset-4 text-teal hover:text-teal-hover disabled:opacity-60"}
+        className={props.inlineClassName ?? "underline underline-offset-4 text-[color:var(--nw-stone-blue)] hover:text-[color:var(--nw-stone-blue)]-hover disabled:opacity-60"}
       >
         {busy ? "Opening…" : props.inlineLabel}
       </button>
@@ -78,7 +78,7 @@ export default function BillingActions(props: Props) {
             type="button"
             onClick={openPortal}
             disabled={busy}
-            className="px-4 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase hover:bg-teal-hover disabled:opacity-60"
+            className="px-4 py-2.5 bg-[var(--nw-stone-blue)] text-white text-[13px] tracking-[0.08em] uppercase hover:bg-[var(--nw-gulf-blue)] disabled:opacity-60"
           >
             {busy ? "Opening…" : "Change Plan"}
           </button>
@@ -86,7 +86,7 @@ export default function BillingActions(props: Props) {
             type="button"
             onClick={openPortal}
             disabled={busy}
-            className="px-4 py-2.5 border border-brand-border text-[13px] tracking-[0.08em] uppercase hover:bg-brand-surface disabled:opacity-60"
+            className="px-4 py-2.5 border border-[var(--border-default)] text-[13px] tracking-[0.08em] uppercase hover:bg-[var(--bg-subtle)] disabled:opacity-60"
           >
             Cancel Subscription
           </button>
@@ -94,7 +94,7 @@ export default function BillingActions(props: Props) {
       ) : billingConfigured ? (
         <Link
           href="/pricing"
-          className="px-4 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase hover:bg-teal-hover"
+          className="px-4 py-2.5 bg-[var(--nw-stone-blue)] text-white text-[13px] tracking-[0.08em] uppercase hover:bg-[var(--nw-gulf-blue)]"
         >
           {onTrial ? "Upgrade Now" : "Pick a Plan"}
         </Link>
@@ -102,7 +102,7 @@ export default function BillingActions(props: Props) {
         <button
           type="button"
           onClick={() => setComingSoon("Billing integration coming soon")}
-          className="px-4 py-2.5 bg-teal text-white text-[13px] tracking-[0.08em] uppercase hover:bg-teal-hover"
+          className="px-4 py-2.5 bg-[var(--nw-stone-blue)] text-white text-[13px] tracking-[0.08em] uppercase hover:bg-[var(--nw-gulf-blue)]"
         >
           {onTrial ? "Upgrade Now" : "Pick a Plan"}
         </button>
@@ -110,13 +110,13 @@ export default function BillingActions(props: Props) {
       {comingSoon && (
         <span
           role="status"
-          className="text-xs text-cream-muted border border-brand-border bg-brand-surface px-2 py-1"
+          className="text-xs text-[color:var(--text-muted)] border border-[var(--border-default)] bg-[var(--bg-subtle)] px-2 py-1"
         >
           {comingSoon}
         </span>
       )}
       {err && (
-        <span className="text-xs text-status-danger">{err}</span>
+        <span className="text-xs text-[color:var(--nw-danger)]">{err}</span>
       )}
     </div>
   );
