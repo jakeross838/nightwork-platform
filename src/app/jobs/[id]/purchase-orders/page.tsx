@@ -11,6 +11,9 @@ import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import BudgetCostsSubTabs from "@/components/budget-costs-sub-tabs";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+import NwButton from "@/components/nw/Button";
 
 interface Job {
   id: string;
@@ -30,14 +33,13 @@ interface PurchaseOrder {
   budget_lines: { cost_codes: { code: string } | null } | null;
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: "text-cream-dim border-cream-dim/40",
-  issued: "text-status-success border-status-success/40",
-  partially_invoiced: "text-brass border-brass/40",
-  fully_invoiced: "text-teal border-teal/40",
-  closed: "text-cream-muted border-brand-border",
-  void: "text-status-danger border-status-danger/40 line-through",
-};
+function poBadgeVariant(status: string): BadgeVariant {
+  if (status === "issued") return "success";
+  if (status === "partially_invoiced") return "warning";
+  if (status === "fully_invoiced") return "info";
+  if (status === "void") return "danger";
+  return "neutral";
+}
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
@@ -171,19 +173,9 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setImportOpen(true)}
-              className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
-              style={{
-                fontFamily: "var(--font-jetbrains-mono)",
-                letterSpacing: "0.12em",
-                background: "transparent",
-                borderColor: "var(--nw-stone-blue)",
-                color: "var(--nw-stone-blue)",
-              }}
-            >
+            <NwButton variant="secondary" size="md" onClick={() => setImportOpen(true)}>
               Import POs
-            </button>
+            </NwButton>
             <Link
               href={`/jobs/${job.id}/purchase-orders/new`}
               className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
@@ -253,15 +245,19 @@ export default function PurchaseOrdersPage({ params }: { params: { id: string } 
                       <td className="px-4 py-3 text-cream">{po.vendors?.name ?? <span className="text-cream-dim">—</span>}</td>
                       <td className="px-4 py-3 text-cream-muted font-mono text-xs">{po.budget_lines?.cost_codes?.code ?? "—"}</td>
                       <td className="px-4 py-3 text-cream-muted max-w-md truncate">{po.description ?? "—"}</td>
-                      <td className="px-4 py-3 text-right text-cream tabular-nums">{formatCents(po.amount)}</td>
-                      <td className="px-4 py-3 text-right text-cream-muted tabular-nums">{formatCents(po.invoiced_total)}</td>
-                      <td className={`px-4 py-3 text-right tabular-nums font-medium ${over ? "text-status-danger" : "text-status-success"}`}>
-                        {formatCents(remaining)}
+                      <td className="px-4 py-3 text-right">
+                        <NwMoney cents={po.amount} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <NwMoney cents={po.invoiced_total} variant="muted" />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <NwMoney cents={remaining} variant={over ? "negative" : "default"} />
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${STATUS_STYLES[po.status] ?? ""}`}>
+                        <NwBadge variant={poBadgeVariant(po.status)} size="sm">
                           {STATUS_LABELS[po.status] ?? po.status}
-                        </span>
+                        </NwBadge>
                         <StaleBadge status={po.status} issuedDate={po.issued_date} invoicedTotal={po.invoiced_total} />
                         {po.issued_date && (
                           <p className="text-[10px] text-cream-dim mt-0.5">Issued {formatDate(po.issued_date)}</p>
@@ -322,34 +318,27 @@ function PoActions({
   return (
     <div className="flex items-center justify-end gap-2">
       {po.status === "draft" && (
-        <button
-          disabled={busy}
-          onClick={() => onStatus("issued")}
-          className="px-3 py-1 text-xs border border-teal text-teal hover:bg-teal hover:text-white disabled:opacity-50 transition-colors"
-        >
-          {busy ? "…" : "Issue"}
-        </button>
+        <NwButton variant="secondary" size="sm" disabled={busy} loading={busy} onClick={() => onStatus("issued")}>
+          Issue
+        </NwButton>
       )}
       {(po.status === "issued" || po.status === "partially_invoiced") && (
-        <button
-          disabled={busy}
-          onClick={() => onStatus("closed")}
-          className="px-3 py-1 text-xs border border-brand-border text-cream-dim hover:text-cream disabled:opacity-50 transition-colors"
-        >
+        <NwButton variant="ghost" size="sm" disabled={busy} onClick={() => onStatus("closed")}>
           Close
-        </button>
+        </NwButton>
       )}
-      <button
+      <NwButton
+        variant="danger"
+        size="sm"
         disabled={busy}
         onClick={() => {
           const note = prompt(`Void PO ${po.po_number}? Enter reason:`);
           if (!note) return;
           onStatus("void", note);
         }}
-        className="px-3 py-1 text-xs border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
       >
         Void
-      </button>
+      </NwButton>
     </div>
   );
 }
@@ -360,7 +349,7 @@ function StaleBadge({ status, issuedDate, invoicedTotal }: { status: string; iss
   if (status === "draft") {
     const created = issuedDate ? new Date(issuedDate).getTime() : 0;
     if (created > 0 && now - created > 14 * 24 * 60 * 60 * 1000) {
-      return <span className="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-cream-dim/40 text-cream-dim">Draft 14d+</span>;
+      return <span className="ml-1.5"><NwBadge variant="neutral" size="sm">Draft 14d+</NwBadge></span>;
     }
     return null;
   }
@@ -368,10 +357,10 @@ function StaleBadge({ status, issuedDate, invoicedTotal }: { status: string; iss
     const issued = new Date(issuedDate).getTime();
     const days = Math.floor((now - issued) / (24 * 60 * 60 * 1000));
     if (days >= 60) {
-      return <span className="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-status-warning text-status-warning bg-status-warning/10">Stale 60d</span>;
+      return <span className="ml-1.5"><NwBadge variant="warning" size="sm">Stale 60d</NwBadge></span>;
     }
     if (days >= 30) {
-      return <span className="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-brass/40 text-brass">Stale</span>;
+      return <span className="ml-1.5"><NwBadge variant="warning" size="sm">Stale</NwBadge></span>;
     }
   }
   return null;

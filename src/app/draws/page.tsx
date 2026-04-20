@@ -6,15 +6,16 @@ import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
-import { formatCents, formatDate, formatStatus, statusBadgeOutline } from "@/lib/utils/format";
+import { formatDate, formatStatus } from "@/lib/utils/format";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
 
-function drawBadgeOutline(status: string): string {
- if (status === "submitted") return "bg-transparent text-cream border border-cream";
- if (status === "paid") return "bg-transparent text-status-success border border-status-success";
- if (status === "approved") return "bg-transparent text-status-success border border-status-success";
- if (status === "pm_review" || status === "draft") return "bg-transparent text-brass border border-brass";
- if (status === "void") return "bg-transparent text-status-danger border border-status-danger";
- return statusBadgeOutline(status);
+function drawBadgeVariant(status: string): BadgeVariant {
+ if (status === "submitted" || status === "pm_review") return "warning";
+ if (status === "paid" || status === "approved") return "success";
+ if (status === "void") return "danger";
+ if (status === "draft") return "neutral";
+ return "neutral";
 }
 
 interface Draw {
@@ -113,9 +114,9 @@ export default function DrawsPage() {
  {Object.entries(grouped).map(([, { job, draws: jobDraws }]) => (
  <div key={job?.id ?? "unknown"}>
  <div className="flex items-center gap-3 mb-3">
- <span className="inline-flex items-center px-2.5 py-0.5 bg-transparent text-brass border border-brass text-sm font-medium">
+ <NwBadge variant="info" size="md">
  {job?.name ?? "Unknown Job"}
- </span>
+ </NwBadge>
  <span className="text-xs text-cream-dim">{job?.address}</span>
  </div>
  <div className="overflow-x-auto border border-brand-border">
@@ -141,11 +142,13 @@ export default function DrawsPage() {
  <td className="py-4 px-5 text-cream-muted">{formatDate(d.period_start)} — {formatDate(d.period_end)}</td>
  <td className="py-4 px-5 text-cream-muted">{formatDate(d.application_date)}</td>
  <td className="py-4 px-5">
- <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${drawBadgeOutline(d.status)}`}>
+ <NwBadge variant={drawBadgeVariant(d.status)} size="sm">
  {formatStatus(d.status)}
- </span>
+ </NwBadge>
  </td>
- <td className="py-4 px-5 text-cream text-right font-display font-medium">{formatCents(d.current_payment_due)}</td>
+ <td className="py-4 px-5 text-right">
+ <NwMoney cents={d.current_payment_due} />
+ </td>
  </tr>
  ))}
  </tbody>

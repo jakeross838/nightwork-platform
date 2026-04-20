@@ -8,6 +8,8 @@ import { formatCents, formatDate, formatPercent, formatRelativeTime } from "@/li
 import { SkeletonList } from "@/components/loading-skeleton";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import FirstUseTip from "@/components/first-use-tip";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwStatusDot, { type StatusDotVariant } from "@/components/nw/StatusDot";
 
 type JobStatus = "active" | "complete" | "warranty" | "cancelled";
 type Health = "green" | "yellow" | "red";
@@ -39,10 +41,10 @@ interface JobHealth {
 type StatusFilter = "all" | JobStatus;
 
 const HEALTH_RANK: Record<Health, number> = { red: 0, yellow: 1, green: 2 };
-const HEALTH_DOT: Record<Health, string> = {
-  green: "bg-status-success",
-  yellow: "bg-brass",
-  red: "bg-status-danger",
+const HEALTH_DOT_VARIANT: Record<Health, StatusDotVariant> = {
+  green: "active",
+  yellow: "pending",
+  red: "danger",
 };
 const HEALTH_LABEL: Record<Health, string> = {
   green: "On track",
@@ -50,17 +52,18 @@ const HEALTH_LABEL: Record<Health, string> = {
   red: "Action required",
 };
 
+const JOB_STATUS_VARIANT: Record<JobStatus, BadgeVariant> = {
+  active: "success",
+  complete: "info",
+  warranty: "warning",
+  cancelled: "danger",
+};
+
 function StatusBadge({ status }: { status: JobStatus }) {
-  const map: Record<JobStatus, string> = {
-    active: "text-status-success border-status-success",
-    complete: "text-teal border-teal",
-    warranty: "text-brass border-brass",
-    cancelled: "text-status-danger border-status-danger",
-  };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider border bg-transparent ${map[status]}`}>
+    <NwBadge variant={JOB_STATUS_VARIANT[status]} size="sm">
       {status}
-    </span>
+    </NwBadge>
   );
 }
 
@@ -70,8 +73,9 @@ function HealthDot({ health, reasons }: { health: Health; reasons: string[] }) {
     <span
       title={tooltip}
       aria-label={`Health: ${HEALTH_LABEL[health]}${reasons.length ? `. ${reasons.join(". ")}` : ""}`}
-      className={`inline-block w-2.5 h-2.5 rounded-full ${HEALTH_DOT[health]}`}
-    />
+    >
+      <NwStatusDot variant={HEALTH_DOT_VARIANT[health]} size="md" />
+    </span>
   );
 }
 
@@ -258,13 +262,13 @@ export default function JobsPage() {
         {!loading && jobs.length > 0 && (
           <div className="flex items-center gap-4 mb-4 text-[11px] text-cream-dim">
             <span className="flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${HEALTH_DOT.green}`} /> Green: on track
+              <NwStatusDot variant="active" size="sm" /> Green: on track
             </span>
             <span className="flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${HEALTH_DOT.yellow}`} /> Yellow: needs attention
+              <NwStatusDot variant="pending" size="sm" /> Yellow: needs attention
             </span>
             <span className="flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${HEALTH_DOT.red}`} /> Red: action required
+              <NwStatusDot variant="danger" size="sm" /> Red: action required
             </span>
           </div>
         )}
@@ -396,11 +400,9 @@ export default function JobsPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         {j.open_invoices > 0 ? (
-                          <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium border ${
-                            j.oldest_invoice_days >= 7 ? "border-status-danger text-status-danger" : "border-brass text-brass"
-                          }`}>
-                            {j.open_invoices}
-                          </span>
+                          <NwBadge variant={j.oldest_invoice_days >= 7 ? "danger" : "warning"} size="sm">
+                            {String(j.open_invoices)}
+                          </NwBadge>
                         ) : (
                           <span className="text-cream-dim text-xs">—</span>
                         )}

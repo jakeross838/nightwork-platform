@@ -10,6 +10,8 @@ import { supabase } from "@/lib/supabase/client";
 import { formatCents } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
+import NwButton from "@/components/nw/Button";
+import NwMoney from "@/components/nw/Money";
 
 interface Vendor {
   id: string;
@@ -173,33 +175,13 @@ export default function VendorsPage() {
           </div>
           <div className="flex items-center gap-2">
             {selected.size >= 2 && (
-              <button
-                onClick={openMerge}
-                className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
-                style={{
-                  fontFamily: "var(--font-jetbrains-mono)",
-                  letterSpacing: "0.12em",
-                  background: "var(--nw-warn)",
-                  borderColor: "var(--nw-warn)",
-                  color: "var(--nw-white-sand)",
-                }}
-              >
+              <NwButton variant="danger" size="md" onClick={openMerge}>
                 Merge {selected.size} Vendors
-              </button>
+              </NwButton>
             )}
-            <button
-              onClick={() => setImportOpen(true)}
-              className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
-              style={{
-                fontFamily: "var(--font-jetbrains-mono)",
-                letterSpacing: "0.12em",
-                background: "transparent",
-                borderColor: "var(--nw-stone-blue)",
-                color: "var(--nw-stone-blue)",
-              }}
-            >
+            <NwButton variant="secondary" size="md" onClick={() => setImportOpen(true)}>
               Import Vendors
-            </button>
+            </NwButton>
           </div>
         </div>
 
@@ -282,8 +264,8 @@ export default function VendorsPage() {
                           : "—"}
                       </td>
                       <td className="py-4 px-5 text-cream text-right">{agg?.count ?? 0}</td>
-                      <td className="py-4 px-5 text-cream text-right font-display font-medium">
-                        {formatCents(agg?.total ?? 0)}
+                      <td className="py-4 px-5 text-right">
+                        <NwMoney cents={agg?.total ?? 0} />
                       </td>
                     </tr>
                   );

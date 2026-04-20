@@ -10,6 +10,16 @@ import InvoiceUploadModal from "@/components/invoice-upload-modal";
 import InvoiceImportModal from "@/components/invoice-import-modal";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList, SkeletonStatCard } from "@/components/loading-skeleton";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+import NwButton from "@/components/nw/Button";
+
+function invoiceBadgeVariant(status: string): BadgeVariant {
+ if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid", "approved", "complete"].includes(status)) return "success";
+ if (["pm_review", "qa_review", "ai_processed", "received", "info_requested", "pm_held", "pending", "in_review", "submitted", "on_hold"].includes(status)) return "warning";
+ if (["qa_kicked_back", "pm_denied", "void", "qb_failed", "denied", "rejected", "cancelled"].includes(status)) return "danger";
+ return "neutral";
+}
 
 interface Invoice {
  id: string;
@@ -57,48 +67,6 @@ function daysOutstanding(receivedDate: string | null): number {
   today.setHours(0, 0, 0, 0);
   const diff = Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
   return Math.max(0, diff);
-}
-
-/** Returns { label, color } for aging badge, or null if not overdue enough.
- *  Rounded-pill styling matching confidence badges. Explicit RGB for visibility. */
-function agingBadge(days: number): { label: string; style: React.CSSProperties; title: string } | null {
-  if (days >= 90) {
-    return {
-      label: "90d+",
-      // red #EF4444
-      style: {
-        backgroundColor: "#EF4444",
-        color: "#FFFFFF",
-        borderColor: "#DC2626",
-      },
-      title: `Outstanding for ${days} days (90+)`,
-    };
-  }
-  if (days >= 61) {
-    return {
-      label: "60d+",
-      // orange #F97316
-      style: {
-        backgroundColor: "#F97316",
-        color: "#FFFFFF",
-        borderColor: "#EA580C",
-      },
-      title: `Outstanding for ${days} days (61-90)`,
-    };
-  }
-  if (days >= 30) {
-    return {
-      label: "30d+",
-      // yellow #EAB308
-      style: {
-        backgroundColor: "#EAB308",
-        color: "#1F2937",
-        borderColor: "#CA8A04",
-      },
-      title: `Outstanding for ${days} days (30-60)`,
-    };
-  }
-  return null;
 }
 
 /** True when invoice is unpaid — aging applies only to unpaid invoices.
@@ -415,35 +383,15 @@ export default function AllInvoicesPage() {
  </p>
  </div>
  <div className="flex items-center gap-2">
- <button
- onClick={() => setImportOpen(true)}
- className="inline-flex items-center justify-center h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
- style={{
- fontFamily: "var(--font-jetbrains-mono)",
- letterSpacing: "0.12em",
- background: "transparent",
- borderColor: "var(--border-strong)",
- color: "var(--text-primary)",
- }}
- >
+ <NwButton variant="secondary" size="md" onClick={() => setImportOpen(true)}>
  Import CSV
- </button>
- <button
- onClick={() => setUploadOpen(true)}
- className="inline-flex items-center justify-center gap-2 h-9 px-4 text-[11px] uppercase font-medium border transition-colors"
- style={{
- fontFamily: "var(--font-jetbrains-mono)",
- letterSpacing: "0.12em",
- background: "var(--nw-stone-blue)",
- borderColor: "var(--nw-stone-blue)",
- color: "var(--nw-white-sand)",
- }}
- >
+ </NwButton>
+ <NwButton variant="primary" size="md" onClick={() => setUploadOpen(true)}>
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
  </svg>
  Upload Invoice
- </button>
+ </NwButton>
  </div>
  </div>
 
@@ -463,8 +411,8 @@ export default function AllInvoicesPage() {
  }`}>
  Payment Tracking
  {paymentInvoices.length > 0 && (
- <span className="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-transparent text-teal border border-teal text-[11px] font-bold">
- {paymentInvoices.length}
+ <span className="ml-2">
+ <NwBadge variant="info" size="sm">{String(paymentInvoices.length)}</NwBadge>
  </span>
  )}
  </button>
@@ -645,52 +593,38 @@ export default function AllInvoicesPage() {
  <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-cream-dim border border-cream-dim/40 uppercase tracking-wide">
- Receipt
- </span>
+ <NwBadge variant="info" size="sm">Receipt</NwBadge>
  )}
  {isUnknownVendor(inv) && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
- Unknown Vendor
- </span>
+ <NwBadge variant="danger" size="sm">Unknown Vendor</NwBadge>
  )}
  </span>
  </td>
  <td className="py-3 px-4 text-cream-muted font-mono text-xs">
  {inv.invoice_number ?? (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-brass border border-brass uppercase tracking-wide">
- No Invoice #
- </span>
+ <NwBadge variant="warning" size="sm">No Invoice #</NwBadge>
  )}
  </td>
  <td className="py-3 px-4 text-cream-muted">
  {inv.invoice_date ? (
  formatDate(inv.invoice_date)
  ) : (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
- No Date
- </span>
+ <NwBadge variant="danger" size="sm">No Date</NwBadge>
  )}
  </td>
  <td className="py-3 px-4">
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">{inv.jobs.name}</span>
+ <NwBadge variant="info" size="sm">{inv.jobs.name}</NwBadge>
  ) : inv.document_category === "overhead" ? (
- <span
-  className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-transparent border"
-  style={{ color: "var(--color-warning, #E65100)", borderColor: "var(--color-warning, #E65100)" }}
- >Overhead</span>
+ <NwBadge variant="warning" size="sm">Overhead</NwBadge>
  ) : (
  <span className="text-cream-dim">—</span>
  )}
  </td>
  <td className="py-3 px-4 text-cream-muted text-xs">
  {inv.line_item_cost_codes && inv.line_item_cost_codes.length > 1 ? (
- <span
- className="inline-flex items-center px-2 py-0.5 bg-transparent text-teal border border-teal text-xs font-medium"
- title={inv.line_item_cost_codes.join(", ")}
- >
- Multiple ({inv.line_item_cost_codes.length})
+ <span title={inv.line_item_cost_codes.join(", ")}>
+ <NwBadge variant="info" size="sm">Multiple ({inv.line_item_cost_codes.length})</NwBadge>
  </span>
  ) : inv.line_item_cost_codes && inv.line_item_cost_codes.length === 1 ? (
  <span>{inv.line_item_cost_codes[0]}</span>
@@ -700,16 +634,16 @@ export default function AllInvoicesPage() {
  <span className="text-cream-dim">—</span>
  )}
  </td>
- <td className="py-3 px-4 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
+ <td className="py-3 px-4 text-right">
+ <NwMoney cents={inv.total_amount} />
+ </td>
  <td className="py-3 px-4">
  <div className="flex items-center gap-1.5">
- <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${statusBadgeColor(inv.status)}`}>
+ <NwBadge variant={invoiceBadgeVariant(inv.status)} size="sm">
  {formatStatus(inv.status)}
- </span>
+ </NwBadge>
  {(inv.parent_invoice_id || inv.partial_approval_note) && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-brass text-brass" title="Part of a partial-approval split">
- Partial
- </span>
+ <NwBadge variant="warning" size="sm">Partial</NwBadge>
  )}
  </div>
  </td>
@@ -721,15 +655,24 @@ export default function AllInvoicesPage() {
  return <span className="text-cream-dim">&mdash;</span>;
  }
  const days = daysOutstanding(inv.received_date);
- const badge = agingBadge(days);
- if (badge) {
+ if (days >= 90) {
  return (
- <span
- className="inline-flex items-center px-2.5 py-0.5 text-[11px] font-bold rounded-full border"
- style={badge.style}
- title={badge.title}
- >
- {badge.label}
+ <span title={`Outstanding for ${days} days (90+)`}>
+ <NwBadge variant="danger" size="sm">90d+</NwBadge>
+ </span>
+ );
+ }
+ if (days >= 61) {
+ return (
+ <span title={`Outstanding for ${days} days (61-90)`}>
+ <NwBadge variant="danger" size="sm">60d+</NwBadge>
+ </span>
+ );
+ }
+ if (days >= 30) {
+ return (
+ <span title={`Outstanding for ${days} days (30-60)`}>
+ <NwBadge variant="warning" size="sm">30d+</NwBadge>
  </span>
  );
  }
@@ -789,16 +732,18 @@ export default function AllInvoicesPage() {
  <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-cream-dim border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+ <NwBadge variant="info" size="sm">Receipt</NwBadge>
  )}
  </span>
  </td>
  <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? <span className="text-cream-dim">&mdash;</span>}</td>
- <td className="py-3 px-4 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
+ <td className="py-3 px-4 text-right">
+ <NwMoney cents={inv.total_amount} />
+ </td>
  <td className="py-3 px-4">
- <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${statusBadgeColor(inv.status)}`}>
+ <NwBadge variant={invoiceBadgeVariant(inv.status)} size="sm">
  {formatStatus(inv.status)}
- </span>
+ </NwBadge>
  </td>
  <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
  <td className="py-3 px-4">

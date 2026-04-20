@@ -7,7 +7,16 @@ import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatDate, formatStatus, statusBadgeOutline } from "@/lib/utils/format";
+import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+
+function invoiceBadgeVariant(status: string): BadgeVariant {
+  if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid", "approved", "complete"].includes(status)) return "success";
+  if (["pm_review", "qa_review", "ai_processed", "received", "info_requested", "pm_held", "pending", "in_review", "submitted", "on_hold"].includes(status)) return "warning";
+  if (["qa_kicked_back", "pm_denied", "void", "qb_failed", "denied", "rejected", "cancelled"].includes(status)) return "danger";
+  return "neutral";
+}
 
 interface Job { id: string; name: string; address: string | null; }
 
@@ -226,7 +235,7 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
                         <span className="inline-flex items-center gap-1.5">
                           {vendor}
                           {inv.document_type === "receipt" && (
-                            <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-medium bg-transparent text-cream-dim border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+                            <NwBadge variant="info" size="sm">Receipt</NwBadge>
                           )}
                         </span>
                       </td>
@@ -234,14 +243,16 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
                       <td className="px-3 py-2 text-cream-muted text-xs">
                         {inv.cost_codes ? `${inv.cost_codes.code} ${inv.cost_codes.description}` : "—"}
                       </td>
-                      <td className="px-3 py-2 text-right text-cream tabular-nums">{formatCents(inv.total_amount)}</td>
+                      <td className="px-3 py-2 text-right">
+                        <NwMoney cents={inv.total_amount} />
+                      </td>
                       <td className="px-3 py-2">
-                        <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${statusBadgeOutline(inv.status)}`}>
+                        <NwBadge variant={invoiceBadgeVariant(inv.status)} size="sm">
                           {formatStatus(inv.status)}
-                        </span>
+                        </NwBadge>
                         {inv.parent_invoice_id && (
-                          <span className="ml-2 inline-block px-1.5 py-0.5 text-[10px] uppercase tracking-wider border border-brass/50 text-brass">
-                            Partial
+                          <span className="ml-2">
+                            <NwBadge variant="warning" size="sm">Partial</NwBadge>
                           </span>
                         )}
                       </td>
