@@ -9,6 +9,7 @@ import { useOrgBranding } from "@/components/org-branding-provider";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
 import TrialBanner from "@/components/trial-banner";
 import NotificationBell from "@/components/notification-bell";
+import FeedbackTrigger from "@/components/feedback-trigger";
 import { useTheme } from "@/components/theme-provider";
 
 function NavThemeToggle() {
@@ -287,6 +288,9 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
               <RoleBadge role={profile.role} />
             </div>
           )}
+          <FeedbackTrigger className="text-[13px] font-sans px-2 py-1 transition-colors hover:underline underline-offset-4 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]">
+            Feedback
+          </FeedbackTrigger>
           <form action={logoutAction}>
             <button type="submit"
               className="text-[13px] font-sans px-2 py-1 transition-colors hover:underline underline-offset-4 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]">
@@ -349,6 +353,9 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
             </span>
           )}
           {show.admin && <NavLink href="/admin" label="Admin" active={isAdminActive} mobile onClick={closeMobile} />}
+          <FeedbackTrigger className="w-full text-left py-3 px-4 text-[13px] font-sans transition-colors hover:underline underline-offset-4 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]">
+            Give feedback
+          </FeedbackTrigger>
           <form action={logoutAction} className="mt-1">
             <button type="submit" className="w-full text-left py-3 px-4 text-[13px] font-sans transition-colors hover:underline underline-offset-4 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]">
               Sign Out
