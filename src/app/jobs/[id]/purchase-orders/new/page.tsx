@@ -162,7 +162,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
   if (!job) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-20 text-center">
-        <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-[rgba(91,134,153,0.3)] border-t-[var(--nw-stone-blue)] animate-spin mx-auto" />
       </main>
     );
   }
@@ -236,7 +236,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
               onChange={(e) => setUseLineItems(e.target.checked)}
               className="accent-teal"
             />
-            <label htmlFor="useLineItems" className="text-sm text-cream-dim">
+            <label htmlFor="useLineItems" className="text-sm text-[color:var(--text-secondary)]">
               Use multiple line items (each tied to its own budget line)
             </label>
           </div>
@@ -258,8 +258,8 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                   ))}
                 </select>
                 {selectedBudgetLineRemaining !== null && (
-                  <p className="text-[11px] text-cream-dim mt-1">
-                    Remaining on this line: <span className="text-cream tabular-nums">{formatCents(selectedBudgetLineRemaining)}</span>
+                  <p className="text-[11px] text-[color:var(--text-secondary)] mt-1">
+                    Remaining on this line: <span className="text-[color:var(--text-primary)] tabular-nums">{formatCents(selectedBudgetLineRemaining)}</span>
                   </p>
                 )}
               </div>
@@ -281,7 +281,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                 <button
                   type="button"
                   onClick={addLine}
-                  className="text-[11px] text-teal hover:underline"
+                  className="text-[11px] text-[color:var(--nw-stone-blue)] hover:underline"
                 >
                   + Add line
                 </button>
@@ -324,7 +324,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                     <button
                       type="button"
                       onClick={() => removeLine(i)}
-                      className="text-cream-dim hover:text-status-danger px-2"
+                      className="text-[color:var(--text-secondary)] hover:text-[color:var(--nw-danger)] px-2"
                       aria-label="Remove"
                     >
                       ×
@@ -332,8 +332,8 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-cream-dim mt-2">
-                Line total: <span className="text-cream tabular-nums">{formatCents(lineItemTotal)}</span>
+              <p className="text-[11px] text-[color:var(--text-secondary)] mt-2">
+                Line total: <span className="text-[color:var(--text-primary)] tabular-nums">{formatCents(lineItemTotal)}</span>
               </p>
             </div>
           )}

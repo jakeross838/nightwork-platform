@@ -39,13 +39,13 @@ interface CoLine {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "text-cream-dim border-cream-dim/40",
-  pending: "text-status-warning border-status-warning/40",
-  pending_approval: "text-status-warning border-status-warning/40",
-  approved: "text-status-success border-status-success/40",
-  executed: "text-teal border-teal/40",
-  denied: "text-status-danger border-status-danger/40",
-  void: "text-status-danger border-status-danger/40 line-through",
+  draft: "text-[color:var(--text-secondary)] border-cream-dim/40",
+  pending: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
+  pending_approval: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
+  approved: "text-[color:var(--nw-success)] border-[rgba(74,138,111,0.35)]",
+  executed: "text-[color:var(--nw-stone-blue)] border-[rgba(91,134,153,0.35)]",
+  denied: "text-[color:var(--nw-danger)] border-[rgba(176,85,78,0.35)]",
+  void: "text-[color:var(--nw-danger)] border-[rgba(176,85,78,0.35)] line-through",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -118,7 +118,7 @@ export default function ChangeOrderDetailPage() {
     return (
       <AppShell>
         <main className="max-w-[1200px] mx-auto px-6 py-20 text-center">
-          <div className="w-8 h-8 border-2 border-teal/30 border-t-teal animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-[var(--nw-stone-blue)]/30 border-t-teal animate-spin mx-auto" />
         </main>
       </AppShell>
     );
@@ -128,7 +128,7 @@ export default function ChangeOrderDetailPage() {
     return (
       <AppShell>
         <main className="max-w-[1200px] mx-auto px-6 py-20 text-center">
-          <p className="text-cream">{error ?? "CO not found"}</p>
+          <p className="text-[color:var(--text-primary)]">{error ?? "CO not found"}</p>
         </main>
       </AppShell>
     );
@@ -180,32 +180,32 @@ export default function ChangeOrderDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="border border-brand-border bg-brand-card p-4">
-            <p className="text-[11px] uppercase tracking-wider text-cream-dim">Base Amount</p>
-            <p className="text-lg text-cream tabular-nums mt-1">{formatCents(co.amount)}</p>
+          <div className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
+            <p className="text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">Base Amount</p>
+            <p className="text-lg text-[color:var(--text-primary)] tabular-nums mt-1">{formatCents(co.amount)}</p>
           </div>
-          <div className="border border-brand-border bg-brand-card p-4">
-            <p className="text-[11px] uppercase tracking-wider text-cream-dim">GC Fee ({(co.gc_fee_rate * 100).toFixed(1)}%)</p>
-            <p className="text-lg text-cream tabular-nums mt-1">{formatCents(co.gc_fee_amount)}</p>
+          <div className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
+            <p className="text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">GC Fee ({(co.gc_fee_rate * 100).toFixed(1)}%)</p>
+            <p className="text-lg text-[color:var(--text-primary)] tabular-nums mt-1">{formatCents(co.gc_fee_amount)}</p>
           </div>
-          <div className="border border-teal bg-teal-muted p-4">
-            <p className="text-[11px] uppercase tracking-wider text-cream-dim">Total with Fee</p>
-            <p className="text-xl text-cream tabular-nums mt-1 font-display">{formatCents(co.total_with_fee)}</p>
+          <div className="border border-[var(--nw-stone-blue)] bg-[rgba(91,134,153,0.12)] p-4">
+            <p className="text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">Total with Fee</p>
+            <p className="text-xl text-[color:var(--text-primary)] tabular-nums mt-1 font-display">{formatCents(co.total_with_fee)}</p>
           </div>
-          <div className="border border-brand-border bg-brand-card p-4">
-            <p className="text-[11px] uppercase tracking-wider text-cream-dim">Days Added</p>
-            <p className="text-lg text-cream mt-1">{co.estimated_days_added ?? 0}</p>
+          <div className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
+            <p className="text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">Days Added</p>
+            <p className="text-lg text-[color:var(--text-primary)] mt-1">{co.estimated_days_added ?? 0}</p>
           </div>
         </div>
 
         {co.status === "denied" && co.denied_reason && (
-          <div className="mb-6 border border-status-danger/40 bg-status-danger/10 px-4 py-3 text-sm text-status-danger">
+          <div className="mb-6 border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.12)] px-4 py-3 text-sm text-[color:var(--nw-danger)]">
             <span className="font-medium">Denied:</span> {co.denied_reason}
           </div>
         )}
 
         {error && (
-          <div className="mb-4 border border-status-danger/40 bg-status-danger/5 px-4 py-3 text-sm text-status-danger">
+          <div className="mb-4 border border-[rgba(176,85,78,0.35)] bg-[rgba(176,85,78,0.08)] px-4 py-3 text-sm text-[color:var(--nw-danger)]">
             {error}
           </div>
         )}
@@ -214,21 +214,21 @@ export default function ChangeOrderDetailPage() {
           <div className="md:col-span-2 space-y-6">
             {co.description && (
               <div className="border nw-panel p-5">
-                <h3 className="text-sm font-medium text-cream mb-2 uppercase tracking-wider">Description</h3>
-                <p className="text-sm text-cream-muted whitespace-pre-wrap">{co.description}</p>
+                <h3 className="text-sm font-medium text-[color:var(--text-primary)] mb-2 uppercase tracking-wider">Description</h3>
+                <p className="text-sm text-[color:var(--text-muted)] whitespace-pre-wrap">{co.description}</p>
               </div>
             )}
 
             <div className="border nw-panel">
-              <div className="border-b border-brand-border px-5 py-3">
-                <h3 className="text-sm font-medium text-cream uppercase tracking-wider">Budget Line Allocations</h3>
+              <div className="border-b border-[var(--border-default)] px-5 py-3">
+                <h3 className="text-sm font-medium text-[color:var(--text-primary)] uppercase tracking-wider">Budget Line Allocations</h3>
               </div>
               {lines.length === 0 ? (
-                <p className="text-sm text-cream-dim p-5">No line allocations — contract-only CO.</p>
+                <p className="text-sm text-[color:var(--text-secondary)] p-5">No line allocations — contract-only CO.</p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim">
+                    <tr className="border-b border-[var(--border-default)] text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">
                       <th className="text-left px-4 py-2 font-medium">Budget Line</th>
                       <th className="text-left px-4 py-2 font-medium">Description</th>
                       <th className="text-right px-4 py-2 font-medium">Amount</th>
@@ -236,22 +236,22 @@ export default function ChangeOrderDetailPage() {
                   </thead>
                   <tbody>
                     {lines.map((l) => (
-                      <tr key={l.id} className="border-b border-brand-row-border last:border-0">
-                        <td className="px-4 py-2 text-cream font-mono text-xs">
+                      <tr key={l.id} className="border-b border-[var(--border-default)] last:border-0">
+                        <td className="px-4 py-2 text-[color:var(--text-primary)] font-mono text-xs">
                           {l.budget_lines?.cost_codes?.code ?? l.cost_code ?? "—"}
                           {l.budget_lines?.cost_codes?.description && (
-                            <span className="ml-2 text-cream-muted font-sans normal-case">{l.budget_lines.cost_codes.description}</span>
+                            <span className="ml-2 text-[color:var(--text-muted)] font-sans normal-case">{l.budget_lines.cost_codes.description}</span>
                           )}
                         </td>
-                        <td className="px-4 py-2 text-cream-muted">{l.description ?? "—"}</td>
-                        <td className={`px-4 py-2 text-right tabular-nums ${l.amount < 0 ? "text-status-danger" : l.amount > 0 ? "text-status-success" : "text-cream"}`}>
+                        <td className="px-4 py-2 text-[color:var(--text-muted)]">{l.description ?? "—"}</td>
+                        <td className={`px-4 py-2 text-right tabular-nums ${l.amount < 0 ? "text-[color:var(--nw-danger)]" : l.amount > 0 ? "text-[color:var(--nw-success)]" : "text-[color:var(--text-primary)]"}`}>
                           {formatCents(l.amount)}
                         </td>
                       </tr>
                     ))}
-                    <tr className="border-t-2 border-brand-border bg-brand-surface font-medium">
-                      <td colSpan={2} className="px-4 py-2 text-[11px] uppercase tracking-wider text-cream-dim">Total</td>
-                      <td className="px-4 py-2 text-right text-cream tabular-nums font-display">
+                    <tr className="border-t-2 border-[var(--border-default)] bg-[var(--bg-subtle)] font-medium">
+                      <td colSpan={2} className="px-4 py-2 text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">Total</td>
+                      <td className="px-4 py-2 text-right text-[color:var(--text-primary)] tabular-nums font-display">
                         {formatCents(lines.reduce((s, l) => s + l.amount, 0))}
                       </td>
                     </tr>
@@ -262,19 +262,19 @@ export default function ChangeOrderDetailPage() {
 
             {co.jobs && (co.status === "approved" || co.status === "executed") && (
               <div className="border nw-panel p-5">
-                <h3 className="text-sm font-medium text-cream mb-3 uppercase tracking-wider">Contract Impact</h3>
+                <h3 className="text-sm font-medium text-[color:var(--text-primary)] mb-3 uppercase tracking-wider">Contract Impact</h3>
                 <dl className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <dt className="text-cream-dim text-[11px] uppercase tracking-wider">Original Contract</dt>
-                    <dd className="text-cream mt-0.5 tabular-nums">{formatCents(co.jobs.original_contract_amount)}</dd>
+                    <dt className="text-[color:var(--text-secondary)] text-[11px] uppercase tracking-wider">Original Contract</dt>
+                    <dd className="text-[color:var(--text-primary)] mt-0.5 tabular-nums">{formatCents(co.jobs.original_contract_amount)}</dd>
                   </div>
                   <div>
-                    <dt className="text-cream-dim text-[11px] uppercase tracking-wider">After COs</dt>
-                    <dd className="text-cream mt-0.5 tabular-nums">{formatCents(co.jobs.current_contract_amount)}</dd>
+                    <dt className="text-[color:var(--text-secondary)] text-[11px] uppercase tracking-wider">After COs</dt>
+                    <dd className="text-[color:var(--text-primary)] mt-0.5 tabular-nums">{formatCents(co.jobs.current_contract_amount)}</dd>
                   </div>
                   <div>
-                    <dt className="text-cream-dim text-[11px] uppercase tracking-wider">This CO</dt>
-                    <dd className="text-teal mt-0.5 tabular-nums font-medium">+{formatCents(co.amount)}</dd>
+                    <dt className="text-[color:var(--text-secondary)] text-[11px] uppercase tracking-wider">This CO</dt>
+                    <dd className="text-[color:var(--nw-stone-blue)] mt-0.5 tabular-nums font-medium">+{formatCents(co.amount)}</dd>
                   </div>
                 </dl>
               </div>
@@ -283,13 +283,13 @@ export default function ChangeOrderDetailPage() {
 
           <aside className="space-y-4">
             <div className="border nw-panel p-4">
-              <h3 className="text-sm font-medium text-cream uppercase tracking-wider mb-3">Actions</h3>
+              <h3 className="text-sm font-medium text-[color:var(--text-primary)] uppercase tracking-wider mb-3">Actions</h3>
               <div className="flex flex-col gap-2">
                 {co.status === "draft" && (
                   <button
                     disabled={busy}
                     onClick={() => updateStatus("pending")}
-                    className="w-full px-3 py-2 text-sm border border-teal text-teal hover:bg-teal hover:text-white disabled:opacity-50 transition-colors"
+                    className="w-full px-3 py-2 text-sm border border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] hover:text-white disabled:opacity-50 transition-colors"
                   >
                     Submit for Approval
                   </button>
@@ -299,7 +299,7 @@ export default function ChangeOrderDetailPage() {
                     <button
                       disabled={busy}
                       onClick={() => updateStatus("approved")}
-                      className="w-full px-3 py-2 text-sm bg-teal text-white hover:bg-teal-hover disabled:opacity-50 transition-colors"
+                      className="w-full px-3 py-2 text-sm bg-[var(--nw-stone-blue)] text-white hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 transition-colors"
                     >
                       {busy ? "…" : "Approve"}
                     </button>
@@ -310,7 +310,7 @@ export default function ChangeOrderDetailPage() {
                         if (!reason) return;
                         updateStatus("denied", { denied_reason: reason });
                       }}
-                      className="w-full px-3 py-2 text-sm border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
+                      className="w-full px-3 py-2 text-sm border border-[rgba(176,85,78,0.55)] text-[color:var(--nw-danger)] hover:bg-[var(--nw-danger)] hover:text-white disabled:opacity-50 transition-colors"
                     >
                       Deny
                     </button>
@@ -324,7 +324,7 @@ export default function ChangeOrderDetailPage() {
                       if (!note) return;
                       updateStatus("void", { note });
                     }}
-                    className="w-full px-3 py-2 text-sm border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
+                    className="w-full px-3 py-2 text-sm border border-[rgba(176,85,78,0.55)] text-[color:var(--nw-danger)] hover:bg-[var(--nw-danger)] hover:text-white disabled:opacity-50 transition-colors"
                   >
                     Void
                   </button>
@@ -337,7 +337,7 @@ export default function ChangeOrderDetailPage() {
                       if (!note) return;
                       updateStatus("void", { note });
                     }}
-                    className="w-full px-3 py-2 text-sm border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
+                    className="w-full px-3 py-2 text-sm border border-[rgba(176,85,78,0.55)] text-[color:var(--nw-danger)] hover:bg-[var(--nw-danger)] hover:text-white disabled:opacity-50 transition-colors"
                   >
                     Void
                   </button>
@@ -346,21 +346,21 @@ export default function ChangeOrderDetailPage() {
             </div>
 
             <div className="border nw-panel p-4 text-sm">
-              <h3 className="text-sm font-medium text-cream uppercase tracking-wider mb-3">Dates</h3>
+              <h3 className="text-sm font-medium text-[color:var(--text-primary)] uppercase tracking-wider mb-3">Dates</h3>
               <dl className="space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <dt className="text-cream-dim">Submitted</dt>
-                  <dd className="text-cream">{co.submitted_date ? formatDate(co.submitted_date) : "—"}</dd>
+                  <dt className="text-[color:var(--text-secondary)]">Submitted</dt>
+                  <dd className="text-[color:var(--text-primary)]">{co.submitted_date ? formatDate(co.submitted_date) : "—"}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-cream-dim">Approved</dt>
-                  <dd className="text-cream">{co.approved_date ? formatDate(co.approved_date) : "—"}</dd>
+                  <dt className="text-[color:var(--text-secondary)]">Approved</dt>
+                  <dd className="text-[color:var(--text-primary)]">{co.approved_date ? formatDate(co.approved_date) : "—"}</dd>
                 </div>
               </dl>
               {co.source_invoice_id && (
                 <Link
                   href={`/invoices/${co.source_invoice_id}`}
-                  className="text-[11px] text-teal hover:underline mt-3 inline-block"
+                  className="text-[11px] text-[color:var(--nw-stone-blue)] hover:underline mt-3 inline-block"
                 >
                   ↳ Drafted from an invoice
                 </Link>
@@ -369,18 +369,18 @@ export default function ChangeOrderDetailPage() {
 
             {co.status_history && co.status_history.length > 0 && (
               <div className="border nw-panel p-4">
-                <h3 className="text-sm font-medium text-cream uppercase tracking-wider mb-3">History</h3>
-                <ul className="space-y-2 text-[11px] text-cream-dim">
+                <h3 className="text-sm font-medium text-[color:var(--text-primary)] uppercase tracking-wider mb-3">History</h3>
+                <ul className="space-y-2 text-[11px] text-[color:var(--text-secondary)]">
                   {co.status_history.map((h, i) => (
                     <li key={i}>
                       <div>
-                        <span className="text-cream">
+                        <span className="text-[color:var(--text-primary)]">
                           {h.old_status ? `${STATUS_LABELS[h.old_status] ?? h.old_status} → ` : ""}
                           {STATUS_LABELS[h.new_status] ?? h.new_status}
                         </span>
                       </div>
                       <div>{formatDate(h.when)}</div>
-                      {h.note && <div className="text-cream-muted italic">{h.note}</div>}
+                      {h.note && <div className="text-[color:var(--text-muted)] italic">{h.note}</div>}
                     </li>
                   ))}
                 </ul>
