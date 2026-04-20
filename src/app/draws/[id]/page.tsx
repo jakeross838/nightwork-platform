@@ -247,10 +247,19 @@ export default function DrawDetailPage() {
             >
               &larr; Draws
             </button>
-            <h1 className="font-display text-xl text-cream">
-              {draw.jobs?.name} <span className="text-cream-dim">&mdash;</span> Draw #{draw.draw_number}
+            <h1
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "22px",
+                letterSpacing: "-0.01em",
+                color: "var(--text-primary)",
+              }}
+            >
+              {draw.jobs?.name} <span style={{ color: "var(--text-tertiary)" }}>&mdash;</span> Draw #{draw.draw_number}
               {draw.revision_number > 0 && (
-                <span className="text-brass ml-1">Rev {draw.revision_number}</span>
+                <span className="ml-1" style={{ color: "var(--nw-warn)" }}>Rev {draw.revision_number}</span>
               )}
               {draw.is_final && (
                 <span className="ml-2 text-[10px] px-2 py-0.5 border border-brass text-brass uppercase tracking-wider">
@@ -287,7 +296,7 @@ export default function DrawDetailPage() {
               <button
                 onClick={() => handleAction("submit")}
                 disabled={acting}
-                className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                className="h-[36px] px-4 text-[11px] uppercase disabled:opacity-50 transition-colors nw-primary-btn"
               >
                 {acting ? "Processing..." : "Submit for Approval"}
               </button>
@@ -319,7 +328,7 @@ export default function DrawDetailPage() {
                   )
                 }
                 disabled={acting}
-                className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium uppercase tracking-[0.06em] transition-colors"
+                className="h-[36px] px-4 text-[11px] uppercase disabled:opacity-50 transition-colors nw-primary-btn"
               >
                 Lock Draw
               </button>
@@ -760,6 +769,20 @@ export default function DrawDetailPage() {
           </div>
         </div>
       </main>
+      <style jsx>{`
+        :global(.nw-primary-btn) {
+          background: var(--nw-stone-blue);
+          color: var(--nw-white-sand);
+          font-family: var(--font-jetbrains-mono);
+          letter-spacing: 0.12em;
+          font-weight: 500;
+          border: 1px solid var(--nw-stone-blue);
+        }
+        :global(.nw-primary-btn:hover:not(:disabled)) {
+          background: var(--nw-gulf-blue);
+          border-color: var(--nw-gulf-blue);
+        }
+      `}</style>
     </AppShell>
   );
 }

@@ -133,14 +133,37 @@ export default async function BillingSettingsPage({
         </Banner>
       )}
 
-      <section className="bg-white border border-brand-border p-6">
+      <section
+        className="border p-6"
+        style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
+      >
         <div className="flex items-baseline justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">Current Plan</p>
-            <h2 className="mt-1 font-display text-3xl text-cream">{planName}</h2>
-            <p className="mt-1 text-sm text-cream-muted">
+            <p
+              className="text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Current Plan
+            </p>
+            <h2
+              className="mt-1 m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "28px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              {planName}
+            </h2>
+            <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
               {PLAN_MONTHLY_PRICE[planSlug]}
-              {planSlug !== "free_trial" && <span className="text-cream-dim">/mo</span>}
+              {planSlug !== "free_trial" && <span style={{ color: "var(--text-tertiary)" }}>/mo</span>}
             </p>
           </div>
           <StatusBadge status={org.subscription_status} />
@@ -171,7 +194,10 @@ export default async function BillingSettingsPage({
           <Row label="Stripe customer" value={org.stripe_customer_id ?? "—"} />
         </dl>
 
-        <div className="mt-6 pt-6 border-t border-brand-border">
+        <div
+          className="mt-6 pt-6 border-t"
+          style={{ borderColor: "var(--border-default)" }}
+        >
           <BillingActions
             hasCustomer={Boolean(org.stripe_customer_id)}
             hasActiveSub={Boolean(currentSub)}
@@ -244,8 +270,17 @@ function capitalize(s: string): string {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <>
-      <dt className="text-[11px] tracking-[0.08em] uppercase text-cream-dim">{label}</dt>
-      <dd className="text-cream break-all">{value}</dd>
+      <dt
+        className="text-[10px] uppercase"
+        style={{
+          fontFamily: "var(--font-jetbrains-mono)",
+          letterSpacing: "0.14em",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        {label}
+      </dt>
+      <dd className="break-all" style={{ color: "var(--text-primary)" }}>{value}</dd>
     </>
   );
 }

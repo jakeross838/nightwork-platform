@@ -24,7 +24,6 @@ export default async function SignupPage({
       <div className="w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block" aria-label={PUBLIC_APP_NAME}>
-            {/* Plain <img> keeps the SVG geometry from collapsing at small sizes. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/nightwork-logo-light.svg"
@@ -33,26 +32,53 @@ export default async function SignupPage({
               className="mx-auto h-10 w-auto"
             />
           </Link>
-          <h1 className="mt-6 font-display text-3xl text-cream tracking-tight">
+          <h1
+            className="m-0 mt-6"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "28px",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
             Create your {PUBLIC_APP_NAME} account
           </h1>
-          <p className="mt-2 text-sm text-cream-dim">
+          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
             14-day free trial. No credit card required.
           </p>
           {plan && (
-            <p className="mt-3 inline-block px-3 py-1 border border-brand-border text-[11px] tracking-[0.08em] uppercase text-cream-dim">
+            <p
+              className="mt-3 inline-block px-3 py-1 border text-[11px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                borderColor: "var(--border-default)",
+                color: "var(--text-tertiary)",
+              }}
+            >
               Selected plan: {plan}
             </p>
           )}
         </div>
 
-        <div className="p-6 border border-brand-border bg-white">
+        <div
+          className="p-6 border"
+          style={{
+            background: "var(--bg-card)",
+            borderColor: "var(--border-default)",
+          }}
+        >
           <SignupForm plan={plan} />
         </div>
 
-        <p className="mt-6 text-center text-sm text-cream-muted">
+        <p className="mt-6 text-center text-sm" style={{ color: "var(--text-tertiary)" }}>
           Already have an account?{" "}
-          <Link href="/login" className="text-teal hover:underline underline-offset-4">
+          <Link
+            href="/login"
+            className="hover:underline underline-offset-4"
+            style={{ color: "var(--nw-gulf-blue)" }}
+          >
             Sign in
           </Link>
         </p>
