@@ -272,7 +272,7 @@ export default function PaymentBatchByVendorPanel({
           <p className="text-sm text-[color:var(--text-primary)]">
             <span className="font-medium">Pay {selected.size} vendors</span> ·{" "}
             <span className="text-[color:var(--text-secondary)]">{selectedInvoiceCount} invoices</span> · Total{" "}
-            <span className="text-brass font-display">{formatCents(selectedTotal)}</span>
+            <span className="text-[color:var(--nw-warn)] font-display">{formatCents(selectedTotal)}</span>
           </p>
           <button
             onClick={() => setShowConfirm(true)}
@@ -440,7 +440,7 @@ function ReceiptView({ receipts, onClose }: { receipts: Receipt[]; onClose: () =
                   {r.missing_lien_release && r.draw_ids.length > 0 ? (
                     <Link
                       href={`/draws/${r.draw_ids[0]}`}
-                      className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-brass text-brass hover:bg-brass/10"
+                      className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-[var(--nw-warn)] text-[color:var(--nw-warn)] hover:bg-[rgba(201,138,59,0.12)]"
                     >
                       Lien missing
                     </Link>

@@ -295,7 +295,7 @@ function ActivityBadge({ action }: { action: string }) {
     delete_blocked: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
     voided: "text-[color:var(--nw-danger)] border-[rgba(176,85,78,0.35)]",
     void_blocked: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
-    merged: "text-brass border-brass/40",
+    merged: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
     approved: "text-[color:var(--nw-success)] border-[rgba(74,138,111,0.35)]",
     denied: "text-[color:var(--nw-danger)] border-[rgba(176,85,78,0.35)]",
     recomputed: "text-[color:var(--text-muted)] border-[var(--border-default)]",

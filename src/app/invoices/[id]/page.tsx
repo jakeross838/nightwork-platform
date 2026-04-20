@@ -402,7 +402,7 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
 // ── Status History Timeline ─────────────────────────────
 function statusDotColor(newStatus: string): string {
  if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-[var(--nw-success)]";
- if (["pm_held", "info_requested"].includes(newStatus)) return "bg-brass";
+ if (["pm_held", "info_requested"].includes(newStatus)) return "bg-[var(--nw-warn)]";
  if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-[var(--nw-danger)]";
  return "bg-[var(--nw-stone-blue)]"; // forward progress: pm_review, qa_review, ai_processed
 }
@@ -1232,7 +1232,7 @@ export default function InvoiceReviewPage() {
  </span>
  )}
  {isChangeOrder && (
- <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-brass border border-brass">
+ <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]">
  Change Order
  </span>
  )}
@@ -1382,9 +1382,9 @@ export default function InvoiceReviewPage() {
  )}
  {/* Partial approval banner — shown on both halves of a split */}
  {(invoice.parent_invoice_id || invoice.partial_approval_note) && (
- <div className="mb-4 border border-brass/50 bg-brass/5 px-4 py-3 text-sm text-[color:var(--text-primary)] animate-fade-up">
+ <div className="mb-4 border border-[rgba(201,138,59,0.5)] bg-[rgba(201,138,59,0.08)] px-4 py-3 text-sm text-[color:var(--text-primary)] animate-fade-up">
  <div className="flex items-start gap-3">
- <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-brass text-brass">
+ <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-[var(--nw-warn)] text-[color:var(--nw-warn)]">
  Partial
  </span>
  <div className="flex-1">
@@ -1424,13 +1424,13 @@ export default function InvoiceReviewPage() {
  )}
  {/* Duplicate warning banner (Phase 8e) */}
  {invoice.is_potential_duplicate && invoice.duplicate_of && (
- <div className="mb-4 border border-brass/60 bg-brass/10 px-4 py-3 text-sm animate-fade-up">
+ <div className="mb-4 border border-[rgba(201,138,59,0.55)] bg-[rgba(201,138,59,0.12)] px-4 py-3 text-sm animate-fade-up">
  <div className="flex items-start gap-3">
- <svg className="w-5 h-5 text-brass flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="w-5 h-5 text-[color:var(--nw-warn)] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
  </svg>
  <div className="flex-1 min-w-0">
- <p className="text-brass font-medium">Possible duplicate detected</p>
+ <p className="text-[color:var(--nw-warn)] font-medium">Possible duplicate detected</p>
  <p className="text-[color:var(--text-muted)] mt-1">
  Matches {invoice.duplicate_of.vendor_name_raw ?? "existing invoice"}{" "}
  {formatCents(invoice.duplicate_of.total_amount)}
@@ -2056,7 +2056,7 @@ export default function InvoiceReviewPage() {
  {(missingInvoiceNumber || missingInvoiceDate || dateReasonablenessWarning) && (
  <div className="mt-4 flex flex-wrap gap-2">
  {missingInvoiceNumber && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-brass border border-brass/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
  No invoice #
  </span>
@@ -2068,14 +2068,14 @@ export default function InvoiceReviewPage() {
  No date detected — required
  </span>
  ) : (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-brass border border-brass/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
  No date detected
  </span>
  )
  )}
  {dateReasonablenessWarning && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-brass border border-brass/20">
+ <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
  {dateReasonablenessWarning}
  </span>
@@ -2112,7 +2112,7 @@ export default function InvoiceReviewPage() {
  })));
  }}
  disabled={!isReviewable}
- className={`relative inline-flex h-6 w-11 items-center transition-colors disabled:opacity-50 ${isChangeOrder ? "bg-brass" : "bg-[var(--border-default)]"}`}
+ className={`relative inline-flex h-6 w-11 items-center transition-colors disabled:opacity-50 ${isChangeOrder ? "bg-[var(--nw-warn)]" : "bg-[var(--border-default)]"}`}
  >
  <span className={`inline-block h-4 w-4 transform bg-white transition-transform ${isChangeOrder ? "translate-x-6" : "translate-x-1"}`} />
  </button>
@@ -2160,7 +2160,7 @@ export default function InvoiceReviewPage() {
  <div>
  <FormField label="Total ($)" value={totalAmount} onChange={setTotalAmount} type="number" disabled={!isReviewable} />
  {amountOverAi && !amountOver10Pct && (
- <p className="mt-1.5 text-[11px] text-brass">
+ <p className="mt-1.5 text-[11px] text-[color:var(--nw-warn)]">
  +{amountIncreasePct.toFixed(1)}% vs AI-parsed {formatCents(aiParsedTotal)}
  </p>
  )}
@@ -2379,7 +2379,7 @@ export default function InvoiceReviewPage() {
  };
  }))}
  disabled={!isReviewable}
- className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-brass" : "bg-[var(--border-default)]"}`}
+ className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-[var(--nw-warn)]" : "bg-[var(--border-default)]"}`}
  aria-label="Toggle Change Order"
  >
  <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${li.is_change_order ? "translate-x-5" : "translate-x-1"}`} />
@@ -2561,8 +2561,8 @@ export default function InvoiceReviewPage() {
  );
  })() : (
  jobId && costCodeId ? (
- <div className="px-3 py-2.5 bg-brass/10 border border-brass/20 ">
- <p className="text-xs text-brass font-medium">No budget set for this cost code</p>
+ <div className="px-3 py-2.5 bg-[rgba(201,138,59,0.12)] border border-[rgba(201,138,59,0.25)] ">
+ <p className="text-xs text-[color:var(--nw-warn)] font-medium">No budget set for this cost code</p>
  <p className="text-[11px] text-[color:var(--text-secondary)] mt-1">Approving will create a $0 budget line — this invoice will show as over-budget on the draw.</p>
  </div>
  ) : (
@@ -2736,9 +2736,9 @@ export default function InvoiceReviewPage() {
 
  {/* Soft warnings for optional fields (job+cost code enforced before reaching this modal) */}
  {(missingInvoiceNumber || missingInvoiceDate) && (
- <div className="mb-4 px-3 py-2.5 bg-[rgba(201,138,59,0.12)] border border-brass/20 space-y-1">
- {missingInvoiceNumber && <p className="text-xs text-brass">Missing invoice number</p>}
- {missingInvoiceDate && <p className="text-xs text-brass">Missing invoice date</p>}
+ <div className="mb-4 px-3 py-2.5 bg-[rgba(201,138,59,0.12)] border border-[rgba(201,138,59,0.25)] space-y-1">
+ {missingInvoiceNumber && <p className="text-xs text-[color:var(--nw-warn)]">Missing invoice number</p>}
+ {missingInvoiceDate && <p className="text-xs text-[color:var(--nw-warn)]">Missing invoice date</p>}
  <p className="text-[11px] text-[color:var(--text-secondary)] mt-1">You can still approve, but consider filling these in.</p>
  </div>
  )}
@@ -2746,7 +2746,7 @@ export default function InvoiceReviewPage() {
  <div className="bg-[var(--bg-subtle)] border border-[var(--border-default)] p-4 space-y-2 text-sm">
  <div className="flex justify-between">
  <span className="text-[color:var(--text-secondary)]">Amount</span>
- <span className={`font-display font-medium ${isCreditMemo ? "text-[color:var(--nw-stone-blue)]" : "text-brass"}`}>{formatCents(totalCents)}</span>
+ <span className={`font-display font-medium ${isCreditMemo ? "text-[color:var(--nw-stone-blue)]" : "text-[color:var(--nw-warn)]"}`}>{formatCents(totalCents)}</span>
  </div>
  <div className="flex justify-between">
  <span className="text-[color:var(--text-secondary)]">Vendor</span>
@@ -2769,7 +2769,7 @@ export default function InvoiceReviewPage() {
  {isChangeOrder && (
  <div className="flex justify-between">
  <span className="text-[color:var(--text-secondary)]">Change Order</span>
- <span className="text-brass">{coReference || "Yes"}</span>
+ <span className="text-[color:var(--nw-warn)]">{coReference || "Yes"}</span>
  </div>
  )}
  </div>
@@ -2822,7 +2822,7 @@ export default function InvoiceReviewPage() {
  <span className="font-mono text-[color:var(--nw-stone-blue)]">{formatCc(r.ccId)}</span>
  {r.bi?.is_allowance && <span className="ml-1 text-[color:var(--nw-stone-blue)]">[Allowance]</span>}
  </span>
- <span className={r.severity === "red" ? "text-[color:var(--nw-danger)]" : r.severity === "orange" ? "text-[color:var(--nw-warn)]" : "text-brass"}>
+ <span className={r.severity === "red" ? "text-[color:var(--nw-danger)]" : r.severity === "orange" ? "text-[color:var(--nw-warn)]" : "text-[color:var(--nw-warn)]"}>
  +{formatCents(r.overageCents)} ({r.pct.toFixed(1)}%)
  </span>
  </li>
@@ -3153,7 +3153,7 @@ export default function InvoiceReviewPage() {
  <td className="px-3 py-2 text-[color:var(--text-primary)]">
  <span className="line-clamp-2">{li.description || "—"}</span>
  {li.is_change_order && li.co_reference && (
- <span className="ml-2 text-[10px] uppercase tracking-wider text-brass">CO {li.co_reference}</span>
+ <span className="ml-2 text-[10px] uppercase tracking-wider text-[color:var(--nw-warn)]">CO {li.co_reference}</span>
  )}
  </td>
  <td className="px-3 py-2 text-[color:var(--text-muted)] text-xs font-mono">
@@ -3177,7 +3177,7 @@ export default function InvoiceReviewPage() {
  <td colSpan={3} className="px-3 py-2 text-[11px] uppercase tracking-wider text-[color:var(--text-secondary)]">
  Holding the remaining
  </td>
- <td className="px-3 py-2 text-right text-brass font-display tabular-nums">
+ <td className="px-3 py-2 text-right text-[color:var(--nw-warn)] font-display tabular-nums">
  {formatCents(lineItems.filter((l) => l.id && !partialApprovedIds.has(l.id)).reduce((s, l) => s + l.amount_cents, 0))}
  </td>
  </tr>
@@ -3258,7 +3258,7 @@ function OverBudgetAlert({ severity, overage, pct, isAllowance }: {
  isAllowance: boolean;
 }) {
  const colorMap: Record<string, { bg: string; border: string; text: string; label: string }> = {
- yellow: { bg: "bg-[rgba(201,138,59,0.12)]", border: "border-brass/30", text: "text-brass", label: "Over budget" },
+ yellow: { bg: "bg-[rgba(201,138,59,0.12)]", border: "border-[rgba(201,138,59,0.3)]", text: "text-[color:var(--nw-warn)]", label: "Over budget" },
  orange: { bg: "bg-[rgba(201,138,59,0.12)]", border: "border-[rgba(201,138,59,0.35)]", text: "text-[color:var(--nw-warn)]", label: "Significantly over budget" },
  red: { bg: "bg-[rgba(176,85,78,0.12)]", border: "border-[rgba(176,85,78,0.35)]", text: "text-[color:var(--nw-danger)]", label: isAllowance ? "Allowance overage" : "Severely over budget" },
  };
@@ -3405,7 +3405,7 @@ function EditHistoryCard({
  <div key={i} className="text-xs border-l-2 border-[rgba(91,134,153,0.3)] pl-3 py-1">
  <p className="text-[color:var(--text-primary)]">
  <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold mr-1.5 bg-transparent border ${
- entry.source === "PM" ? "text-[color:var(--nw-stone-blue)] border-[var(--nw-stone-blue)]" : "text-brass border-brass"
+ entry.source === "PM" ? "text-[color:var(--nw-stone-blue)] border-[var(--nw-stone-blue)]" : "text-[color:var(--nw-warn)] border-[var(--nw-warn)]"
  }`}>
  {entry.source}
  </span>
@@ -3425,7 +3425,7 @@ function EditHistoryCard({
 }
 
 function BudgetRow({ label, value, highlight }: { label: string; value: number; highlight?: "danger" | "warning" | "success" }) {
- const color = highlight === "danger" ? "text-[color:var(--nw-danger)]" : highlight === "warning" ? "text-brass" : highlight === "success" ? "text-[color:var(--nw-success)]" : "text-[color:var(--text-primary)]";
+ const color = highlight === "danger" ? "text-[color:var(--nw-danger)]" : highlight === "warning" ? "text-[color:var(--nw-warn)]" : highlight === "success" ? "text-[color:var(--nw-success)]" : "text-[color:var(--text-primary)]";
  return (
  <div className="flex justify-between text-sm">
  <span className="text-[color:var(--text-secondary)]">{label}</span>
@@ -3484,7 +3484,7 @@ function PaymentSection({
  : status === "scheduled"
  ? "border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)]"
  : status === "partial"
- ? "border-brass text-brass"
+ ? "border-[var(--nw-warn)] text-[color:var(--nw-warn)]"
  : "border-[var(--border-strong)] text-[color:var(--text-secondary)]"
  }`}
  >
@@ -3511,7 +3511,7 @@ function PaymentSection({
  {invoice.payment_amount != null && invoice.payment_amount !== invoice.total_amount && (
  <div className="flex justify-between">
  <span className="text-[color:var(--text-muted)]">Paid so far</span>
- <span className="text-brass font-display font-medium">{formatCents(invoice.payment_amount)}</span>
+ <span className="text-[color:var(--nw-warn)] font-display font-medium">{formatCents(invoice.payment_amount)}</span>
  </div>
  )}
  </div>

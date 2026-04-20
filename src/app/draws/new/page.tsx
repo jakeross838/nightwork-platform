@@ -608,7 +608,7 @@ export default function NewDrawWizardPage() {
               )}
 
               {jobId && jobMeta && jobMeta.invoicesSinceLastDraw === 0 && (
-                <div className="bg-brass/10 border border-brass/40 px-4 py-3 text-sm text-brass">
+                <div className="bg-[rgba(201,138,59,0.12)] border border-[rgba(201,138,59,0.35)] px-4 py-3 text-sm text-[color:var(--nw-warn)]">
                   No new approved invoices since{" "}
                   {jobMeta.lastDrawNumber
                     ? `Draw #${jobMeta.lastDrawNumber}`
@@ -618,7 +618,7 @@ export default function NewDrawWizardPage() {
               )}
 
               {jobId && (
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-brass">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-[color:var(--nw-warn)]">
                   <input
                     type="checkbox"
                     checked={isFinal}
@@ -808,8 +808,8 @@ export default function NewDrawWizardPage() {
                     ))}
                     {coLines.length > 0 && (
                       <>
-                        <tr className="bg-brass/10 border-t-2 border-brass/40">
-                          <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-brass font-semibold">
+                        <tr className="bg-[rgba(201,138,59,0.12)] border-t-2 border-[rgba(201,138,59,0.35)]">
+                          <td colSpan={8} className="py-1.5 px-3 text-[10px] uppercase tracking-wider text-[color:var(--nw-warn)] font-semibold">
                             Change Orders
                             {preview?.change_orders.some((c) => c.pcco_number != null) && (
                               <span className="ml-2 text-[color:var(--text-secondary)] font-normal normal-case">
@@ -878,7 +878,7 @@ export default function NewDrawWizardPage() {
             <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6">
               <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-4">
                 G702 Summary — Application for Payment{" "}
-                {isFinal && <span className="text-brass">(FINAL)</span>}
+                {isFinal && <span className="text-[color:var(--nw-warn)]">(FINAL)</span>}
               </p>
               <div className="space-y-3">
                 <G702Line num="1" label="Original Contract Sum" value={preview.totals.original_contract_sum} />
@@ -899,8 +899,8 @@ export default function NewDrawWizardPage() {
             </div>
 
             {warnings.length > 0 && (
-              <div className="bg-brass/10 border border-brass/40 p-4">
-                <p className="text-[11px] font-medium text-brass uppercase tracking-wider mb-2">
+              <div className="bg-[rgba(201,138,59,0.12)] border border-[rgba(201,138,59,0.35)] p-4">
+                <p className="text-[11px] font-medium text-[color:var(--nw-warn)] uppercase tracking-wider mb-2">
                   Warnings ({warnings.length})
                 </p>
                 <ul className="space-y-1.5 text-sm">
@@ -908,7 +908,7 @@ export default function NewDrawWizardPage() {
                     <li
                       key={i}
                       className={
-                        w.kind === "warn" ? "text-brass" : "text-[color:var(--text-muted)]"
+                        w.kind === "warn" ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-muted)]"
                       }
                     >
                       {w.kind === "warn" ? "⚠" : "ℹ"} {w.text}
@@ -1056,7 +1056,7 @@ function G702Line({
       </div>
       <span
         className={`font-display ${
-          highlight ? "text-brass font-medium text-base" : "text-[color:var(--text-primary)] text-sm"
+          highlight ? "text-[color:var(--nw-warn)] font-medium text-base" : "text-[color:var(--text-primary)] text-sm"
         }`}
       >
         {formatCents(value)}
@@ -1085,13 +1085,13 @@ function G703EditRow({
 
   return (
     <>
-      <tr className={`border-t border-[var(--border-default)] ${hasOverride ? "bg-brass/5" : ""}`}>
-        <td className={`py-2 px-3 font-mono text-xs font-bold ${isCo ? "text-brass" : "text-[color:var(--nw-stone-blue)]"}`}>
+      <tr className={`border-t border-[var(--border-default)] ${hasOverride ? "bg-[rgba(201,138,59,0.08)]" : ""}`}>
+        <td className={`py-2 px-3 font-mono text-xs font-bold ${isCo ? "text-[color:var(--nw-warn)]" : "text-[color:var(--nw-stone-blue)]"}`}>
           {line.code}
         </td>
         <td className="py-2 px-3 text-[color:var(--text-primary)]">
           {line.description}
-          {isCo && <span className="ml-2 text-[10px] text-brass">CO</span>}
+          {isCo && <span className="ml-2 text-[10px] text-[color:var(--nw-warn)]">CO</span>}
         </td>
         <td className="py-2 px-3 text-[color:var(--text-primary)] text-right">{formatCents(line.scheduled_value)}</td>
         <td className="py-2 px-3 text-[color:var(--text-primary)] text-right">
@@ -1112,11 +1112,11 @@ function G703EditRow({
         <td className={`py-2 px-3 text-right ${line.balance_to_finish < 0 ? "text-[color:var(--nw-danger)]" : "text-[color:var(--text-primary)]"}`}>
           {formatCents(line.balance_to_finish)}
         </td>
-        <td className="py-2 px-3 text-right text-brass">{formatCents(line.retainage)}</td>
+        <td className="py-2 px-3 text-right text-[color:var(--nw-warn)]">{formatCents(line.retainage)}</td>
       </tr>
       {hasOverride && (
         <tr>
-          <td colSpan={8} className="py-1.5 px-3 bg-brass/5">
+          <td colSpan={8} className="py-1.5 px-3 bg-[rgba(201,138,59,0.08)]">
             <input
               type="text"
               placeholder="Reason for adjustment (required)"

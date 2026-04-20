@@ -1216,7 +1216,7 @@ function CategoryBlock({
                   {r.description}
                 </button>
                 {r.is_allowance && (
-                  <span className="ml-2 inline-block px-1.5 py-0.5 text-[9px] uppercase tracking-wider border border-brass/50 text-brass">
+                  <span className="ml-2 inline-block px-1.5 py-0.5 text-[9px] uppercase tracking-wider border border-[rgba(201,138,59,0.5)] text-[color:var(--nw-warn)]">
                     Allowance
                   </span>
                 )}

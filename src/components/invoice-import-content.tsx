@@ -459,7 +459,7 @@ export default function ImportPageContent() {
                     type="button"
                     onClick={doBulkAssign}
                     disabled={!assignJobId}
-                    className="px-3 py-1.5 bg-brass text-bg-dark text-xs tracking-[0.08em] uppercase hover:bg-brass/90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 bg-[var(--nw-warn)] text-bg-dark text-xs tracking-[0.08em] uppercase hover:bg-[var(--nw-warn)]/90 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Apply
                   </button>
@@ -586,7 +586,7 @@ function Stat({
     tone === "ok"
       ? "text-[color:var(--nw-success)]"
       : tone === "warn"
-      ? "text-brass"
+      ? "text-[color:var(--nw-warn)]"
       : tone === "err"
       ? "text-[color:var(--nw-danger)]"
       : "text-[color:var(--text-secondary)]";
@@ -604,7 +604,7 @@ function StatusBadge({ status }: { status: string }) {
     import_parsing: { label: "Parsing…", tone: "bg-[rgba(91,134,153,0.24)] text-[color:var(--nw-stone-blue)]" },
     import_parsed: { label: "Parsed", tone: "bg-[rgba(74,138,111,0.24)] text-[color:var(--nw-success)]" },
     import_error: { label: "Error", tone: "bg-[rgba(176,85,78,0.24)] text-[color:var(--nw-danger)]" },
-    import_duplicate: { label: "Duplicate", tone: "bg-brass/20 text-brass" },
+    import_duplicate: { label: "Duplicate", tone: "bg-[rgba(201,138,59,0.24)] text-[color:var(--nw-warn)]" },
     pm_review: { label: "Sent → PM", tone: "bg-cream/10 text-[color:var(--text-secondary)]" },
     qa_review: { label: "Sent → QA", tone: "bg-cream/10 text-[color:var(--text-secondary)]" },
   };
@@ -660,7 +660,7 @@ function RowView({
         {row.jobs?.name ? (
           <span className="text-[color:var(--text-primary)]">{row.jobs.name}</span>
         ) : row.status === "import_parsed" ? (
-          <span className="text-brass text-xs">Unmatched — assign</span>
+          <span className="text-[color:var(--nw-warn)] text-xs">Unmatched — assign</span>
         ) : (
           <span className="text-[color:var(--text-secondary)]">—</span>
         )}

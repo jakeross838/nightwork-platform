@@ -336,7 +336,7 @@ export default function JobsPage() {
                           <div className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Open Invoices</div>
                           <div className="text-[var(--text-primary)] tabular-nums">
                             {j.open_invoices > 0 ? (
-                              <span className={j.oldest_invoice_days >= 7 ? "text-[color:var(--nw-danger)]" : "text-brass"}>
+                              <span className={j.oldest_invoice_days >= 7 ? "text-[color:var(--nw-danger)]" : "text-[color:var(--nw-warn)]"}>
                                 {j.open_invoices}
                               </span>
                             ) : (

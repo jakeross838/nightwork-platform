@@ -248,7 +248,7 @@ export default function CostCodeCombobox({
                         <span className="font-mono text-[12px] shrink-0 w-14">{o.code}</span>
                         <span className="flex-1 truncate">{o.description}</span>
                         {o.is_change_order && (
-                          <span className="text-[10px] uppercase tracking-wider text-brass">CO</span>
+                          <span className="text-[10px] uppercase tracking-wider text-[color:var(--nw-warn)]">CO</span>
                         )}
                       </button>
                     );

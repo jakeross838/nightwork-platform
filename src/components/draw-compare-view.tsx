@@ -170,9 +170,9 @@ export default function DrawCompareView({ drawId }: { drawId: string }) {
 
 function SectionRow({ label, co }: { label: string; co?: boolean }) {
   return (
-    <tr className={co ? "bg-brass/10" : "bg-[rgba(91,134,153,0.06)]"}>
+    <tr className={co ? "bg-[rgba(201,138,59,0.12)]" : "bg-[rgba(91,134,153,0.06)]"}>
       <td colSpan={8} className={`py-1.5 px-3 text-[10px] uppercase tracking-wider font-semibold ${
-        co ? "text-brass" : "text-[color:var(--text-secondary)]"
+        co ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-secondary)]"
       }`}>
         {label}
       </td>
@@ -186,13 +186,13 @@ function CompareRow({ line, co }: { line: CompareLine; co?: boolean }) {
   const flagBadges: { text: string; cls: string }[] = [];
   if (line.new_line) flagBadges.push({ text: "NEW", cls: "border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)]" });
   if (line.large_swing)
-    flagBadges.push({ text: `±${line.swing_pct.toFixed(0)}%`, cls: "border-brass text-brass" });
+    flagBadges.push({ text: `±${line.swing_pct.toFixed(0)}%`, cls: "border-[var(--nw-warn)] text-[color:var(--nw-warn)]" });
   if (line.went_backwards)
     flagBadges.push({ text: "REVERSED", cls: "border-[rgba(176,85,78,0.5)] text-[color:var(--nw-danger)]" });
 
   return (
-    <tr className={`border-t border-[var(--border-default)] ${line.large_swing ? "bg-brass/5" : ""}`}>
-      <td className={`py-2 px-3 font-mono text-xs font-bold ${co ? "text-brass" : "text-[color:var(--nw-stone-blue)]"}`}>
+    <tr className={`border-t border-[var(--border-default)] ${line.large_swing ? "bg-[rgba(201,138,59,0.08)]" : ""}`}>
+      <td className={`py-2 px-3 font-mono text-xs font-bold ${co ? "text-[color:var(--nw-warn)]" : "text-[color:var(--nw-stone-blue)]"}`}>
         {line.code}
       </td>
       <td className="py-2 px-3 text-[color:var(--text-primary)]">{line.description}</td>
@@ -249,7 +249,7 @@ function SummaryCard({
     >
       <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">{label}</p>
       <p className="text-xs text-[color:var(--text-muted)] mt-1">{period}</p>
-      <p className={`text-2xl font-display font-medium mt-2 ${highlight ? "text-brass" : "text-[color:var(--text-primary)]"}`}>
+      <p className={`text-2xl font-display font-medium mt-2 ${highlight ? "text-[color:var(--nw-warn)]" : "text-[color:var(--text-primary)]"}`}>
         {formatCents(amount)}
       </p>
       <p className="text-xs text-[color:var(--text-secondary)] mt-1">

@@ -145,7 +145,7 @@ export default function DrawLienReleaseUploadList({
         <div className="bg-[var(--bg-card)] border border-[rgba(91,134,153,0.3)] p-3 text-sm text-[color:var(--text-primary)] space-y-1">
           <p className="text-[color:var(--nw-success)]">Matched and uploaded {bulkResults.matched} file(s).</p>
           {bulkResults.missing.length > 0 && (
-            <p className="text-brass">
+            <p className="text-[color:var(--nw-warn)]">
               Could not match: {bulkResults.missing.join(", ")}. Use the per-row upload to assign
               manually.
             </p>
@@ -258,7 +258,7 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
 
 function badge(status: string): string {
   if (status === "received") return "bg-transparent text-[color:var(--nw-success)] border border-[rgba(74,138,111,0.5)]";
-  if (status === "pending") return "bg-transparent text-brass border border-brass";
+  if (status === "pending") return "bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]";
   return "bg-transparent text-[color:var(--text-secondary)] border border-[var(--border-strong)]";
 }
 
