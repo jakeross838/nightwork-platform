@@ -98,7 +98,7 @@ export default function TeamSettings({
         <button
           type="button"
           onClick={() => setInviteOpen((o) => !o)}
-          className="px-4 py-2 bg-[var(--org-primary)] text-white text-sm font-medium"
+          className="px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-sm font-medium"
         >
           {inviteOpen ? "Cancel" : "Invite Member"}
         </button>
@@ -134,7 +134,7 @@ export default function TeamSettings({
               type="button"
               onClick={submitInvite}
               disabled={!inviteEmail.trim()}
-              className="px-4 py-2 bg-[var(--org-primary)] text-white text-sm font-medium disabled:opacity-50 h-[38px]"
+              className="px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-sm font-medium disabled:opacity-50 h-[38px]"
             >
               Send Invite
             </button>

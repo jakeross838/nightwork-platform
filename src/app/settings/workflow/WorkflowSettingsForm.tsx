@@ -344,7 +344,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
           type="button"
           onClick={onSave}
           disabled={saving || !dirty}
-          className="px-4 py-2 bg-[var(--org-primary)] text-white text-sm font-medium disabled:opacity-60"
+          className="px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-sm font-medium disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save changes"}
         </button>
@@ -463,7 +463,7 @@ function Toggle({
         aria-hidden="true"
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors border mt-0.5 ${
           checked
-            ? "bg-[var(--org-primary)] border-[var(--org-primary)]"
+            ? "bg-[var(--nw-stone-blue)] border-[var(--nw-stone-blue)]"
             : "bg-brand-border/40 border-brand-border"
         }`}
       >
@@ -479,7 +479,7 @@ function Toggle({
 
 function SubSetting({ children }: { children: React.ReactNode }) {
   return (
-    <div className="pb-3 pl-4 border-l-2 border-[var(--org-primary)]/30 ml-1">
+    <div className="pb-3 pl-4 border-l-2 border-[var(--nw-stone-blue)]/30 ml-1">
       {children}
     </div>
   );

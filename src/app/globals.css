@@ -6,19 +6,14 @@
 
 @layer base {
   :root {
-    /* Per-org brand colors (overridden at runtime by layout.tsx via
-       a `<style>:root{--org-primary:…;--org-accent:…;}</style>` tag). */
-    --org-primary: #3F5862;
-    --org-accent: #3F5862;
-
     /* Backgrounds */
     --bg-page: #F7F5ED;
     --bg-subtle: #F5F5F5;
     --bg-muted: #E8E8E8;
-    --bg-inverse: var(--org-primary);
+    --bg-inverse: var(--nw-slate-deep);
 
     /* Text */
-    --text-primary: var(--org-primary);
+    --text-primary: var(--nw-slate-tile);
     --text-body: #3D3D3D;
     --text-secondary: #878787;
     --text-inverse: #FFFFFF;
@@ -26,14 +21,14 @@
     /* Borders */
     --border-default: #E8E8E8;
     --border-strong: #A0A0A0;
-    --border-brand: var(--org-primary);
+    --border-brand: var(--nw-stone-blue);
 
     /* Semantic */
     --color-white: #FFFFFF;
     --color-success: #2E7D32;
     --color-warning: #E65100;
     --color-error: #c0392b;
-    --color-money: var(--org-primary);
+    --color-money: var(--nw-slate-tile);
 
     /* Nightwork brand tokens — additive. Existing components keep their
        current colors; new chrome work should reach for these instead. */

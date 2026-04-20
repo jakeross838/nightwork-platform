@@ -80,9 +80,10 @@ export async function GET(
  : { data: null };
  const ORG_SIGNATORY = signerProfile?.full_name ?? "";
 
- // Branded colors (ExcelJS argb without # prefix)
- const NAVY = hexForExcel(org?.primary_color);
- const HEADER_GOLD = hexForExcel(org?.accent_color ?? org?.primary_color);
+ // Nightwork brand colors (ExcelJS argb without # prefix).
+ // slate-deep = #1A2830, stone-blue = #5B8699.
+ const NAVY = hexForExcel("#1A2830");
+ const HEADER_GOLD = hexForExcel("#5B8699");
 
  // Fonts
  const FONT_TITLE: Partial<ExcelJS.Font> = { name: "Century Gothic", size: 14, bold: true, color: { argb: NAVY } };

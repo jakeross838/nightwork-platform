@@ -8,8 +8,6 @@ type Org = {
   name: string;
   tagline: string | null;
   logo_url: string | null;
-  primary_color: string;
-  accent_color: string | null;
   company_address: string | null;
   company_city: string | null;
   company_state: string | null;
@@ -41,8 +39,6 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
         body: JSON.stringify({
           name: form.name,
           tagline: form.tagline,
-          primary_color: form.primary_color,
-          accent_color: form.accent_color,
           company_address: form.company_address,
           company_city: form.company_city,
           company_state: form.company_state,
@@ -91,7 +87,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
   }
 
   return (
-    <div className="grid lg:grid-cols-[1fr_320px] gap-8">
+    <div className="max-w-2xl">
       <div className="space-y-6">
         <Section title="Company Info">
           <Field label="Company Name" value={form.name} onChange={(v) => update("name", v)} />
@@ -145,7 +141,11 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
         <Section title="Logo">
           <div className="flex items-center gap-4">
             <div
-              className="h-16 w-40 flex items-center justify-center border border-brand-border bg-[var(--org-primary)]"
+              className="h-16 w-40 flex items-center justify-center border"
+              style={{
+                background: "var(--nw-slate-deep)",
+                borderColor: "var(--border-default)",
+              }}
             >
               {form.logo_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -155,7 +155,16 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
                   className="max-h-12 max-w-[140px] object-contain"
                 />
               ) : (
-                <span className="text-white text-xs uppercase tracking-[0.08em]">No logo</span>
+                <span
+                  className="text-xs uppercase"
+                  style={{
+                    fontFamily: "var(--font-jetbrains-mono)",
+                    letterSpacing: "0.14em",
+                    color: "var(--nw-white-sand)",
+                  }}
+                >
+                  No logo
+                </span>
               )}
             </div>
             <div>
@@ -166,31 +175,16 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
                 onChange={onLogoChange}
                 className="text-sm"
               />
-              <p className="mt-1 text-xs text-cream-dim">
+              <p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>
                 PNG, JPG, SVG, or WebP. Displays at 32px tall in the nav.
               </p>
-              {uploading && <p className="text-xs text-cream-dim mt-1">Uploading…</p>}
+              {uploading && (
+                <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
+                  Uploading…
+                </p>
+              )}
             </div>
           </div>
-        </Section>
-
-        <Section title="Brand Colors">
-          <div className="grid grid-cols-2 gap-4">
-            <ColorField
-              label="Primary Color"
-              value={form.primary_color}
-              onChange={(v) => update("primary_color", v)}
-            />
-            <ColorField
-              label="Accent Color"
-              value={form.accent_color ?? form.primary_color}
-              onChange={(v) => update("accent_color", v)}
-            />
-          </div>
-          <p className="text-xs text-cream-dim">
-            Primary drives the nav bar, buttons, and highlights. Accent appears on subtle
-            borders and divider lines.
-          </p>
         </Section>
 
         <div className="flex items-center gap-3 pt-2">
@@ -213,48 +207,6 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
           )}
         </div>
       </div>
-
-      {/* Live preview */}
-      <aside className="h-max sticky top-24">
-        <p className="section-label">Live Preview</p>
-        <div
-          className="border"
-          style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
-        >
-          <div
-            className="px-4 py-3 flex items-center gap-3"
-            style={{ background: form.primary_color, borderTop: `3px solid ${form.primary_color}` }}
-          >
-            {form.logo_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={form.logo_url} alt={form.name} className="h-7 object-contain" />
-            ) : (
-              <span className="font-display text-white text-sm uppercase tracking-[0.08em]">
-                {form.name || "Company Name"}
-              </span>
-            )}
-          </div>
-          <div className="p-4 space-y-2">
-            <div
-              className="inline-block px-3 py-1 text-white text-xs"
-              style={{ background: form.primary_color }}
-            >
-              Primary Button
-            </div>
-            <div
-              className="inline-block ml-2 px-3 py-1 text-white text-xs"
-              style={{ background: form.accent_color ?? form.primary_color }}
-            >
-              Accent Button
-            </div>
-            <div
-              className="h-px w-full mt-3"
-              style={{ background: form.accent_color ?? form.primary_color }}
-            />
-            <p className="text-xs text-cream-dim mt-2">{form.tagline ?? ""}</p>
-          </div>
-        </div>
-      </aside>
     </div>
   );
 }
@@ -333,38 +285,6 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 border border-brand-border bg-white text-sm text-cream focus-teal"
       />
-    </label>
-  );
-}
-
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
-        {label}
-      </span>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-10 w-12 border border-brand-border cursor-pointer p-0"
-        />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-3 py-2 border border-brand-border bg-white text-sm text-cream focus-teal font-mono uppercase"
-        />
-      </div>
     </label>
   );
 }

@@ -276,7 +276,7 @@ export default function OnboardWizard({
             <div>
               <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">Logo (optional)</span>
               <div className="flex items-center gap-4">
-                <div className="h-14 w-36 flex items-center justify-center border border-brand-border bg-[var(--org-primary)]">
+                <div className="h-14 w-36 flex items-center justify-center border border-brand-border bg-[var(--nw-slate-deep)]">
                   {company.logo_url ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={company.logo_url} alt="Logo" className="max-h-10 max-w-[130px] object-contain" />

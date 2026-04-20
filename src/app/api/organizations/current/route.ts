@@ -10,8 +10,6 @@ export const dynamic = "force-dynamic";
 const EDITABLE_COLUMNS = new Set([
   "name",
   "tagline",
-  "primary_color",
-  "accent_color",
   "logo_url",
   "company_address",
   "company_city",
