@@ -8,12 +8,16 @@ import { useOrgBranding } from "@/components/org-branding-provider";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
 import GettingStartedChecklist from "@/components/getting-started-checklist";
 import {
-  formatMoney,
   formatRelativeTime,
   formatStatus,
 } from "@/lib/utils/format";
 import { SkeletonStatCard, SkeletonBlock } from "@/components/loading-skeleton";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import NwCard from "@/components/nw/Card";
+import NwEyebrow from "@/components/nw/Eyebrow";
+import NwBadge from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+import NwStatusDot, { type StatusDotVariant } from "@/components/nw/StatusDot";
 
 type UserRole = "owner" | "admin" | "pm" | "accounting";
 
@@ -114,11 +118,21 @@ export default function Dashboard() {
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-6 py-8">
         {/* Header */}
         <div className="mb-8 animate-fade-up">
-          <h1 className="font-display text-3xl text-cream">
+          <NwEyebrow tone="muted" className="mb-2">Overview · Today</NwEyebrow>
+          <h1
+            className="m-0"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "30px",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
             {firstName ? `Welcome, ${firstName}` : brandName}
           </h1>
           {tagline && (
-            <p className="mt-1 text-sm text-cream-dim">{tagline}</p>
+            <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>{tagline}</p>
           )}
         </div>
 
@@ -153,7 +167,7 @@ export default function Dashboard() {
                 />
                 <MetricCard
                   label="Payments Due"
-                  value={formatMoney(data.metrics.paymentsDueCents)}
+                  cents={data.metrics.paymentsDueCents}
                   href="/invoices/payments"
                   emphasis={data.metrics.paymentsOverdue30 ? "danger" : undefined}
                 />
@@ -175,20 +189,20 @@ export default function Dashboard() {
               message="Nothing needs your attention right now. New action items will appear here as data flows in."
             />
           ) : (
-            <div className="border border-brand-border bg-white">
+            <NwCard padding="none">
               <ul>
                 {data.attention.items.map((item, i) => (
                   <AttentionRow key={`${item.kind}-${i}`} item={item} />
                 ))}
               </ul>
               {data.attention.total > data.attention.items.length && (
-                <div className="border-t border-brand-border px-4 py-3 text-center">
-                  <Link href="/invoices/queue" className="text-sm text-teal hover:underline">
+                <div className="border-t px-4 py-3 text-center" style={{ borderColor: "var(--border-default)" }}>
+                  <Link href="/invoices/queue" className="text-sm hover:underline" style={{ color: "var(--nw-gulf-blue)" }}>
                     View all {data.attention.total} items
                   </Link>
                 </div>
               )}
-            </div>
+            </NwCard>
           )}
         </section>
 
@@ -206,18 +220,18 @@ export default function Dashboard() {
                 message="Actions will appear here as your team uses the system."
               />
             ) : (
-              <div className="border border-brand-border bg-white">
+              <NwCard padding="none">
                 <ul>
                   {data.activity.map((entry) => (
                     <ActivityRow key={entry.id} entry={entry} />
                   ))}
                 </ul>
-                <div className="border-t border-brand-border px-4 py-3 text-center">
-                  <Link href="/settings/admin" className="text-sm text-teal hover:underline">
+                <div className="border-t px-4 py-3 text-center" style={{ borderColor: "var(--border-default)" }}>
+                  <Link href="/settings/admin" className="text-sm hover:underline" style={{ color: "var(--nw-gulf-blue)" }}>
                     View all activity
                   </Link>
                 </div>
-              </div>
+              </NwCard>
             )}
           </div>
 
@@ -242,12 +256,14 @@ export default function Dashboard() {
 function MetricCard({
   label,
   value,
+  cents,
   href,
   badge,
   emphasis,
 }: {
   label: string;
-  value: string;
+  value?: string;
+  cents?: number;
   href: string;
   badge?: { kind: "danger" | "warning"; text: string };
   emphasis?: "danger";
@@ -255,30 +271,41 @@ function MetricCard({
   return (
     <Link
       href={href}
-      className="group block p-4 border border-brand-border bg-white hover:border-teal/60 transition-colors"
+      className="group block p-4 border transition-colors"
+      style={{
+        background: "var(--bg-card)",
+        borderColor: "var(--border-default)",
+        color: "var(--text-primary)",
+      }}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim leading-tight">
-          {label}
-        </span>
+        <NwEyebrow tone="muted">{label}</NwEyebrow>
         {badge && (
-          <span
-            className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 border ${
-              badge.kind === "danger"
-                ? "text-status-danger border-status-danger"
-                : "text-status-warning border-status-warning"
-            }`}
-          >
+          <NwBadge variant={badge.kind === "danger" ? "danger" : "warning"} size="sm">
             {badge.text}
-          </span>
+          </NwBadge>
         )}
       </div>
-      <div
-        className={`mt-3 font-display text-3xl tabular-nums ${
-          emphasis === "danger" ? "text-status-danger" : "text-cream"
-        }`}
-      >
-        {value}
+      <div className="mt-3">
+        {cents !== undefined ? (
+          <NwMoney
+            cents={cents}
+            size="xl"
+            variant={emphasis === "danger" ? "negative" : "emphasized"}
+          />
+        ) : (
+          <span
+            className="tabular-nums"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              fontSize: "28px",
+              fontWeight: 500,
+              color: emphasis === "danger" ? "var(--nw-danger)" : "var(--text-primary)",
+            }}
+          >
+            {value}
+          </span>
+        )}
       </div>
     </Link>
   );
@@ -288,46 +315,60 @@ function MetricCard({
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="flex items-baseline justify-between mb-3">
-      <h2 className="font-display text-lg text-cream">{title}</h2>
-      {subtitle && <p className="text-xs text-cream-dim">{subtitle}</p>}
+      <h2
+        className="m-0"
+        style={{
+          fontFamily: "var(--font-space-grotesk)",
+          fontWeight: 500,
+          fontSize: "18px",
+          letterSpacing: "-0.01em",
+          color: "var(--text-primary)",
+        }}
+      >
+        {title}
+      </h2>
+      {subtitle && <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{subtitle}</p>}
     </div>
   );
 }
 
 // ---------- Attention Row ----------
-const SEV_STYLES: Record<AttentionItem["severity"], { dot: string; label: string }> = {
-  critical: { dot: "bg-status-danger", label: "text-status-danger" },
-  high: { dot: "bg-status-warning", label: "text-status-warning" },
-  medium: { dot: "bg-brass", label: "text-brass" },
-  low: { dot: "bg-cream-dim", label: "text-cream-dim" },
+const SEV_DOT: Record<AttentionItem["severity"], StatusDotVariant> = {
+  critical: "danger",
+  high: "danger",
+  medium: "pending",
+  low: "inactive",
 };
 
 function AttentionRow({ item }: { item: AttentionItem }) {
-  const sev = SEV_STYLES[item.severity];
   return (
-    <li className="border-b border-brand-border last:border-0">
+    <li className="border-b last:border-0" style={{ borderColor: "var(--border-default)" }}>
       <Link
         href={item.href}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-brand-surface transition-colors"
+        className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-subtle)] transition-colors"
       >
-        <span className={`shrink-0 inline-block w-2 h-2 rounded-full ${sev.dot}`} aria-hidden="true" />
+        <NwStatusDot variant={SEV_DOT[item.severity]} size="md" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-cream font-medium truncate">{item.title}</span>
+            <span className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{item.title}</span>
             {item.ageDays !== undefined && item.ageDays > 0 && (
-              <span className={`text-[10px] uppercase tracking-wider ${sev.label}`}>
+              <NwBadge
+                variant={item.severity === "critical" || item.severity === "high" ? "danger" : "warning"}
+                size="sm"
+              >
                 {item.ageDays}d
-              </span>
+              </NwBadge>
             )}
           </div>
-          <p className="text-xs text-cream-dim mt-0.5 truncate">{item.description}</p>
+          <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{item.description}</p>
         </div>
         <svg
-          className="shrink-0 w-4 h-4 text-cream-dim group-hover:text-teal"
+          className="shrink-0 w-4 h-4"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
           strokeWidth={2}
+          style={{ color: "var(--text-tertiary)" }}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
@@ -342,16 +383,26 @@ function ActivityRow({ entry }: { entry: ActivityEntry }) {
   const entityLabel = describeEntity(entry.entity_type, entry.details);
   const summary = `${entry.user_name ?? "System"} ${verb} ${entityLabel}${entry.job_name ? ` on ${entry.job_name}` : ""}`;
   const content = (
-    <div className="flex items-start gap-3 px-4 py-3 hover:bg-brand-surface transition-colors">
-      <div className="shrink-0 mt-1 w-2 h-2 rounded-full bg-teal/60" />
+    <div className="flex items-start gap-3 px-4 py-3 hover:bg-[var(--bg-subtle)] transition-colors">
+      <span className="mt-1.5">
+        <NwStatusDot variant="info" size="sm" />
+      </span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-cream truncate">{summary}</p>
-        <p className="text-xs text-cream-dim mt-0.5">{formatRelativeTime(entry.created_at)}</p>
+        <p className="text-sm truncate" style={{ color: "var(--text-primary)" }}>{summary}</p>
+        <p
+          className="text-[10px] uppercase tracking-[0.14em] mt-0.5"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {formatRelativeTime(entry.created_at)}
+        </p>
       </div>
     </div>
   );
   return (
-    <li className="border-b border-brand-border last:border-0">
+    <li className="border-b last:border-0" style={{ borderColor: "var(--border-default)" }}>
       {entry.link_href ? <Link href={entry.link_href}>{content}</Link> : content}
     </li>
   );
@@ -420,102 +471,90 @@ function CashFlowPanel({ cashFlow }: { cashFlow: DashboardData["cashFlow"] }) {
   const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
 
   return (
-    <div className="border border-brand-border bg-white p-5 space-y-5">
+    <NwCard padding="md" className="space-y-5">
       {/* This month */}
       <div>
-        <h3 className="text-[10px] tracking-[0.12em] uppercase text-cream-dim mb-2">This month</h3>
+        <NwEyebrow tone="muted" className="mb-2">This month</NwEyebrow>
         <div className="grid grid-cols-3 gap-3">
-          <NumStat label="Invoiced" value={formatMoney(cashFlow.monthInvoiced)} href="/invoices" />
-          <NumStat label="Paid" value={formatMoney(cashFlow.monthPaid)} href="/invoices/payments" />
-          <NumStat
-            label="Net"
-            value={formatMoney(cashFlow.monthNet)}
-            negative={cashFlow.monthNet < 0}
-          />
+          <NumStat label="Invoiced" cents={cashFlow.monthInvoiced} href="/invoices" />
+          <NumStat label="Paid" cents={cashFlow.monthPaid} href="/invoices/payments" />
+          <NumStat label="Net" cents={cashFlow.monthNet} signColor />
         </div>
       </div>
 
       {/* Outstanding aging breakdown */}
       <div>
         <div className="flex items-baseline justify-between mb-2">
-          <h3 className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Outstanding</h3>
-          <span className="text-sm text-cream tabular-nums">
-            {formatMoney(cashFlow.outstandingTotal)}
-          </span>
+          <NwEyebrow tone="muted">Outstanding</NwEyebrow>
+          <NwMoney cents={cashFlow.outstandingTotal} size="md" variant="emphasized" />
         </div>
         {/* Stacked horizontal bar */}
-        <div className="flex h-2.5 w-full overflow-hidden border border-brand-border bg-brand-surface">
+        <div
+          className="flex h-2.5 w-full overflow-hidden border"
+          style={{ borderColor: "var(--border-default)", background: "var(--bg-subtle)" }}
+        >
           {pct(cashFlow.aging.current) > 0 && (
             <div
-              className="bg-status-success"
-              style={{ width: `${pct(cashFlow.aging.current)}%` }}
-              title={`Current: ${formatMoney(cashFlow.aging.current)}`}
+              style={{ width: `${pct(cashFlow.aging.current)}%`, background: "var(--nw-success)" }}
+              title={`Current`}
             />
           )}
           {pct(cashFlow.aging.d30) > 0 && (
             <div
-              className="bg-brass"
-              style={{ width: `${pct(cashFlow.aging.d30)}%` }}
-              title={`30-59 days: ${formatMoney(cashFlow.aging.d30)}`}
+              style={{ width: `${pct(cashFlow.aging.d30)}%`, background: "var(--nw-warn)" }}
+              title={`30-59 days`}
             />
           )}
           {pct(cashFlow.aging.d60) > 0 && (
             <div
-              className="bg-status-warning"
-              style={{ width: `${pct(cashFlow.aging.d60)}%` }}
-              title={`60-89 days: ${formatMoney(cashFlow.aging.d60)}`}
+              style={{ width: `${pct(cashFlow.aging.d60)}%`, background: "var(--nw-warn)" }}
+              title={`60-89 days`}
             />
           )}
           {pct(cashFlow.aging.d90) > 0 && (
             <div
-              className="bg-status-danger"
-              style={{ width: `${pct(cashFlow.aging.d90)}%` }}
-              title={`90+ days: ${formatMoney(cashFlow.aging.d90)}`}
+              style={{ width: `${pct(cashFlow.aging.d90)}%`, background: "var(--nw-danger)" }}
+              title={`90+ days`}
             />
           )}
         </div>
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <AgeChip color="bg-status-success" label="Current" value={cashFlow.aging.current} />
-          <AgeChip color="bg-brass" label="30-59d" value={cashFlow.aging.d30} />
-          <AgeChip color="bg-status-warning" label="60-89d" value={cashFlow.aging.d60} />
-          <AgeChip color="bg-status-danger" label="90+d" value={cashFlow.aging.d90} />
+          <AgeChip variant="active" label="Current" value={cashFlow.aging.current} />
+          <AgeChip variant="pending" label="30-59d" value={cashFlow.aging.d30} />
+          <AgeChip variant="pending" label="60-89d" value={cashFlow.aging.d60} />
+          <AgeChip variant="danger" label="90+d" value={cashFlow.aging.d90} />
         </div>
       </div>
 
       {/* Upcoming */}
-      <div className="pt-4 border-t border-brand-border">
+      <div className="pt-4 border-t" style={{ borderColor: "var(--border-default)" }}>
         <div className="flex items-baseline justify-between">
-          <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Upcoming (open POs)</span>
-          <Link
-            href="/jobs"
-            className="text-sm text-cream tabular-nums hover:text-teal transition-colors"
-          >
-            {formatMoney(cashFlow.upcomingCommitted)}
+          <NwEyebrow tone="muted">Upcoming (open POs)</NwEyebrow>
+          <Link href="/jobs" className="hover:opacity-75 transition-opacity">
+            <NwMoney cents={cashFlow.upcomingCommitted} size="md" />
           </Link>
         </div>
       </div>
-    </div>
+    </NwCard>
   );
 }
 
 function NumStat({
   label,
-  value,
+  cents,
   href,
-  negative,
+  signColor,
 }: {
   label: string;
-  value: string;
+  cents: number;
   href?: string;
-  negative?: boolean;
+  signColor?: boolean;
 }) {
   const inner = (
-    <>
-      <p className="text-[10px] uppercase tracking-wider text-cream-dim">{label}</p>
-      <p className={`mt-1 text-base tabular-nums ${negative ? "text-status-danger" : "text-cream"}`}>
-        {value}
-      </p>
-    </>
+    <div className="flex flex-col gap-1">
+      <NwEyebrow tone="muted">{label}</NwEyebrow>
+      <NwMoney cents={cents} size="md" signColor={signColor} />
+    </div>
   );
   if (href) {
     return (
@@ -524,16 +563,16 @@ function NumStat({
       </Link>
     );
   }
-  return <div>{inner}</div>;
+  return inner;
 }
 
-function AgeChip({ color, label, value }: { color: string; label: string; value: number }) {
+function AgeChip({ variant, label, value }: { variant: StatusDotVariant; label: string; value: number }) {
   return (
     <div className="flex items-center gap-2">
-      <span className={`inline-block w-2 h-2 ${color}`} />
+      <NwStatusDot variant={variant} size="sm" />
       <div>
-        <p className="text-[10px] uppercase tracking-wider text-cream-dim">{label}</p>
-        <p className="text-xs tabular-nums text-cream">{formatMoney(value)}</p>
+        <NwEyebrow tone="muted">{label}</NwEyebrow>
+        <NwMoney cents={value} size="sm" />
       </div>
     </div>
   );

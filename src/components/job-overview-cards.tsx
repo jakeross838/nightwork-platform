@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatDate } from "@/lib/utils/format";
+import { formatDate } from "@/lib/utils/format";
+import NwCard from "@/components/nw/Card";
+import NwEyebrow from "@/components/nw/Eyebrow";
+import NwMoney from "@/components/nw/Money";
+import NwStatusDot from "@/components/nw/StatusDot";
 
 const SPENT_STATUSES = [
   "pm_approved",
@@ -273,35 +277,39 @@ export default function JobOverviewCards({
       {/* Top row: Contract Summary + Budget Health + Open Items */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Contract Summary */}
-        <Card title="Contract Summary">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
-            <MiniStat label="Original" value={formatCents(originalContract)} />
-            <MiniStat
-              label="Approved COs"
-              value={formatCents(approvedCosTotal)}
-              tone={
-                approvedCosTotal > 0
-                  ? "positive"
-                  : approvedCosTotal < 0
-                    ? "negative"
-                    : undefined
-              }
-            />
-            <MiniStat label="Revised" value={formatCents(revisedContract)} strong />
+        <SectionCard title="Contract Summary">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <MiniStat label="Original" cents={originalContract} />
+            <MiniStat label="Approved COs" cents={approvedCosTotal} signColor />
+            <MiniStat label="Revised" cents={revisedContract} emphasized />
           </div>
           <div className="mt-4">
-            <div className="flex items-center justify-between text-[11px] text-cream-dim">
-              <span>% Complete</span>
-              <span className="text-cream font-display">{percentComplete.toFixed(1)}%</span>
+            <div className="flex items-center justify-between">
+              <NwEyebrow tone="muted">% Complete</NwEyebrow>
+              <span
+                className="tabular-nums text-[13px]"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono)",
+                  color: "var(--text-primary)",
+                }}
+              >
+                {percentComplete.toFixed(1)}%
+              </span>
             </div>
-            <div className="mt-1.5 h-2 bg-brand-surface overflow-hidden">
-              <div className="h-full bg-teal transition-all" style={{ width: `${percentComplete}%` }} />
+            <div
+              className="mt-1.5 h-2 overflow-hidden"
+              style={{ background: "var(--bg-subtle)" }}
+            >
+              <div
+                className="h-full transition-all"
+                style={{ width: `${percentComplete}%`, background: "var(--nw-stone-blue)" }}
+              />
             </div>
           </div>
-        </Card>
+        </SectionCard>
 
         {/* Budget Health */}
-        <Card title="Budget Health">
+        <SectionCard title="Budget Health">
           {budgetHealth === null ? (
             <Placeholder />
           ) : (
@@ -321,10 +329,10 @@ export default function JobOverviewCards({
               />
             </div>
           )}
-        </Card>
+        </SectionCard>
 
         {/* Open Items */}
-        <Card title="Open Items">
+        <SectionCard title="Open Items">
           {openItems === null ? (
             <Placeholder />
           ) : (
@@ -333,7 +341,7 @@ export default function JobOverviewCards({
                 href={`/jobs/${jobId}/invoices?status=pending`}
                 label="Pending Invoices"
                 count={openItems.pending_invoices_count}
-                amount={formatCents(openItems.pending_invoices_total)}
+                amountCents={openItems.pending_invoices_total}
               />
               <OpenItemRow
                 href={`/jobs/${jobId}/purchase-orders?status=draft`}
@@ -352,63 +360,94 @@ export default function JobOverviewCards({
               />
             </div>
           )}
-        </Card>
+        </SectionCard>
       </div>
 
       {/* Recent Activity */}
-      <Card title="Recent Activity" action={
-        <Link href={`/jobs/${jobId}?view=activity`} className="text-[12px] text-teal hover:underline">
-          View all activity →
-        </Link>
-      }>
+      <SectionCard
+        title="Recent Activity"
+        action={
+          <Link
+            href={`/jobs/${jobId}?view=activity`}
+            className="text-[11px] uppercase hover:underline"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              letterSpacing: "0.14em",
+              color: "var(--nw-gulf-blue)",
+            }}
+          >
+            View all
+          </Link>
+        }
+      >
         {activity === null ? (
           <Placeholder />
         ) : activity.length === 0 ? (
-          <p className="text-xs text-cream-dim">No recent activity.</p>
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>No recent activity.</p>
         ) : (
-          <ul className="divide-y divide-brand-row-border">
+          <ul
+            className="divide-y"
+            style={{ borderColor: "var(--border-default)" }}
+          >
             {activity.map((a) => (
               <li
                 key={a.id}
-                className="py-2 flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 text-[12px]"
+                className="py-2 flex items-start gap-3 text-[12px]"
               >
-                <span className="text-cream-dim tabular-nums shrink-0 sm:w-32">
+                <span className="mt-1.5">
+                  <NwStatusDot variant="info" size="sm" />
+                </span>
+                <span
+                  className="shrink-0 w-28 tabular-nums text-[10px] uppercase"
+                  style={{
+                    fontFamily: "var(--font-jetbrains-mono)",
+                    letterSpacing: "0.14em",
+                    color: "var(--text-tertiary)",
+                  }}
+                >
                   {formatActivityTs(a.created_at)}
                 </span>
-                <span className="text-cream flex-1 break-words">
+                <span className="flex-1 break-words" style={{ color: "var(--text-primary)" }}>
                   <span className="font-medium">{formatEntityAction(a.entity_type, a.action)}</span>
                   {summarizeDetails(a.details) && (
-                    <span className="text-cream-dim"> · {summarizeDetails(a.details)}</span>
+                    <span style={{ color: "var(--text-tertiary)" }}> · {summarizeDetails(a.details)}</span>
                   )}
                 </span>
-                <span className="text-cream-dim shrink-0">{a.user_name ?? "—"}</span>
+                <span className="shrink-0" style={{ color: "var(--text-tertiary)" }}>{a.user_name ?? "—"}</span>
               </li>
             ))}
           </ul>
         )}
-      </Card>
+      </SectionCard>
 
       {/* Upcoming Payments */}
-      <Card title="Upcoming Payments (next 30 days)">
+      <SectionCard title="Upcoming Payments (next 30 days)">
         {payments === null ? (
           <Placeholder />
         ) : payments.length === 0 ? (
-          <p className="text-xs text-cream-dim">No scheduled payments in the next 30 days.</p>
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>No scheduled payments in the next 30 days.</p>
         ) : (
-          <ul className="divide-y divide-brand-row-border">
+          <ul className="divide-y" style={{ borderColor: "var(--border-default)" }}>
             {payments.map((p) => (
               <li
                 key={p.id}
                 className="py-2 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-[12px]"
               >
-                <span className="text-cream sm:flex-1 truncate">
+                <span className="sm:flex-1 truncate" style={{ color: "var(--text-primary)" }}>
                   {p.vendor_name ?? p.vendor_name_raw ?? "—"}
                 </span>
                 <span className="flex items-center justify-between gap-3 sm:gap-3">
-                  <span className="text-cream-dim tabular-nums sm:w-24 sm:text-right">
-                    {formatCents(p.total_amount)}
+                  <span className="sm:w-24 sm:text-right">
+                    <NwMoney cents={p.total_amount} size="sm" variant="muted" />
                   </span>
-                  <span className="text-cream-dim tabular-nums sm:w-28 sm:text-right">
+                  <span
+                    className="tabular-nums sm:w-28 sm:text-right text-[10px] uppercase"
+                    style={{
+                      fontFamily: "var(--font-jetbrains-mono)",
+                      letterSpacing: "0.14em",
+                      color: "var(--text-tertiary)",
+                    }}
+                  >
                     {formatDate(p.scheduled_payment_date)}
                   </span>
                 </span>
@@ -416,12 +455,12 @@ export default function JobOverviewCards({
             ))}
           </ul>
         )}
-      </Card>
+      </SectionCard>
     </div>
   );
 }
 
-function Card({
+function SectionCard({
   title,
   action,
   children,
@@ -431,47 +470,50 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-brand-card border border-brand-border p-5">
+    <NwCard padding="md">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-display text-base text-cream">{title}</h3>
+        <NwEyebrow tone="muted">{title}</NwEyebrow>
         {action}
       </div>
       {children}
-    </section>
+    </NwCard>
   );
 }
 
 function Placeholder() {
   return (
     <div className="h-16 flex items-center justify-center">
-      <div className="w-4 h-4 border-2 border-teal/30 border-t-teal animate-spin" />
+      <div
+        className="w-4 h-4 border-2 animate-spin"
+        style={{
+          borderColor: "var(--border-default)",
+          borderTopColor: "var(--nw-stone-blue)",
+        }}
+      />
     </div>
   );
 }
 
 function MiniStat({
   label,
-  value,
-  tone,
-  strong,
+  cents,
+  emphasized,
+  signColor,
 }: {
   label: string;
-  value: string;
-  tone?: "positive" | "negative";
-  strong?: boolean;
+  cents: number;
+  emphasized?: boolean;
+  signColor?: boolean;
 }) {
-  const toneClass =
-    tone === "positive"
-      ? "text-status-success"
-      : tone === "negative"
-        ? "text-status-danger"
-        : "text-cream";
   return (
-    <div>
-      <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
-      <p className={`text-[13px] mt-0.5 tabular-nums font-display ${toneClass} ${strong ? "font-semibold" : ""}`}>
-        {value}
-      </p>
+    <div className="flex flex-col gap-1">
+      <NwEyebrow tone="muted">{label}</NwEyebrow>
+      <NwMoney
+        cents={cents}
+        size="md"
+        variant={emphasized ? "emphasized" : "default"}
+        signColor={signColor}
+      />
     </div>
   );
 }
@@ -487,16 +529,25 @@ function HealthStat({
   tone?: "danger" | "warning";
   href?: string;
 }) {
-  const toneClass =
+  const valueColor =
     tone === "danger"
-      ? "text-status-danger"
+      ? "var(--nw-danger)"
       : tone === "warning"
-        ? "text-status-warning"
-        : "text-cream";
+        ? "var(--nw-warn)"
+        : "var(--text-primary)";
   const body = (
-    <div>
-      <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
-      <p className={`text-2xl mt-1 tabular-nums font-display ${toneClass}`}>{value}</p>
+    <div className="flex flex-col gap-1">
+      <NwEyebrow tone="muted">{label}</NwEyebrow>
+      <p
+        className="text-2xl tabular-nums"
+        style={{
+          fontFamily: "var(--font-jetbrains-mono)",
+          fontWeight: 500,
+          color: valueColor,
+        }}
+      >
+        {value}
+      </p>
     </div>
   );
   return href && value > 0 ? (
@@ -512,30 +563,41 @@ function OpenItemRow({
   href,
   label,
   count,
-  amount,
+  amountCents,
 }: {
   href: string;
   label: string;
   count: number;
-  amount?: string;
+  amountCents?: number;
 }) {
   if (count === 0) {
     return (
-      <div className="flex items-center justify-between text-[12px] text-cream-dim py-1">
+      <div
+        className="flex items-center justify-between text-[12px] py-1"
+        style={{ color: "var(--text-tertiary)" }}
+      >
         <span>{label}</span>
-        <span className="tabular-nums">0</span>
+        <span className="tabular-nums" style={{ fontFamily: "var(--font-jetbrains-mono)" }}>0</span>
       </div>
     );
   }
   return (
     <Link
       href={href}
-      className="flex items-center justify-between text-[12px] py-1 hover:text-teal transition-colors"
+      className="flex items-center justify-between text-[12px] py-1 transition-colors hover:opacity-75"
+      style={{ color: "var(--text-primary)" }}
     >
-      <span className="text-cream">{label}</span>
+      <span>{label}</span>
       <span className="flex items-center gap-3 tabular-nums">
-        {amount && <span className="text-cream-dim">{amount}</span>}
-        <span className="text-cream font-medium">{count}</span>
+        {amountCents !== undefined && (
+          <NwMoney cents={amountCents} size="sm" variant="muted" />
+        )}
+        <span
+          className="font-medium"
+          style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+        >
+          {count}
+        </span>
       </span>
     </Link>
   );
