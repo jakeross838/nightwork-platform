@@ -161,13 +161,13 @@ export default function JobsPage() {
   if (authorized === false) {
     return (
       <main className="max-w-[1600px] mx-auto px-6 py-16 text-center">
-        <h2 className="font-display text-2xl text-cream">Access denied</h2>
-        <p className="mt-2 text-sm text-cream-dim">
+        <h2 className="font-display text-2xl" style={{ color: "var(--text-primary)" }}>Access denied</h2>
+        <p className="mt-2 text-sm" style={{ color: "var(--text-tertiary)" }}>
           Jobs management is restricted to administrators.
         </p>
         <Link
           href="/"
-          className="inline-block mt-6 px-4 py-2 border border-brand-border text-cream hover:border-teal transition-colors"
+          className="inline-block mt-6 px-4 py-2 border text-[var(--text-primary)] border-[var(--border-default)] hover:border-[var(--nw-stone-blue)] transition-colors"
         >
           Return home
         </Link>
@@ -232,12 +232,12 @@ export default function JobsPage() {
             placeholder="Search by name, address, or client..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+            className="flex-1 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+            className="px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
           >
             <option value="active">Active</option>
             <option value="complete">Complete</option>
@@ -248,7 +248,7 @@ export default function JobsPage() {
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none"
+            className="px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
             aria-label="Sort jobs"
           >
             <option value="health">Sort: Health (worst first)</option>
@@ -260,7 +260,7 @@ export default function JobsPage() {
 
         {/* Health legend */}
         {!loading && jobs.length > 0 && (
-          <div className="flex items-center gap-4 mb-4 text-[11px] text-cream-dim">
+          <div className="flex items-center gap-4 mb-4 text-[11px] text-[var(--text-tertiary)]">
             <span className="flex items-center gap-1.5">
               <NwStatusDot variant="active" size="sm" /> Green: on track
             </span>
@@ -303,7 +303,7 @@ export default function JobsPage() {
                 <Link
                   key={j.id}
                   href={`/jobs/${j.id}`}
-                  className="block border border-brand-border bg-brand-card p-4 active:bg-brand-surface transition-colors"
+                  className="block border border-[var(--border-default)] bg-[var(--bg-card)] p-4 active:bg-[var(--bg-subtle)] transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <span className="mt-1.5">
@@ -312,40 +312,40 @@ export default function JobsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="text-cream font-medium truncate">{j.name}</div>
-                          <div className="text-xs text-cream-dim truncate">{j.address ?? "—"}</div>
+                          <div className="text-[var(--text-primary)] font-medium truncate">{j.name}</div>
+                          <div className="text-xs text-[var(--text-tertiary)] truncate">{j.address ?? "—"}</div>
                         </div>
                         <StatusBadge status={j.status} />
                       </div>
-                      <div className="mt-2 text-xs text-cream-muted">
+                      <div className="mt-2 text-xs text-[var(--text-secondary)]">
                         <span>{j.client_name ?? "—"}</span>
-                        <span className="text-cream-dim"> · PM: {j.pm_name ?? "—"}</span>
+                        <span className="text-[var(--text-tertiary)]"> · PM: {j.pm_name ?? "—"}</span>
                       </div>
                       <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Complete</div>
-                          <div className="text-cream tabular-nums">{formatPercent(j.pct_complete)}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Complete</div>
+                          <div className="text-[var(--text-primary)] tabular-nums">{formatPercent(j.pct_complete)}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Budget Used</div>
-                          <div className={`tabular-nums ${j.budget_used_pct > 100 ? "text-status-danger" : "text-cream"}`}>
+                          <div className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Budget Used</div>
+                          <div className={`tabular-nums ${j.budget_used_pct > 100 ? "text-status-danger" : "text-[var(--text-primary)]"}`}>
                             {formatPercent(j.budget_used_pct)}
                           </div>
                         </div>
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-cream-dim">Open Invoices</div>
-                          <div className="text-cream tabular-nums">
+                          <div className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Open Invoices</div>
+                          <div className="text-[var(--text-primary)] tabular-nums">
                             {j.open_invoices > 0 ? (
                               <span className={j.oldest_invoice_days >= 7 ? "text-status-danger" : "text-brass"}>
                                 {j.open_invoices}
                               </span>
                             ) : (
-                              <span className="text-cream-dim">—</span>
+                              <span className="text-[var(--text-tertiary)]">—</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="mt-2 text-[10px] text-cream-dim">
+                      <div className="mt-2 text-[10px] text-[var(--text-tertiary)]">
                         {j.last_activity_at ? `Active ${formatRelativeTime(j.last_activity_at)}` : `Contract ${formatDate(j.contract_date)}`}
                       </div>
                     </div>
@@ -355,10 +355,10 @@ export default function JobsPage() {
             </div>
 
             {/* Desktop table view (>= md) */}
-            <div className="hidden md:block border border-brand-border bg-brand-card overflow-x-auto">
+            <div className="hidden md:block border border-[var(--border-default)] bg-[var(--bg-card)] overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium">
+                  <tr className="border-b border-[var(--border-default)] text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)] font-medium">
                     <th className="text-left px-4 py-3 font-medium w-8" aria-label="Health"></th>
                     <th className="text-left px-4 py-3 font-medium">Name</th>
                     <th className="text-left px-4 py-3 font-medium">Client / PM</th>
@@ -373,28 +373,28 @@ export default function JobsPage() {
                   {filtered.map((j) => (
                     <tr
                       key={j.id}
-                      className="border-b border-brand-row-border last:border-0 hover:bg-brand-surface cursor-pointer transition-colors"
+                      className="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-subtle)] cursor-pointer transition-colors"
                       onClick={() => router.push(`/jobs/${j.id}`)}
                     >
                       <td className="px-4 py-3">
                         <HealthDot health={j.health} reasons={j.health_reasons} />
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-cream font-medium">{j.name}</div>
-                        <div className="text-xs text-cream-dim">{j.address ?? "—"}</div>
+                        <div className="text-[var(--text-primary)] font-medium">{j.name}</div>
+                        <div className="text-xs text-[var(--text-tertiary)]">{j.address ?? "—"}</div>
                       </td>
-                      <td className="px-4 py-3 text-cream-muted">
+                      <td className="px-4 py-3 text-[var(--text-secondary)]">
                         <div>{j.client_name ?? "—"}</div>
-                        <div className="text-xs text-cream-dim">PM: {j.pm_name ?? "—"}</div>
+                        <div className="text-xs text-[var(--text-tertiary)]">PM: {j.pm_name ?? "—"}</div>
                       </td>
-                      <td className="px-4 py-3 text-right text-cream tabular-nums">
+                      <td className="px-4 py-3 text-right text-[var(--text-primary)] tabular-nums">
                         {formatPercent(j.pct_complete)}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">
-                        <span className={j.budget_used_pct > 100 ? "text-status-danger" : "text-cream"}>
+                        <span className={j.budget_used_pct > 100 ? "text-status-danger" : "text-[var(--text-primary)]"}>
                           {formatPercent(j.budget_used_pct)}
                         </span>
-                        <div className="text-[10px] text-cream-dim">
+                        <div className="text-[10px] text-[var(--text-tertiary)]">
                           {formatCents(j.invoiced_total)} / {formatCents(j.budget_total)}
                         </div>
                       </td>
@@ -404,10 +404,10 @@ export default function JobsPage() {
                             {String(j.open_invoices)}
                           </NwBadge>
                         ) : (
-                          <span className="text-cream-dim text-xs">—</span>
+                          <span className="text-[var(--text-tertiary)] text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-cream-muted text-xs">
+                      <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">
                         {j.last_activity_at ? formatRelativeTime(j.last_activity_at) : formatDate(j.contract_date)}
                       </td>
                       <td className="px-4 py-3"><StatusBadge status={j.status} /></td>

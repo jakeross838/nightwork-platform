@@ -417,6 +417,7 @@ export default function InvoiceReviewPage() {
 
  const [invoice, setInvoice] = useState<InvoiceData | null>(null);
  const [loading, setLoading] = useState(true);
+ const [loadError, setLoadError] = useState<string | null>(null);
  const [saving, setSaving] = useState(false);
 
  const [jobId, setJobId] = useState("");
@@ -492,8 +493,14 @@ export default function InvoiceReviewPage() {
 
  // Fetch invoice
  async function fetchInvoice() {
+ setLoading(true);
+ setLoadError(null);
+ try {
  const res = await fetch(`/api/invoices/${invoiceId}`);
- if (res.ok) {
+ if (!res.ok) {
+ const body = await res.json().catch(() => ({}));
+ throw new Error(body?.error ?? `Invoice failed to load (${res.status})`);
+ }
  const data: InvoiceData = await res.json();
  setInvoice(data);
  // If this is a partial-approval split (either parent or child),
@@ -560,8 +567,11 @@ export default function InvoiceReviewPage() {
  }))
  );
  }
- }
+ } catch (err) {
+ setLoadError(err instanceof Error ? err.message : "Couldn't load invoice");
+ } finally {
  setLoading(false);
+ }
  }
  useEffect(() => {
  fetchInvoice();
@@ -809,7 +819,7 @@ export default function InvoiceReviewPage() {
  // assignments. Only persist for approve/hold/deny/info flows — reading-only
  // paths (e.g. reassign PM) skip this entirely.
  if (lineItems.length > 0) {
- await fetch(`/api/invoices/${invoiceId}/line-items`, {
+ const liRes = await fetch(`/api/invoices/${invoiceId}/line-items`, {
  method: "PUT", headers: { "Content-Type": "application/json" },
  body: JSON.stringify({
  line_items: lineItems.map((li) => ({
@@ -827,6 +837,14 @@ export default function InvoiceReviewPage() {
  })),
  }),
  });
+ if (!liRes.ok) {
+ const body = await liRes.json().catch(() => ({}));
+ toast.error(
+ body?.error ?? "Couldn't save line items — action not applied. Please retry."
+ );
+ setSaving(false);
+ return;
+ }
  }
 
  const res = await fetch(`/api/invoices/${invoiceId}/action`, {
@@ -856,10 +874,26 @@ export default function InvoiceReviewPage() {
  </div>
  );
 
- if (!invoice) return (
- <div className="min-h-screen flex items-center justify-center">
- <p className="text-status-danger font-display text-lg">Invoice not found</p>
+ if (loadError || !invoice) return (
+ <AppShell>
+ <main className="max-w-[640px] mx-auto px-4 md:px-6 py-16">
+ <div
+ className="border p-6"
+ style={{
+ background: "var(--bg-card)",
+ borderColor: "var(--nw-danger)",
+ color: "var(--text-primary)",
+ }}
+ >
+ <NwEyebrow tone="danger" className="mb-2">Couldn&apos;t load</NwEyebrow>
+ <p className="text-sm">{loadError ?? "Invoice not found"}</p>
+ <div className="mt-4 flex gap-2">
+ <NwButton variant="secondary" size="sm" onClick={fetchInvoice}>Retry</NwButton>
+ <NwButton variant="ghost" size="sm" onClick={() => router.push("/invoices")}>Back to Invoices</NwButton>
  </div>
+ </div>
+ </main>
+ </AppShell>
  );
 
  const isReviewable = ["pm_review", "ai_processed", "pm_held", "info_requested"].includes(invoice.status);

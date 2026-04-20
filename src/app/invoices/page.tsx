@@ -92,16 +92,16 @@ const ALL_STATUSES = [
 const statusBadgeColor = statusBadgeOutline;
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
- if (!active) return <span className="ml-1 text-cream-dim">↕</span>;
- return <span className="ml-1 text-teal">{dir === "asc" ? "↑" : "↓"}</span>;
+ if (!active) return <span className="ml-1 text-[var(--text-tertiary)]">↕</span>;
+ return <span className="ml-1 text-[var(--text-accent)]">{dir === "asc" ? "↑" : "↓"}</span>;
 }
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
  return (
- <div className="bg-brand-card border border-brand-border px-4 py-3">
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</p>
- <p className="text-xl font-display font-medium text-cream mt-1">{value}</p>
- {sub && <p className="text-xs text-cream-dim mt-0.5">{sub}</p>}
+ <div className="border px-4 py-3" style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}>
+ <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>{label}</p>
+ <p className="text-xl font-display font-medium mt-1" style={{ color: "var(--text-primary)" }}>{value}</p>
+ {sub && <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{sub}</p>}
  </div>
  );
 }
@@ -396,18 +396,18 @@ export default function AllInvoicesPage() {
  </div>
 
  {/* Tabs */}
- <div className="flex gap-1 mb-6 bg-brand-surface border border-brand-border p-1 w-fit">
+ <div className="flex gap-1 mb-6 bg-[var(--bg-subtle)] border border-[var(--border-default)] p-1 w-fit">
  <button
  onClick={() => setActiveTab("all")}
  className={`px-4 py-2 text-sm font-medium transition-colors ${
- activeTab === "all" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+ activeTab === "all" ? "bg-[var(--bg-muted)] text-[var(--text-primary)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
  }`}>
  All Invoices
  </button>
  <button
  onClick={() => setActiveTab("payment")}
  className={`px-4 py-2 text-sm font-medium transition-colors ${
- activeTab === "payment" ? "bg-brand-elevated text-cream" : "text-cream-dim hover:text-cream"
+ activeTab === "payment" ? "bg-[var(--bg-muted)] text-[var(--text-primary)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
  }`}>
  Payment Tracking
  {paymentInvoices.length > 0 && (
@@ -443,31 +443,31 @@ export default function AllInvoicesPage() {
  {/* Primary filters */}
  <div className="flex flex-col md:flex-row gap-3 mb-3">
  <div className="relative flex-1">
- <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cream-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+ <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
  </svg>
  <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
  placeholder="Search vendor or invoice #..."
- className="w-full pl-9 pr-8 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream placeholder-cream-dim focus:border-teal focus:outline-none" />
+ className="w-full pl-9 pr-8 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--nw-stone-blue)] focus:outline-none" />
  {search && (
- <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-cream-dim hover:text-cream">
+ <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
  </button>
  )}
  </div>
  <select value={jobFilter} onChange={(e) => setJobFilter(e.target.value)}
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-48">
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none md:w-48">
  <option value="">All Jobs</option>
  {jobNames.map(n => <option key={n} value={n}>{n}</option>)}
  </select>
  <select value={pmFilter} onChange={(e) => setPmFilter(e.target.value)}
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-44">
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none md:w-44">
  <option value="">All PMs</option>
  <option value="__unassigned__">Unassigned</option>
  {pmUsers.map(u => <option key={u.id} value={u.id}>{u.full_name}</option>)}
  </select>
  <select value={confidenceFilter} onChange={(e) => setConfidenceFilter(e.target.value as ConfidenceFilter)}
- className="px-3 py-2.5 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none md:w-40">
+ className="px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none md:w-40">
  <option value="all">All Confidence</option>
  <option value="high">High (≥85%)</option>
  <option value="medium">Medium (70–84%)</option>
@@ -478,20 +478,20 @@ export default function AllInvoicesPage() {
  {/* More Filters toggle */}
  <div className="flex items-center gap-3 mb-5">
  <button onClick={() => setShowMoreFilters(!showMoreFilters)}
- className="flex items-center gap-1.5 px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border hover:border-brand-border-light transition-colors">
+ className="flex items-center gap-1.5 px-3 py-2 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] transition-colors">
  <svg className={`w-4 h-4 transition-transform ${showMoreFilters ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
  </svg>
  More Filters
  {advancedFilterCount > 0 && (
- <span className="ml-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-teal text-brand-bg text-[10px] font-bold">
+ <span className="ml-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-nw-stone-blue text-nw-white-sand text-[10px] font-bold">
  {advancedFilterCount}
  </span>
  )}
  </button>
  {isFiltered && (
  <button onClick={clearAllFilters}
- className="px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border hover:border-brand-border-light transition-colors">
+ className="px-3 py-2 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] transition-colors">
  Clear all filters
  </button>
  )}
@@ -499,15 +499,15 @@ export default function AllInvoicesPage() {
 
  {/* Advanced filters */}
  {showMoreFilters && (
- <div className="mb-5 p-4 bg-brand-surface/50 border border-brand-border space-y-4 animate-fade-up">
+ <div className="mb-5 p-4 bg-[var(--bg-subtle)]/50 border border-[var(--border-default)] space-y-4 animate-fade-up">
  {/* Status multi-select */}
  <div>
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">Status</p>
+ <p className="text-[11px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Status</p>
  <div className="flex flex-wrap gap-2">
  {ALL_STATUSES.map(s => (
  <button key={s} onClick={() => toggleStatus(s)}
  className={`px-2.5 py-1 text-xs border transition-colors ${
- statusFilters.has(s) ? statusBadgeColor(s) + " font-medium" : "text-cream-dim border-brand-border hover:border-brand-border-light"
+ statusFilters.has(s) ? statusBadgeColor(s) + " font-medium" : "text-[var(--text-tertiary)] border-[var(--border-default)] hover:border-[var(--border-strong)]"
  }`}>
  {formatStatus(s)}
  </button>
@@ -517,9 +517,9 @@ export default function AllInvoicesPage() {
  <div className="flex flex-col md:flex-row gap-4">
  {/* Amount range */}
  <div>
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">Amount Range</p>
+ <p className="text-[11px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Amount Range</p>
  <select value={amountRange} onChange={(e) => setAmountRange(e.target.value as AmountRange)}
- className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none">
+ className="px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none">
  <option value="all">All</option>
  <option value="0-5k">$0 – $5K</option>
  <option value="5k-25k">$5K – $25K</option>
@@ -529,13 +529,13 @@ export default function AllInvoicesPage() {
  </div>
  {/* Date range */}
  <div>
- <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-2">Invoice Date Range</p>
+ <p className="text-[11px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider mb-2">Invoice Date Range</p>
  <div className="flex items-center gap-2">
  <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)}
- className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none" />
- <span className="text-cream-dim text-sm">to</span>
+ className="px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none" />
+ <span className="text-[var(--text-tertiary)] text-sm">to</span>
  <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)}
- className="px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:border-teal focus:outline-none" />
+ className="px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none" />
  </div>
  </div>
  </div>
@@ -553,43 +553,43 @@ export default function AllInvoicesPage() {
  )}
 
  {filtered.length > 0 && (
- <div className="overflow-x-auto border border-brand-border animate-fade-up">
+ <div className="overflow-x-auto border border-[var(--border-default)] animate-fade-up">
  <table className="w-full min-w-[1100px] text-sm">
  <thead>
- <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-teal transition-colors sticky left-0 bg-brand-surface z-10" onClick={() => toggleSort("vendor")}>
+ <tr className="bg-[var(--bg-subtle)] text-left">
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-[var(--text-accent)] transition-colors sticky left-0 bg-[var(--bg-subtle)] z-10" onClick={() => toggleSort("vendor")}>
  Vendor<SortArrow active={sortKey === "vendor"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Inv #</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("date")}>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Inv #</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-[var(--text-accent)] transition-colors" onClick={() => toggleSort("date")}>
  Date<SortArrow active={sortKey === "date"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Job</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Cost Code</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("amount")}>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Job</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Cost Code</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em] text-right cursor-pointer select-none hover:text-[var(--text-accent)] transition-colors" onClick={() => toggleSort("amount")}>
  Amount<SortArrow active={sortKey === "amount"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("status")}>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-[var(--text-accent)] transition-colors" onClick={() => toggleSort("status")}>
  Status<SortArrow active={sortKey === "status"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("pm")}>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-[var(--text-accent)] transition-colors" onClick={() => toggleSort("pm")}>
  PM<SortArrow active={sortKey === "pm"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("aging")}>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em] text-right cursor-pointer select-none hover:text-[var(--text-accent)] transition-colors" onClick={() => toggleSort("aging")}>
  Days Out<SortArrow active={sortKey === "aging"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Payment</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Payment</th>
  </tr>
  </thead>
  <tbody>
  {filtered.map((inv) => (
  <tr key={inv.id}
- className="group border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
+ className="group border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] cursor-pointer transition-colors"
  onClick={() => {
  const reviewable = ["pm_review", "ai_processed"].includes(inv.status);
  window.location.href = reviewable ? `/invoices/${inv.id}` : `/invoices/${inv.id}`;
  }}>
- <td className="py-3 px-4 text-cream font-medium sticky left-0 bg-brand-card group-hover:bg-brand-elevated/50 z-[1]">
+ <td className="py-3 px-4 text-[var(--text-primary)] font-medium sticky left-0 bg-[var(--bg-card)] group-hover:bg-[var(--bg-muted)] z-[1]">
  <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
@@ -600,12 +600,12 @@ export default function AllInvoicesPage() {
  )}
  </span>
  </td>
- <td className="py-3 px-4 text-cream-muted font-mono text-xs">
+ <td className="py-3 px-4 text-[var(--text-secondary)] font-mono text-xs">
  {inv.invoice_number ?? (
  <NwBadge variant="warning" size="sm">No Invoice #</NwBadge>
  )}
  </td>
- <td className="py-3 px-4 text-cream-muted">
+ <td className="py-3 px-4 text-[var(--text-secondary)]">
  {inv.invoice_date ? (
  formatDate(inv.invoice_date)
  ) : (
@@ -618,10 +618,10 @@ export default function AllInvoicesPage() {
  ) : inv.document_category === "overhead" ? (
  <NwBadge variant="warning" size="sm">Overhead</NwBadge>
  ) : (
- <span className="text-cream-dim">—</span>
+ <span className="text-[var(--text-tertiary)]">—</span>
  )}
  </td>
- <td className="py-3 px-4 text-cream-muted text-xs">
+ <td className="py-3 px-4 text-[var(--text-secondary)] text-xs">
  {inv.line_item_cost_codes && inv.line_item_cost_codes.length > 1 ? (
  <span title={inv.line_item_cost_codes.join(", ")}>
  <NwBadge variant="info" size="sm">Multiple ({inv.line_item_cost_codes.length})</NwBadge>
@@ -631,7 +631,7 @@ export default function AllInvoicesPage() {
  ) : inv.cost_codes ? (
  <span>{inv.cost_codes.code}</span>
  ) : (
- <span className="text-cream-dim">—</span>
+ <span className="text-[var(--text-tertiary)]">—</span>
  )}
  </td>
  <td className="py-3 px-4 text-right">
@@ -647,12 +647,12 @@ export default function AllInvoicesPage() {
  )}
  </div>
  </td>
- <td className="py-3 px-4 text-cream-muted text-xs">{inv.assigned_pm?.full_name ?? <span className="text-cream-dim">—</span>}</td>
+ <td className="py-3 px-4 text-[var(--text-secondary)] text-xs">{inv.assigned_pm?.full_name ?? <span className="text-[var(--text-tertiary)]">—</span>}</td>
  <td className="py-3 px-4 text-right">
  {(() => {
  // Paid (or voided) invoices don't age — render a dash, no badge, no days text.
  if (!isUnpaidInvoice(inv)) {
- return <span className="text-cream-dim">&mdash;</span>;
+ return <span className="text-[var(--text-tertiary)]">&mdash;</span>;
  }
  const days = daysOutstanding(inv.received_date);
  if (days >= 90) {
@@ -677,11 +677,11 @@ export default function AllInvoicesPage() {
  );
  }
  return (
- <span className="text-xs text-cream-muted tabular-nums">{days}d</span>
+ <span className="text-xs text-[var(--text-secondary)] tabular-nums">{days}d</span>
  );
  })()}
  </td>
- <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
+ <td className="py-3 px-4 text-[var(--text-secondary)] text-xs">{formatDate(inv.payment_date)}</td>
  </tr>
  ))}
  </tbody>
@@ -704,30 +704,30 @@ export default function AllInvoicesPage() {
  {paymentGroups.map(([dateKey, group]) => (
  <div key={dateKey} className="animate-fade-up">
  <div className="flex items-center gap-3 mb-3">
- <h3 className="text-sm font-medium text-cream">
+ <h3 className="text-sm font-medium text-[var(--text-primary)]">
  {dateKey === "No Date" ? "No Payment Date" : formatDate(dateKey)}
  </h3>
- <span className="text-[11px] text-cream-dim bg-brand-surface px-2 py-0.5 border border-brand-border">
+ <span className="text-[11px] text-[var(--text-tertiary)] bg-[var(--bg-subtle)] px-2 py-0.5 border border-[var(--border-default)]">
  {group.length} invoice{group.length !== 1 ? "s" : ""} &mdash; {formatCents(group.reduce((s, inv) => s + inv.total_amount, 0))}
  </span>
  </div>
- <div className="overflow-x-auto border border-brand-border">
+ <div className="overflow-x-auto border border-[var(--border-default)]">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Vendor</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Inv #</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] text-right">Amount</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Status</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Payment Date</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Check #</th>
- <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] text-center">Picked Up</th>
+ <tr className="bg-[var(--bg-subtle)] text-left">
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Vendor</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Inv #</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em] text-right">Amount</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Status</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Payment Date</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em]">Check #</th>
+ <th className="py-3 px-4 text-[10px] text-[var(--text-tertiary)] font-medium uppercase tracking-[0.14em] text-center">Picked Up</th>
  </tr>
  </thead>
  <tbody>
  {group.map((inv) => (
- <tr key={inv.id} className="border-t border-brand-row-border hover:bg-brand-elevated/50 transition-colors">
- <td className="py-3 px-4 text-cream font-medium cursor-pointer hover:text-teal transition-colors"
+ <tr key={inv.id} className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] transition-colors">
+ <td className="py-3 px-4 text-[var(--text-primary)] font-medium cursor-pointer hover:text-[var(--text-accent)] transition-colors"
  onClick={() => window.location.href = `/invoices/${inv.id}`}>
  <span className="inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
@@ -736,7 +736,7 @@ export default function AllInvoicesPage() {
  )}
  </span>
  </td>
- <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? <span className="text-cream-dim">&mdash;</span>}</td>
+ <td className="py-3 px-4 text-[var(--text-secondary)] font-mono text-xs">{inv.invoice_number ?? <span className="text-[var(--text-tertiary)]">&mdash;</span>}</td>
  <td className="py-3 px-4 text-right">
  <NwMoney cents={inv.total_amount} />
  </td>
@@ -745,7 +745,7 @@ export default function AllInvoicesPage() {
  {formatStatus(inv.status)}
  </NwBadge>
  </td>
- <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
+ <td className="py-3 px-4 text-[var(--text-secondary)] text-xs">{formatDate(inv.payment_date)}</td>
  <td className="py-3 px-4">
  {editingCheckId === inv.id ? (
  <input
@@ -755,14 +755,14 @@ export default function AllInvoicesPage() {
  onBlur={() => handleInlineCheckSave(inv.id, editingCheckValue)}
  onKeyDown={(e) => { if (e.key === "Enter") handleInlineCheckSave(inv.id, editingCheckValue); if (e.key === "Escape") setEditingCheckId(null); }}
  autoFocus
- className="w-24 px-2 py-1 bg-brand-surface border border-teal text-xs text-cream focus:outline-none"
+ className="w-24 px-2 py-1 bg-[var(--bg-subtle)] border border-nw-stone-blue text-xs text-[var(--text-primary)] focus:outline-none"
  />
  ) : (
  <button
  onClick={(e) => { e.stopPropagation(); setEditingCheckId(inv.id); setEditingCheckValue(inv.check_number ?? ""); }}
- className="px-2 py-1 text-xs text-cream-muted hover:text-cream hover:bg-brand-surface transition-colors min-w-[60px] text-left"
+ className="px-2 py-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors min-w-[60px] text-left"
  disabled={savingInline === inv.id}>
- {savingInline === inv.id ? "..." : (inv.check_number || <span className="text-cream-dim italic">Add #</span>)}
+ {savingInline === inv.id ? "..." : (inv.check_number || <span className="text-[var(--text-tertiary)] italic">Add #</span>)}
  </button>
  )}
  </td>
@@ -770,7 +770,7 @@ export default function AllInvoicesPage() {
  <button
  onClick={(e) => { e.stopPropagation(); handleInlinePickedUpToggle(inv.id, inv.picked_up); }}
  disabled={savingInline === inv.id}
- className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${inv.picked_up ? "bg-status-success" : "bg-brand-border"}`}>
+ className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${inv.picked_up ? "bg-status-success" : "bg-[var(--border-default)]"}`}>
  <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${inv.picked_up ? "translate-x-5" : "translate-x-1"}`} />
  </button>
  </td>
