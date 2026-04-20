@@ -168,6 +168,7 @@ export const DELETE = withApiError(async (
     .from("draw_line_items")
     .select("id")
     .eq("draw_id", context.params.id)
+    .eq("org_id", membership.org_id)
     .eq("change_order_id", coId)
     .is("deleted_at", null)
     .maybeSingle();
@@ -175,18 +176,21 @@ export const DELETE = withApiError(async (
     await supabase
       .from("draw_line_items")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", (line as { id: string }).id);
+      .eq("id", (line as { id: string }).id)
+      .eq("org_id", membership.org_id);
   }
   await supabase
     .from("change_orders")
     .update({ draw_number: null, application_number: null, updated_at: new Date().toISOString() })
-    .eq("id", coId);
+    .eq("id", coId)
+    .eq("org_id", membership.org_id);
 
   await recomputePercentageBillings(context.params.id);
   const { data: draw } = await supabase
     .from("draws")
     .select("job_id")
     .eq("id", context.params.id)
+    .eq("org_id", membership.org_id)
     .single();
   if (draw?.job_id) {
     try {

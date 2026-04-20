@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
 import { renderCoverLetter, type CoverLetterContext } from "@/lib/cover-letter";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 /**
  * GET /api/draws/[id]/cover-letter
@@ -26,7 +25,11 @@ const ORG_ID = "00000000-0000-0000-0000-000000000001";
  *     (Implemented as POST in this same route file.)
  */
 
-async function loadDraw(supabase: ReturnType<typeof createServerClient>, id: string) {
+async function loadDraw(
+  supabase: ReturnType<typeof createServerClient>,
+  id: string,
+  orgId: string
+) {
   const { data: draw, error } = await supabase
     .from("draws")
     .select(
@@ -36,6 +39,7 @@ async function loadDraw(supabase: ReturnType<typeof createServerClient>, id: str
        jobs:job_id (id, name, address, client_name)`
     )
     .eq("id", id)
+    .eq("org_id", orgId)
     .is("deleted_at", null)
     .single();
   if (error || !draw) return null;
@@ -83,11 +87,17 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
-    const draw = await loadDraw(supabase, params.id);
+    const draw = await loadDraw(supabase, params.id, orgId);
     if (!draw) return NextResponse.json({ error: "Draw not found" }, { status: 404 });
 
-    const settings = await getWorkflowSettings(ORG_ID);
+    const settings = await getWorkflowSettings(orgId);
     const template = settings.cover_letter_template;
     const ctx = buildContext(draw);
     const generated = !draw.cover_letter_text;
@@ -115,17 +125,24 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const body = (await request.json()) as { cover_letter_text?: string };
     const text = (body.cover_letter_text ?? "").toString();
     const { error } = await supabase
       .from("draws")
       .update({ cover_letter_text: text.length > 0 ? text : null })
-      .eq("id", params.id);
+      .eq("id", params.id)
+      .eq("org_id", orgId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     await logActivity({
-      org_id: ORG_ID,
+      org_id: orgId,
       entity_type: "draw",
       entity_id: params.id,
       action: "updated",
@@ -149,21 +166,28 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
-    const draw = await loadDraw(supabase, params.id);
+    const draw = await loadDraw(supabase, params.id, orgId);
     if (!draw) return NextResponse.json({ error: "Draw not found" }, { status: 404 });
 
-    const settings = await getWorkflowSettings(ORG_ID);
+    const settings = await getWorkflowSettings(orgId);
     const ctx = buildContext(draw);
     const body = renderCoverLetter(settings.cover_letter_template, ctx);
 
     await supabase
       .from("draws")
       .update({ cover_letter_text: null })
-      .eq("id", params.id);
+      .eq("id", params.id)
+      .eq("org_id", orgId);
 
     await logActivity({
-      org_id: ORG_ID,
+      org_id: orgId,
       entity_type: "draw",
       entity_id: params.id,
       action: "updated",

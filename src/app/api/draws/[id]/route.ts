@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
+import { getCurrentMembership } from "@/lib/org/session";
 import {
   applicationNumberForDraw,
   computeDrawLines,
@@ -13,22 +14,21 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
-
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Service-role bypasses RLS so embeds like `cost_codes:cost_code_id (...)`
-    // return actual rows instead of null when user-session RLS evaluation
-    // is ambiguous. Auth gate still runs on the user-session client.
-    const userSb = createServerClient();
-    const { data: { user } } = await userSb.auth.getUser();
-    if (!user) {
+    const membership = await getCurrentMembership();
+    if (!membership) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    const supabase = tryCreateServiceRoleClient() ?? userSb;
+    const orgId = membership.org_id;
+
+    // Service-role bypasses RLS so embeds like `cost_codes:cost_code_id (...)`
+    // return actual rows instead of null when user-session RLS evaluation
+    // is ambiguous. Every query still carries an explicit org_id filter.
+    const supabase = tryCreateServiceRoleClient() ?? createServerClient();
 
     const { data: draw, error } = await supabase
       .from("draws")
@@ -36,6 +36,7 @@ export async function GET(
         `*, jobs:job_id (id, name, address, client_name, deposit_percentage, gc_fee_percentage, retainage_percent, original_contract_amount, current_contract_amount, starting_application_number, previous_co_completed_amount)`
       )
       .eq("id", params.id)
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .single();
 
@@ -50,6 +51,7 @@ export async function GET(
         "id, vendor_id, vendor_name_raw, invoice_number, total_amount, cost_code_id, payment_status, payment_date"
       )
       .eq("draw_id", params.id)
+      .eq("org_id", orgId)
       .is("deleted_at", null);
 
     // Budget lines and cost codes for this job.
@@ -60,6 +62,7 @@ export async function GET(
          cost_codes:cost_code_id (code, description, category, sort_order, is_change_order)`
       )
       .eq("job_id", draw.job_id)
+      .eq("org_id", orgId)
       .is("deleted_at", null);
 
     // Auto-create budget lines for invoice cost codes not yet present (same
@@ -81,7 +84,7 @@ export async function GET(
           original_estimate: 0,
           revised_estimate: 0,
           previous_applications_baseline: 0,
-          org_id: ORG_ID,
+          org_id: orgId,
         })
         .select(
           `id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline, co_adjustments,
@@ -182,6 +185,7 @@ export async function GET(
          vendors:vendor_id (id, name)`
       )
       .eq("draw_id", params.id)
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .order("created_at");
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import {
   computeDrawLines,
   lessPreviousCertificatesForJob,
@@ -22,11 +23,18 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const { data: current, error } = await supabase
       .from("draws")
       .select("id, job_id, draw_number, revision_number, period_start, period_end, is_final, status")
       .eq("id", params.id)
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .single();
     if (error || !current) {
@@ -42,6 +50,7 @@ export async function GET(
       .from("draws")
       .select("id, draw_number, revision_number, status, period_start, period_end, is_final")
       .eq("job_id", job_id)
+      .eq("org_id", orgId)
       .is("deleted_at", null)
       .lt("draw_number", drawNumber)
       .order("draw_number", { ascending: false })
@@ -63,12 +72,14 @@ export async function GET(
         .from("invoices")
         .select("id, total_amount, vendor_id, vendor_name_raw, cost_code_id")
         .eq("draw_id", draw.id)
+        .eq("org_id", orgId)
         .is("deleted_at", null);
       const invIds = (invs ?? []).map((i) => i.id as string);
       const { data: jobRow } = await supabase
         .from("jobs")
         .select("retainage_percent, original_contract_amount, deposit_percentage, previous_co_completed_amount")
         .eq("id", job_id)
+        .eq("org_id", orgId)
         .single();
       const retPct = (jobRow as { retainage_percent?: number } | null)?.retainage_percent ?? 10;
       const { lines } = await computeDrawLines({
@@ -88,6 +99,7 @@ export async function GET(
         .from("change_orders")
         .select("total_with_fee, amount, co_type, status")
         .eq("job_id", job_id)
+        .eq("org_id", orgId)
         .in("status", ["approved", "executed"])
         .is("deleted_at", null);
       const netChangeOrders =

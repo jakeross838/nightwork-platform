@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { recalcLinesAndPOs } from "@/lib/recalc";
 import { notifyRole, notifyUser } from "@/lib/notifications";
@@ -14,8 +15,6 @@ import { getWorkflowSettings } from "@/lib/workflow-settings";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 // Phase 8 workflow: draft → submitted → approved → locked
 // Also supports: approved → paid (legacy), void, and "send back to draft"
@@ -35,6 +34,12 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const orgId = membership.org_id;
+
     const supabase = createServerClient();
     const { action, reason } = (await request.json()) as {
       action: string;
@@ -52,6 +57,7 @@ export async function POST(
         "id, job_id, org_id, status, status_history, draw_number, revision_number, period_end, is_final, current_payment_due"
       )
       .eq("id", params.id)
+      .eq("org_id", orgId)
       .single();
     if (fetchError || !draw) {
       return NextResponse.json({ error: "Draw not found" }, { status: 404 });
@@ -74,11 +80,12 @@ export async function POST(
         .from("invoices")
         .select("id")
         .eq("draw_id", params.id)
+        .eq("org_id", orgId)
         .eq("payment_status", "paid")
         .is("deleted_at", null);
       if ((paidInvs ?? []).length > 0) {
         await logActivity({
-          org_id: ORG_ID,
+          org_id: orgId,
           entity_type: "draw",
           entity_id: params.id,
           action: "void_blocked",
@@ -105,7 +112,7 @@ export async function POST(
           { status: 400 }
         );
       }
-      const settings = await getWorkflowSettings(ORG_ID);
+      const settings = await getWorkflowSettings(orgId);
       if (settings.require_lien_release_for_draw) {
         const docs = await missingDocumentBlockers(params.id);
         if (docs.missing > 0) {
@@ -151,7 +158,8 @@ export async function POST(
     const { error: updateError } = await supabase
       .from("draws")
       .update(updates)
-      .eq("id", params.id);
+      .eq("id", params.id)
+      .eq("org_id", orgId);
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
@@ -164,13 +172,15 @@ export async function POST(
         .from("invoices")
         .select("id, status")
         .eq("draw_id", params.id)
+        .eq("org_id", orgId)
         .is("deleted_at", null);
       const invIds = (invs ?? []).map((i) => i.id as string);
       if (invIds.length > 0) {
         await supabase
           .from("invoices")
           .update({ status: "in_draw" })
-          .in("id", invIds);
+          .in("id", invIds)
+          .eq("org_id", orgId);
         try {
           const { data: lines } = await supabase
             .from("invoice_line_items")
@@ -186,7 +196,7 @@ export async function POST(
         }
         for (const invId of invIds) {
           await logStatusChange({
-            org_id: ORG_ID,
+            org_id: orgId,
             entity_type: "invoice",
             entity_id: invId,
             from: "qa_approved",
@@ -200,14 +210,14 @@ export async function POST(
         const newReleases = await autoGenerateLienReleases({
           draw_id: params.id,
           job_id: draw.job_id as string,
-          org_id: draw.org_id as string,
+          org_id: orgId,
           isFinal: !!draw.is_final,
           through_date: (draw as { period_end: string | null }).period_end ?? null,
           created_by: null,
         });
         if (newReleases > 0) {
           await logActivity({
-            org_id: ORG_ID,
+            org_id: orgId,
             entity_type: "draw",
             entity_id: params.id,
             action: "updated",
@@ -219,8 +229,9 @@ export async function POST(
               .from("jobs")
               .select("name")
               .eq("id", draw.job_id as string)
+              .eq("org_id", orgId)
               .maybeSingle();
-            await notifyRole(ORG_ID, ["accounting", "admin"], {
+            await notifyRole(orgId, ["accounting", "admin"], {
               notification_type: "lien_release_pending",
               subject: `${newReleases} lien release(s) needed — Draw #${draw.draw_number}`,
               body: `Draw #${draw.draw_number} on ${jobRow?.name ?? "a job"} was submitted. ${newReleases} vendor lien release(s) need to be collected.`,
@@ -240,9 +251,10 @@ export async function POST(
           .from("jobs")
           .select("name")
           .eq("id", draw.job_id as string)
+          .eq("org_id", orgId)
           .maybeSingle();
         const amt = `$${Math.round(((draw as { current_payment_due?: number }).current_payment_due ?? 0) / 100).toLocaleString("en-US")}`;
-        await notifyRole(ORG_ID, ["owner", "admin"], {
+        await notifyRole(orgId, ["owner", "admin"], {
           notification_type: "draw_submitted",
           subject: `Draw #${draw.draw_number} submitted — ${jobRow?.name ?? ""}`,
           body: `Draw #${draw.draw_number} for ${jobRow?.name ?? "a job"} (${amt}) submitted for approval.`,
@@ -259,6 +271,7 @@ export async function POST(
         .from("invoices")
         .select("id")
         .eq("draw_id", params.id)
+        .eq("org_id", orgId)
         .eq("status", "in_draw")
         .is("deleted_at", null);
       const invIds = (invs ?? []).map((i) => i.id as string);
@@ -266,7 +279,8 @@ export async function POST(
         await supabase
           .from("invoices")
           .update({ status: "qa_approved" })
-          .in("id", invIds);
+          .in("id", invIds)
+          .eq("org_id", orgId);
         try {
           const { data: lines } = await supabase
             .from("invoice_line_items")
@@ -282,7 +296,7 @@ export async function POST(
         }
         for (const invId of invIds) {
           await logStatusChange({
-            org_id: ORG_ID,
+            org_id: orgId,
             entity_type: "invoice",
             entity_id: invId,
             from: "in_draw",
@@ -298,11 +312,11 @@ export async function POST(
       try {
         const scheduled = await autoScheduleDrawPayments({
           draw_id: params.id,
-          org_id: draw.org_id as string,
+          org_id: orgId,
         });
         if (scheduled > 0) {
           await logActivity({
-            org_id: ORG_ID,
+            org_id: orgId,
             entity_type: "draw",
             entity_id: params.id,
             action: "updated",
@@ -318,9 +332,10 @@ export async function POST(
           .from("draws")
           .select("created_by")
           .eq("id", params.id)
+          .eq("org_id", orgId)
           .maybeSingle();
         if (me?.created_by) {
-          await notifyUser(me.created_by as string, ORG_ID, {
+          await notifyUser(me.created_by as string, orgId, {
             notification_type: "draw_approved",
             subject: `Draw #${draw.draw_number} approved`,
             body: `Your draw submission has been approved.`,
@@ -341,6 +356,7 @@ export async function POST(
         .from("invoices")
         .select("id, status")
         .eq("draw_id", params.id)
+        .eq("org_id", orgId)
         .is("deleted_at", null);
       const invIds = (invs ?? []).map((i) => i.id as string);
       if (invIds.length > 0) {
@@ -348,6 +364,7 @@ export async function POST(
           .from("invoices")
           .update({ status: "qa_approved", draw_id: null })
           .in("id", invIds)
+          .eq("org_id", orgId)
           .in("status", ["in_draw"])
           .select("id");
         if (unlinkErr) {
@@ -373,7 +390,7 @@ export async function POST(
     }
 
     await logStatusChange({
-      org_id: ORG_ID,
+      org_id: orgId,
       entity_type: "draw",
       entity_id: params.id,
       from: draw.status,

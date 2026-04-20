@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
-import { getCurrentOrg } from "@/lib/org/session";
+import { getCurrentMembership, getCurrentOrg } from "@/lib/org/session";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
 import { renderCoverLetter, type CoverLetterContext } from "@/lib/cover-letter";
 import ExcelJS from "exceljs";
@@ -64,9 +64,14 @@ export async function GET(
  { params }: { params: { id: string } }
 ) {
  try {
+ const membership = await getCurrentMembership();
+ if (!membership) {
+ return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+ }
+ const orgId = membership.org_id;
+
  const userSb = createServerClient();
  const { data: { user } } = await userSb.auth.getUser();
- if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
  const supabase = tryCreateServiceRoleClient() ?? userSb;
 
  // ── Fetch org branding + signing contact ──
@@ -102,6 +107,7 @@ export async function GET(
  .from("draws")
  .select(`*, jobs:job_id (id, name, address, client_name, client_email, deposit_percentage, gc_fee_percentage, original_contract_amount)`)
  .eq("id", params.id)
+ .eq("org_id", orgId)
  .is("deleted_at", null)
  .single();
 
@@ -114,6 +120,7 @@ export async function GET(
  .from("invoices")
  .select("id, vendor_name_raw, invoice_number, total_amount, cost_code_id")
  .eq("draw_id", params.id)
+ .eq("org_id", orgId)
  .is("deleted_at", null);
 
  // ── Fetch budget lines ──
@@ -124,6 +131,7 @@ export async function GET(
  cost_codes:cost_code_id (code, description, category, sort_order)
  `)
  .eq("job_id", draw.job_id)
+ .eq("org_id", orgId)
  .is("deleted_at", null);
 
  // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,6 +145,7 @@ export async function GET(
  .from("change_orders")
  .select("*")
  .eq("job_id", draw.job_id)
+ .eq("org_id", orgId)
  .eq("status", "executed")
  .is("deleted_at", null)
  .order("pcco_number", { ascending: true });
@@ -187,7 +196,7 @@ export async function GET(
  // ═══════════════════════════════════════════════
  // SHEET 0: Cover Letter (Phase 8f) — first page
  // ═══════════════════════════════════════════════
- const settings = await getWorkflowSettings(draw.org_id ?? "00000000-0000-0000-0000-000000000001");
+ const settings = await getWorkflowSettings(orgId);
  const coverDraw = draw as unknown as {
  contract_sum_to_date?: number;
  total_completed_to_date?: number;

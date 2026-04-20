@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership } from "@/lib/org/session";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -18,12 +19,17 @@ export const fetchCache = "force-no-store";
 
 export async function GET() {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
     const supabase = createServerClient();
     const { data, error } = await supabase
       .from("draws")
       .select(
         "id, job_id, draw_number, status, wizard_draft, updated_at, jobs:job_id (id, name, address)"
       )
+      .eq("org_id", membership.org_id)
       .eq("status", "draft")
       .not("wizard_draft", "is", null)
       .is("deleted_at", null)
@@ -40,6 +46,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
     const supabase = createServerClient();
     const body = (await request.json()) as {
       id?: string;
@@ -55,6 +65,7 @@ export async function POST(request: NextRequest) {
         .from("draws")
         .update({ wizard_draft: body.wizard_draft })
         .eq("id", body.id)
+        .eq("org_id", membership.org_id)
         .eq("status", "draft");
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json({ id: body.id });
@@ -75,6 +86,10 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
     const supabase = createServerClient();
     const id = request.nextUrl.searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
@@ -84,6 +99,7 @@ export async function DELETE(request: NextRequest) {
       .from("draws")
       .update({ deleted_at: new Date().toISOString(), wizard_draft: null })
       .eq("id", id)
+      .eq("org_id", membership.org_id)
       .eq("status", "draft");
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });
