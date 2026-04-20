@@ -9,6 +9,7 @@ import { recalcLinesAndPOs } from "@/lib/recalc";
 import { logStatusChange } from "@/lib/activity-log";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
 import { captureCorrections } from "@/lib/invoices/corrections";
+import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -19,6 +20,8 @@ interface ActionRequest {
  pm_overrides?: Record<string, { old: unknown; new: unknown }>;
  qa_overrides?: Record<string, { old: unknown; new: unknown }>;
  updates?: Record<string, unknown>;
+ /** Optimistic lock: updated_at of the row the client fetched. */
+ expected_updated_at?: string;
 }
 
 const ACTION_STATUS_MAP: Record<string, string> = {
@@ -50,7 +53,8 @@ export async function POST(
 
  const supabase = createServerClient();
  const body: ActionRequest = await request.json();
- const { action, note, pm_overrides, qa_overrides, updates } = body;
+ const { action, pm_overrides, qa_overrides, updates, expected_updated_at } = body;
+ let note = body.note;
 
  if (!ACTION_STATUS_MAP[action]) {
  return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -184,6 +188,96 @@ export async function POST(
  );
  }
 
+ // WI-L-4: budget gate. Sum this invoice's allocations per budget line; any
+ // line that would exceed `revised_estimate` requires an explicit override
+ // from the PM. The "?acknowledged_over_budget=true" URL param is the
+ // acknowledgement token — without it we return 422 with the overage detail
+ // so the client can show the red warning dialog.
+ const INVOICE_COUNTING = [
+ "pm_approved",
+ "qa_review",
+ "qa_approved",
+ "pushed_to_qb",
+ "in_draw",
+ "paid",
+ ];
+ if (!INVOICE_COUNTING.includes(invoice.status)) {
+ const { data: allocLines } = await supabase
+ .from("invoice_line_items")
+ .select("budget_line_id, amount_cents")
+ .eq("invoice_id", params.id)
+ .is("deleted_at", null);
+ const allocationsByBL = new Map<string, number>();
+ for (const l of allocLines ?? []) {
+ const blId = (l as { budget_line_id: string | null }).budget_line_id;
+ const amt = (l as { amount_cents: number | null }).amount_cents ?? 0;
+ if (!blId) continue;
+ allocationsByBL.set(blId, (allocationsByBL.get(blId) ?? 0) + amt);
+ }
+
+ if (allocationsByBL.size > 0) {
+ const { data: bls } = await supabase
+ .from("budget_lines")
+ .select("id, revised_estimate, invoiced, cost_code_id, cost_codes(code, description)")
+ .in("id", Array.from(allocationsByBL.keys()))
+ .eq("org_id", membership.org_id);
+
+ const overageDetails: Array<{
+ budget_line_id: string;
+ cost_code: string | null;
+ description: string | null;
+ revised_estimate: number;
+ currently_invoiced: number;
+ this_invoice_allocation: number;
+ overage: number;
+ }> = [];
+
+ for (const bl of bls ?? []) {
+ const blRow = bl as {
+ id: string;
+ revised_estimate: number | null;
+ invoiced: number | null;
+ cost_codes: { code?: string; description?: string } | { code?: string; description?: string }[] | null;
+ };
+ const revised = blRow.revised_estimate ?? 0;
+ const invoiced = blRow.invoiced ?? 0;
+ const thisInvoice = allocationsByBL.get(blRow.id) ?? 0;
+ if (invoiced + thisInvoice > revised && revised > 0) {
+ const cc = Array.isArray(blRow.cost_codes) ? blRow.cost_codes[0] : blRow.cost_codes;
+ overageDetails.push({
+ budget_line_id: blRow.id,
+ cost_code: cc?.code ?? null,
+ description: cc?.description ?? null,
+ revised_estimate: revised,
+ currently_invoiced: invoiced,
+ this_invoice_allocation: thisInvoice,
+ overage: invoiced + thisInvoice - revised,
+ });
+ }
+ }
+
+ if (overageDetails.length > 0) {
+ const url = new URL(request.url);
+ const acknowledged = url.searchParams.get("acknowledged_over_budget") === "true";
+ if (!acknowledged) {
+ const totalOverage = overageDetails.reduce((s, o) => s + o.overage, 0);
+ return NextResponse.json(
+ {
+ error: "over_budget",
+ message: `Approving this invoice would push ${overageDetails.length} budget line(s) over by $${(totalOverage / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}. PM must acknowledge.`,
+ details: overageDetails,
+ },
+ { status: 422 }
+ );
+ }
+ // Acknowledged — append a note so the audit trail captures the override.
+ if (!note) {
+ note = `Over-budget override acknowledged by PM for ${overageDetails.length} cost code(s).`;
+ }
+ }
+ }
+ }
+
  // Amount guard: > 10% over AI-parsed requires a note so the reason is
  // captured in status_history.
  const aiParsed = invoice.ai_parsed_total_amount ?? invoice.total_amount;
@@ -272,13 +366,16 @@ export async function POST(
  }
  }
 
- const { error: updateError } = await supabase
- .from("invoices")
- .update(updatePayload)
- .eq("id", params.id);
-
- if (updateError) {
- return NextResponse.json({ error: updateError.message }, { status: 500 });
+ const lockResult = await updateWithLock(supabase, {
+ table: "invoices",
+ id: params.id,
+ orgId: membership.org_id,
+ expectedUpdatedAt: expected_updated_at,
+ updates: updatePayload,
+ selectCols: "id, status, updated_at",
+ });
+ if (isLockConflict(lockResult)) {
+ return lockResult.response;
  }
 
  // ─── Phase 7b: recalc downstream totals + activity log ─────────────

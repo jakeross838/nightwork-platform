@@ -5,6 +5,7 @@ import { getCurrentMembership } from "@/lib/org/session";
 import { recalcBudgetLine, recalcPO } from "@/lib/recalc";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { canVoidPO, formatBlockers } from "@/lib/deletion-guards";
+import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -67,6 +68,7 @@ interface PatchBody {
   issued_date?: string | null;
   notes?: string | null;
   note?: string;
+  expected_updated_at?: string;
   line_items?: Array<{
     id?: string;
     budget_line_id?: string | null;
@@ -138,11 +140,16 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     }
   }
 
-  const { error: updateErr } = await supabase
-    .from("purchase_orders")
-    .update(patch)
-    .eq("id", params.id);
-  if (updateErr) throw new ApiError(updateErr.message, 500);
+  const lockResult = await updateWithLock(supabase, {
+    table: "purchase_orders",
+    id: params.id,
+    orgId: membership.org_id,
+    expectedUpdatedAt: body.expected_updated_at,
+    updates: patch,
+  });
+  if (isLockConflict(lockResult)) {
+    return lockResult.response;
+  }
 
   // Phase 7b: void cascades. When a PO flips to void, detach every invoice
   // line that pointed at it (set po_id = null) so those lines fall back to

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
+import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
 
 export const dynamic = "force-dynamic";
 
@@ -57,8 +58,17 @@ export async function PATCH(
       updates.received_at = new Date().toISOString();
     }
 
-    const { error } = await supabase.from("lien_releases").update(updates).eq("id", params.id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const expectedUpdatedAt = (body.expected_updated_at as string | undefined) || null;
+    const lockResult = await updateWithLock(supabase, {
+      table: "lien_releases",
+      id: params.id,
+      orgId: membership.org_id,
+      expectedUpdatedAt,
+      updates,
+    });
+    if (isLockConflict(lockResult)) {
+      return lockResult.response;
+    }
 
     await logActivity({
       org_id: releaseOrgId,

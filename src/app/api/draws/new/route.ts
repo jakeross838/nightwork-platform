@@ -46,6 +46,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // WI-H-1: require at least one invoice. A 0-invoice draw has $0 payment
+    // due and no paper trail to justify it — likely a wizard misfire.
+    if (!Array.isArray(invoice_ids) || invoice_ids.length === 0) {
+      return NextResponse.json(
+        { error: "At least one invoice is required to create a draw." },
+        { status: 400 }
+      );
+    }
+
     // Phase 8 guard: cannot create a new draw if the prior one is still in
     // draft or submitted. Revisions (same draw_number) are allowed.
     const { data: openPriorDraws } = await supabase

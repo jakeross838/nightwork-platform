@@ -63,7 +63,15 @@ export const POST = withApiError(async (request: NextRequest, { params }: { para
   if (!title) throw new ApiError("Title is required", 400);
 
   const coType = body.co_type ?? "owner";
-  const amount = Math.max(0, Math.round(body.amount ?? 0));
+  // WI-H-2: reject negatives explicitly. Contract reductions use a separate
+  // workflow (not yet implemented).
+  if ((body.amount ?? 0) < 0) {
+    throw new ApiError(
+      "Change orders must have a positive amount. Contract reductions use a separate workflow (not yet implemented).",
+      422
+    );
+  }
+  const amount = Math.round(body.amount ?? 0);
   const rate = Math.max(0, Math.min(1, body.gc_fee_rate ?? 0));
   const feeAmount = Math.round(amount * rate);
   const totalWithFee = amount + feeAmount;

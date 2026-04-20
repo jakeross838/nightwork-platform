@@ -202,7 +202,14 @@ export async function parseInvoiceWithVision(
  .replace(/```\s*/g, "")
  .trim();
 
+ try {
  return JSON.parse(jsonText) as ParsedInvoice;
+ } catch (err) {
+ const msg = err instanceof Error ? err.message : "unknown";
+ throw new Error(
+ `Claude returned invalid JSON: ${msg}. First 200 chars: ${jsonText.slice(0, 200)}`
+ );
+ }
 }
 
 export async function parseInvoiceFromText(
@@ -239,5 +246,12 @@ export async function parseInvoiceFromText(
  .replace(/```\s*/g, "")
  .trim();
 
+ try {
  return JSON.parse(jsonText) as ParsedInvoice;
+ } catch (err) {
+ const msg = err instanceof Error ? err.message : "unknown";
+ throw new Error(
+ `Claude returned invalid JSON: ${msg}. First 200 chars: ${jsonText.slice(0, 200)}`
+ );
+ }
 }
