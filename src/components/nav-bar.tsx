@@ -217,32 +217,32 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
       className="bg-nw-slate-deeper border-b border-[rgba(247,245,236,0.08)] sticky top-0 z-40"
     >
       <div className="max-w-[1600px] mx-auto px-8 h-[54px] flex items-center justify-between gap-[22px]">
-        <Link href="/" className="flex items-center gap-3 group shrink-0">
-          {/* Nightwork wordmark — always present. Cream variant reads clean on
-              the dark nav. Plain <img> avoids next/image rasterization artifacts
-              on the wordmark's fine underbeam gradient at nav scale. */}
+        <Link href="/" className="flex items-center gap-4 group shrink-0">
+          {/* Nightwork wordmark — PRIMARY anchor. Cream on slate-deep nav.
+              Plain <img> avoids next/image rasterization artifacts on the
+              wordmark's fine underbeam gradient at nav scale. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/nightwork-wordmark.svg"
             alt={PUBLIC_APP_NAME}
-            className="h-5 w-auto md:h-6 group-hover:opacity-80 transition-opacity"
+            className="h-6 md:h-7 w-auto group-hover:opacity-85 transition-opacity"
           />
           {logoUrl && (
             <>
+              {/* Thin vertical divider — platform hosting tenant, not a
+                  partnership (hence no × symbol). Desktop only; mobile shows
+                  just the wordmark. */}
               <span
                 aria-hidden="true"
-                className="hidden md:inline text-[rgba(247,245,236,0.35)] text-[14px] leading-none select-none"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                ×
-              </span>
-              {/* Tenant's uploaded logo — paid customization. Hidden on narrow
-                  mobile so the Nightwork wordmark stays legible. */}
+                className="hidden md:block w-px h-6 bg-[rgba(247,245,236,0.18)]"
+              />
+              {/* Tenant's uploaded logo — SECONDARY. Scaled down so Nightwork
+                  carries ~60% of the lockup's visual mass. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoUrl}
                 alt={brandName}
-                className="hidden md:block h-8 w-auto object-contain"
+                className="hidden md:block h-[18px] w-auto object-contain"
               />
             </>
           )}
