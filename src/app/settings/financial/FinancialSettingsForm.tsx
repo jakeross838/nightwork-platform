@@ -87,13 +87,13 @@ export default function FinancialSettingsForm({ org }: Props) {
 
       <Section title="Payment Schedule">
         <label className="block">
-          <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">
+          <span className="block text-[10px] uppercase mb-1 nw-eyebrow">
             Schedule Type
           </span>
           <select
             value={scheduleType}
             onChange={(e) => setScheduleType(e.target.value as PaymentScheduleType)}
-            className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+            className="w-full px-3 py-2 border nw-field text-sm"
           >
             {Object.entries(SCHEDULE_LABELS).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
@@ -128,28 +128,69 @@ export default function FinancialSettingsForm({ org }: Props) {
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="px-4 py-2 bg-[var(--org-primary)] text-white text-sm font-medium disabled:opacity-60"
+          className="h-[36px] px-4 text-[11px] uppercase disabled:opacity-60 nw-primary-btn"
         >
-          {saving ? "Saving…" : "Save changes"}
+          {saving ? "Saving" : "Save changes"}
         </button>
         {message && (
           <span
-            className={`text-xs tracking-[0.04em] ${
-              message.kind === "ok" ? "text-status-success" : "text-status-danger"
-            }`}
+            className="text-xs"
+            style={{
+              color: message.kind === "ok" ? "var(--nw-success)" : "var(--nw-danger)",
+            }}
           >
             {message.text}
           </span>
         )}
       </div>
+      <style jsx>{`
+        :global(.nw-eyebrow) {
+          font-family: var(--font-jetbrains-mono);
+          letter-spacing: 0.14em;
+          color: var(--text-tertiary);
+        }
+        :global(.nw-field) {
+          background: var(--bg-subtle);
+          border-color: var(--border-default);
+          color: var(--text-primary);
+        }
+        :global(input.nw-field:focus), :global(select.nw-field:focus) {
+          outline: none;
+          border-color: var(--nw-stone-blue);
+        }
+        :global(.nw-primary-btn) {
+          font-family: var(--font-jetbrains-mono);
+          letter-spacing: 0.12em;
+          font-weight: 500;
+          background: var(--nw-stone-blue);
+          color: var(--nw-white-sand);
+          border: 1px solid var(--nw-stone-blue);
+        }
+        :global(.nw-primary-btn:hover:not(:disabled)) {
+          background: var(--nw-gulf-blue);
+          border-color: var(--nw-gulf-blue);
+        }
+      `}</style>
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border border-brand-border bg-white p-5">
-      <h2 className="section-label">{title}</h2>
+    <section
+      className="border p-5"
+      style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
+    >
+      <h2
+        className="m-0 mb-3 text-[10px] uppercase"
+        style={{
+          fontFamily: "var(--font-jetbrains-mono)",
+          letterSpacing: "0.14em",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        {title}
+      </h2>
       <div className="space-y-3">{children}</div>
     </section>
   );
@@ -168,7 +209,7 @@ function PctField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">{label}</span>
+      <span className="block text-[10px] uppercase mb-1 nw-eyebrow">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -177,7 +218,7 @@ function PctField({
           step="0.01"
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+          className="w-full px-3 py-2 border nw-field text-sm"
         />
         <span className="text-cream-dim text-sm">%</span>
       </div>
@@ -203,14 +244,14 @@ function IntField({
 }) {
   return (
     <label className="block">
-      <span className="block text-[11px] tracking-[0.08em] uppercase text-cream-dim mb-1">{label}</span>
+      <span className="block text-[10px] uppercase mb-1 nw-eyebrow">{label}</span>
       <input
         type="number"
         min={min}
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+        className="w-full px-3 py-2 border nw-field text-sm"
       />
       {help && <p className="text-xs text-cream-dim mt-1">{help}</p>}
     </label>

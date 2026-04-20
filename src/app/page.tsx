@@ -23,38 +23,77 @@ export default async function Root() {
     <div className="min-h-screen flex flex-col">
       <PublicHeader />
 
+      <style dangerouslySetInnerHTML={{ __html: `
+        .nw-panel { background: var(--bg-card); border-color: var(--border-default); }
+      ` }} />
       {/* Hero */}
-      <section className="px-6 pt-20 pb-24 bg-brand-bg">
+      <section className="px-6 pt-20 pb-24" style={{ background: "var(--bg-page)" }}>
         <div className="max-w-[1100px] mx-auto text-center">
-          <span className="inline-block px-3 py-1 border border-brand-border text-[10px] tracking-[0.12em] uppercase text-cream-dim mb-6">
+          <span
+            className="inline-block px-3 py-1 border text-[10px] uppercase mb-6"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              letterSpacing: "0.14em",
+              borderColor: "var(--border-default)",
+              color: "var(--text-tertiary)",
+            }}
+          >
             Built for Custom Home Builders
           </span>
-          <h1 className="font-display text-5xl md:text-6xl text-cream tracking-tight leading-[1.05] max-w-4xl mx-auto">
+          <h1
+            className="m-0 text-5xl md:text-6xl tracking-tight leading-[1.05] max-w-4xl mx-auto"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
             You build homes. Nightwork runs your business.
           </h1>
-          <p className="mt-6 text-lg md:text-xl text-cream-muted max-w-2xl mx-auto">
+          <p className="mt-6 text-lg md:text-xl max-w-2xl mx-auto" style={{ color: "var(--text-secondary)" }}>
             Nightwork makes building lightwork.
           </p>
           <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
             <Link
               href="/signup"
-              className="px-6 py-3 bg-teal text-white text-[13px] tracking-[0.12em] uppercase font-medium hover:bg-teal-hover transition-colors"
+              className="px-6 py-3 text-[11px] uppercase transition-colors"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.12em",
+                fontWeight: 500,
+                background: "var(--nw-stone-blue)",
+                color: "var(--nw-white-sand)",
+                border: "1px solid var(--nw-stone-blue)",
+              }}
             >
               Start Free Trial
             </Link>
             <Link
               href="/pricing"
-              className="px-6 py-3 border border-brand-border text-cream text-[13px] tracking-[0.12em] uppercase font-medium hover:bg-brand-surface transition-colors"
+              className="px-6 py-3 border text-[11px] uppercase transition-colors"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.12em",
+                fontWeight: 500,
+                borderColor: "var(--border-strong)",
+                color: "var(--text-primary)",
+              }}
             >
               See Pricing
             </Link>
           </div>
-          <p className="mt-4 text-xs text-cream-dim">No credit card required · 14-day free trial</p>
+          <p className="mt-4 text-xs" style={{ color: "var(--text-tertiary)" }}>
+            No credit card required · 14-day free trial
+          </p>
         </div>
       </section>
 
       {/* Features */}
-      <section className="px-6 py-20 bg-white border-y border-brand-border">
+      <section
+        className="px-6 py-20 border-y"
+        style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
+      >
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-16">
             <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Capabilities</span>
@@ -98,7 +137,10 @@ export default async function Root() {
       </section>
 
       {/* Pricing preview */}
-      <section className="px-6 py-20 bg-brand-surface border-t border-brand-border">
+      <section
+        className="px-6 py-20 border-t"
+        style={{ background: "var(--bg-subtle)", borderColor: "var(--border-default)" }}
+      >
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-12">
             <span className="text-[10px] tracking-[0.12em] uppercase text-cream-dim">Pricing</span>
@@ -129,7 +171,7 @@ export default async function Root() {
 
 function FeatureCard({ title, body }: { title: string; body: string }) {
   return (
-    <div className="p-6 border border-brand-border bg-white">
+    <div className="p-6 border nw-panel">
       <h3 className="font-display text-lg text-cream">{title}</h3>
       <p className="mt-3 text-sm text-cream-muted leading-relaxed">{body}</p>
     </div>

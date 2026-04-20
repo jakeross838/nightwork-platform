@@ -440,15 +440,44 @@ export default function JobInternalBillingsPage({
         />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">{job.name}</h2>
-            <p className="text-sm text-cream-dim mt-1">
+            <span
+              className="block mb-2 text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Job · Internal Billings
+            </span>
+            <h2
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "28px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              {job.name}
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
               {job.address ?? "No address"}
             </p>
           </div>
           <button
             type="button"
             onClick={openAdd}
-            className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-sm font-medium transition-colors"
+            className="h-[36px] px-4 text-[11px] uppercase transition-colors"
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              letterSpacing: "0.12em",
+              fontWeight: 500,
+              background: "var(--nw-stone-blue)",
+              color: "var(--nw-white-sand)",
+              border: "1px solid var(--nw-stone-blue)",
+            }}
           >
             + Add Billing
           </button>
@@ -783,7 +812,7 @@ export default function JobInternalBillingsPage({
             primaryAction={{ label: "+ Add Billing", onClick: openAdd }}
           />
         ) : billings.length > 0 ? (
-          <div className="bg-brand-card border border-brand-border overflow-x-auto">
+          <div className="border nw-panel overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
@@ -861,10 +890,16 @@ export default function JobInternalBillingsPage({
           </div>
         ) : null}
 
-        <p className="mt-4 text-[11px] text-cream-dim">
+        <p className="mt-4 text-[11px]" style={{ color: "var(--text-tertiary)" }}>
           {billings.length} billing{billings.length !== 1 ? "s" : ""} total.
           Percentage billings are computed when attached to a draw.
         </p>
+        <style jsx>{`
+          :global(.nw-panel) {
+            background: var(--bg-card);
+            border-color: var(--border-default);
+          }
+        `}</style>
       </main>
   );
 }

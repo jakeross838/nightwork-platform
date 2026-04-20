@@ -4,6 +4,20 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CostCode } from "./page";
 
+if (typeof document !== "undefined" && !document.getElementById("nw-cc-styles")) {
+  const s = document.createElement("style");
+  s.id = "nw-cc-styles";
+  s.textContent = `
+    .nw-panel { background: var(--bg-card); border-color: var(--border-default); }
+    .nw-eyebrow { font-family: var(--font-jetbrains-mono); letter-spacing: 0.14em; color: var(--text-tertiary); }
+    .nw-input { background: var(--bg-subtle); border-color: var(--border-default); color: var(--text-primary); }
+    .nw-input:focus { outline: none; border-color: var(--nw-stone-blue); }
+    .nw-primary-btn { font-family: var(--font-jetbrains-mono); letter-spacing: 0.12em; font-weight: 500; background: var(--nw-stone-blue); color: var(--nw-white-sand); border: 1px solid var(--nw-stone-blue); }
+    .nw-primary-btn:hover:not(:disabled) { background: var(--nw-gulf-blue); border-color: var(--nw-gulf-blue); }
+  `;
+  document.head.appendChild(s);
+}
+
 type Draft = {
   id?: string;
   code: string;
@@ -294,7 +308,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
           placeholder="Search code, description, or category…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 border border-brand-border bg-white text-sm w-[320px] max-w-full"
+          className="px-3 py-2 border nw-panel text-sm w-[320px] max-w-full"
         />
         <div className="flex gap-2 flex-wrap">
           <button
@@ -350,7 +364,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
       )}
 
       {importPreview && (
-        <div className="border border-brand-border bg-white p-4">
+        <div className="border nw-panel p-4">
           <h3 className="section-label">Import Preview — {importPreview.length} rows</h3>
           <div className="max-h-[240px] overflow-auto mt-2 text-sm">
             <table className="w-full">
@@ -400,7 +414,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
       )}
 
       {editing && (
-        <div className="border border-brand-border bg-white p-4">
+        <div className="border nw-panel p-4">
           <h3 className="section-label">{editing.id ? "Edit Cost Code" : "New Cost Code"}</h3>
           <div className="grid sm:grid-cols-2 gap-3 mt-2">
             <label className="block">
@@ -408,7 +422,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               <input
                 value={editing.code}
                 onChange={(e) => setEditing({ ...editing, code: e.target.value })}
-                className="w-full px-3 py-2 border border-brand-border bg-white text-sm font-mono"
+                className="w-full px-3 py-2 border nw-panel text-sm font-mono"
               />
             </label>
             <label className="block">
@@ -416,7 +430,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               <input
                 value={editing.description}
                 onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+                className="w-full px-3 py-2 border nw-panel text-sm"
               />
             </label>
             <label className="block">
@@ -424,7 +438,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
               <input
                 value={editing.category}
                 onChange={(e) => setEditing({ ...editing, category: e.target.value })}
-                className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+                className="w-full px-3 py-2 border nw-panel text-sm"
               />
             </label>
             <label className="block">
@@ -433,7 +447,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
                 type="number"
                 value={editing.sort_order}
                 onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-brand-border bg-white text-sm"
+                className="w-full px-3 py-2 border nw-panel text-sm"
               />
             </label>
             <label className="flex items-center gap-2 sm:col-span-2 text-sm text-cream">
@@ -465,7 +479,7 @@ export default function CostCodesManager({ initial }: { initial: CostCode[] }) {
         </div>
       )}
 
-      <div className="border border-brand-border bg-white overflow-hidden">
+      <div className="border nw-panel overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-brand-surface">
             <tr className="text-left text-[11px] tracking-[0.08em] uppercase text-cream-dim">

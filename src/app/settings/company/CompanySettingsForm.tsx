@@ -198,7 +198,7 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
             type="button"
             onClick={onSave}
             disabled={saving}
-            className="px-4 py-2 bg-[var(--org-primary)] text-white text-sm font-medium disabled:opacity-60"
+            className="h-[36px] px-4 text-[11px] uppercase disabled:opacity-60 nw-primary-btn"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
@@ -217,7 +217,10 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
       {/* Live preview */}
       <aside className="h-max sticky top-24">
         <p className="section-label">Live Preview</p>
-        <div className="border border-brand-border bg-white">
+        <div
+          className="border"
+          style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
+        >
           <div
             className="px-4 py-3 flex items-center gap-3"
             style={{ background: form.primary_color, borderTop: `3px solid ${form.primary_color}` }}
@@ -258,9 +261,49 @@ export default function CompanySettingsForm({ org }: { org: Org }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border border-brand-border bg-white p-5">
-      <h2 className="section-label">{title}</h2>
+    <section
+      className="border p-5"
+      style={{ background: "var(--bg-card)", borderColor: "var(--border-default)" }}
+    >
+      <h2
+        className="m-0 mb-3 text-[10px] uppercase"
+        style={{
+          fontFamily: "var(--font-jetbrains-mono)",
+          letterSpacing: "0.14em",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        {title}
+      </h2>
       <div className="space-y-3">{children}</div>
+      <style jsx>{`
+        :global(.nw-eyebrow) {
+          font-family: var(--font-jetbrains-mono);
+          letter-spacing: 0.14em;
+          color: var(--text-tertiary);
+        }
+        :global(.nw-input) {
+          background: var(--bg-subtle);
+          border-color: var(--border-default);
+          color: var(--text-primary);
+        }
+        :global(.nw-input:focus) {
+          outline: none;
+          border-color: var(--nw-stone-blue);
+        }
+        :global(.nw-primary-btn) {
+          font-family: var(--font-jetbrains-mono);
+          letter-spacing: 0.12em;
+          font-weight: 500;
+          background: var(--nw-stone-blue);
+          color: var(--nw-white-sand);
+          border: 1px solid var(--nw-stone-blue);
+        }
+        :global(.nw-primary-btn:hover:not(:disabled)) {
+          background: var(--nw-gulf-blue);
+          border-color: var(--nw-gulf-blue);
+        }
+      `}</style>
     </section>
   );
 }

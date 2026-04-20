@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TeamMember, PendingInvite } from "./page";
+import NwBadge from "@/components/nw/Badge";
 
 const ROLE_OPTIONS: Array<{ value: TeamMember["role"]; label: string }> = [
   { value: "owner", label: "Owner" },
@@ -259,14 +260,26 @@ export default function TeamSettings({
 }
 
 function Badge({ tone, children }: { tone: "ok" | "warn" | "muted"; children: React.ReactNode }) {
-  const styles: Record<string, string> = {
-    ok: "bg-status-success-muted text-status-success border-status-success",
-    warn: "bg-status-warning-muted text-status-warning border-status-warning",
-    muted: "border-brand-border text-cream-dim",
-  };
+  const variant = tone === "ok" ? "success" : tone === "warn" ? "warning" : "neutral";
   return (
-    <span className={`inline-block px-2 py-0.5 text-[10px] tracking-[0.08em] uppercase border ${styles[tone]}`}>
+    <NwBadge variant={variant} size="sm">
       {children}
-    </span>
+    </NwBadge>
   );
+}
+
+// Global helper classes for team form
+const teamStyles = `
+  .nw-panel { background: var(--bg-card); border-color: var(--border-default); }
+  .nw-eyebrow { font-family: var(--font-jetbrains-mono); letter-spacing: 0.14em; color: var(--text-tertiary); }
+  .nw-input { background: var(--bg-subtle); border-color: var(--border-default); color: var(--text-primary); }
+  .nw-input:focus { outline: none; border-color: var(--nw-stone-blue); }
+  .nw-primary-btn { font-family: var(--font-jetbrains-mono); letter-spacing: 0.12em; font-weight: 500; background: var(--nw-stone-blue); color: var(--nw-white-sand); border: 1px solid var(--nw-stone-blue); }
+  .nw-primary-btn:hover:not(:disabled) { background: var(--nw-gulf-blue); border-color: var(--nw-gulf-blue); }
+`;
+if (typeof document !== "undefined" && !document.getElementById("nw-team-styles")) {
+  const s = document.createElement("style");
+  s.id = "nw-team-styles";
+  s.textContent = teamStyles;
+  document.head.appendChild(s);
 }
