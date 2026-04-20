@@ -847,10 +847,56 @@ export default function InvoiceReviewPage() {
  }
  }
 
- const res = await fetch(`/api/invoices/${invoiceId}/action`, {
- method: "POST", headers: { "Content-Type": "application/json" },
- body: JSON.stringify({ action, note, pm_overrides: Object.keys(overrides).length > 0 ? overrides : undefined, updates: Object.keys(updates).length > 0 ? updates : undefined }),
+ const submitAction = async (acknowledgedOverBudget = false): Promise<Response> => {
+ const url = acknowledgedOverBudget
+ ? `/api/invoices/${invoiceId}/action?acknowledged_over_budget=true`
+ : `/api/invoices/${invoiceId}/action`;
+ return fetch(url, {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({
+ action,
+ note,
+ pm_overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+ updates: Object.keys(updates).length > 0 ? updates : undefined,
+ }),
  });
+ };
+
+ let res = await submitAction(false);
+
+ // WI-L-4: over-budget gate — 422 asks PM to acknowledge before proceeding.
+ if (res.status === 422) {
+ const data = await res.clone().json().catch(() => ({}));
+ if (data?.error === "over_budget" && Array.isArray(data.details)) {
+ type Overage = {
+ cost_code: string | null;
+ description: string | null;
+ revised_estimate: number;
+ currently_invoiced: number;
+ this_invoice_allocation: number;
+ overage: number;
+ };
+ const details = data.details as Overage[];
+ const totalOverage = details.reduce((s, o) => s + o.overage, 0);
+ const lines = details
+ .map(
+ (o) =>
+ ` • ${o.cost_code ?? "(no code)"} ${o.description ? "— " + o.description : ""}: over by $${(o.overage / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`
+ )
+ .join("\n");
+ const ok = window.confirm(
+ `Over budget\n\n` +
+ `Approving this invoice would push ${details.length} budget line(s) over by $${(totalOverage / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}:\n\n${lines}\n\nApprove anyway?`
+ );
+ if (!ok) {
+ setSaving(false);
+ return;
+ }
+ res = await submitAction(true);
+ }
+ }
+
  setSaving(false);
  if (res.ok) {
  const ACTION_LABEL: Record<string, string> = {

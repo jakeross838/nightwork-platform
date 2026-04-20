@@ -54,12 +54,26 @@ export async function POST(
 
     const { data: release, error: fetchErr } = await supabase
       .from("lien_releases")
-      .select("id, org_id, job_id, draw_id, vendor_id, status, document_url")
+      .select("id, org_id, job_id, draw_id, vendor_id, status, document_url, updated_at")
       .eq("id", params.id)
       .eq("org_id", membership.org_id)
       .single();
     if (fetchErr || !release) {
       return NextResponse.json({ error: "Lien release not found" }, { status: 404 });
+    }
+
+    const expectedUpdatedAt =
+      (formData.get("expected_updated_at") as string | null) ?? null;
+    if (expectedUpdatedAt && release.updated_at !== expectedUpdatedAt) {
+      return NextResponse.json(
+        {
+          error:
+            "This lien release changed since you opened it. Reload and retry the upload.",
+          code: "optimistic_lock_conflict",
+          current: { id: release.id, updated_at: release.updated_at },
+        },
+        { status: 409 }
+      );
     }
 
     const orgId = release.org_id as string | null;

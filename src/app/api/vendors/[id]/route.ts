@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { canDeleteVendor, formatBlockers } from "@/lib/deletion-guards";
 import { logActivity } from "@/lib/activity-log";
 import { getCurrentMembership } from "@/lib/org/session";
+import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ interface PatchBody {
   phone?: string | null;
   email?: string | null;
   notes?: string | null;
+  expected_updated_at?: string;
 }
 
 const ALLOWED_FIELDS: (keyof PatchBody)[] = [
@@ -30,6 +32,11 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
+    const membership = await getCurrentMembership();
+    if (!membership) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
     const body: PatchBody = await request.json();
 
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -49,23 +56,19 @@ export async function PATCH(
 
     const supabase = createServerClient();
 
-    const { data, error } = await supabase
-      .from("vendors")
-      .update(updates)
-      .eq("id", id)
-      .is("deleted_at", null)
-      .select("id, name, default_cost_code_id, address, phone, email, notes")
-      .single();
-
-    if (error) {
-      console.error("Vendor update error:", error);
-      return NextResponse.json({ error: `Failed to update vendor: ${error.message}` }, { status: 500 });
-    }
-    if (!data) {
-      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    const lockResult = await updateWithLock<{ id: string }>(supabase, {
+      table: "vendors",
+      id,
+      orgId: membership.org_id,
+      expectedUpdatedAt: body.expected_updated_at,
+      updates,
+      selectCols: "id, name, default_cost_code_id, address, phone, email, notes, updated_at",
+    });
+    if (isLockConflict(lockResult)) {
+      return lockResult.response;
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(lockResult);
   } catch (err) {
     console.error("Vendor PATCH error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";

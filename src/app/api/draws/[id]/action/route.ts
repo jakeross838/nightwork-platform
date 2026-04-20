@@ -12,6 +12,7 @@ import {
 } from "@/lib/lien-releases";
 import { autoScheduleDrawPayments } from "@/lib/payment-schedule";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
+import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -41,9 +42,10 @@ export async function POST(
     const orgId = membership.org_id;
 
     const supabase = createServerClient();
-    const { action, reason } = (await request.json()) as {
+    const { action, reason, expected_updated_at } = (await request.json()) as {
       action: string;
       reason?: string;
+      expected_updated_at?: string;
     };
 
     const rule = ACTION_MAP[action];
@@ -155,13 +157,16 @@ export async function POST(
       updates.wizard_draft = null;
     }
 
-    const { error: updateError } = await supabase
-      .from("draws")
-      .update(updates)
-      .eq("id", params.id)
-      .eq("org_id", orgId);
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    const lockResult = await updateWithLock(supabase, {
+      table: "draws",
+      id: params.id,
+      orgId,
+      expectedUpdatedAt: expected_updated_at,
+      updates,
+      selectCols: "id, status, updated_at",
+    });
+    if (isLockConflict(lockResult)) {
+      return lockResult.response;
     }
 
     // --- Side-effects per transition ----------------------------------------

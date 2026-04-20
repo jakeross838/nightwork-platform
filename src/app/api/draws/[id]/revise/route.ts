@@ -14,7 +14,7 @@ export const fetchCache = "force-no-store";
  * parent so they appear on the newer revision's line items.
  */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -23,6 +23,15 @@ export async function POST(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
     const orgId = membership.org_id;
+
+    // Body is optional — when present, supports optimistic locking.
+    let expectedUpdatedAt: string | null = null;
+    try {
+      const body = (await request.json()) as { expected_updated_at?: string } | null;
+      expectedUpdatedAt = body?.expected_updated_at ?? null;
+    } catch {
+      /* no body — fine */
+    }
 
     const supabase = createServerClient();
 
@@ -35,6 +44,18 @@ export async function POST(
       .single();
     if (fetchError || !original) {
       return NextResponse.json({ error: "Draw not found" }, { status: 404 });
+    }
+
+    if (expectedUpdatedAt && original.updated_at !== expectedUpdatedAt) {
+      return NextResponse.json(
+        {
+          error:
+            "This draw changed since you opened it. Reload to revise from the latest version.",
+          code: "optimistic_lock_conflict",
+          current: { id: original.id, updated_at: original.updated_at },
+        },
+        { status: 409 }
+      );
     }
 
     if (!["submitted", "approved", "locked", "paid"].includes(original.status)) {

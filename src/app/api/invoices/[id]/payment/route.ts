@@ -4,6 +4,7 @@ import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 import { getOrgPaymentSchedule, scheduledPaymentDate } from "@/lib/payment-schedule";
 import { notifyRole, sendNotification } from "@/lib/notifications";
+import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,7 @@ export async function POST(
     const supabase = createServerClient();
     const body = (await request.json()) as Record<string, unknown>;
     const action = body.action as string;
+    const expectedUpdatedAt = (body.expected_updated_at as string | undefined) || null;
 
     const { data: invoice, error: fetchError } = await supabase
       .from("invoices")
@@ -87,13 +89,17 @@ export async function POST(
           { status: 400 }
         );
       }
-      await supabase
-        .from("invoices")
-        .update({
+      const scheduleResult = await updateWithLock(supabase, {
+        table: "invoices",
+        id: params.id,
+        orgId: membership.org_id,
+        expectedUpdatedAt: expectedUpdatedAt,
+        updates: {
           scheduled_payment_date: date,
           payment_status: "scheduled",
-        })
-        .eq("id", params.id);
+        },
+      });
+      if (isLockConflict(scheduleResult)) return scheduleResult.response;
       await logActivity({
         org_id: invoiceOrgId,
         entity_type: "invoice",
@@ -156,7 +162,14 @@ export async function POST(
       };
       // Flip invoice.status to 'paid' when fully paid.
       if (isFullPay) updates.status = "paid";
-      await supabase.from("invoices").update(updates).eq("id", params.id);
+      const markPaidResult = await updateWithLock(supabase, {
+        table: "invoices",
+        id: params.id,
+        orgId: membership.org_id,
+        expectedUpdatedAt: expectedUpdatedAt,
+        updates,
+      });
+      if (isLockConflict(markPaidResult)) return markPaidResult.response;
       await logActivity({
         org_id: invoiceOrgId,
         entity_type: "invoice",
@@ -190,16 +203,20 @@ export async function POST(
           );
         }
       }
-      await supabase
-        .from("invoices")
-        .update({
+      const reverseResult = await updateWithLock(supabase, {
+        table: "invoices",
+        id: params.id,
+        orgId: membership.org_id,
+        expectedUpdatedAt: expectedUpdatedAt,
+        updates: {
           payment_status: "unpaid",
           payment_amount: null,
           payment_method: null,
           payment_reference: null,
           payment_date: null,
-        })
-        .eq("id", params.id);
+        },
+      });
+      if (isLockConflict(reverseResult)) return reverseResult.response;
       await logActivity({
         org_id: invoiceOrgId,
         entity_type: "invoice",
@@ -219,7 +236,14 @@ export async function POST(
       const updates: Record<string, unknown> = {};
       for (const k of allowed) if (k in body) updates[k] = body[k];
       if (Object.keys(updates).length > 0) {
-        await supabase.from("invoices").update(updates).eq("id", params.id);
+        const updateResult = await updateWithLock(supabase, {
+          table: "invoices",
+          id: params.id,
+          orgId: membership.org_id,
+          expectedUpdatedAt: expectedUpdatedAt,
+          updates,
+        });
+        if (isLockConflict(updateResult)) return updateResult.response;
       }
       return NextResponse.json({ ok: true });
     }

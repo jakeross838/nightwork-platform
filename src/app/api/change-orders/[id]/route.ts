@@ -5,6 +5,7 @@ import { getCurrentMembership } from "@/lib/org/session";
 import { recalcBudgetLine } from "@/lib/recalc";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { canVoidCO, formatBlockers } from "@/lib/deletion-guards";
+import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -51,6 +52,7 @@ interface PatchBody {
   status?: "draft" | "pending" | "approved" | "denied" | "void" | "executed";
   denied_reason?: string;
   note?: string;
+  expected_updated_at?: string;
   lines?: Array<{
     budget_line_id?: string | null;
     cost_code?: string;
@@ -92,7 +94,15 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
   if (body.title !== undefined) patch.title = body.title;
   if (body.description !== undefined) patch.description = body.description;
   if (body.amount !== undefined) {
-    amount = Math.max(0, Math.round(body.amount));
+    // WI-H-2: reject negatives explicitly so PM's "deduct" intent can't be
+    // silently dropped. Contract reductions use a separate workflow (TODO).
+    if (body.amount < 0) {
+      throw new ApiError(
+        "Change orders must have a positive amount. Contract reductions use a separate workflow (not yet implemented).",
+        422
+      );
+    }
+    amount = Math.round(body.amount);
     patch.amount = amount;
   }
   if (body.gc_fee_rate !== undefined) {
@@ -177,11 +187,17 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     }
   }
 
-  const { error: updateErr } = await supabase
-    .from("change_orders")
-    .update(patch)
-    .eq("id", params.id);
-  if (updateErr) throw new ApiError(updateErr.message, 500);
+  const lockResult = await updateWithLock(supabase, {
+    table: "change_orders",
+    id: params.id,
+    orgId: membership.org_id,
+    expectedUpdatedAt: body.expected_updated_at,
+    updates: patch,
+  });
+  if (isLockConflict(lockResult)) {
+    // Cannot throw ApiError here — return response directly.
+    return lockResult.response;
+  }
 
   // Replace lines if provided.
   if (body.lines) {
