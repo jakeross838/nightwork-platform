@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents } from "@/lib/utils/format";
+import NwEyebrow from "@/components/nw/Eyebrow";
+import NwMoney from "@/components/nw/Money";
 
 interface JobFinancials {
   original_contract: number;
@@ -22,16 +23,6 @@ const SPENT_STATUSES = [
   "paid",
 ];
 
-/**
- * Persistent financial summary bar shown at the top of every job detail tab.
- *
- * Derives contract totals from the job row, billed-to-date from the sum of
- * approved invoices on the job, and % complete from billed / revised.
- *
- * Uses `sticky top-[56px]` so it stays visible under the main nav when
- * scrolling. Height is compact (roughly 60px) so it does not dominate the
- * tab content.
- */
 export default function JobFinancialBar({
   jobId,
   preloaded,
@@ -71,7 +62,6 @@ export default function JobFinancialBar({
       const approvedCos = (job as { approved_cos_total?: number }).approved_cos_total ?? 0;
       const revised =
         (job as { current_contract_amount?: number }).current_contract_amount ?? original + approvedCos;
-      // Include pre-Nightwork certified baseline for mid-project imports.
       const baseline = (job as { previous_certificates_total?: number }).previous_certificates_total ?? 0;
       const nightworkBilled = (invRows ?? []).reduce(
         (s, r) => s + ((r as { total_amount: number }).total_amount ?? 0),
@@ -98,36 +88,52 @@ export default function JobFinancialBar({
 
   return (
     <div
-      className="sticky top-[56px] z-30 -mx-4 md:-mx-6 px-4 md:px-6 py-2.5 bg-brand-card border-b border-brand-border mb-4"
+      className="sticky top-[56px] z-30 -mx-4 md:-mx-6 px-4 md:px-6 py-2.5 mb-4 border-b"
+      style={{
+        background: "var(--bg-card)",
+        borderColor: "var(--border-default)",
+      }}
       aria-label="Job financial summary"
     >
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 md:gap-4 text-[11px]">
-        <Cell label="Original Contract" value={data ? formatCents(data.original_contract) : "—"} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
+        <Cell label="Original Contract" cents={data?.original_contract ?? null} />
         <Cell
           label="Approved COs"
-          value={data ? formatCents(data.approved_cos) : "—"}
-          tone={data && data.approved_cos > 0 ? "positive" : data && data.approved_cos < 0 ? "negative" : undefined}
+          cents={data?.approved_cos ?? null}
+          signColor
         />
-        <Cell label="Revised Contract" value={data ? formatCents(data.revised_contract) : "—"} strong />
-        <Cell label="Billed to Date" value={data ? formatCents(data.billed_to_date) : "—"} />
-        <div className="flex flex-col gap-1">
-          <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">% Complete</p>
+        <Cell label="Revised Contract" cents={data?.revised_contract ?? null} emphasized />
+        <Cell label="Billed to Date" cents={data?.billed_to_date ?? null} />
+        <div className="flex flex-col gap-1.5">
+          <NwEyebrow tone="muted">% Complete</NwEyebrow>
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-brand-surface overflow-hidden">
+            <div
+              className="flex-1 h-1.5 overflow-hidden"
+              style={{ background: "var(--bg-subtle)" }}
+            >
               <div
-                className="h-full bg-teal"
-                style={{ width: `${data?.percent_complete ?? 0}%` }}
+                className="h-full"
+                style={{
+                  width: `${data?.percent_complete ?? 0}%`,
+                  background: "var(--nw-stone-blue)",
+                }}
               />
             </div>
-            <span className="text-[13px] text-cream tabular-nums font-display shrink-0">
+            <span
+              className="text-[13px] tabular-nums shrink-0"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                color: "var(--text-primary)",
+              }}
+            >
               {data ? `${data.percent_complete.toFixed(1)}%` : "—"}
             </span>
           </div>
         </div>
         <Cell
           label="Remaining"
-          value={data ? formatCents(data.remaining) : "—"}
-          tone={data && data.remaining < 0 ? "negative" : undefined}
+          cents={data?.remaining ?? null}
+          signColor
         />
       </div>
     </div>
@@ -136,31 +142,24 @@ export default function JobFinancialBar({
 
 function Cell({
   label,
-  value,
-  tone,
-  strong,
+  cents,
+  emphasized,
+  signColor,
 }: {
   label: string;
-  value: string;
-  tone?: "positive" | "negative";
-  strong?: boolean;
+  cents: number | null;
+  emphasized?: boolean;
+  signColor?: boolean;
 }) {
-  const toneClass =
-    tone === "positive"
-      ? "text-status-success"
-      : tone === "negative"
-        ? "text-status-danger"
-        : "text-cream";
   return (
-    <div className="flex flex-col gap-0.5">
-      <p className="text-[10px] uppercase tracking-wider text-cream-dim font-medium">{label}</p>
-      <p
-        className={`text-[13px] tabular-nums font-display ${toneClass} ${
-          strong ? "font-semibold" : ""
-        }`}
-      >
-        {value}
-      </p>
+    <div className="flex flex-col gap-1.5">
+      <NwEyebrow tone="muted">{label}</NwEyebrow>
+      <NwMoney
+        cents={cents}
+        size="md"
+        variant={emphasized ? "emphasized" : "default"}
+        signColor={signColor}
+      />
     </div>
   );
 }

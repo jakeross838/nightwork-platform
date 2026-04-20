@@ -9,6 +9,18 @@ import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import JobOverviewCards from "@/components/job-overview-cards";
 import Breadcrumbs from "@/components/breadcrumbs";
+import NwCard from "@/components/nw/Card";
+import NwEyebrow from "@/components/nw/Eyebrow";
+import NwButton from "@/components/nw/Button";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+
+function jobStatusVariant(status: string): BadgeVariant {
+  if (status === "active") return "success";
+  if (status === "complete") return "info";
+  if (status === "warranty") return "warning";
+  if (status === "cancelled") return "danger";
+  return "neutral";
+}
 
 interface PmUser {
   id: string;
@@ -253,18 +265,30 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         <Breadcrumbs items={[{ label: "Jobs", href: "/jobs" }, { label: job.name }]} />
         <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
           <div>
-            <h2 className="font-display text-2xl text-cream">{job.name}</h2>
-            <p className="text-sm text-cream-dim mt-1">
-              {job.address ?? "No address"} · {job.contract_type === "cost_plus" ? "Cost Plus" : "Fixed Price"}
+            <NwEyebrow tone="muted" className="mb-2">Operations · Job</NwEyebrow>
+            <h2
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "30px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              {job.name}
+            </h2>
+            <p className="text-sm mt-1 flex items-center gap-2 flex-wrap" style={{ color: "var(--text-secondary)" }}>
+              <span>{job.address ?? "No address"}</span>
+              <span>·</span>
+              <span>{job.contract_type === "cost_plus" ? "Cost Plus" : "Fixed Price"}</span>
+              <NwBadge variant={jobStatusVariant(job.status)} size="sm">{job.status}</NwBadge>
             </p>
           </div>
           {!editing && (
-            <button
-              onClick={() => setEditing(true)}
-              className="px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
-            >
+            <NwButton variant="secondary" size="md" onClick={() => setEditing(true)}>
               Edit
-            </button>
+            </NwButton>
           )}
         </div>
         <JobTabs jobId={job.id} active="overview" />
@@ -281,8 +305,8 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               preloaded={overviewPreloaded}
             />
 
-            <section className="bg-brand-card border border-brand-border p-6 mt-4">
-              <h3 className="font-display text-base text-cream mb-3">Job Details</h3>
+            <NwCard padding="lg" className="mt-4">
+              <NwEyebrow tone="muted" className="mb-3">Job Details</NwEyebrow>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <Detail label="Client Name" value={job.client_name} />
                 <Detail label="Client Email" value={job.client_email} />
@@ -298,10 +322,17 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 <Detail label="Assigned PM" value={pms.find((p) => p.id === job.pm_id)?.full_name ?? "Unassigned"} />
                 <Detail label="Status" value={job.status} />
               </div>
-            </section>
+            </NwCard>
           </>
         ) : (
-          <form onSubmit={handleSave} className="bg-brand-card border border-brand-border p-6 mb-6 space-y-4">
+          <form
+            onSubmit={handleSave}
+            className="border p-6 mb-6 space-y-4"
+            style={{
+              background: "var(--bg-card)",
+              borderColor: "var(--border-default)",
+            }}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <EditField label="Name">
                 <input className="input" value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -415,45 +446,55 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             {formError && (
               <div className="border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">{formError}</div>
             )}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-brand-border">
-              <button
+            <div className="flex items-center justify-end gap-3 pt-3 border-t" style={{ borderColor: "var(--border-default)" }}>
+              <NwButton
                 type="button"
+                variant="ghost"
+                size="md"
                 onClick={() => { setEditing(false); setForm(job); setFormError(null); }}
-                className="px-4 py-2 text-sm text-cream-dim hover:text-cream transition-colors"
               >
                 Cancel
-              </button>
-              <button type="submit" disabled={saving} className="px-5 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors">
-                {saving ? "Saving…" : "Save Changes"}
-              </button>
+              </NwButton>
+              <NwButton type="submit" variant="primary" size="md" disabled={saving} loading={saving}>
+                {saving ? "Saving" : "Save Changes"}
+              </NwButton>
             </div>
           </form>
         )}
 
         {/* Quick budget status / import */}
-        <section className="bg-brand-card border border-brand-border p-6 mb-6">
+        <NwCard padding="lg" className="mb-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 className="font-display text-lg text-cream">Budget</h3>
-              <p className="text-sm text-cream-dim mt-1">
+              <NwEyebrow tone="muted" className="mb-2">Budget</NwEyebrow>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 {budgetCount === 0 ? "No budget lines yet" : `${budgetCount} lines imported`}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Link
                 href={`/jobs/${job.id}/budget`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 border border-teal text-teal hover:bg-teal hover:text-white text-sm font-medium transition-colors"
+                className="inline-flex items-center justify-center h-[36px] px-4 text-[11px] uppercase font-medium border transition-colors"
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono)",
+                  letterSpacing: "0.12em",
+                  background: "transparent",
+                  borderColor: "var(--border-strong)",
+                  color: "var(--text-primary)",
+                }}
               >
-                View Full Budget →
+                View Full Budget
               </Link>
               <input ref={fileRef} type="file" accept=".xlsx,.xlsm,.csv" onChange={handleImport} className="hidden" />
-              <button
+              <NwButton
+                variant="secondary"
+                size="md"
                 onClick={() => fileRef.current?.click()}
                 disabled={importing}
-                className="inline-flex items-center gap-1.5 px-4 py-2 border border-brand-border text-cream hover:bg-brand-surface disabled:opacity-60 text-sm font-medium transition-colors"
+                loading={importing}
               >
-                {importing ? "Importing…" : "Import Budget (.xlsx / .csv)"}
-              </button>
+                {importing ? "Importing" : "Import Budget"}
+              </NwButton>
             </div>
           </div>
           {importError && (
@@ -492,7 +533,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               )}
             </div>
           )}
-        </section>
+        </NwCard>
       </main>
 
       <style jsx>{`
@@ -512,9 +553,9 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
 
 function Detail({ label, value }: { label: string; value: string | null | undefined }) {
   return (
-    <div>
-      <p className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</p>
-      <p className="text-sm text-cream mt-0.5">{value ?? "—"}</p>
+    <div className="flex flex-col gap-1">
+      <NwEyebrow tone="muted">{label}</NwEyebrow>
+      <p className="text-sm" style={{ color: "var(--text-primary)" }}>{value ?? "—"}</p>
     </div>
   );
 }
@@ -522,7 +563,7 @@ function Detail({ label, value }: { label: string; value: string | null | undefi
 function EditField({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
   return (
     <label className={`flex flex-col gap-1 ${full ? "md:col-span-2" : ""}`}>
-      <span className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">{label}</span>
+      <NwEyebrow tone="muted">{label}</NwEyebrow>
       {children}
     </label>
   );
