@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, daysAgo, formatDateTime } from "@/lib/utils/format";
+import { daysAgo, formatDateTime } from "@/lib/utils/format";
 import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
+import NwBadge from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
 
 interface QaInvoice {
  id: string;
@@ -121,7 +123,7 @@ export default function QaQueuePage() {
  <td className="py-4 px-5 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
  <td className="py-4 px-5">
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">{inv.jobs.name}</span>
+ <NwBadge variant="info" size="sm">{inv.jobs.name}</NwBadge>
  ) : (
  <span className="text-cream-dim">—</span>
  )}
@@ -129,7 +131,9 @@ export default function QaQueuePage() {
  <td className="py-4 px-5 text-cream-muted text-xs">
  {inv.cost_codes ? `${inv.cost_codes.code} — ${inv.cost_codes.description}` : "—"}
  </td>
- <td className="py-4 px-5 text-cream text-right font-medium font-display">{formatCents(inv.total_amount)}</td>
+ <td className="py-4 px-5 text-right">
+ <NwMoney cents={inv.total_amount} />
+ </td>
  <td className="py-4 px-5 text-cream-dim text-xs">
  {approval ? (
  <>

@@ -7,9 +7,11 @@ import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatDate, formatStatus } from "@/lib/utils/format";
+import { formatDate, formatStatus } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import DrawsSubTabs from "@/components/draws-sub-tabs";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
 
 interface Job { id: string; name: string; address: string | null; }
 
@@ -24,13 +26,12 @@ interface Draw {
   current_payment_due: number;
 }
 
-function drawBadge(status: string): string {
-  if (status === "submitted") return "text-cream border-cream";
-  if (status === "paid") return "text-status-success border-status-success";
-  if (status === "approved") return "text-status-success border-status-success";
-  if (status === "pm_review" || status === "draft") return "text-brass border-brass";
-  if (status === "void") return "text-status-danger border-status-danger";
-  return "text-cream-dim border-cream-dim";
+function drawBadgeVariant(status: string): BadgeVariant {
+  if (status === "submitted" || status === "pm_review") return "warning";
+  if (status === "paid" || status === "approved") return "success";
+  if (status === "void") return "danger";
+  if (status === "draft") return "neutral";
+  return "neutral";
 }
 
 export default function JobDrawsPage({ params }: { params: { id: string } }) {
@@ -168,12 +169,12 @@ export default function JobDrawsPage({ params }: { params: { id: string } }) {
                     </td>
                     <td className="px-4 py-3 text-cream-muted">{formatDate(d.application_date)}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${drawBadge(d.status)}`}>
+                      <NwBadge variant={drawBadgeVariant(d.status)} size="sm">
                         {formatStatus(d.status)}
-                      </span>
+                      </NwBadge>
                     </td>
-                    <td className="px-4 py-3 text-right text-cream tabular-nums">
-                      {formatCents(d.current_payment_due)}
+                    <td className="px-4 py-3 text-right">
+                      <NwMoney cents={d.current_payment_due} />
                     </td>
                   </tr>
                 ))}

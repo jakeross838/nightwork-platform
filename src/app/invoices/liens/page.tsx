@@ -10,6 +10,9 @@ import { formatCents, formatDate } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
 import { toast } from "@/lib/utils/toast";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+import NwButton from "@/components/nw/Button";
 
 interface LienRelease {
   id: string;
@@ -266,13 +269,15 @@ export default function BulkLienReleasesPage() {
               className="hidden"
               onChange={(e) => e.target.files && handleBulkUpload(e.target.files)}
             />
-            <button
+            <NwButton
+              variant="primary"
+              size="md"
               onClick={() => bulkInput.current?.click()}
               disabled={bulkBusy || (releases?.length ?? 0) === 0}
-              className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium"
+              loading={bulkBusy}
             >
-              {bulkBusy ? "Uploading…" : "Choose files"}
-            </button>
+              {bulkBusy ? "Uploading" : "Choose files"}
+            </NwButton>
           </div>
         </div>
 
@@ -285,15 +290,18 @@ export default function BulkLienReleasesPage() {
                   <span className="font-mono text-xs text-cream-dim truncate max-w-[320px]">{r.file}</span>
                   {r.releaseId ? (
                     <>
-                      <span className={`inline-block px-2 py-0.5 text-[11px] border uppercase tracking-wider ${
-                        r.matchScore === "exact"
-                          ? "text-status-success border-status-success"
-                          : r.matchScore === "vendor+amount"
-                            ? "text-teal border-teal"
-                            : "text-brass border-brass"
-                      }`}>
+                      <NwBadge
+                        variant={
+                          r.matchScore === "exact"
+                            ? "success"
+                            : r.matchScore === "vendor+amount"
+                              ? "info"
+                              : "warning"
+                        }
+                        size="sm"
+                      >
                         {r.matchScore}
-                      </span>
+                      </NwBadge>
                       <span className="text-cream">{r.vendor}</span>
                       <span className="text-cream-muted">· {r.job}</span>
                       <span className="text-cream-dim tabular-nums ml-auto">{r.amount != null ? formatCents(r.amount) : "—"}</span>
@@ -390,14 +398,14 @@ export default function BulkLienReleasesPage() {
                         <td className="px-4 py-3 text-cream-muted text-xs">
                           {r.release_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                         </td>
-                        <td className="px-4 py-3 text-right text-cream tabular-nums">
-                          {r.amount != null ? formatCents(r.amount) : "—"}
+                        <td className="px-4 py-3 text-right">
+                          <NwMoney cents={r.amount} />
                         </td>
                         <td className="px-4 py-3 text-cream-muted text-xs">{formatDate(r.through_date)}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${badgeFor(r.status)}`}>
+                          <NwBadge variant={lienBadgeVariant(r.status)} size="sm">
                             {r.status.replace(/_/g, " ")}
-                          </span>
+                          </NwBadge>
                         </td>
                         <td className="px-4 py-3 text-xs">
                           {r.document_url ? (
@@ -422,13 +430,15 @@ export default function BulkLienReleasesPage() {
                               if (rowInputs.current[r.id]) rowInputs.current[r.id]!.value = "";
                             }}
                           />
-                          <button
+                          <NwButton
+                            variant="secondary"
+                            size="sm"
                             onClick={() => rowInputs.current[r.id]?.click()}
                             disabled={busyId === r.id}
-                            className="px-3 py-1 text-xs border border-teal text-teal hover:bg-teal hover:text-white disabled:opacity-50 transition-colors"
+                            loading={busyId === r.id}
                           >
-                            {busyId === r.id ? "Uploading…" : r.document_url ? "Replace" : "Upload"}
-                          </button>
+                            {busyId === r.id ? "Uploading" : r.document_url ? "Replace" : "Upload"}
+                          </NwButton>
                         </td>
                       </tr>
                     );
@@ -452,9 +462,9 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
   );
 }
 
-function badgeFor(status: string): string {
-  if (status === "received") return "text-status-success border-status-success/60";
-  if (status === "pending") return "text-brass border-brass/60";
-  if (status === "waived") return "text-cream-dim border-cream-dim/40";
-  return "text-cream-muted border-brand-border";
+function lienBadgeVariant(status: string): BadgeVariant {
+  if (status === "received") return "success";
+  if (status === "pending") return "warning";
+  if (status === "waived") return "neutral";
+  return "neutral";
 }

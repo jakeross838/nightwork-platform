@@ -6,6 +6,9 @@ import { formatCents, formatDate } from "@/lib/utils/format";
 import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 import PaymentBatchByVendorPanel from "@/components/payment-batch-by-vendor-panel";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+import NwButton from "@/components/nw/Button";
 
 interface PaymentInvoice {
   id: string;
@@ -340,20 +343,24 @@ export default function PaymentsPage() {
                   <option value="wire">Wire</option>
                   <option value="credit_card">Credit Card</option>
                 </select>
-                <button
+                <NwButton
+                  variant="secondary"
+                  size="sm"
                   onClick={() => bulk("schedule")}
                   disabled={bulkBusy}
-                  className="px-3 py-1.5 border border-teal text-teal hover:bg-teal/10 disabled:opacity-50 text-sm font-medium"
+                  loading={bulkBusy}
                 >
                   Schedule
-                </button>
-                <button
+                </NwButton>
+                <NwButton
+                  variant="primary"
+                  size="sm"
                   onClick={() => bulk("mark_paid")}
                   disabled={bulkBusy}
-                  className="px-3 py-1.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-medium"
+                  loading={bulkBusy}
                 >
                   Mark as Paid
-                </button>
+                </NwButton>
               </div>
             )}
 
@@ -403,18 +410,18 @@ export default function PaymentsPage() {
                           {inv.invoice_number ?? "—"}
                         </td>
                         <td className="py-3 px-4 text-cream-muted text-xs">{inv.jobs?.name ?? "—"}</td>
-                        <td className="py-3 px-4 text-cream text-right font-display font-medium">
-                          {formatCents(inv.total_amount)}
+                        <td className="py-3 px-4 text-right">
+                          <NwMoney cents={inv.total_amount} />
                           {inv.payment_status === "partial" && (
-                            <div className="text-[10px] text-brass">
-                              paid {formatCents(inv.payment_amount ?? 0)}
+                            <div className="text-[10px] text-brass mt-0.5">
+                              paid <NwMoney cents={inv.payment_amount ?? 0} size="sm" variant="muted" />
                             </div>
                           )}
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${payStatusBadge(inv.payment_status)}`}>
+                          <NwBadge variant={payStatusVariant(inv.payment_status)} size="sm">
                             {inv.payment_status}
-                          </span>
+                          </NwBadge>
                         </td>
                         <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.scheduled_payment_date)}</td>
                         <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(inv.payment_date)}</td>
@@ -467,13 +474,13 @@ export default function PaymentsPage() {
                               <td className="py-3 px-4 text-cream-muted font-mono text-xs">{inv.invoice_number ?? "—"}</td>
                               <td className="py-3 px-4 text-cream-muted text-xs">{formatDate(ref)}</td>
                               <td className={`py-3 px-4 ${color} text-xs font-medium`}>{days} days</td>
-                              <td className="py-3 px-4 text-cream text-right font-display font-medium">
-                                {formatCents(inv.total_amount)}
+                              <td className="py-3 px-4 text-right">
+                                <NwMoney cents={inv.total_amount} />
                               </td>
                               <td className="py-3 px-4">
-                                <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${payStatusBadge(inv.payment_status)}`}>
+                                <NwBadge variant={payStatusVariant(inv.payment_status)} size="sm">
                                   {inv.payment_status}
-                                </span>
+                                </NwBadge>
                               </td>
                             </tr>
                           );
@@ -545,9 +552,9 @@ function AgingCard({
   );
 }
 
-function payStatusBadge(s: string): string {
-  if (s === "paid") return "bg-transparent text-status-success border border-status-success";
-  if (s === "scheduled") return "bg-transparent text-teal border border-teal";
-  if (s === "partial") return "bg-transparent text-brass border border-brass";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+function payStatusVariant(s: string): BadgeVariant {
+  if (s === "paid") return "success";
+  if (s === "scheduled") return "info";
+  if (s === "partial") return "warning";
+  return "neutral";
 }

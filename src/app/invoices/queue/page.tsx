@@ -2,11 +2,27 @@
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, confidenceColor, daysAgo, formatDate } from "@/lib/utils/format";
+import { formatCents, daysAgo, formatDate } from "@/lib/utils/format";
 import AppShell from "@/components/app-shell";
 import FinancialViewTabs from "@/components/financial-view-tabs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import { SkeletonList } from "@/components/loading-skeleton";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+import NwButton from "@/components/nw/Button";
+
+function confidenceVariant(score: number): BadgeVariant {
+ if (score >= 0.85) return "success";
+ if (score >= 0.7) return "warning";
+ return "danger";
+}
+
+function agingBadgeInfo(days: number): { variant: BadgeVariant; label: string } | null {
+ if (days >= 90) return { variant: "danger", label: "90d+" };
+ if (days >= 61) return { variant: "danger", label: "60d+" };
+ if (days >= 30) return { variant: "warning", label: "30d+" };
+ return null;
+}
 
 interface QueueInvoice {
  id: string;
@@ -44,21 +60,9 @@ function MissingDataBadges({ inv }: { inv: QueueInvoice }) {
  if (!unknownVendor && !missingNumber && !missingDate) return null;
  return (
  <div className="mt-2 flex flex-wrap gap-1.5">
- {missingNumber && (
- <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-transparent text-brass border border-brass uppercase tracking-wide">
- No Invoice #
- </span>
- )}
- {missingDate && (
- <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
- No Date
- </span>
- )}
- {unknownVendor && (
- <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-transparent text-status-danger border border-status-danger uppercase tracking-wide">
- Unknown Vendor
- </span>
- )}
+ {missingNumber && <NwBadge variant="warning" size="sm">No Invoice #</NwBadge>}
+ {missingDate && <NwBadge variant="danger" size="sm">No Date</NwBadge>}
+ {unknownVendor && <NwBadge variant="danger" size="sm">Unknown Vendor</NwBadge>}
  </div>
  );
 }
@@ -98,18 +102,8 @@ function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
  return <span className="ml-1 text-teal">{dir === "asc" ? "\u2191" : "\u2193"}</span>;
 }
 
-/** Orange outlined badge for invoices that aren't job-costed (software,
- *  storage, utilities). Shown in place of the "Unmatched" grey text so
- *  PMs know they're not supposed to hunt for a job match. */
 function OverheadBadge() {
- return (
- <span
- className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-transparent border"
- style={{ color: "var(--color-warning, #E65100)", borderColor: "var(--color-warning, #E65100)" }}
- >
- Overhead
- </span>
- );
+ return <NwBadge variant="warning" size="sm">Overhead</NwBadge>;
 }
 
 export default function QueuePage() {
@@ -973,13 +967,12 @@ export default function QueuePage() {
  <span className="text-cream font-medium text-base inline-flex items-center gap-2">
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-transparent text-cream-dim border border-cream-dim/40 uppercase tracking-wide">Receipt</span>
+ <NwBadge variant="info" size="sm">Receipt</NwBadge>
  )}
  </span>
  <div className="flex items-center gap-2">
- <span className="text-cream font-display font-medium text-lg">
- {formatCents(inv.total_amount)}
- </span>
+ <NwMoney cents={inv.total_amount} size="lg" />
+
  {batchEnabled && (
  <label
  onClick={(e) => e.stopPropagation()}
@@ -999,9 +992,7 @@ export default function QueuePage() {
  <div className="flex items-center justify-between mt-2">
  <div>
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
- {inv.jobs.name}
- </span>
+ <NwBadge variant="info" size="sm">{inv.jobs.name}</NwBadge>
  ) : inv.document_category === "overhead" ? (
  <OverheadBadge />
  ) : (
@@ -1011,27 +1002,18 @@ export default function QueuePage() {
  )}
  </div>
  <div className="flex items-center gap-2">
- <span
- className={`inline-flex items-center px-2 py-0.5 text-xs font-medium border ${confidenceColor(inv.confidence_score)}`}
- >
+ <NwBadge variant={confidenceVariant(inv.confidence_score)} size="sm">
  {Math.round(inv.confidence_score * 100)}%
- </span>
+ </NwBadge>
  {(() => {
  const d = daysAgo(inv.received_date);
- let badge: { label: string; style: React.CSSProperties } | null = null;
- if (d >= 90) badge = { label: "90d+", style: { backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#DC2626" } };
- else if (d >= 61) badge = { label: "60d+", style: { backgroundColor: "#F97316", color: "#FFFFFF", borderColor: "#EA580C" } };
- else if (d >= 30) badge = { label: "30d+", style: { backgroundColor: "#EAB308", color: "#1F2937", borderColor: "#CA8A04" } };
+ const aging = agingBadgeInfo(d);
  return (
  <>
  <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
  {d}d
  </span>
- {badge && (
- <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border" style={badge.style}>
- {badge.label}
- </span>
- )}
+ {aging && <NwBadge variant={aging.variant} size="sm">{aging.label}</NwBadge>}
  </>
  );
  })()}
@@ -1059,32 +1041,16 @@ export default function QueuePage() {
  </div>
  <MissingDataBadges inv={inv} />
  {inv.status === "pm_held" && (
- <div className="mt-2">
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
- Held
- </span>
- </div>
+ <div className="mt-2"><NwBadge variant="warning" size="sm">Held</NwBadge></div>
  )}
  {inv.status === "pm_denied" && (
- <div className="mt-2">
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-status-danger border border-status-danger text-xs font-medium">
- Denied
- </span>
- </div>
+ <div className="mt-2"><NwBadge variant="danger" size="sm">Denied</NwBadge></div>
  )}
  {inv.status === "info_requested" && (
- <div className="mt-2">
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
- Info Requested
- </span>
- </div>
+ <div className="mt-2"><NwBadge variant="warning" size="sm">Info Requested</NwBadge></div>
  )}
  {inv.is_potential_duplicate && !inv.duplicate_dismissed_at && (
- <div className="mt-2">
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
- Duplicate?
- </span>
- </div>
+ <div className="mt-2"><NwBadge variant="warning" size="sm">Duplicate?</NwBadge></div>
  )}
  {/* Quick Approve — mobile card */}
  {isQuickApproveEligible(inv) && (
@@ -1099,43 +1065,45 @@ export default function QueuePage() {
  {inv.jobs?.name ? ` to ${inv.jobs.name}` : ""}?
  </span>
  <div className="flex gap-2 shrink-0">
- <button
- type="button"
+ <NwButton
+ variant="ghost"
+ size="sm"
  onClick={(e) => {
  e.stopPropagation();
  setQuickApproveConfirmId(null);
  }}
  disabled={quickApproveProcessingId === inv.id}
  aria-label="Cancel quick approve"
- className="px-2 py-1 text-sm text-cream-dim border border-brand-border"
  >
  &#10007;
- </button>
- <button
- type="button"
+ </NwButton>
+ <NwButton
+ variant="primary"
+ size="sm"
  onClick={(e) => {
  e.stopPropagation();
  handleQuickApprove(inv);
  }}
  disabled={quickApproveProcessingId === inv.id}
+ loading={quickApproveProcessingId === inv.id}
  aria-label="Confirm quick approve"
- className="px-2 py-1 text-sm font-medium bg-status-success text-white disabled:opacity-50"
  >
- {quickApproveProcessingId === inv.id ? "..." : "\u2713 Yes"}
- </button>
+ {quickApproveProcessingId === inv.id ? "" : "\u2713 Yes"}
+ </NwButton>
  </div>
  </div>
  ) : (
- <button
- type="button"
+ <NwButton
+ variant="primary"
+ size="md"
+ className="w-full"
  onClick={(e) => {
  e.stopPropagation();
  setQuickApproveConfirmId(inv.id);
  }}
- className="w-full px-3 py-2 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors"
  >
  Quick Approve
- </button>
+ </NwButton>
  )}
  </div>
  )}
@@ -1252,29 +1220,11 @@ export default function QueuePage() {
  )}
  <td className="py-4 px-5 text-cream font-medium">
  {inv.vendor_name_raw ?? "Unknown"}
- {inv.document_type === "receipt" && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-cream-dim border border-cream-dim/40 text-[10px] font-medium uppercase tracking-wide">Receipt</span>
- )}
- {inv.status === "pm_held" && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-brass border border-brass text-[10px] font-medium">
- Held
- </span>
- )}
- {inv.status === "pm_denied" && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-status-danger border border-status-danger text-[10px] font-medium">
- Denied
- </span>
- )}
- {inv.status === "info_requested" && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-brass border border-brass text-[10px] font-medium">
- Info Requested
- </span>
- )}
- {inv.is_potential_duplicate && !inv.duplicate_dismissed_at && (
- <span className="ml-2 inline-flex items-center px-1.5 py-0.5 bg-transparent text-brass border border-brass text-[10px] font-medium">
- Duplicate?
- </span>
- )}
+ {inv.document_type === "receipt" && <span className="ml-2"><NwBadge variant="info" size="sm">Receipt</NwBadge></span>}
+ {inv.status === "pm_held" && <span className="ml-2"><NwBadge variant="warning" size="sm">Held</NwBadge></span>}
+ {inv.status === "pm_denied" && <span className="ml-2"><NwBadge variant="danger" size="sm">Denied</NwBadge></span>}
+ {inv.status === "info_requested" && <span className="ml-2"><NwBadge variant="warning" size="sm">Info Requested</NwBadge></span>}
+ {inv.is_potential_duplicate && !inv.duplicate_dismissed_at && <span className="ml-2"><NwBadge variant="warning" size="sm">Duplicate?</NwBadge></span>}
  <MissingDataBadges inv={inv} />
  </td>
  <td className="py-4 px-5 text-cream-muted font-mono text-xs">
@@ -1291,9 +1241,7 @@ export default function QueuePage() {
  </td>
  <td className="py-4 px-5">
  {inv.jobs?.name ? (
- <span className="inline-flex items-center px-2 py-0.5 bg-transparent text-brass border border-brass text-xs font-medium">
- {inv.jobs.name}
- </span>
+ <NwBadge variant="info" size="sm">{inv.jobs.name}</NwBadge>
  ) : inv.document_category === "overhead" ? (
  <OverheadBadge />
  ) : (
@@ -1311,33 +1259,24 @@ export default function QueuePage() {
  {inv.assigned_pm?.full_name ?? "Unassigned"}
  </span>
  </td>
- <td className="py-4 px-5 text-cream text-right font-medium font-display">
- {formatCents(inv.total_amount)}
+ <td className="py-4 px-5 text-right">
+ <NwMoney cents={inv.total_amount} />
  </td>
  <td className="py-4 px-5">
- <span
- className={`inline-flex items-center px-2 py-0.5 text-xs font-medium border ${confidenceColor(inv.confidence_score)}`}
- >
+ <NwBadge variant={confidenceVariant(inv.confidence_score)} size="sm">
  {Math.round(inv.confidence_score * 100)}%
- </span>
+ </NwBadge>
  </td>
  <td className="py-4 px-5 text-right">
  {(() => {
  const d = daysAgo(inv.received_date);
- let badge: { label: string; style: React.CSSProperties } | null = null;
- if (d >= 90) badge = { label: "90d+", style: { backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#DC2626" } };
- else if (d >= 61) badge = { label: "60d+", style: { backgroundColor: "#F97316", color: "#FFFFFF", borderColor: "#EA580C" } };
- else if (d >= 30) badge = { label: "30d+", style: { backgroundColor: "#EAB308", color: "#1F2937", borderColor: "#CA8A04" } };
+ const aging = agingBadgeInfo(d);
  return (
  <div className="flex items-center justify-end gap-1.5">
  <span className={`text-sm font-medium ${d > 5 ? "text-status-danger" : d > 2 ? "text-brass" : "text-cream-dim"}`}>
  {d}d
  </span>
- {badge && (
- <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border" style={badge.style}>
- {badge.label}
- </span>
- )}
+ {aging && <NwBadge variant={aging.variant} size="sm">{aging.label}</NwBadge>}
  </div>
  );
  })()}
@@ -1347,33 +1286,35 @@ export default function QueuePage() {
  {isQuickApproveEligible(inv) ? (
  quickApproveConfirmId === inv.id ? (
  <div className="flex gap-1 items-center justify-end">
- <button
- type="button"
+ <NwButton
+ variant="ghost"
+ size="sm"
  onClick={() => setQuickApproveConfirmId(null)}
  disabled={quickApproveProcessingId === inv.id}
- className="px-2 py-1 text-sm text-cream-dim border border-brand-border hover:text-cream"
  aria-label="Cancel quick approve"
  >
  &#10007;
- </button>
- <button
- type="button"
+ </NwButton>
+ <NwButton
+ variant="primary"
+ size="sm"
  onClick={() => handleQuickApprove(inv)}
  disabled={quickApproveProcessingId === inv.id}
- className="px-2 py-1 text-sm font-medium bg-status-success text-white disabled:opacity-50"
+ loading={quickApproveProcessingId === inv.id}
  aria-label="Confirm quick approve"
  >
- {quickApproveProcessingId === inv.id ? "..." : "\u2713 Yes"}
- </button>
+ {quickApproveProcessingId === inv.id ? "" : "\u2713 Yes"}
+ </NwButton>
  </div>
  ) : (
- <button
- type="button"
+ <NwButton
+ variant="primary"
+ size="sm"
+ className="w-full"
  onClick={() => setQuickApproveConfirmId(inv.id)}
- className="w-full px-3 py-1.5 text-xs font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors"
  >
  Quick Approve
- </button>
+ </NwButton>
  )
  ) : null}
  </td>
@@ -1406,35 +1347,39 @@ export default function QueuePage() {
  </button>
  </div>
  <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-2">
- <button
- onClick={() => setSelectedIds(new Set())}
- className="hidden sm:inline-flex px-3 py-2 text-sm text-cream-dim hover:text-cream border border-brand-border hover:border-brand-border-light transition-colors items-center justify-center"
- >
+ <div className="hidden sm:inline-flex">
+ <NwButton variant="ghost" size="md" onClick={() => setSelectedIds(new Set())}>
  Clear Selection
- </button>
- <button
+ </NwButton>
+ </div>
+ <NwButton
+ variant="secondary"
+ size="md"
  onClick={() => { setHoldNote(""); setShowHoldNoteModal(true); }}
  disabled={batchProcessing}
- className="px-3 py-2.5 text-sm font-medium bg-brass text-brand-bg hover:bg-brass-hover transition-colors disabled:opacity-50"
  >
  <span className="sm:hidden">Hold</span>
  <span className="hidden sm:inline">Hold All</span>
- </button>
- <button
+ </NwButton>
+ <NwButton
+ variant="danger"
+ size="md"
  onClick={() => { setDenyNote(""); setShowDenyNoteModal(true); }}
  disabled={batchProcessing}
- className="px-3 py-2.5 text-sm font-medium bg-status-danger text-white hover:bg-status-danger/90 transition-colors disabled:opacity-50"
  >
  <span className="sm:hidden">Deny</span>
  <span className="hidden sm:inline">Deny All</span>
- </button>
- <button
+ </NwButton>
+ <NwButton
+ variant="primary"
+ size="md"
  onClick={handleBatchApprove}
  disabled={batchProcessing}
- className="px-3 py-2.5 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 transition-colors disabled:opacity-50"
+ loading={batchProcessing}
  >
- {batchProcessing ? "..." : <><span className="sm:hidden">Approve</span><span className="hidden sm:inline">Approve All</span></>}
- </button>
+ <span className="sm:hidden">Approve</span>
+ <span className="hidden sm:inline">Approve All</span>
+ </NwButton>
  </div>
  </div>
  </div>

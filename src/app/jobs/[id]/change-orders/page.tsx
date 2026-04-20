@@ -9,6 +9,9 @@ import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+import NwButton from "@/components/nw/Button";
 
 interface Job {
   id: string;
@@ -37,15 +40,13 @@ interface ChangeOrder {
   source_invoice_id: string | null;
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: "text-cream-dim border-cream-dim/40",
-  pending: "text-status-warning border-status-warning/40",
-  pending_approval: "text-status-warning border-status-warning/40",
-  approved: "text-status-success border-status-success/40",
-  executed: "text-teal border-teal/40",
-  denied: "text-status-danger border-status-danger/40",
-  void: "text-status-danger border-status-danger/40 line-through",
-};
+function coBadgeVariant(status: string): BadgeVariant {
+  if (status === "approved") return "success";
+  if (status === "executed") return "info";
+  if (status === "pending" || status === "pending_approval") return "warning";
+  if (status === "denied" || status === "void") return "danger";
+  return "neutral";
+}
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
@@ -260,20 +261,18 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
                     </td>
                     <td className="px-4 py-3 text-cream-muted">
                       {co.co_type === "owner" ? (
-                        <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-teal/40 text-teal">Owner</span>
+                        <NwBadge variant="info" size="sm">Owner</NwBadge>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 text-[10px] uppercase tracking-wider border border-brand-border text-cream-muted">Internal</span>
+                        <NwBadge variant="neutral" size="sm">Internal</NwBadge>
                       )}
                     </td>
-                    <td className={`px-4 py-3 text-right tabular-nums font-medium ${
-                      co.amount < 0 ? "text-status-danger" : co.amount > 0 ? "text-status-success" : "text-cream"
-                    }`}>
-                      {formatCents(co.amount)}
+                    <td className="px-4 py-3 text-right">
+                      <NwMoney cents={co.amount} signColor />
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-0.5 text-[11px] uppercase tracking-wider border ${STATUS_STYLES[co.status] ?? ""}`}>
+                      <NwBadge variant={coBadgeVariant(co.status)} size="sm">
                         {STATUS_LABELS[co.status] ?? co.status}
-                      </span>
+                      </NwBadge>
                     </td>
                     <td className="px-4 py-3 text-cream-dim text-[11px]">{co.submitted_date ? formatDate(co.submitted_date) : "—"}</td>
                     <td className="px-4 py-3 text-cream-dim text-[11px]">{co.approved_date ? formatDate(co.approved_date) : "—"}</td>
@@ -318,17 +317,18 @@ function CoActions({
   if (["approved", "executed", "denied", "void"].includes(co.status)) {
     if (co.status === "approved" && canApprove) {
       return (
-        <button
+        <NwButton
+          variant="danger"
+          size="sm"
           disabled={busy}
           onClick={() => {
             const note = prompt(`Void approved CO #${co.pcco_number}? Enter reason:`);
             if (!note) return;
             onStatus("void", { note });
           }}
-          className="px-3 py-1 text-xs border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
         >
           Void
-        </button>
+        </NwButton>
       );
     }
     return <span className="text-[11px] text-cream-dim">—</span>;
@@ -337,47 +337,41 @@ function CoActions({
   return (
     <div className="flex items-center justify-end gap-2 flex-wrap">
       {co.status === "draft" && (
-        <button
-          disabled={busy}
-          onClick={() => onStatus("pending")}
-          className="px-3 py-1 text-xs border border-teal text-teal hover:bg-teal hover:text-white disabled:opacity-50 transition-colors"
-        >
-          {busy ? "…" : "Submit"}
-        </button>
+        <NwButton variant="secondary" size="sm" disabled={busy} loading={busy} onClick={() => onStatus("pending")}>
+          Submit
+        </NwButton>
       )}
       {(co.status === "pending" || co.status === "pending_approval") && canApprove && (
         <>
-          <button
-            disabled={busy}
-            onClick={() => onStatus("approved")}
-            className="px-3 py-1 text-xs bg-teal text-white hover:bg-teal-hover disabled:opacity-50 transition-colors"
-          >
-            {busy ? "…" : "Approve"}
-          </button>
-          <button
+          <NwButton variant="primary" size="sm" disabled={busy} loading={busy} onClick={() => onStatus("approved")}>
+            Approve
+          </NwButton>
+          <NwButton
+            variant="danger"
+            size="sm"
             disabled={busy}
             onClick={() => {
               const reason = prompt(`Deny CO #${co.pcco_number}? Enter reason:`);
               if (!reason) return;
               onStatus("denied", { denied_reason: reason });
             }}
-            className="px-3 py-1 text-xs border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
           >
             Deny
-          </button>
+          </NwButton>
         </>
       )}
-      <button
+      <NwButton
+        variant="danger"
+        size="sm"
         disabled={busy}
         onClick={() => {
           const note = prompt(`Void CO #${co.pcco_number}? Enter reason:`);
           if (!note) return;
           onStatus("void", { note });
         }}
-        className="px-3 py-1 text-xs border border-status-danger/60 text-status-danger hover:bg-status-danger hover:text-white disabled:opacity-50 transition-colors"
       >
         Void
-      </button>
+      </NwButton>
     </div>
   );
 }

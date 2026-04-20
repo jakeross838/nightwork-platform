@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatDate } from "@/lib/utils/format";
+import { formatDate } from "@/lib/utils/format";
 import JobTabs from "@/components/job-tabs";
 import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import DrawsSubTabs from "@/components/draws-sub-tabs";
+import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+import NwButton from "@/components/nw/Button";
 
 interface LienRelease {
   id: string;
@@ -212,20 +215,23 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
               </select>
 
               <div className="flex-1" />
-              <button
+              <NwButton
+                variant="primary"
+                size="md"
                 onClick={() => bulk("mark_received")}
                 disabled={pendingIds.length === 0 || bulkBusy}
-                className="px-3 py-2 border border-status-success text-status-success hover:bg-status-success/10 disabled:opacity-40 text-sm font-medium transition-colors"
+                loading={bulkBusy}
               >
                 Mark {pendingIds.length} as Received
-              </button>
-              <button
+              </NwButton>
+              <NwButton
+                variant="secondary"
+                size="md"
                 onClick={() => bulk("waive")}
                 disabled={pendingIds.length === 0 || bulkBusy}
-                className="px-3 py-2 border border-brand-border text-cream-dim hover:text-cream disabled:opacity-40 text-sm font-medium transition-colors"
               >
                 Waive {pendingIds.length}
-              </button>
+              </NwButton>
             </div>
 
             {filtered.length === 0 ? (
@@ -259,13 +265,13 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
                           {r.draws ? `Draw #${r.draws.draw_number}${r.draws.revision_number > 0 ? ` Rev ${r.draws.revision_number}` : ""}` : "—"}
                         </td>
                         <td className="py-3 px-4 text-cream-muted text-xs">{humanType(r.release_type)}</td>
-                        <td className="py-3 px-4 text-cream text-right font-display font-medium">
-                          {r.amount != null ? formatCents(r.amount) : "—"}
+                        <td className="py-3 px-4 text-right">
+                          <NwMoney cents={r.amount} />
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${badgeFor(r.status)}`}>
+                          <NwBadge variant={lienBadgeVariant(r.status)} size="sm">
                             {humanStatus(r.status)}
-                          </span>
+                          </NwBadge>
                         </td>
                         <td className="py-3 px-4">
                           <PaymentStatusBadge summary={r.payment_summary} />
@@ -291,12 +297,9 @@ export default function JobLienReleasesPage({ params }: { params: { id: string }
                           )}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => setEditingId(r.id)}
-                            className="text-xs text-teal hover:underline"
-                          >
+                          <NwButton variant="ghost" size="sm" onClick={() => setEditingId(r.id)}>
                             Edit
-                          </button>
+                          </NwButton>
                         </td>
                       </tr>
                     ))}
@@ -468,10 +471,10 @@ function humanStatus(s: string): string {
   return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function badgeFor(status: string): string {
-  if (status === "received") return "bg-transparent text-status-success border border-status-success";
-  if (status === "pending") return "bg-transparent text-brass border border-brass";
-  return "bg-transparent text-cream-dim border border-brand-border-light";
+function lienBadgeVariant(status: string): BadgeVariant {
+  if (status === "received") return "success";
+  if (status === "pending") return "warning";
+  return "neutral";
 }
 
 function PaymentStatusBadge({
@@ -485,21 +488,21 @@ function PaymentStatusBadge({
   const { paid_count, total_count } = summary;
   if (paid_count === total_count) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-status-success text-status-success">
+      <NwBadge variant="success" size="sm">
         Paid {paid_count}/{total_count}
-      </span>
+      </NwBadge>
     );
   }
   if (paid_count === 0) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-brand-border-light text-cream-dim">
+      <NwBadge variant="neutral" size="sm">
         Unpaid 0/{total_count}
-      </span>
+      </NwBadge>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium border border-brass text-brass">
+    <NwBadge variant="warning" size="sm">
       Partial {paid_count}/{total_count}
-    </span>
+    </NwBadge>
   );
 }
