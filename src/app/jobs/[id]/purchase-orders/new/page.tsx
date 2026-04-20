@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents } from "@/lib/utils/format";
+import NwCard from "@/components/nw/Card";
+import NwEyebrow from "@/components/nw/Eyebrow";
+import NwButton from "@/components/nw/Button";
+import NwMoney from "@/components/nw/Money";
 
 interface Job {
   id: string;
@@ -173,16 +177,26 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
             { label: "New" },
           ]}
         />
-        <h2 className="font-display text-2xl text-cream mb-6">New Purchase Order</h2>
+        <NwEyebrow tone="muted" className="mb-2">Job · Purchase Order</NwEyebrow>
+        <h2
+          className="m-0 mb-6"
+          style={{
+            fontFamily: "var(--font-space-grotesk)",
+            fontWeight: 500,
+            fontSize: "30px",
+            letterSpacing: "-0.02em",
+            color: "var(--text-primary)",
+          }}
+        >
+          New Purchase Order
+        </h2>
 
-        <form className="bg-brand-card border border-brand-border p-6 space-y-5">
+        <NwCard padding="lg"><form className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
-                Vendor
-              </label>
+              <NwEyebrow tone="muted" className="mb-1.5 block">Vendor</NwEyebrow>
               <select
-                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}
               >
@@ -193,11 +207,9 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
-                PO Number
-              </label>
+              <NwEyebrow tone="muted" className="mb-1.5 block">PO Number</NwEyebrow>
               <input
-                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
                 placeholder="Auto-generated (e.g. PO-001)"
                 value={poNumber}
                 onChange={(e) => setPoNumber(e.target.value)}
@@ -206,11 +218,9 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
-              Description
-            </label>
+            <NwEyebrow tone="muted" className="mb-1.5 block">Description</NwEyebrow>
             <textarea
-              className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+              className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -234,11 +244,9 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           {!useLineItems ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
-                  Budget Line
-                </label>
+                <NwEyebrow tone="muted" className="mb-1.5 block">Budget Line</NwEyebrow>
                 <select
-                  className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
                   value={budgetLineId}
                   onChange={(e) => setBudgetLineId(e.target.value)}
                 >
@@ -256,13 +264,11 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                 )}
               </div>
               <div>
-                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
-                  Amount ($)
-                </label>
+                <NwEyebrow tone="muted" className="mb-1.5 block">Amount ($)</NwEyebrow>
                 <input
                   type="number"
                   step="0.01"
-                  className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                  className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
@@ -271,9 +277,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           ) : (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider">
-                  Line Items
-                </label>
+                <NwEyebrow tone="muted">Line Items</NwEyebrow>
                 <button
                   type="button"
                   onClick={addLine}
@@ -286,7 +290,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                 {lineItems.map((li, i) => (
                   <div key={i} className="grid grid-cols-[1.5fr_1fr_120px_auto] gap-2 items-start">
                     <select
-                      className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                      className="px-2 py-1 text-sm focus:outline-none nw-input"
                       value={li.budget_line_id}
                       onChange={(e) => {
                         const bl = budgetLineById.get(e.target.value);
@@ -304,7 +308,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                       ))}
                     </select>
                     <input
-                      className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                      className="px-2 py-1 text-sm focus:outline-none nw-input"
                       placeholder="Description"
                       value={li.description}
                       onChange={(e) => updateLine(i, { description: e.target.value })}
@@ -312,7 +316,7 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
                     <input
                       type="number"
                       step="0.01"
-                      className="px-2 py-1 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                      className="px-2 py-1 text-sm focus:outline-none nw-input"
                       placeholder="$"
                       value={li.amount_dollars}
                       onChange={(e) => updateLine(i, { amount_dollars: e.target.value })}
@@ -336,12 +340,10 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
-                Issued Date (optional)
-              </label>
+              <NwEyebrow tone="muted" className="mb-1.5 block">Issued Date (optional)</NwEyebrow>
               <input
                 type="date"
-                className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+                className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
                 value={issuedDate}
                 onChange={(e) => setIssuedDate(e.target.value)}
               />
@@ -349,63 +351,85 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
           </div>
 
           <div>
-            <label className="text-[11px] font-medium text-cream-dim uppercase tracking-wider mb-1.5 block">
-              Notes
-            </label>
+            <NwEyebrow tone="muted" className="mb-1.5 block">Notes</NwEyebrow>
             <textarea
-              className="w-full px-3 py-2 bg-brand-surface border border-brand-border text-sm text-cream focus:outline-none focus:border-teal"
+              className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 bg-brand-surface border border-brand-border px-4 py-3">
-            <div>
-              <p className="text-[11px] text-cream-dim uppercase tracking-wider">Total</p>
-              <p className="text-lg text-teal font-display tabular-nums">{formatCents(effectiveAmount)}</p>
+          <div
+            className="grid grid-cols-2 gap-3 border px-4 py-3"
+            style={{ background: "var(--bg-subtle)", borderColor: "var(--border-default)" }}
+          >
+            <div className="flex flex-col gap-1">
+              <NwEyebrow tone="accent">Total</NwEyebrow>
+              <NwMoney cents={effectiveAmount} size="lg" variant="emphasized" />
             </div>
             {selectedBudgetLineRemaining !== null && !useLineItems && effectiveAmount > selectedBudgetLineRemaining && (
-              <div>
-                <p className="text-[11px] text-status-warning uppercase tracking-wider">Exceeds remaining budget</p>
-                <p className="text-sm text-status-warning tabular-nums">
-                  by {formatCents(effectiveAmount - selectedBudgetLineRemaining)}
-                </p>
+              <div className="flex flex-col gap-1">
+                <NwEyebrow tone="warn">Exceeds remaining budget</NwEyebrow>
+                <NwMoney cents={effectiveAmount - selectedBudgetLineRemaining} size="md" prefix="by $" />
               </div>
             )}
           </div>
 
           {error && (
-            <div className="border border-status-danger/40 bg-status-danger/5 px-4 py-2 text-sm text-status-danger">
+            <div
+              className="border px-4 py-2 text-sm"
+              style={{
+                borderColor: "var(--nw-danger)",
+                background: "rgba(176,85,78,0.05)",
+                color: "var(--nw-danger)",
+              }}
+            >
               {error}
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-brand-border">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t" style={{ borderColor: "var(--border-default)" }}>
             <Link
               href={`/jobs/${params.id}/purchase-orders`}
-              className="px-4 py-2 text-sm text-cream-dim hover:text-cream transition-colors"
+              className="px-4 py-2 text-sm transition-colors"
+              style={{ color: "var(--text-tertiary)" }}
             >
               Cancel
             </Link>
-            <button
+            <NwButton
               type="button"
+              variant="secondary"
+              size="md"
               disabled={saving}
-              onClick={(e) => handleSubmit(e, "draft")}
-              className="px-4 py-2 border border-brand-border text-sm text-cream hover:bg-brand-surface disabled:opacity-60 transition-colors"
+              onClick={(e) => handleSubmit(e as unknown as React.FormEvent, "draft")}
+              loading={saving}
             >
-              {saving ? "Saving…" : "Save as Draft"}
-            </button>
-            <button
+              {saving ? "Saving" : "Save as Draft"}
+            </NwButton>
+            <NwButton
               type="button"
+              variant="primary"
+              size="md"
               disabled={saving}
-              onClick={(e) => handleSubmit(e, "issued")}
-              className="px-5 py-2 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              onClick={(e) => handleSubmit(e as unknown as React.FormEvent, "issued")}
+              loading={saving}
             >
-              {saving ? "Saving…" : "Issue PO"}
-            </button>
+              {saving ? "Saving" : "Issue PO"}
+            </NwButton>
           </div>
         </form>
+        </NwCard>
+        <style jsx>{`
+          :global(.nw-input) {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+          }
+          :global(.nw-input:focus) {
+            border-color: var(--nw-stone-blue);
+          }
+        `}</style>
       </main>
   );
 }

@@ -322,17 +322,36 @@ export default function ImportPageContent() {
       <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 md:px-6 py-8">
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <div className="text-xs tracking-[0.15em] uppercase text-cream-dim">
-              Invoices
-            </div>
-            <h1 className="font-display text-3xl text-cream mt-1">Bulk Import</h1>
-            <p className="text-sm text-cream-dim mt-1">
+            <span
+              className="block mb-2 text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Financial · Invoices
+            </span>
+            <h1
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-space-grotesk)",
+                fontWeight: 500,
+                fontSize: "30px",
+                letterSpacing: "-0.02em",
+                color: "var(--text-primary)",
+              }}
+            >
+              Bulk Import
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
               Drop PDFs or images. Up to 50 files, 10MB each. Parsing is sequential to respect AI rate limits.
             </p>
           </div>
           <Link
             href="/invoices"
-            className="text-sm text-cream-dim hover:text-cream"
+            className="text-sm hover:underline"
+            style={{ color: "var(--nw-gulf-blue)" }}
           >
             ← Back to invoices
           </Link>

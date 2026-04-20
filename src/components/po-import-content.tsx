@@ -1,12 +1,25 @@
 "use client";
 
 import CsvImporter from "@/components/csv-importer";
+import NwEyebrow from "@/components/nw/Eyebrow";
 
 export default function POImportContent({ jobId }: { jobId: string }) {
   return (
     <main className="max-w-3xl mx-auto px-4 md:px-6 py-8">
-      <h2 className="font-display text-2xl text-cream mb-3">Import Purchase Orders</h2>
-      <p className="text-sm text-cream-dim mb-6">
+      <NwEyebrow tone="muted" className="mb-2">Job · Purchase Orders</NwEyebrow>
+      <h2
+        className="m-0 mb-3"
+        style={{
+          fontFamily: "var(--font-space-grotesk)",
+          fontWeight: 500,
+          fontSize: "30px",
+          letterSpacing: "-0.02em",
+          color: "var(--text-primary)",
+        }}
+      >
+        Import Purchase Orders
+      </h2>
+      <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
         Upload a CSV or Excel file with columns for PO number, vendor, description, and amount.
         Unknown vendors will be created automatically.
       </p>
