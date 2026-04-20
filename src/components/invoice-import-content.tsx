@@ -85,7 +85,11 @@ export default function ImportPageContent() {
       .eq("status", "active")
       .is("deleted_at", null)
       .order("name")
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Failed to load jobs for assign dropdown:", error);
+          return;
+        }
         if (data) setJobs(data as JobOption[]);
       });
   }, []);
