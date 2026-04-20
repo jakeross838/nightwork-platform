@@ -493,7 +493,7 @@ export default function PaymentsPage() {
 
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
-    <th className={`py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider ${right ? "text-right" : ""}`}>
+    <th className={`py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] ${right ? "text-right" : ""}`}>
       {children}
     </th>
   );

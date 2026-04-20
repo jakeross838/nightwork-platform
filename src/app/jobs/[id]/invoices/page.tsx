@@ -203,7 +203,7 @@ export default function JobInvoicesPage({ params }: { params: { id: string } }) 
           <div className="bg-brand-card border border-brand-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-border text-[11px] uppercase tracking-wider text-cream-dim bg-brand-surface/50">
+                <tr className="border-b border-brand-border text-[10px] uppercase tracking-[0.14em] text-cream-dim font-medium bg-brand-surface/50">
                   <th className="text-left px-3 py-3 font-medium">Date</th>
                   <th className="text-left px-3 py-3 font-medium">Vendor</th>
                   <th className="text-left px-3 py-3 font-medium">Inv #</th>

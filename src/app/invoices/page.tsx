@@ -609,28 +609,28 @@ export default function AllInvoicesPage() {
  <table className="w-full min-w-[1100px] text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors sticky left-0 bg-brand-surface z-10" onClick={() => toggleSort("vendor")}>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-teal transition-colors sticky left-0 bg-brand-surface z-10" onClick={() => toggleSort("vendor")}>
  Vendor<SortArrow active={sortKey === "vendor"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Inv #</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("date")}>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Inv #</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("date")}>
  Date<SortArrow active={sortKey === "date"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Job</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Cost Code</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("amount")}>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Job</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Cost Code</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("amount")}>
  Amount<SortArrow active={sortKey === "amount"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("status")}>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("status")}>
  Status<SortArrow active={sortKey === "status"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("pm")}>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("pm")}>
  PM<SortArrow active={sortKey === "pm"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("aging")}>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] text-right cursor-pointer select-none hover:text-teal transition-colors" onClick={() => toggleSort("aging")}>
  Days Out<SortArrow active={sortKey === "aging"} dir={sortDir} />
  </th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Payment</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Payment</th>
  </tr>
  </thead>
  <tbody>
@@ -772,13 +772,13 @@ export default function AllInvoicesPage() {
  <table className="w-full text-sm">
  <thead>
  <tr className="bg-brand-surface text-left">
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Vendor</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Inv #</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-right">Amount</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Status</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Payment Date</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider">Check #</th>
- <th className="py-3 px-4 text-[11px] text-cream font-bold uppercase tracking-wider text-center">Picked Up</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Vendor</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Inv #</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] text-right">Amount</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Status</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Payment Date</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em]">Check #</th>
+ <th className="py-3 px-4 text-[10px] text-cream-dim font-medium uppercase tracking-[0.14em] text-center">Picked Up</th>
  </tr>
  </thead>
  <tbody>
