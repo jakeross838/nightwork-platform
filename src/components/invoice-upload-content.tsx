@@ -6,6 +6,7 @@ import {
  formatDollars, confidenceColor, confidenceLabel,
  formatInvoiceType, formatFlag, formatDocumentType, formatDate,
 } from "@/lib/utils/format";
+import NwButton from "@/components/nw/Button";
 
 
 type ParseStep = "uploading" | "analyzing" | "extracting" | "matching" | "complete";
@@ -568,10 +569,9 @@ export default function UploadContent() {
  {parsedUnsaved.length > 1 && (
  <div className="border-b border-brand-border bg-brand-surface/50 px-6 py-3">
  <div className="max-w-7xl mx-auto flex items-center justify-end">
- <button onClick={saveAll} disabled={savingAll}
- className="px-4 py-2 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-sm font-medium transition-colors">
- {savingAll ? "Saving..." : `Save All & Route (${parsedUnsaved.length})`}
- </button>
+ <NwButton variant="primary" size="md" onClick={saveAll} disabled={savingAll} loading={savingAll}>
+ {savingAll ? "Saving" : `Save All & Route (${parsedUnsaved.length})`}
+ </NwButton>
  </div>
  </div>
  )}
@@ -625,7 +625,9 @@ export default function UploadContent() {
  </div>
  <p className="text-lg text-cream font-display">{isDragging ? "Drop files here" : <><span className="hidden md:inline">Drag & drop {documentType === "receipt" ? "receipts" : "invoices"}</span><span className="md:hidden">Upload {documentType === "receipt" ? "Receipts" : "Invoices"}</span></>}</p>
  <p className="mt-1.5 text-sm text-cream-dim hidden md:block">or click to browse &mdash; PDF, DOCX, XLSX, JPG, PNG</p>
- <button className="mt-4 px-6 py-3 bg-teal hover:bg-teal-hover text-brand-bg font-medium transition-colors md:hidden">Browse Files</button>
+ <div className="mt-4 md:hidden">
+ <NwButton variant="primary" size="md">Browse Files</NwButton>
+ </div>
  </div>
 
  {/* Results */}
@@ -663,10 +665,9 @@ export default function UploadContent() {
  </div>
  {fileStatus.saved && <span className="text-xs text-teal flex-shrink-0">Saved &amp; Routed</span>}
  {fileStatus.status === "done" && fileStatus.result && !fileStatus.saved && (
- <button onClick={(e) => { e.stopPropagation(); saveOne(index); }} disabled={fileStatus.saving}
- className="flex-shrink-0 px-4 py-1.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-brand-bg text-xs font-semibold transition-colors">
- {fileStatus.saving ? "Saving..." : "Save & Route"}
- </button>
+ <NwButton variant="primary" size="sm" onClick={(e) => { e.stopPropagation(); saveOne(index); }} disabled={fileStatus.saving} loading={fileStatus.saving}>
+ {fileStatus.saving ? "Saving" : "Save & Route"}
+ </NwButton>
  )}
  </div>
 

@@ -517,13 +517,43 @@ export default function NewDrawWizardPage() {
   return (
     <AppShell>
       <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+        <span
+          className="block mb-2 text-[10px] uppercase"
+          style={{
+            fontFamily: "var(--font-jetbrains-mono)",
+            letterSpacing: "0.14em",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          Financial · Draw Wizard
+        </span>
         <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-          <h2 className="font-display text-2xl text-cream">Create New Draw</h2>
+          <h2
+            className="m-0"
+            style={{
+              fontFamily: "var(--font-space-grotesk)",
+              fontWeight: 500,
+              fontSize: "30px",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
+            Create New Draw
+          </h2>
           {jobId && draftId && (
-            <span className="text-xs text-cream-dim">Draft auto-save enabled</span>
+            <span
+              className="text-[10px] uppercase"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.14em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Draft auto-save enabled
+            </span>
           )}
         </div>
-        <p className="text-sm text-cream-dim mb-6">
+        <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
           Step-by-step wizard. Save as draft at any step — pick up later from the draws list.
         </p>
 
@@ -612,7 +642,7 @@ export default function NewDrawWizardPage() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!jobId || !!blockingOpenDraw}
-                className="px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium transition-colors"
+                className="px-6 py-2.5 disabled:opacity-50 transition-colors nw-primary-btn"
               >
                 Next: Period
               </button>
@@ -657,7 +687,7 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={() => setStep(3)}
                   disabled={!periodStart || !periodEnd}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-6 py-2.5 disabled:opacity-50 transition-colors nw-primary-btn"
                 >
                   Next: Review Line Items
                 </button>
@@ -833,7 +863,7 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={() => setStep(4)}
                   disabled={selected.size === 0}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-6 py-2.5 disabled:opacity-50 transition-colors nw-primary-btn"
                 >
                   Next: Summary
                 </button>
@@ -928,7 +958,7 @@ export default function NewDrawWizardPage() {
                 <button
                   onClick={handleSaveDraft}
                   disabled={submitting}
-                  className="w-full sm:w-auto px-8 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-medium"
+                  className="w-full sm:w-auto px-8 py-2.5 disabled:opacity-50 transition-colors nw-primary-btn"
                 >
                   {submitting ? "Creating…" : "Create Draw"}
                 </button>
@@ -937,6 +967,22 @@ export default function NewDrawWizardPage() {
           </div>
         )}
       </main>
+      <style jsx>{`
+        :global(.nw-primary-btn) {
+          background: var(--nw-stone-blue);
+          color: var(--nw-white-sand);
+          font-family: var(--font-jetbrains-mono);
+          font-size: 11px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          font-weight: 500;
+          border: 1px solid var(--nw-stone-blue);
+        }
+        :global(.nw-primary-btn:hover:not(:disabled)) {
+          background: var(--nw-gulf-blue);
+          border-color: var(--nw-gulf-blue);
+        }
+      `}</style>
     </AppShell>
   );
 }

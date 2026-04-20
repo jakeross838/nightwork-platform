@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Breadcrumbs from "@/components/breadcrumbs";
 import CsvImporter from "@/components/csv-importer";
 import { supabase } from "@/lib/supabase/client";
+import NwEyebrow from "@/components/nw/Eyebrow";
 
 export default function VendorImportPageContent() {
   const router = useRouter();
@@ -27,10 +28,22 @@ export default function VendorImportPageContent() {
             { label: "Import" },
           ]}
         />
-        <h2 className="font-display text-2xl text-cream mb-3">Import Vendors</h2>
-        <p className="text-sm text-cream-dim mb-6">
+        <NwEyebrow tone="muted" className="mb-2">Admin · Import</NwEyebrow>
+        <h2
+          className="m-0 mb-3"
+          style={{
+            fontFamily: "var(--font-space-grotesk)",
+            fontWeight: 500,
+            fontSize: "30px",
+            letterSpacing: "-0.02em",
+            color: "var(--text-primary)",
+          }}
+        >
+          Import Vendors
+        </h2>
+        <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
           Upload a CSV or Excel file with vendor info. Existing vendors (case-insensitive name match) will be updated; new names become new vendors.
-          <Link href="/vendors" className="text-teal hover:underline ml-2">Back to vendors</Link>
+          <Link href="/vendors" className="ml-2 hover:underline" style={{ color: "var(--nw-gulf-blue)" }}>Back to vendors</Link>
         </p>
 
         <CsvImporter
