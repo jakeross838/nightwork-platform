@@ -388,6 +388,14 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                   value={form.retainage_percent ?? 0}
                   onChange={(e) => setForm({ ...form, retainage_percent: Number(e.target.value) })}
                 />
+                {Number(form.retainage_percent ?? 0) >= 90 && (
+                  <p
+                    className="mt-1.5 text-[11px]"
+                    style={{ color: "var(--nw-warn)" }}
+                  >
+                    Retainage at {Number(form.retainage_percent).toFixed(1)}% will leave minimal payment due on each draw. Verify this is intentional.
+                  </p>
+                )}
               </EditField>
               <EditField label="Starting Application Number">
                 <input
