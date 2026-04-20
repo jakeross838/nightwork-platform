@@ -771,7 +771,7 @@ export default function DrawDetailPage() {
                         <tr
                           key={inv.id}
                           className="border-t border-brand-row-border hover:bg-brand-elevated/50 cursor-pointer transition-colors"
-                          onClick={() => (window.location.href = `/invoices/${inv.id}`)}
+                          onClick={() => router.push(`/invoices/${inv.id}`)}
                         >
                           <td className="py-3 px-4 text-cream">{inv.vendor_name_raw ?? "Unknown"}</td>
                           <td className="py-3 px-4 text-cream-muted font-mono text-xs">

@@ -20,6 +20,7 @@ export const GET = withApiError(
       )
       .eq("job_id", params.id)
       .eq("org_id", membership.org_id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (error) throw new ApiError(error.message, 500);

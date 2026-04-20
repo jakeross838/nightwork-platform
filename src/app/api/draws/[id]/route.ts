@@ -29,6 +29,11 @@ export async function GET(
     // return actual rows instead of null when user-session RLS evaluation
     // is ambiguous. Every query still carries an explicit org_id filter.
     const supabase = tryCreateServiceRoleClient() ?? createServerClient();
+    // Capture the acting user so auto-created budget_lines get a created_by.
+    const userSb = createServerClient();
+    const {
+      data: { user: actor },
+    } = await userSb.auth.getUser();
 
     const { data: draw, error } = await supabase
       .from("draws")
@@ -85,6 +90,7 @@ export async function GET(
           revised_estimate: 0,
           previous_applications_baseline: 0,
           org_id: orgId,
+          created_by: actor?.id ?? null,
         })
         .select(
           `id, cost_code_id, original_estimate, revised_estimate, previous_applications_baseline, co_adjustments,

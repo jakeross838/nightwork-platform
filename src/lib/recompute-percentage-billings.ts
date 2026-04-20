@@ -69,7 +69,8 @@ export async function recomputePercentageBillings(drawId: string): Promise<void>
         "id, percentage, draw_line_item_id, " +
           "internal_billing_types:billing_type_id (calculation_method)"
       )
-      .in("id", billingIds);
+      .in("id", billingIds)
+      .is("deleted_at", null);
     billings = (bs ?? []) as unknown as BillingRow[];
   }
 

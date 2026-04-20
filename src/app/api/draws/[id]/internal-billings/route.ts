@@ -53,7 +53,8 @@ export const GET = withApiError(async (
     const { data: ab } = await supabase
       .from("internal_billings")
       .select("id, internal_billing_types:billing_type_id (calculation_method)")
-      .in("id", billingIds);
+      .in("id", billingIds)
+      .is("deleted_at", null);
     pctSet = new Set(
       ((ab ?? []) as unknown as Array<{
         id: string;
@@ -80,6 +81,9 @@ export const POST = withApiError(async (
     throw new ApiError("Only admins/PMs can attach billings to a draw", 403);
   }
   const supabase = createServerClient();
+  const {
+    data: { user: actor },
+  } = await supabase.auth.getUser();
   const body = (await req.json()) as AttachBody;
   if (!Array.isArray(body.billing_ids) || body.billing_ids.length === 0) {
     throw new ApiError("billing_ids is required", 400);
@@ -170,6 +174,7 @@ export const POST = withApiError(async (
         percent_complete: 0,
         balance_to_finish: 0,
         org_id: membership.org_id,
+        created_by: actor?.id ?? null,
       })
       .select("id")
       .single();
@@ -227,6 +232,7 @@ export const DELETE = withApiError(async (
     .select("id, draw_line_item_id")
     .eq("id", billingId)
     .eq("org_id", membership.org_id)
+    .is("deleted_at", null)
     .single();
   if (!billing) throw new ApiError("Billing not found", 404);
 

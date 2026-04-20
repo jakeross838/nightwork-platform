@@ -774,7 +774,7 @@ export default function InvoiceReviewPage() {
  const o: Record<string, { old: unknown; new: unknown }> = {};
  if (invoiceNumber !== (invoice.invoice_number ?? "")) o.invoice_number = { old: invoice.invoice_number, new: invoiceNumber };
  if (invoiceDate !== (invoice.invoice_date ?? "")) o.invoice_date = { old: invoice.invoice_date, new: invoiceDate };
- if (totalAmount !== String(invoice.total_amount / 100)) o.total_amount = { old: invoice.total_amount / 100, new: parseFloat(totalAmount) };
+ if (totalAmount !== String(invoice.total_amount / 100)) o.total_amount = { old: invoice.total_amount, new: Math.round(parseFloat(totalAmount) * 100) };
  if (invoiceType !== (invoice.invoice_type ?? "")) o.invoice_type = { old: invoice.invoice_type, new: invoiceType };
  if (description !== (invoice.description ?? "")) o.description = { old: invoice.description, new: description };
  if (jobId !== (invoice.job_id ?? "")) o.job_id = { old: invoice.job_id, new: jobId };

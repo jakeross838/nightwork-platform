@@ -217,27 +217,34 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
       className="bg-nw-slate-deeper border-b border-[rgba(247,245,236,0.08)] sticky top-0 z-40"
     >
       <div className="max-w-[1600px] mx-auto px-8 h-[54px] flex items-center justify-between gap-[22px]">
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
-          {logoUrl ? (
-            // Tenant has uploaded a custom logo — respect it (paid customization).
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt={brandName}
-              className="h-8 w-auto object-contain"
-            />
-          ) : (
-            // Default product chrome — Nightwork logo on dark nav background.
-            // Plain <img> (not next/image) because the SVG's amber brace +
-            // cream studs collapse at subpixel during Next's rasterization
-            // at ~28px tall. Browser-native SVG render preserves fills.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src="/brand/nightwork-logo-dark.svg"
-              alt={PUBLIC_APP_NAME}
-              style={{ width: "auto" }}
-              className="h-8 w-auto group-hover:opacity-80 transition-opacity"
-            />
+        <Link href="/" className="flex items-center gap-3 group shrink-0">
+          {/* Nightwork wordmark — always present. Cream variant reads clean on
+              the dark nav. Plain <img> avoids next/image rasterization artifacts
+              on the wordmark's fine underbeam gradient at nav scale. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/nightwork-wordmark.svg"
+            alt={PUBLIC_APP_NAME}
+            className="h-5 w-auto md:h-6 group-hover:opacity-80 transition-opacity"
+          />
+          {logoUrl && (
+            <>
+              <span
+                aria-hidden="true"
+                className="hidden md:inline text-[rgba(247,245,236,0.35)] text-[14px] leading-none select-none"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                ×
+              </span>
+              {/* Tenant's uploaded logo — paid customization. Hidden on narrow
+                  mobile so the Nightwork wordmark stays legible. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                alt={brandName}
+                className="hidden md:block h-8 w-auto object-contain"
+              />
+            </>
           )}
         </Link>
 
