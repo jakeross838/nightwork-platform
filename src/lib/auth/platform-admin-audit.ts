@@ -4,6 +4,7 @@ export type PlatformAuditAction =
   | "impersonate_start"
   | "impersonate_end"
   | "impersonate_write"
+  | "impersonation_security_fail"
   | "org_extend_trial"
   | "org_mark_churned"
   | "org_unlock"

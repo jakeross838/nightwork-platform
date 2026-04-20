@@ -49,6 +49,7 @@ export async function updateSession(request: NextRequest) {
   scrubbed.delete("x-platform-admin-role");
   scrubbed.delete("x-impersonation-active");
   scrubbed.delete("x-impersonation-target-org");
+  scrubbed.delete("x-impersonation-admin-user-id");
 
   // Track any cookies Supabase wants to set during token refresh. We apply
   // them to the final response at the very end.
@@ -199,6 +200,10 @@ export async function updateSession(request: NextRequest) {
     scrubbed.set("x-org-role", "owner");
     scrubbed.set("x-impersonation-active", "1");
     scrubbed.set("x-impersonation-target-org", impersonationTargetOrg);
+    // Admin user id is the real signed-in user (we never swap auth
+    // identity — only the org context). Expose it explicitly so
+    // write handlers don't have to re-look it up from the session.
+    scrubbed.set("x-impersonation-admin-user-id", user!.id);
   } else if (membership) {
     scrubbed.set("x-org-id", membership.org_id);
     scrubbed.set("x-org-role", membership.role);

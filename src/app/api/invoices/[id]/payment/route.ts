@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 import { getOrgPaymentSchedule, scheduledPaymentDate } from "@/lib/payment-schedule";
 import { notifyRole, sendNotification } from "@/lib/notifications";
 import { updateWithLock, isLockConflict } from "@/lib/api/optimistic-lock";
@@ -34,7 +37,14 @@ export async function POST(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
     const body = (await request.json()) as Record<string, unknown>;
     const action = body.action as string;
     const expectedUpdatedAt = (body.expected_updated_at as string | undefined) || null;
@@ -142,6 +152,13 @@ export async function POST(
       } catch (err) {
         console.warn(`[payment schedule notify] ${err instanceof Error ? err.message : err}`);
       }
+      await logImpersonatedWrite(ctx, {
+        target_record_type: "invoice",
+        target_record_id: params.id,
+        details: { action, scheduled_payment_date: date },
+        route: `/api/invoices/${params.id}/payment`,
+        method: "POST",
+      });
       return NextResponse.json({ ok: true, scheduled_payment_date: date });
     }
 
@@ -182,6 +199,13 @@ export async function POST(
           payment_method,
           payment_reference,
         },
+      });
+      await logImpersonatedWrite(ctx, {
+        target_record_type: "invoice",
+        target_record_id: params.id,
+        details: { action, payment_amount, payment_method, payment_reference, payment_status: newPayStatus },
+        route: `/api/invoices/${params.id}/payment`,
+        method: "POST",
       });
       return NextResponse.json({ ok: true, payment_status: newPayStatus });
     }
@@ -224,6 +248,13 @@ export async function POST(
         action: "updated",
         details: { payment_reversed: true, prior_status: invoice.payment_status },
       });
+      await logImpersonatedWrite(ctx, {
+        target_record_type: "invoice",
+        target_record_id: params.id,
+        details: { action, prior_status: invoice.payment_status },
+        route: `/api/invoices/${params.id}/payment`,
+        method: "POST",
+      });
       return NextResponse.json({ ok: true });
     }
 
@@ -245,6 +276,13 @@ export async function POST(
         });
         if (isLockConflict(updateResult)) return updateResult.response;
       }
+      await logImpersonatedWrite(ctx, {
+        target_record_type: "invoice",
+        target_record_id: params.id,
+        details: { action, updates },
+        route: `/api/invoices/${params.id}/payment`,
+        method: "POST",
+      });
       return NextResponse.json({ ok: true });
     }
 

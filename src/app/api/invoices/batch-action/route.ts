@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { recalcLinesAndPOs } from "@/lib/recalc";
 import { logStatusChange } from "@/lib/activity-log";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
 import { getCurrentMembership } from "@/lib/org/session";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -28,7 +31,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
     const body: BatchActionRequest = await request.json();
     const { action, invoice_ids, note } = body;
 
@@ -301,6 +311,16 @@ export async function POST(request: NextRequest) {
           extra: { action, batch: true },
         });
       }
+    }
+
+    for (const id of success) {
+      await logImpersonatedWrite(ctx, {
+        target_record_type: "invoice",
+        target_record_id: id,
+        details: { action, note, batch_size: success.length },
+        route: "/api/invoices/batch-action",
+        method: "POST",
+      });
     }
 
     return NextResponse.json({ success, failed });

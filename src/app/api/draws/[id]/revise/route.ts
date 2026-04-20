@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -33,7 +36,14 @@ export async function POST(
       /* no body — fine */
     }
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
 
     const { data: original, error: fetchError } = await supabase
       .from("draws")
@@ -153,6 +163,18 @@ export async function POST(
         revision_number: newRevisionNumber,
         inherited_invoices: invIds.length,
       },
+    });
+
+    await logImpersonatedWrite(ctx, {
+      target_record_type: "draw",
+      target_record_id: revision.id as string,
+      details: {
+        original_draw_id: params.id,
+        draw_number: revision.draw_number,
+        revision_number: revision.revision_number,
+      },
+      route: `/api/draws/${params.id}/revise`,
+      method: "POST",
     });
 
     return NextResponse.json({

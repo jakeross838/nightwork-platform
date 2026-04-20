@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +39,14 @@ export async function POST(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
     const formData = await request.formData();
     const file = formData.get("file");
     if (!(file instanceof File)) {
@@ -136,6 +146,18 @@ export async function POST(
           previously_uploaded: !!release.document_url,
         },
       },
+    });
+
+    await logImpersonatedWrite(ctx, {
+      target_record_type: "lien_release",
+      target_record_id: params.id,
+      details: {
+        path,
+        status_after: updates.status ?? release.status,
+        previously_uploaded: !!release.document_url,
+      },
+      route: `/api/lien-releases/${params.id}/upload`,
+      method: "POST",
     });
 
     return NextResponse.json({ ok: true, document_url: documentUrl, status: updates.status ?? release.status });

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +40,14 @@ export async function PUT(
  return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
  }
 
- const supabase = createServerClient();
+ const ctx = await getClientForRequest();
+ if (!ctx.ok) {
+   return NextResponse.json(
+     { error: `Impersonation rejected: ${ctx.reason}` },
+     { status: 401 }
+   );
+ }
+ const supabase = ctx.client;
  const body = (await request.json()) as { line_items: LineItemPayload[] };
  const payload = Array.isArray(body.line_items) ? body.line_items : [];
 
@@ -141,6 +151,14 @@ export async function PUT(
  return NextResponse.json({ error: upsertErr.message }, { status: 500 });
  }
  }
+
+ await logImpersonatedWrite(ctx, {
+   target_record_type: "invoice",
+   target_record_id: params.id,
+   details: { upserted: rows.length, deleted: toDelete.length },
+   route: `/api/invoices/${params.id}/line-items`,
+   method: "PUT",
+ });
 
  return NextResponse.json({ ok: true, count: rows.length, deleted: toDelete.length });
  } catch (err) {

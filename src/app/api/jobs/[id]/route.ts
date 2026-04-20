@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
 import { canDeleteJob, formatBlockers } from "@/lib/deletion-guards";
 import { logActivity } from "@/lib/activity-log";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +24,9 @@ export const DELETE = withApiError(
     if (!membership) throw new ApiError("Not authenticated", 401);
     if (!["owner", "admin"].includes(membership.role)) throw new ApiError("Forbidden", 403);
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) throw new ApiError(`Impersonation rejected: ${ctx.reason}`, 401);
+    const supabase = ctx.client;
     const { data: { user } } = await supabase.auth.getUser();
 
     const guard = await canDeleteJob(params.id);
@@ -53,6 +58,14 @@ export const DELETE = withApiError(
       entity_type: "job",
       entity_id: params.id,
       action: "deleted",
+    });
+
+    await logImpersonatedWrite(ctx, {
+      target_record_type: "job",
+      target_record_id: params.id,
+      details: { soft_deleted: true },
+      route: `/api/jobs/${params.id}`,
+      method: "DELETE",
     });
 
     return NextResponse.json({ ok: true });

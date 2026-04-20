@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
+import {
+  getClientForRequest,
+  logImpersonatedWrite,
+} from "@/lib/auth/impersonation-client";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +23,14 @@ export async function POST(request: NextRequest) {
     }
     const orgId = membership.org_id;
 
-    const supabase = createServerClient();
+    const ctx = await getClientForRequest();
+    if (!ctx.ok) {
+      return NextResponse.json(
+        { error: `Impersonation rejected: ${ctx.reason}` },
+        { status: 401 }
+      );
+    }
+    const supabase = ctx.client;
     const body = (await request.json()) as { ids?: string[]; action?: string };
     const ids = body.ids ?? [];
     if (ids.length === 0) {
@@ -69,6 +79,15 @@ export async function POST(request: NextRequest) {
       action: "updated",
       details: { bulk_lien_release_action: body.action, count: ids.length },
     });
+    for (const id of ids) {
+      await logImpersonatedWrite(ctx, {
+        target_record_type: "lien_release",
+        target_record_id: id,
+        details: { action: body.action, batch_size: ids.length },
+        route: "/api/lien-releases/bulk",
+        method: "POST",
+      });
+    }
     return NextResponse.json({ ok: true, updated: ids.length });
   } catch (err) {
     return NextResponse.json(
