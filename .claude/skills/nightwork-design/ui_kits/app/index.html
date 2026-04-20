@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nightwork — App UI kit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  :root {
+    --nw-teal: #3F5862; --nw-teal-hover: #2F4850;
+    --nw-brass: #E89A2B; --nw-amber: #E65100;
+    --nw-cream: #F5EDD8; --nw-page: #F7F5ED;
+    --nw-subtle: #F5F5F5; --nw-border: #E8E8E8;
+    --nw-text-primary: #3F5862; --nw-text-body: #3F5862; --nw-text-secondary: #878787;
+    --nw-status-success: #2E7D32; --nw-status-warning: #E89A2B; --nw-status-danger: #c0392b;
+    --nw-display: "Century Gothic", "URW Gothic", "ITC Avant Garde Gothic", "Futura", "Montserrat", system-ui, sans-serif;
+    --nw-sans: "Inter", system-ui, -apple-system, sans-serif;
+    --nw-body: "Inter", system-ui, -apple-system, sans-serif;
+    --nw-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+  html,body { margin:0; background: var(--nw-page); font-family: var(--nw-body); color: var(--nw-text-primary); }
+  * { box-sizing: border-box; }
+  button:focus, input:focus, select:focus { outline: 2px solid rgba(63,88,98,.3); outline-offset: 1px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="Shell.jsx"></script>
+<script type="text/babel" src="Dashboard.jsx"></script>
+<script type="text/babel" src="DrawWizard.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+  function App() {
+    const [view, setView] = React.useState("dashboard"); // dashboard | draw-wizard
+    const [selectedJob, setSelectedJob] = React.useState("1");
+
+    if (view === "draw-wizard") {
+      return <>
+        <NavBar active="Financial" />
+        <DrawWizard onExit={() => setView("dashboard")} />
+      </>;
+    }
+
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        <NavBar active="Dashboard" />
+        <div style={{ display: "flex", flex: 1 }}>
+          <JobSidebar selectedId={selectedJob} onSelect={setSelectedJob} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Dashboard />
+            <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 24px 24px" }}>
+              <button onClick={() => setView("draw-wizard")} style={{
+                padding: "10px 20px", background: "var(--nw-teal)", color: "#fff",
+                fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase",
+                fontWeight: 500, border: "none", cursor: "pointer"
+              }}>→ Open Draw wizard (prototype flow)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

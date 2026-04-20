@@ -1,0 +1,19 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Text colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px;background:#fff;font-family:var(--font-body);}
+  .stack{display:flex;flex-direction:column;gap:16px;}
+  .row{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--border-default);padding-bottom:12px;}
+  .sample{font-size:20px;min-width:180px;}
+  .token{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-family:var(--font-sans);min-width:180px;}
+  .hex{font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);}
+</style></head>
+<body>
+<div class="stack">
+  <div class="row"><span class="sample" style="color:#3F5862">Primary text · Century Gothic</span><span class="token">text-primary</span><span class="hex">#3F5862</span></div>
+  <div class="row"><span class="sample" style="color:#3D3D3D">Body copy reads here — 15px default.</span><span class="token">text-body</span><span class="hex">#3D3D3D</span></div>
+  <div class="row"><span class="sample" style="color:#878787">Labels, meta, timestamps</span><span class="token">text-secondary</span><span class="hex">#878787</span></div>
+  <div class="row" style="background:#0F1E36;padding:10px 14px;border:none;"><span class="sample" style="color:#FFFFFF">Inverse on dark chrome</span><span class="token" style="color:rgba(255,255,255,.6)">text-inverse</span><span class="hex" style="color:rgba(255,255,255,.6)">#FFFFFF</span></div>
+</div>
+</body></html>

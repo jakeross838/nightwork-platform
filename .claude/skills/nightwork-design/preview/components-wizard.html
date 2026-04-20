@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Wizard steps</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px;background:#F7F5ED;font-family:var(--font-sans);}
+  .wrap{display:flex;gap:8px;flex-wrap:wrap;}
+  .step{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;font-weight:500;}
+  .active{background:#3F5862;color:#fff;}
+  .done{background:#E8E8E8;color:#3F5862;}
+  .todo{background:#F5F5F5;color:#878787;}
+  .n{font-family:var(--font-mono);}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="step done"><span class="n">Step 1 of 4</span><span>·</span><span>Select Job</span></div>
+  <div class="step active"><span class="n">Step 2 of 4</span><span>·</span><span>Period</span></div>
+  <div class="step todo"><span class="n">Step 3 of 4</span><span>·</span><span>Review Line Items</span></div>
+  <div class="step todo"><span class="n">Step 4 of 4</span><span>·</span><span>Summary &amp; Submit</span></div>
+</div>
+</body></html>

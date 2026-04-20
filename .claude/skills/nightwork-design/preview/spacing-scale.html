@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spacing scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px;background:#fff;font-family:var(--font-sans);}
+  .row{display:flex;align-items:center;gap:16px;padding:6px 0;}
+  .row + .row{border-top:1px solid var(--border-default);}
+  .name{min-width:70px;font-size:11px;color:var(--text-primary);font-family:var(--font-mono);font-weight:600;}
+  .bar{background:#3F5862;height:12px;}
+  .px{font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);min-width:50px;}
+  .use{font-size:11px;color:var(--text-secondary);}
+</style></head>
+<body>
+  <div class="row"><span class="name">space-1</span><span class="bar" style="width:4px"></span><span class="px">4px</span><span class="use">Icon-to-text gap · hairline</span></div>
+  <div class="row"><span class="name">space-2</span><span class="bar" style="width:8px"></span><span class="px">8px</span><span class="use">Tight stack inside chips</span></div>
+  <div class="row"><span class="name">space-3</span><span class="bar" style="width:12px"></span><span class="px">12px</span><span class="use">Card inner padding · row gap</span></div>
+  <div class="row"><span class="name">space-4</span><span class="bar" style="width:16px"></span><span class="px">16px</span><span class="use">Card padding · mobile outer</span></div>
+  <div class="row"><span class="name">space-6</span><span class="bar" style="width:24px"></span><span class="px">24px</span><span class="use">Desktop outer · feature card</span></div>
+  <div class="row"><span class="name">space-8</span><span class="bar" style="width:32px"></span><span class="px">32px</span><span class="use">Section spacing</span></div>
+</body></html>

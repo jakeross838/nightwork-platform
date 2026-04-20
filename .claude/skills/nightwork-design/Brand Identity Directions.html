@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nightwork — Beam A·01 × Ross Built palette</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:#0a0a0a;color:#ddd;font-family:"Inter",sans-serif;}
+  .page{padding:40px;max-width:1500px;margin:0 auto;}
+  h1{font-family:"Space Grotesk";font-size:30px;font-weight:500;color:#fff;margin:0 0 4px;letter-spacing:-0.02em;}
+  .lede{font-size:13px;color:#888;margin:0 0 12px;max-width:900px;line-height:1.65;}
+  .lede b{color:#ddd;font-weight:500;}
+  .swatches{display:flex;gap:10px;margin:12px 0 28px;flex-wrap:wrap;}
+  .sw{display:flex;align-items:center;gap:8px;border:1px solid #222;padding:6px 10px 6px 6px;background:#111;}
+  .sw .chip{width:28px;height:28px;border:1px solid rgba(255,255,255,0.08);}
+  .sw .nm{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.05em;color:#ddd;}
+  .sw .hex{font-family:"JetBrains Mono";font-size:10px;color:#666;}
+
+  .section-head{font-family:"Space Grotesk";font-weight:500;font-size:16px;color:#fff;margin:28px 0 10px;letter-spacing:-0.01em;display:flex;align-items:baseline;gap:12px;}
+  .section-head .mono{font-family:"JetBrains Mono";font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#666;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#222;border:1px solid #222;}
+  .opt{display:flex;flex-direction:column;min-height:300px;overflow:hidden;}
+  .hd{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:baseline;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#888;background:#111;}
+  .hd .n{font-weight:600;color:#fff;}
+  .hd .nm{color:#bbb;}
+  .hd .hex{color:#666;}
+
+  .modes{display:flex;flex:1;}
+  .mode{flex:1;padding:26px 28px 22px;display:flex;flex-direction:column;justify-content:space-between;position:relative;min-height:260px;}
+  .mtag{position:absolute;top:10px;right:12px;font-family:"JetBrains Mono";font-size:8px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.4;}
+
+  /* Dark uses Slate Tile #3B5864 as deep bg option, or pure night */
+  .dark{background:#0F1014;color:#F7F5EC;}
+  .dark-slate{background:#1A2830;color:#F7F5EC;}
+  .light{background:#F7F5EC;color:#3B5864;}   /* White Sand + Slate Tile text */
+
+  .mark{display:flex;flex-direction:column;gap:8px;}
+  .word{font-family:"Space Grotesk";font-weight:600;font-size:44px;letter-spacing:-0.04em;line-height:1;}
+  .rail{width:100%;height:6px;display:block;}
+  .slog{font-size:10.5px;letter-spacing:0.01em;opacity:0.72;margin-top:14px;}
+  .slog b{font-weight:500;opacity:1;}
+
+  .mini{margin-top:22px;padding-top:14px;border-top:1px solid;font-size:11px;}
+  .dark .mini, .dark-slate .mini{border-top-color:rgba(247,245,236,0.14);}
+  .light .mini{border-top-color:rgba(59,88,100,0.18);}
+  .mini .row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+  .mini .lab{font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.1em;text-transform:uppercase;opacity:0.6;}
+  .mini .kpi{font-family:"Space Grotesk";font-weight:600;font-size:22px;letter-spacing:-0.02em;}
+  .mini .val{font-family:"JetBrains Mono";font-variant-numeric:tabular-nums;}
+  .pill{display:inline-block;padding:2px 7px;font-family:"JetBrains Mono";font-size:9px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid currentColor;}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Beam A·01 × Ross Built palette</h1>
+  <p class="lede">Pulled the palette straight from <b>Ross Built's 2022 brand guide</b> (North Street Creative) and mapped it onto the Beam A·01 lockup. The guide's coastal Florida palette gives us four blue values + warm off-white — a quieter, more upmarket accent system than the lamp-amber direction. Same wordmark, same fade rail; only the accent hue changes.</p>
+
+  <div class="swatches">
+    <div class="sw"><span class="chip" style="background:#3B5864"></span><span class="nm">Slate Tile</span><span class="hex">#3B5864</span></div>
+    <div class="sw"><span class="chip" style="background:#4E7A8C"></span><span class="nm">Gulf Blue</span><span class="hex">#4E7A8C</span></div>
+    <div class="sw"><span class="chip" style="background:#5B8699"></span><span class="nm">Stone Blue</span><span class="hex">#5B8699</span></div>
+    <div class="sw"><span class="chip" style="background:#CBD8DB"></span><span class="nm">Oceanside</span><span class="hex">#CBD8DB</span></div>
+    <div class="sw"><span class="chip" style="background:#F7F5EC;border-color:#333"></span><span class="nm">White Sand</span><span class="hex">#F7F5EC</span></div>
+  </div>
+
+  <div class="section-head">8 accent options from the Ross Built palette<span class="mono">dark + light · same lockup</span></div>
+
+  <div class="grid">
+
+    <!-- 01 Stone Blue (primary coastal hue) -->
+    <div class="opt">
+      <div class="hd"><span><span class="n">01</span> <span class="nm">Stone Blue</span> <span class="hex">— the primary Ross Built hue</span></span><span class="hex">#5B8699 / #3B5864</span></div>
+      <div class="modes">
+        <div class="mode dark"><span class="mtag">Dark</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r01d" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r01d)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#5B8699">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#5B8699">3 OPEN</span></div></div>
+        </div>
+        <div class="mode light"><span class="mtag">Light</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r01l" x1="0" x2="1"><stop offset="0" stop-color="#3B5864"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r01l)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#3B5864">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#3B5864">3 OPEN</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 Gulf Blue (mid) -->
+    <div class="opt">
+      <div class="hd"><span><span class="n">02</span> <span class="nm">Gulf Blue</span> <span class="hex">— body-text hue, slightly greener</span></span><span class="hex">#4E7A8C / #3B5864</span></div>
+      <div class="modes">
+        <div class="mode dark"><span class="mtag">Dark</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r02d" x1="0" x2="1"><stop offset="0" stop-color="#4E7A8C"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r02d)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#4E7A8C">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#4E7A8C">3 OPEN</span></div></div>
+        </div>
+        <div class="mode light"><span class="mtag">Light</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r02l" x1="0" x2="1"><stop offset="0" stop-color="#4E7A8C"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r02l)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#4E7A8C">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#4E7A8C">3 OPEN</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 Slate Tile (deepest) -->
+    <div class="opt">
+      <div class="hd"><span><span class="n">03</span> <span class="nm">Slate Tile</span> <span class="hex">— deepest, most reserved</span></span><span class="hex">#3B5864</span></div>
+      <div class="modes">
+        <div class="mode dark"><span class="mtag">Dark</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r03d" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r03d)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#5B8699">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#5B8699">3 OPEN</span></div></div>
+        </div>
+        <div class="mode light"><span class="mtag">Light</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r03l" x1="0" x2="1"><stop offset="0" stop-color="#3B5864"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r03l)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#3B5864">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#3B5864">3 OPEN</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 Oceanside -->
+    <div class="opt">
+      <div class="hd"><span><span class="n">04</span> <span class="nm">Oceanside</span> <span class="hex">— pale, soft sea foam</span></span><span class="hex">#CBD8DB / #4E7A8C</span></div>
+      <div class="modes">
+        <div class="mode dark"><span class="mtag">Dark</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r04d" x1="0" x2="1"><stop offset="0" stop-color="#CBD8DB"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r04d)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#CBD8DB">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#CBD8DB">3 OPEN</span></div></div>
+        </div>
+        <div class="mode light"><span class="mtag">Light</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r04l" x1="0" x2="1"><stop offset="0" stop-color="#4E7A8C"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r04l)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#4E7A8C">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#4E7A8C">3 OPEN</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 Slate Tile on Slate Tile (brand-immersive dark) -->
+    <div class="opt">
+      <div class="hd"><span><span class="n">05</span> <span class="nm">Slate immersive</span> <span class="hex">— dark uses Slate Tile as BG</span></span><span class="hex">bg #1A2830 · accent #5B8699</span></div>
+      <div class="modes">
+        <div class="mode dark-slate"><span class="mtag">Dark</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r05d" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r05d)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#5B8699">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#5B8699">3 OPEN</span></div></div>
+        </div>
+        <div class="mode light"><span class="mtag">Light</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r05l" x1="0" x2="1"><stop offset="0" stop-color="#3B5864"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r05l)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#3B5864">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#3B5864">3 OPEN</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 Stone → Oceanside gradient (the full coastal gradient) -->
+    <div class="opt">
+      <div class="hd"><span><span class="n">06</span> <span class="nm">Coastal gradient</span> <span class="hex">— Stone Blue → Oceanside fade</span></span><span class="hex">#5B8699 → #CBD8DB</span></div>
+      <div class="modes">
+        <div class="mode dark"><span class="mtag">Dark</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r06d" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="0.5" stop-color="#CBD8DB" stop-opacity="0.8"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r06d)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#5B8699">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#5B8699">3 OPEN</span></div></div>
+        </div>
+        <div class="mode light"><span class="mtag">Light</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r06l" x1="0" x2="1"><stop offset="0" stop-color="#3B5864"/><stop offset="0.55" stop-color="#4E7A8C" stop-opacity="0.6"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r06l)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#3B5864">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#3B5864">3 OPEN</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 07 Dusk Stone — shift hue slightly warmer/more saturated toward dusk to hint at 'nightwork' -->
+    <div class="opt">
+      <div class="hd"><span><span class="n">07</span> <span class="nm">Dusk Stone</span> <span class="hex">— Stone Blue shifted toward dusk/violet</span></span><span class="hex">#6A7F99 / #465E77</span></div>
+      <div class="modes">
+        <div class="mode dark"><span class="mtag">Dark</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r07d" x1="0" x2="1"><stop offset="0" stop-color="#6A7F99"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r07d)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#6A7F99">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#6A7F99">3 OPEN</span></div></div>
+        </div>
+        <div class="mode light"><span class="mtag">Light</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r07l" x1="0" x2="1"><stop offset="0" stop-color="#465E77"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r07l)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#465E77">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#465E77">3 OPEN</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 08 Stone Blue + warm Sand spark — dual accent where cream is earned -->
+    <div class="opt">
+      <div class="hd"><span><span class="n">08</span> <span class="nm">Stone + Sand spark</span> <span class="hex">— Stone Blue with White Sand highlight</span></span><span class="hex">#5B8699 + #F7F5EC highlight</span></div>
+      <div class="modes">
+        <div class="mode dark"><span class="mtag">Dark</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r08d" x1="0" x2="1"><stop offset="0" stop-color="#5B8699"/><stop offset="0.45" stop-color="#5B8699"/><stop offset="0.55" stop-color="#F7F5EC"/><stop offset="1" stop-color="#F7F5EC" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r08d)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#5B8699">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#5B8699">3 OPEN</span></div></div>
+        </div>
+        <div class="mode light"><span class="mtag">Light</span>
+          <div class="mark">
+            <div class="word">nightwork</div>
+            <svg class="rail" viewBox="0 0 260 6" preserveAspectRatio="none"><defs><linearGradient id="r08l" x1="0" x2="1"><stop offset="0" stop-color="#3B5864"/><stop offset="0.45" stop-color="#3B5864"/><stop offset="0.55" stop-color="#4E7A8C"/><stop offset="1" stop-color="#3B5864" stop-opacity="0"/></linearGradient></defs><rect x="0" y="2" width="260" height="2" fill="url(#r08l)"/></svg>
+            <div class="slog"><b>Nightwork</b> makes building <b>lightwork</b>.</div>
+          </div>
+          <div class="mini"><div class="row"><span class="lab">Payments due</span><span class="kpi" style="color:#3B5864">$184,250</span></div><div class="row"><span class="lab">Draws open</span><span class="pill" style="color:#3B5864">3 OPEN</span></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:32px;padding:16px 20px;border:1px solid #222;background:#141414;font-size:12px;color:#999;line-height:1.7;max-width:940px;">
+    <b style="color:#fff;font-weight:500">Pulled from:</b> Ross Built brand guide, Dec 2022 (North Street Creative). Slate Tile <span style="font-family:JetBrains Mono;color:#5B8699">#3B5864</span>, Stone Blue <span style="font-family:JetBrains Mono;color:#5B8699">#5B8699</span>, Gulf Blue <span style="font-family:JetBrains Mono;color:#5B8699">#4E7A8C</span>, Oceanside <span style="font-family:JetBrains Mono;color:#5B8699">#CBD8DB</span>, White Sand <span style="font-family:JetBrains Mono;color:#5B8699">#F7F5EC</span>. Logo PNG + SVG copied into <span style="font-family:JetBrains Mono">raw/</span>. Ross Built typeface is Proxima Nova (Nunito Sans is the free fallback) — we can swap Space Grotesk for that later if you want full alignment.
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nightwork — Brand Explorations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Jost:wght@400;500;600&family=Instrument+Serif&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #1a1a1a; color: #ddd; font-family: "Inter", system-ui, sans-serif; }
+  .canvas { padding: 32px; max-width: 1400px; margin: 0 auto; }
+  .canvas > header { margin-bottom: 24px; }
+  .canvas > header h1 { font-family: "Instrument Serif", serif; font-size: 36px; margin: 0; font-weight: 400; color: #fff; letter-spacing: -0.01em; }
+  .canvas > header p { font-size: 13px; color: #999; margin: 4px 0 0; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+  .option { background: #222; border: 1px solid #333; overflow: hidden; }
+  .option-head { padding: 14px 18px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .option-head .name { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; font-weight: 500; }
+  .option-head .tag { font-size: 10px; color: #888; letter-spacing: 0.06em; }
+  .option-head .swatches { display: flex; gap: 4px; }
+  .option-head .swatches span { width: 14px; height: 14px; display: inline-block; }
+  .option-desc { padding: 10px 18px; font-size: 11.5px; color: #aaa; border-bottom: 1px solid #333; line-height: 1.5; }
+  .option-body { padding: 0; }
+
+  /* The inner dashboard — resets to each option's variables */
+  .demo {
+    font-family: var(--f-body, "Inter", sans-serif);
+    background: var(--bg, #F7F5ED);
+    color: var(--text-p, #3F5862);
+    padding: 0;
+    min-height: 420px;
+  }
+  .demo .nav { background: var(--chrome, #3F5862); color: var(--chrome-fg, #fff); padding: 10px 18px; display: flex; align-items: center; justify-content: space-between; border-top: var(--chrome-top, 3px solid #3F5862); }
+  .demo .nav .logo { font-family: var(--f-display, "Inter"); font-size: 16px; font-weight: var(--logo-w, 400); letter-spacing: var(--logo-tr, 0.02em); color: var(--logo-c, #fff); }
+  .demo .nav .logo .mark { color: var(--accent, #E89A2B); margin-right: 4px; font-weight: 600; }
+  .demo .nav .tabs { display: flex; gap: 4px; }
+  .demo .nav .tab { color: rgba(255,255,255,0.6); padding: 4px 10px; font-size: 12px; }
+  .demo .nav .tab.active { color: var(--chrome-fg, #fff); position: relative; }
+  .demo .nav .tab.active::after { content:""; position: absolute; bottom:-6px; left:0; right:0; height:1px; background: var(--accent-underline, #fff); }
+  .demo .nav .right { font-size: 11px; color: rgba(255,255,255,0.7); }
+
+  .demo .content { padding: 20px; }
+  .demo .eyebrow { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-s, #878787); font-weight: 500; font-family: var(--f-body, "Inter"); }
+  .demo h2 { font-family: var(--f-display, "Inter"); font-weight: var(--h-w, 400); font-size: 28px; letter-spacing: var(--h-tr, -0.02em); color: var(--text-p); margin: 4px 0 2px; line-height: 1.1; }
+  .demo .sub { font-size: 12px; color: var(--text-s, #878787); margin-bottom: 16px; }
+
+  .demo .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .demo .metric { background: var(--card, #fff); border: 1px solid var(--border, #E8E8E8); border-radius: var(--radius, 0); padding: 12px; }
+  .demo .metric.primary { border: var(--metric-primary-border, 1px solid var(--border, #E8E8E8)); background: var(--metric-primary-bg, var(--card, #fff)); }
+  .demo .metric .m-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-s, #878787); font-weight: 600; }
+  .demo .metric .m-value { font-family: var(--f-num, var(--f-display, "Inter")); font-size: 26px; font-weight: var(--num-w, 400); color: var(--text-p); margin-top: 8px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; }
+  .demo .metric .m-chip { display: inline-block; font-size: 9px; padding: 1px 5px; border: 1px solid var(--accent, #E89A2B); color: var(--accent, #E89A2B); letter-spacing: 0.08em; text-transform: uppercase; border-radius: var(--chip-radius, 0); font-weight: 700; }
+
+  .demo .atn { background: var(--card, #fff); border: 1px solid var(--border, #E8E8E8); border-radius: var(--radius, 0); }
+  .demo .atn-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border, #E8E8E8); }
+  .demo .atn-row:last-child { border: none; }
+  .demo .atn-row .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .demo .atn-row .t { font-size: 13px; color: var(--text-p); flex: 1; font-weight: 500; }
+  .demo .atn-row .a { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent, #E89A2B); font-weight: 700; padding: 1px 5px; border: 1px solid var(--accent, #E89A2B); border-radius: var(--chip-radius, 0); }
+
+  .demo .cta-bar { margin-top: 14px; display: flex; gap: 8px; align-items: center; }
+  .demo .btn { padding: 8px 16px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; border: none; cursor: pointer; border-radius: var(--btn-radius, 0); }
+  .demo .btn.pri { background: var(--btn-pri-bg, var(--accent, #E89A2B)); color: var(--btn-pri-fg, #fff); }
+  .demo .btn.sec { background: transparent; color: var(--text-p); border: 1px solid var(--border, #E8E8E8); }
+
+  /* =============================================================
+     SCHEMES
+     ============================================================= */
+
+  /* 01 — Current (baseline) */
+  .scheme-00 .demo {
+    --bg: #F7F5ED; --card: #fff; --border: #E8E8E8;
+    --chrome: #3F5862; --chrome-top: 3px solid #3F5862; --chrome-fg: #fff;
+    --text-p: #3F5862; --text-s: #878787;
+    --accent: #E89A2B; --accent-underline: #fff;
+    --f-display: "Inter"; --f-body: "Inter"; --f-num: "Inter";
+    --h-w: 600;
+  }
+
+  /* 02 — Monochrome rigor (Linear / Vercel energy) */
+  .scheme-01 .demo {
+    --bg: #fff; --card: #fff; --border: #E5E5E5;
+    --chrome: #0A0A0A; --chrome-top: 0; --chrome-fg: #fff;
+    --text-p: #0A0A0A; --text-s: #737373;
+    --accent: #0A0A0A; --accent-underline: #fff;
+    --f-display: "Inter"; --f-body: "Inter"; --f-num: "JetBrains Mono";
+    --h-w: 600;
+    --btn-pri-bg: #0A0A0A; --btn-pri-fg: #fff;
+  }
+  .scheme-01 .demo .logo .mark { color: #0A0A0A; }
+  .scheme-01 .demo .metric.primary { background: #0A0A0A; color: #fff; }
+  .scheme-01 .demo .metric.primary .m-label { color: rgba(255,255,255,0.6); }
+  .scheme-01 .demo .metric.primary .m-value { color: #fff; }
+
+  /* 03 — Ink & iron (charcoal chrome + single electric blue) */
+  .scheme-02 .demo {
+    --bg: #FAFAF9; --card: #fff; --border: #E7E5E4;
+    --chrome: #1C1917; --chrome-top: 0; --chrome-fg: #FAFAF9;
+    --text-p: #1C1917; --text-s: #78716C;
+    --accent: #1E40AF; --accent-underline: #60A5FA;
+    --f-display: "Inter"; --f-body: "Inter"; --f-num: "JetBrains Mono";
+    --h-w: 600;
+    --btn-pri-bg: #1C1917; --btn-pri-fg: #FAFAF9;
+  }
+  .scheme-02 .demo .logo .mark { color: #60A5FA; }
+
+  /* 04 — Blueprint (cool paper, navy chrome, cyan accent) */
+  .scheme-03 .demo {
+    --bg: #F2F5F7; --card: #fff; --border: #D9E2E8;
+    --chrome: #0E2A47; --chrome-top: 0; --chrome-fg: #fff;
+    --text-p: #0E2A47; --text-s: #5E7180;
+    --accent: #0891B2; --accent-underline: #22D3EE;
+    --f-display: "Jost"; --f-body: "Inter"; --f-num: "JetBrains Mono";
+    --h-w: 500;
+    --btn-pri-bg: #0E2A47; --btn-pri-fg: #fff;
+  }
+  .scheme-03 .demo .logo .mark { color: #22D3EE; }
+
+  /* 05 — Forest ledger (deep green = money + build) */
+  .scheme-04 .demo {
+    --bg: #F7F5ED; --card: #fff; --border: #E8E4D6;
+    --chrome: #1F3A2E; --chrome-top: 0; --chrome-fg: #F7F5ED;
+    --text-p: #1F3A2E; --text-s: #6B7065;
+    --accent: #1F3A2E; --accent-underline: #C8B273;
+    --f-display: "Jost"; --f-body: "Inter"; --f-num: "JetBrains Mono";
+    --h-w: 500;
+    --btn-pri-bg: #1F3A2E; --btn-pri-fg: #F7F5ED;
+  }
+  .scheme-04 .demo .logo .mark { color: #C8B273; }
+  .scheme-04 .demo .metric.primary { background: #1F3A2E; color: #F7F5ED; }
+  .scheme-04 .demo .metric.primary .m-label { color: rgba(247,245,237,0.7); }
+  .scheme-04 .demo .metric.primary .m-value { color: #F7F5ED; }
+  .scheme-04 .demo .atn-row .a { border-color: #C8B273; color: #8A6E1F; }
+
+  /* 06 — Oxblood + paper (serious, old-money ledger) */
+  .scheme-05 .demo {
+    --bg: #F5F1E8; --card: #fff; --border: #E3DDC9;
+    --chrome: #2B1410; --chrome-top: 0; --chrome-fg: #F5F1E8;
+    --text-p: #2B1410; --text-s: #857B6A;
+    --accent: #8B2A2A; --accent-underline: #D97757;
+    --f-display: "Instrument Serif"; --f-body: "Inter"; --f-num: "IBM Plex Mono";
+    --h-w: 400; --h-tr: 0;
+    --num-w: 400;
+    --btn-pri-bg: #2B1410; --btn-pri-fg: #F5F1E8;
+  }
+  .scheme-05 .demo h2 { font-family: "Instrument Serif"; font-size: 34px; letter-spacing: 0; }
+  .scheme-05 .demo .logo { font-family: "Instrument Serif"; font-weight: 400; }
+  .scheme-05 .demo .logo .mark { color: #D97757; }
+
+  /* 07 — High contrast bone (Ramp-style warm neutrals) */
+  .scheme-06 .demo {
+    --bg: #F5F3EE; --card: #fff; --border: #E0DBCC;
+    --chrome: #fff; --chrome-top: 0; --chrome-fg: #1A1A1A;
+    --text-p: #1A1A1A; --text-s: #8B8680;
+    --accent: #1A1A1A; --accent-underline: #1A1A1A;
+    --f-display: "Jost"; --f-body: "Inter"; --f-num: "JetBrains Mono";
+    --h-w: 500;
+    --btn-pri-bg: #1A1A1A; --btn-pri-fg: #fff;
+  }
+  .scheme-06 .demo .nav { border-bottom: 1px solid #E0DBCC; }
+  .scheme-06 .demo .nav .tab { color: #8B8680; }
+  .scheme-06 .demo .nav .tab.active { color: #1A1A1A; }
+  .scheme-06 .demo .nav .tab.active::after { background: #1A1A1A; }
+  .scheme-06 .demo .nav .right { color: #8B8680; }
+  .scheme-06 .demo .logo .mark { color: #1A1A1A; }
+
+  /* 08 — Brass & slate (brass = gold accent + cool slate) */
+  .scheme-07 .demo {
+    --bg: #F4F5F7; --card: #fff; --border: #DDE1E6;
+    --chrome: #212A36; --chrome-top: 0; --chrome-fg: #fff;
+    --text-p: #212A36; --text-s: #6B7280;
+    --accent: #B08D3A; --accent-underline: #D4AC55;
+    --f-display: "Jost"; --f-body: "Inter"; --f-num: "JetBrains Mono";
+    --h-w: 600;
+    --btn-pri-bg: #212A36; --btn-pri-fg: #fff;
+  }
+  .scheme-07 .demo .logo .mark { color: #D4AC55; }
+
+  /* 09 — Terra/rust (warm terracotta replaces amber) */
+  .scheme-08 .demo {
+    --bg: #F7F2EA; --card: #fff; --border: #E8DECD;
+    --chrome: #3C2E26; --chrome-top: 0; --chrome-fg: #F7F2EA;
+    --text-p: #3C2E26; --text-s: #8C7B6C;
+    --accent: #B84A1E; --accent-underline: #D97757;
+    --f-display: "Jost"; --f-body: "Inter"; --f-num: "JetBrains Mono";
+    --h-w: 500;
+    --btn-pri-bg: #3C2E26; --btn-pri-fg: #F7F2EA;
+  }
+  .scheme-08 .demo .logo .mark { color: #B84A1E; }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <header>
+    <h1>Nightwork — eight brand directions</h1>
+    <p>Same dashboard, same copy, same components. Only palette + type + chrome change. Tell me which ones to keep exploring and I'll push those further.</p>
+  </header>
+  <div class="grid">
+    <div class="option scheme-00">
+      <div class="option-head"><span class="name">00 · Current (baseline)</span><span class="swatches"><span style="background:#F7F5ED"></span><span style="background:#3F5862"></span><span style="background:#E89A2B"></span></span></div>
+      <div class="option-desc"><b>Teal chrome · cream page · amber accent.</b> The version you don't love. Here for comparison.</div>
+      <div class="option-body"><div id="d0" class="demo"></div></div>
+    </div>
+
+    <div class="option scheme-01">
+      <div class="option-head"><span class="name">01 · Monochrome rigor</span><span class="swatches"><span style="background:#fff;border:1px solid #333"></span><span style="background:#0A0A0A"></span><span style="background:#0A0A0A"></span></span></div>
+      <div class="option-desc"><b>Pure white + black. No accent.</b> Linear / Vercel energy. Status colors do all the talking. Feels the most serious and timeless; also the most austere.</div>
+      <div class="option-body"><div id="d1" class="demo"></div></div>
+    </div>
+
+    <div class="option scheme-02">
+      <div class="option-head"><span class="name">02 · Ink &amp; iron</span><span class="swatches"><span style="background:#FAFAF9"></span><span style="background:#1C1917"></span><span style="background:#1E40AF"></span></span></div>
+      <div class="option-desc"><b>Warm stone page · near-black chrome · deep blue accent.</b> Technical, precise. Blue only lives in links, numbers, primary CTAs.</div>
+      <div class="option-body"><div id="d2" class="demo"></div></div>
+    </div>
+
+    <div class="option scheme-03">
+      <div class="option-head"><span class="name">03 · Blueprint</span><span class="swatches"><span style="background:#F2F5F7"></span><span style="background:#0E2A47"></span><span style="background:#0891B2"></span></span></div>
+      <div class="option-desc"><b>Cool paper · deep navy chrome · cyan accent.</b> Leans construction-blueprint. Feels trustworthy + institutional.</div>
+      <div class="option-body"><div id="d3" class="demo"></div></div>
+    </div>
+
+    <div class="option scheme-04">
+      <div class="option-head"><span class="name">04 · Forest ledger</span><span class="swatches"><span style="background:#F7F5ED"></span><span style="background:#1F3A2E"></span><span style="background:#C8B273"></span></span></div>
+      <div class="option-desc"><b>Keep the cream · deep forest green chrome · muted brass accent.</b> Money + build together. Feels like a fountain-pen ledger.</div>
+      <div class="option-body"><div id="d4" class="demo"></div></div>
+    </div>
+
+    <div class="option scheme-05">
+      <div class="option-head"><span class="name">05 · Oxblood &amp; paper</span><span class="swatches"><span style="background:#F5F1E8"></span><span style="background:#2B1410"></span><span style="background:#8B2A2A"></span></span></div>
+      <div class="option-desc"><b>Warm off-white · near-black brown chrome · oxblood accent · serif display.</b> Old-money ledger. Most distinctive here; farthest from "SaaS".</div>
+      <div class="option-body"><div id="d5" class="demo"></div></div>
+    </div>
+
+    <div class="option scheme-06">
+      <div class="option-head"><span class="name">06 · Bone &amp; black</span><span class="swatches"><span style="background:#F5F3EE"></span><span style="background:#fff;border:1px solid #333"></span><span style="background:#1A1A1A"></span></span></div>
+      <div class="option-desc"><b>Warm bone page · white chrome · all-black text &amp; CTAs.</b> Ramp-style. Quiet and expensive; no colored accents at all.</div>
+      <div class="option-body"><div id="d6" class="demo"></div></div>
+    </div>
+
+    <div class="option scheme-07">
+      <div class="option-head"><span class="name">07 · Brass &amp; slate</span><span class="swatches"><span style="background:#F4F5F7"></span><span style="background:#212A36"></span><span style="background:#B08D3A"></span></span></div>
+      <div class="option-desc"><b>Cool neutral page · slate-blue chrome · brass accent.</b> Swaps the orange for a warmer, muted gold. Closer to current chrome, new warmth.</div>
+      <div class="option-body"><div id="d7" class="demo"></div></div>
+    </div>
+
+    <div class="option scheme-08">
+      <div class="option-head"><span class="name">08 · Terra &amp; oak</span><span class="swatches"><span style="background:#F7F2EA"></span><span style="background:#3C2E26"></span><span style="background:#B84A1E"></span></span></div>
+      <div class="option-desc"><b>Warm sand · dark oak chrome · terracotta accent.</b> Earthy, construction-honest. Deeper, richer take on an orange — still an "orange" family, but oxidized, not fluorescent.</div>
+      <div class="option-body"><div id="d8" class="demo"></div></div>
+    </div>
+  </div>
+</div>
+
+<template id="demo-template">
+  <div class="nav">
+    <div class="logo"><span class="mark">N</span>nightwork</div>
+    <div class="tabs"><span class="tab active">Dashboard</span><span class="tab">Financial</span><span class="tab">Admin</span></div>
+    <div class="right">Jake · ADMIN</div>
+  </div>
+  <div class="content">
+    <div class="eyebrow">Good morning</div>
+    <h2>Seven items need your attention</h2>
+    <div class="sub">Across 14 active jobs · updated 2:41 PM</div>
+
+    <div class="metrics">
+      <div class="metric primary">
+        <div class="m-label">Payments Due</div>
+        <div class="m-value">$184,250</div>
+      </div>
+      <div class="metric">
+        <div class="m-label">Pending Invoices</div>
+        <div class="m-value">23 <span class="m-chip">7d</span></div>
+      </div>
+      <div class="metric">
+        <div class="m-label">Draws in Progress</div>
+        <div class="m-value">3</div>
+      </div>
+    </div>
+
+    <div class="atn">
+      <div class="atn-row"><span class="dot" style="background:#c0392b"></span><span class="t">Invoice #INV-04821 over budget</span><span class="a">12d</span></div>
+      <div class="atn-row"><span class="dot" style="background:#E89A2B"></span><span class="t">Draw #7 awaiting approval</span><span class="a">5d</span></div>
+      <div class="atn-row"><span class="dot" style="background:#2E7D32"></span><span class="t">Chase OpsAcct reconciled</span></div>
+    </div>
+
+    <div class="cta-bar">
+      <button class="btn pri">+ New Draw</button>
+      <button class="btn sec">Review Invoices</button>
+    </div>
+  </div>
+</template>
+
+<script>
+  const tpl = document.getElementById("demo-template");
+  for (let i = 0; i < 9; i++) {
+    const host = document.getElementById("d" + i);
+    if (host) host.appendChild(tpl.content.cloneNode(true));
+  }
+</script>
+</body>
+</html>
