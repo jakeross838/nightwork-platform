@@ -5,7 +5,6 @@ import { getCurrentMembership } from "@/lib/org/session";
 import { correctLine } from "@/lib/cost-intelligence/correct-line";
 import type {
   ProposedItemData,
-  ExtractedComponent,
   ComponentType,
   ComponentSource,
 } from "@/lib/cost-intelligence/types";
