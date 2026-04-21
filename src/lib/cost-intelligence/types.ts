@@ -1,0 +1,206 @@
+/**
+ * Cost Intelligence Spine — shared TypeScript types.
+ *
+ * Matches migration 00052. Numeric money fields are cents (BIGINT) on the
+ * wire and `number` in TS — stay in cents until you hit the UI layer.
+ */
+
+export type ItemType =
+  | "material"
+  | "labor"
+  | "equipment"
+  | "service"
+  | "subcontract"
+  | "other";
+
+export type ItemUnit =
+  | "each"
+  | "sf"
+  | "lf"
+  | "sy"
+  | "cy"
+  | "lb"
+  | "gal"
+  | "hr"
+  | "day"
+  | "lump_sum"
+  | "pkg"
+  | "box";
+
+export type MatchTier =
+  | "alias_match"
+  | "trigram_match"
+  | "ai_semantic_match"
+  | "ai_new_item";
+
+export type CreatedVia = MatchTier | "manual";
+
+export type ExtractionStatus = "pending" | "partial" | "verified" | "rejected";
+
+export type LineVerificationStatus =
+  | "pending"
+  | "verified"
+  | "corrected"
+  | "rejected"
+  | "auto_committed";
+
+export type SourceType =
+  | "invoice"
+  | "invoice_line"
+  | "po"
+  | "po_line"
+  | "co"
+  | "co_line"
+  | "proposal"
+  | "quote"
+  | "manual_entry";
+
+export interface Item {
+  id: string;
+  org_id: string;
+  canonical_name: string;
+  description: string | null;
+  item_type: ItemType;
+  category: string | null;
+  subcategory: string | null;
+  specs: Record<string, unknown>;
+  unit: ItemUnit;
+  default_cost_code_id: string | null;
+  first_seen_source: string | null;
+  ai_confidence: number | null;
+  human_verified: boolean;
+  human_verified_at: string | null;
+  human_verified_by: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface ProposedItemData {
+  canonical_name: string;
+  item_type: ItemType;
+  category: string | null;
+  subcategory: string | null;
+  specs: Record<string, unknown>;
+  unit: ItemUnit;
+}
+
+export interface InvoiceExtractionRow {
+  id: string;
+  org_id: string;
+  invoice_id: string;
+  raw_ocr_text: string | null;
+  raw_pdf_url: string | null;
+  extracted_at: string;
+  extraction_model: string | null;
+  extraction_prompt_version: string | null;
+  total_tokens_input: number | null;
+  total_tokens_output: number | null;
+  field_confidences: Record<string, number>;
+  verification_status: ExtractionStatus;
+  verified_lines_count: number;
+  total_lines_count: number;
+  verified_at: string | null;
+  verified_by: string | null;
+  auto_committed: boolean;
+  auto_commit_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface InvoiceExtractionLineRow {
+  id: string;
+  org_id: string;
+  extraction_id: string;
+  invoice_line_item_id: string | null;
+  line_order: number;
+  raw_description: string;
+  raw_quantity: number | null;
+  raw_unit_price_cents: number | null;
+  raw_total_cents: number | null;
+  raw_unit_text: string | null;
+  proposed_item_id: string | null;
+  proposed_item_data: ProposedItemData | null;
+  match_tier: MatchTier | null;
+  match_confidence: number | null;
+  match_reasoning: string | null;
+  candidates_considered: CandidateConsideration[] | null;
+  verification_status: LineVerificationStatus;
+  verified_item_id: string | null;
+  verified_at: string | null;
+  verified_by: string | null;
+  correction_notes: string | null;
+  vendor_item_pricing_id: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface CandidateConsideration {
+  item_id: string;
+  canonical_name: string;
+  score?: number;
+  rejected_reason?: string;
+}
+
+export interface VendorItemPricingRow {
+  id: string;
+  org_id: string;
+  vendor_id: string;
+  item_id: string;
+  unit_price_cents: number;
+  quantity: number;
+  total_cents: number;
+  unit: string;
+  job_id: string | null;
+  cost_code_id: string | null;
+  scope_tags: string[] | null;
+  source_type: SourceType;
+  source_invoice_id: string | null;
+  source_invoice_line_id: string | null;
+  source_extraction_line_id: string | null;
+  source_po_id: string | null;
+  source_co_id: string | null;
+  source_doc_url: string | null;
+  transaction_date: string;
+  recorded_at: string;
+  ai_confidence: number | null;
+  created_via: CreatedVia | null;
+  human_verified: boolean;
+  human_verified_by: string | null;
+  human_verified_at: string | null;
+  auto_committed: boolean;
+  created_by: string | null;
+  created_at: string;
+  deleted_at: string | null;
+}
+
+export interface MatchResult {
+  item_id: string | null;
+  proposed_item_data: ProposedItemData | null;
+  confidence: number;
+  created_via: MatchTier;
+  reasoning: string;
+  candidates_considered: CandidateConsideration[];
+}
+
+export interface VendorContext {
+  vendor_id: string | null;
+  vendor_name: string | null;
+  /** Recent alias_text strings this vendor has used (for prompt grounding). */
+  recent_aliases: Array<{ alias_text: string; canonical_name: string }>;
+  /** Past corrections for this vendor — most recent first. */
+  recent_corrections: Array<{
+    source_text: string;
+    ai_canonical_name: string | null;
+    corrected_canonical_name: string | null;
+  }>;
+}
+
+export interface CostIntelligenceSettings {
+  auto_commit_enabled: boolean;
+  auto_commit_threshold: number;
+  verification_required_for_low_confidence: boolean;
+}

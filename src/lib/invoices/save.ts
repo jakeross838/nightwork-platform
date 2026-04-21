@@ -16,6 +16,7 @@ import {
 import { notifyPmsForJob } from "@/lib/notifications";
 import { findPotentialDuplicate } from "@/lib/invoices/duplicate-detection";
 import { getWorkflowSettings } from "@/lib/workflow-settings";
+import { extractInvoice } from "@/lib/cost-intelligence/extract-invoice";
 
 const INVOICES_BUCKET = "invoice-files";
 
@@ -543,6 +544,16 @@ export async function saveParsedInvoice(
         `[save] invoice_allocations auto-create failed for ${invoiceId}: ${allocErr instanceof Error ? allocErr.message : allocErr}`
       );
     }
+  }
+
+  // Cost Intelligence Spine: stage extraction lines for verification.
+  // Runs after invoice_line_items exist. Never fails the save.
+  try {
+    await extractInvoice(supabase, invoiceId, { triggeredBy: null });
+  } catch (err) {
+    console.warn(
+      `[save cost-intel] extractInvoice failed for ${invoiceId}: ${err instanceof Error ? err.message : err}`
+    );
   }
 
   // Fire PM notifications when a matched, non-overhead invoice lands in a

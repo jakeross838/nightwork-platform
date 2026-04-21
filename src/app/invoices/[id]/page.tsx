@@ -18,6 +18,7 @@ import NwMoney from "@/components/nw/Money";
 import NwDataRow from "@/components/nw/DataRow";
 import { invoiceDisplayName } from "@/lib/invoices/display";
 import { toast } from "@/lib/utils/toast";
+import ExtractionVerificationPanel from "@/components/items/extraction-verification-panel";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -2657,6 +2658,10 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  </div>
+
+ {/* Cost Intelligence verification — staged line items awaiting review.
+     Renders full-width below the main invoice grid. */}
+ <ExtractionVerificationPanel invoiceId={invoice.id} />
  </main>
 
  {/* ── Sticky Mobile Action Bar ── */}

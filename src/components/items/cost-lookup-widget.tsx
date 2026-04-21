@@ -1,0 +1,343 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import NwEyebrow from "@/components/nw/Eyebrow";
+import NwBadge from "@/components/nw/Badge";
+import NwMoney from "@/components/nw/Money";
+
+type ItemSearchResult = {
+  id: string;
+  canonical_name: string;
+  item_type: string;
+  category: string | null;
+  unit: string;
+};
+
+type VendorComparison = {
+  vendor_id: string;
+  vendor_name: string;
+  txn_count: number;
+  total_cents: number;
+  avg_unit_cents: number;
+  last_txn: string | null;
+};
+
+type PriceTrendPoint = {
+  date: string;
+  unit_price_cents: number;
+  vendor: string;
+};
+
+export default function CostLookupWidget() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ItemSearchResult[]>([]);
+  const [selected, setSelected] = useState<ItemSearchResult | null>(null);
+  const [comparison, setComparison] = useState<VendorComparison[]>([]);
+  const [trend, setTrend] = useState<PriceTrendPoint[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  const runSearch = useCallback(async (q: string) => {
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/cost-intelligence/items?q=${encodeURIComponent(q)}&limit=15`);
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const json = await res.json();
+      setResults(json.items ?? []);
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (query.trim().length >= 2) {
+        void runSearch(query.trim());
+      } else {
+        setResults([]);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [query, runSearch]);
+
+  const loadItemDetail = useCallback(async (item: ItemSearchResult) => {
+    setSelected(item);
+    setLoadingDetail(true);
+    setComparison([]);
+    setTrend([]);
+    try {
+      const res = await fetch(`/api/cost-intelligence/items/${item.id}`);
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      type PricingRow = {
+        vendor_id: string;
+        unit_price_cents: number;
+        quantity: number;
+        total_cents: number;
+        transaction_date: string;
+        vendors: { name: string } | null;
+      };
+      const json = (await res.json()) as { pricing: PricingRow[] };
+      const rows = json.pricing ?? [];
+
+      const map = new Map<string, VendorComparison & { total_qty: number }>();
+      for (const r of rows) {
+        const key = r.vendor_id;
+        if (!map.has(key)) {
+          map.set(key, {
+            vendor_id: key,
+            vendor_name: r.vendors?.name ?? "(unknown)",
+            txn_count: 0,
+            total_cents: 0,
+            total_qty: 0,
+            avg_unit_cents: 0,
+            last_txn: null,
+          });
+        }
+        const b = map.get(key)!;
+        b.txn_count++;
+        b.total_cents += r.total_cents ?? 0;
+        b.total_qty += Number(r.quantity ?? 0);
+        if (!b.last_txn || r.transaction_date > b.last_txn) b.last_txn = r.transaction_date;
+      }
+
+      const comp: VendorComparison[] = Array.from(map.values())
+        .map((b) => ({
+          vendor_id: b.vendor_id,
+          vendor_name: b.vendor_name,
+          txn_count: b.txn_count,
+          total_cents: b.total_cents,
+          avg_unit_cents:
+            b.total_qty > 0
+              ? Math.round(b.total_cents / b.total_qty)
+              : Math.round(b.total_cents / Math.max(1, b.txn_count)),
+          last_txn: b.last_txn,
+        }))
+        .sort((a, b) => a.avg_unit_cents - b.avg_unit_cents);
+      setComparison(comp);
+
+      // Price trend (chronological)
+      setTrend(
+        rows
+          .slice()
+          .sort((a, b) => a.transaction_date.localeCompare(b.transaction_date))
+          .map((r) => ({
+            date: r.transaction_date,
+            unit_price_cents: Math.round(r.unit_price_cents ?? 0),
+            vendor: r.vendors?.name ?? "—",
+          }))
+      );
+    } finally {
+      setLoadingDetail(false);
+    }
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelected(null);
+    setComparison([]);
+    setTrend([]);
+  }, []);
+
+  return (
+    <section className="border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <NwEyebrow tone="accent">Cost Lookup</NwEyebrow>
+          <h2
+            className="mt-1 text-[18px] tracking-[-0.02em] text-[var(--text-primary)]"
+            style={{ fontFamily: "var(--font-space-grotesk)" }}
+          >
+            Compare vendor pricing
+          </h2>
+        </div>
+        {selected ? (
+          <button
+            type="button"
+            className="text-[11px] uppercase tracking-[0.12em] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+            onClick={clearSelection}
+          >
+            Clear
+          </button>
+        ) : null}
+      </div>
+
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search an item (e.g. 2x4 lumber, framing labor, drywall)…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full px-3 h-[40px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[13px] text-[var(--text-primary)]"
+        />
+        {query.trim().length >= 2 && !selected ? (
+          <div className="absolute top-full left-0 right-0 mt-1 border border-[var(--border-default)] bg-[var(--bg-card)] max-h-[240px] overflow-auto z-10 divide-y divide-[var(--border-default)]">
+            {searching ? (
+              <p className="p-3 text-[12px] text-[var(--text-tertiary)]">Searching…</p>
+            ) : results.length === 0 ? (
+              <p className="p-3 text-[12px] text-[var(--text-tertiary)]">No matches.</p>
+            ) : (
+              results.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => loadItemDetail(r)}
+                  className="w-full text-left p-2 hover:bg-[var(--bg-subtle)]"
+                >
+                  <div className="text-[13px] text-[var(--text-primary)] font-medium">
+                    {r.canonical_name}
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-[var(--text-tertiary)]">
+                    {r.item_type}
+                    {r.category ? ` · ${r.category}` : ""}
+                    {r.unit ? ` · unit ${r.unit}` : ""}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      {selected ? (
+        <div className="mt-5">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+            <div>
+              <Link
+                href={`/items/${selected.id}`}
+                className="text-[16px] font-medium text-[var(--text-primary)] hover:text-nw-gulf-blue hover:underline"
+              >
+                {selected.canonical_name}
+              </Link>
+              <div className="mt-0.5 text-[11px] text-[var(--text-tertiary)]">
+                {selected.item_type}
+                {selected.category ? ` · ${selected.category}` : ""}
+                {selected.unit ? ` · unit ${selected.unit}` : ""}
+              </div>
+            </div>
+            {comparison.length > 0 ? (
+              <NwBadge variant="accent" size="sm">
+                {comparison.length} vendor{comparison.length === 1 ? "" : "s"}
+              </NwBadge>
+            ) : null}
+          </div>
+
+          {loadingDetail ? (
+            <p className="text-[13px] text-[var(--text-tertiary)]">Loading pricing…</p>
+          ) : comparison.length === 0 ? (
+            <p className="text-[13px] text-[var(--text-tertiary)]">
+              No pricing rows yet. Verify extraction lines to populate this item.
+            </p>
+          ) : (
+            <>
+              {/* Vendor comparison table */}
+              <div className="border border-[var(--border-default)]">
+                <table className="w-full text-[12px]">
+                  <thead
+                    className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
+                    style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+                  >
+                    <tr className="border-b border-[var(--border-default)]">
+                      <th className="text-left px-3 py-2 font-medium">Vendor</th>
+                      <th className="text-right px-3 py-2 font-medium">Avg unit</th>
+                      <th className="text-right px-3 py-2 font-medium">Txns</th>
+                      <th className="text-right px-3 py-2 font-medium">Total</th>
+                      <th className="text-left px-3 py-2 font-medium">Last</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparison.map((b, i) => (
+                      <tr
+                        key={b.vendor_id}
+                        className="border-b border-[var(--border-default)] last:border-b-0"
+                      >
+                        <td className="px-3 py-2">
+                          <span className="text-[var(--text-primary)]">{b.vendor_name}</span>
+                          {i === 0 ? (
+                            <span className="ml-2">
+                              <NwBadge variant="success" size="sm">
+                                lowest
+                              </NwBadge>
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <NwMoney cents={b.avg_unit_cents} size="sm" />
+                        </td>
+                        <td
+                          className="px-3 py-2 text-right text-[var(--text-secondary)]"
+                          style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                        >
+                          {b.txn_count}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <NwMoney cents={b.total_cents} size="sm" />
+                        </td>
+                        <td
+                          className="px-3 py-2 text-[var(--text-tertiary)]"
+                          style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+                        >
+                          {b.last_txn ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Simple trend bars — min/max normalized */}
+              {trend.length > 1 ? (
+                <div className="mt-4">
+                  <NwEyebrow tone="muted">Unit price over time</NwEyebrow>
+                  <TrendChart points={trend} />
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function TrendChart({ points }: { points: PriceTrendPoint[] }) {
+  const max = Math.max(1, ...points.map((p) => p.unit_price_cents));
+  const min = Math.min(0, ...points.map((p) => p.unit_price_cents));
+  const range = Math.max(1, max - min);
+  return (
+    <div className="mt-2 border border-[var(--border-default)] bg-[var(--bg-subtle)] p-3">
+      <div className="flex items-end gap-1.5 h-[120px]">
+        {points.map((p, i) => {
+          const h = Math.max(3, ((p.unit_price_cents - min) / range) * 120);
+          return (
+            <div
+              key={i}
+              className="relative flex-1 min-w-[6px] bg-nw-stone-blue/50 hover:bg-nw-stone-blue transition-colors group"
+              style={{ height: `${h}px` }}
+              title={`${p.date} · ${p.vendor} · $${(p.unit_price_cents / 100).toFixed(2)}`}
+            >
+              <div
+                className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 whitespace-nowrap bg-[var(--bg-card)] border border-[var(--border-default)] px-2 py-1 text-[10px] text-[var(--text-primary)]"
+                style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+              >
+                {p.date} · ${(p.unit_price_cents / 100).toFixed(2)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div
+        className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
+        style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+      >
+        <span>{points[0]?.date}</span>
+        <span>
+          min ${(min / 100).toFixed(2)} · max ${(max / 100).toFixed(2)}
+        </span>
+        <span>{points[points.length - 1]?.date}</span>
+      </div>
+    </div>
+  );
+}

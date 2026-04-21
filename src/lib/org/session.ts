@@ -31,6 +31,11 @@ export type CurrentOrg = {
   storage_used_bytes: number;
   onboarding_complete: boolean;
   builder_type: string | null;
+  cost_intelligence_settings: {
+    auto_commit_enabled?: boolean;
+    auto_commit_threshold?: number;
+    verification_required_for_low_confidence?: boolean;
+  } | null;
 };
 
 export type CurrentMembership = {
@@ -47,7 +52,7 @@ const ORG_COLUMNS =
   "payment_schedule_type, payment_schedule_config, " +
   "subscription_plan, subscription_status, stripe_customer_id, stripe_subscription_id, trial_ends_at, " +
   "ai_calls_this_month, ai_calls_limit, storage_used_bytes, " +
-  "onboarding_complete, builder_type";
+  "onboarding_complete, builder_type, cost_intelligence_settings";
 
 async function resolveMembership(
   supabase: SupabaseClient,

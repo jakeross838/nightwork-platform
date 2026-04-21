@@ -34,6 +34,10 @@ export default function PlatformSidebar({
       label: "Feedback",
       badge: unresolvedFeedback ?? null,
     },
+    { href: "/admin/platform/items", label: "CI · Items" },
+    { href: "/admin/platform/pricing", label: "CI · Pricing" },
+    { href: "/admin/platform/extractions", label: "CI · Extractions" },
+    { href: "/admin/platform/classifications", label: "CI · Corrections" },
     { href: "/admin/platform/audit", label: "Audit log" },
     {
       href: "/admin/platform/audit?action=impersonate_start",
