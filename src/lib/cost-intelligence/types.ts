@@ -65,6 +65,8 @@ export interface Item {
   subcategory: string | null;
   specs: Record<string, unknown>;
   unit: ItemUnit;
+  canonical_unit: string;
+  conversion_rules: Record<string, ConversionRule>;
   default_cost_code_id: string | null;
   first_seen_source: string | null;
   ai_confidence: number | null;
@@ -74,6 +76,30 @@ export interface Item {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface ConversionRule {
+  ratio: number;
+  notes?: string;
+}
+
+export interface UnitConversionSuggestionRow {
+  id: string;
+  org_id: string;
+  item_id: string;
+  from_unit: string;
+  to_unit: string;
+  suggested_ratio: number;
+  ai_reasoning: string | null;
+  ai_confidence: number | null;
+  source_extraction_line_id: string | null;
+  status: "pending" | "confirmed" | "rejected" | "superseded";
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  confirmed_ratio: number | null;
+  notes: string | null;
+  created_at: string;
   deleted_at: string | null;
 }
 

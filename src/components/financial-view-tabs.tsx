@@ -9,8 +9,7 @@ export type FinancialView =
   | "payments"
   | "draws"
   | "aging"
-  | "liens"
-  | "items";
+  | "liens";
 
 const TABS: { key: FinancialView; label: string; href: string }[] = [
   { key: "invoices", label: "Invoices", href: "/invoices" },
@@ -20,7 +19,6 @@ const TABS: { key: FinancialView; label: string; href: string }[] = [
   { key: "draws", label: "Draws", href: "/draws" },
   { key: "aging", label: "Aging", href: "/financials/aging-report" },
   { key: "liens", label: "Liens", href: "/invoices/liens" },
-  { key: "items", label: "Items", href: "/items" },
 ];
 
 export default function FinancialViewTabs({

@@ -11,6 +11,17 @@ const nextConfig = {
       { source: "/vendors/import", destination: "/vendors?action=import", permanent: true },
       { source: "/settings/cost-codes/import", destination: "/settings/cost-codes?action=import", permanent: true },
       { source: "/jobs/:id/purchase-orders/import", destination: "/jobs/:id/purchase-orders?action=import", permanent: true },
+
+      // Cost Intelligence consolidation — legacy /items paths moved under /cost-intelligence.
+      { source: "/items", destination: "/cost-intelligence/items", permanent: true },
+      { source: "/items/verification-queue", destination: "/cost-intelligence/verification", permanent: true },
+      { source: "/items/:id", destination: "/cost-intelligence/items/:id", permanent: true },
+
+      // Platform admin CI consolidation — individual CI admin tools merged into tabbed view.
+      { source: "/admin/platform/items", destination: "/admin/platform/cost-intelligence", permanent: true },
+      { source: "/admin/platform/pricing", destination: "/admin/platform/cost-intelligence?tab=pricing", permanent: true },
+      { source: "/admin/platform/extractions", destination: "/admin/platform/cost-intelligence?tab=extractions", permanent: true },
+      { source: "/admin/platform/classifications", destination: "/admin/platform/cost-intelligence?tab=classifications", permanent: true },
     ];
   },
   webpack: (config) => {

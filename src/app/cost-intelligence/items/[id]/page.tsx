@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
-import FinancialViewTabs from "@/components/financial-view-tabs";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwBadge from "@/components/nw/Badge";
 import NwMoney from "@/components/nw/Money";
@@ -17,6 +16,8 @@ type ItemDetail = {
   category: string | null;
   subcategory: string | null;
   unit: string;
+  canonical_unit: string;
+  conversion_rules: Record<string, { ratio: number; notes?: string }> | null;
   specs: Record<string, unknown> | null;
   ai_confidence: number | null;
   human_verified: boolean;
@@ -42,6 +43,10 @@ type PricingRow = {
   quantity: number;
   total_cents: number;
   unit: string;
+  observed_unit: string | null;
+  observed_unit_price_cents: number | null;
+  canonical_unit_price_cents: number | null;
+  conversion_applied: { from_unit: string; to_unit: string; ratio: number; source: string } | null;
   job_id: string | null;
   source_type: string;
   transaction_date: string;
@@ -73,7 +78,7 @@ interface FetchResult {
   job_activity: JobActivity[];
 }
 
-export default function ItemDetailPage() {
+export default function CostIntelligenceItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<FetchResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,7 +106,6 @@ export default function ItemDetailPage() {
     void load();
   }, [load]);
 
-  // Vendor breakdown (avg unit price, last txn date)
   const vendorBreakdown = useMemo(() => {
     if (!data) return [];
     type Breakdown = {
@@ -110,8 +114,10 @@ export default function ItemDetailPage() {
       count: number;
       total_cents: number;
       total_qty: number;
+      total_canonical_qty: number;
       last_txn: string | null;
       avg_unit_cents: number;
+      avg_canonical_unit_cents: number;
     };
     const map = new Map<string, Breakdown>();
     for (const p of data.pricing) {
@@ -124,20 +130,33 @@ export default function ItemDetailPage() {
           count: 0,
           total_cents: 0,
           total_qty: 0,
+          total_canonical_qty: 0,
           last_txn: null,
           avg_unit_cents: 0,
+          avg_canonical_unit_cents: 0,
         });
       }
       const b = map.get(vId)!;
       b.count++;
       b.total_cents += p.total_cents ?? 0;
       b.total_qty += Number(p.quantity ?? 0);
+      const canonicalPrice = p.canonical_unit_price_cents ?? p.unit_price_cents ?? 0;
+      const ratio = p.conversion_applied?.ratio ?? 1;
+      b.total_canonical_qty += Number(p.quantity ?? 0) * (Number.isFinite(ratio) && ratio > 0 ? ratio : 1);
+      void canonicalPrice;
       if (!b.last_txn || p.transaction_date > b.last_txn) b.last_txn = p.transaction_date;
     }
     return Array.from(map.values())
       .map((b) => ({
         ...b,
-        avg_unit_cents: b.total_qty > 0 ? Math.round(b.total_cents / b.total_qty) : b.total_cents / Math.max(1, b.count),
+        avg_unit_cents:
+          b.total_qty > 0
+            ? Math.round(b.total_cents / b.total_qty)
+            : b.total_cents / Math.max(1, b.count),
+        avg_canonical_unit_cents:
+          b.total_canonical_qty > 0
+            ? Math.round(b.total_cents / b.total_canonical_qty)
+            : 0,
       }))
       .sort((a, b) => b.total_cents - a.total_cents);
   }, [data]);
@@ -146,7 +165,6 @@ export default function ItemDetailPage() {
     return (
       <AppShell>
         <main className="max-w-[1400px] mx-auto px-6 py-8">
-          <FinancialViewTabs active="items" />
           <p className="text-[13px] text-[var(--text-tertiary)]">Loading…</p>
         </main>
       </AppShell>
@@ -157,12 +175,11 @@ export default function ItemDetailPage() {
     return (
       <AppShell>
         <main className="max-w-[1400px] mx-auto px-6 py-8">
-          <FinancialViewTabs active="items" />
           <div className="border border-nw-danger/40 p-4 text-[13px] text-nw-danger">
             Load failed: {error ?? "Unknown error"}
           </div>
           <div className="mt-3">
-            <Link href="/items" className="text-[11px] text-nw-gulf-blue hover:underline">
+            <Link href="/cost-intelligence/items" className="text-[11px] text-nw-gulf-blue hover:underline">
               ← Back to items
             </Link>
           </div>
@@ -172,21 +189,21 @@ export default function ItemDetailPage() {
   }
 
   const { item, aliases, pricing, job_activity } = data;
+  const conversionRules = Object.entries(item.conversion_rules ?? {}) as Array<
+    [string, { ratio: number; notes?: string }]
+  >;
 
   return (
     <AppShell>
       <main className="max-w-[1400px] mx-auto px-6 py-8">
-        <FinancialViewTabs active="items" />
-
         <Link
-          href="/items"
+          href="/cost-intelligence/items"
           className="text-[11px] text-[var(--text-tertiary)] hover:text-nw-gulf-blue uppercase tracking-[0.12em]"
           style={{ fontFamily: "var(--font-jetbrains-mono)" }}
         >
           ← All items
         </Link>
 
-        {/* Header */}
         <div className="mt-4 flex items-start justify-between gap-6">
           <div>
             <NwEyebrow tone="accent">
@@ -205,34 +222,30 @@ export default function ItemDetailPage() {
             ) : null}
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <NwBadge variant="neutral" size="sm">
-                unit · {item.unit}
+                canonical · {item.canonical_unit}
               </NwBadge>
+              {item.unit !== item.canonical_unit && (
+                <NwBadge variant="neutral" size="sm">
+                  legacy unit · {item.unit}
+                </NwBadge>
+              )}
               {item.human_verified ? (
-                <NwBadge variant="success" size="sm">
-                  human verified
-                </NwBadge>
+                <NwBadge variant="success" size="sm">human verified</NwBadge>
               ) : (
-                <NwBadge variant="warning" size="sm">
-                  unverified
-                </NwBadge>
+                <NwBadge variant="warning" size="sm">unverified</NwBadge>
               )}
               {item.ai_confidence != null && (
-                <NwBadge variant="info" size="sm">
-                  AI {Math.round(item.ai_confidence * 100)}%
-                </NwBadge>
+                <NwBadge variant="info" size="sm">AI {Math.round(item.ai_confidence * 100)}%</NwBadge>
               )}
               {item.default_cost_code && (
-                <NwBadge variant="accent" size="sm">
-                  {item.default_cost_code.code}
-                </NwBadge>
+                <NwBadge variant="accent" size="sm">{item.default_cost_code.code}</NwBadge>
               )}
             </div>
           </div>
         </div>
 
-        {/* Grid layout */}
+        {/* Grid: vendor breakdown + aliases */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Vendor breakdown */}
           <div className="lg:col-span-2 border border-[var(--border-default)] bg-[var(--bg-card)]">
             <div className="px-4 py-3 border-b border-[var(--border-default)]">
               <NwEyebrow tone="muted">Vendor comparison</NwEyebrow>
@@ -249,7 +262,9 @@ export default function ItemDetailPage() {
                 >
                   <tr className="border-b border-[var(--border-default)]">
                     <th className="text-left px-4 py-2 font-medium">Vendor</th>
-                    <th className="text-right px-4 py-2 font-medium">Avg unit</th>
+                    <th className="text-right px-4 py-2 font-medium">
+                      Avg / {item.canonical_unit}
+                    </th>
                     <th className="text-right px-4 py-2 font-medium">Txns</th>
                     <th className="text-right px-4 py-2 font-medium">Total</th>
                     <th className="text-left px-4 py-2 font-medium">Last seen</th>
@@ -257,14 +272,23 @@ export default function ItemDetailPage() {
                 </thead>
                 <tbody>
                   {vendorBreakdown.map((b) => (
-                    <tr key={b.vendor_id} className="border-b border-[var(--border-default)] last:border-b-0">
+                    <tr
+                      key={b.vendor_id}
+                      className="border-b border-[var(--border-default)] last:border-b-0"
+                    >
                       <td className="px-4 py-2 text-[var(--text-primary)]">{b.vendor_name}</td>
                       <td className="px-4 py-2 text-right">
-                        <NwMoney cents={b.avg_unit_cents} size="sm" />
+                        <NwMoney
+                          cents={b.avg_canonical_unit_cents || b.avg_unit_cents}
+                          size="sm"
+                        />
                       </td>
                       <td
                         className="px-4 py-2 text-right text-[var(--text-secondary)]"
-                        style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                        style={{
+                          fontFamily: "var(--font-jetbrains-mono)",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
                       >
                         {b.count}
                       </td>
@@ -284,7 +308,6 @@ export default function ItemDetailPage() {
             )}
           </div>
 
-          {/* Aliases */}
           <div className="border border-[var(--border-default)] bg-[var(--bg-card)]">
             <div className="px-4 py-3 border-b border-[var(--border-default)]">
               <NwEyebrow tone="muted">Aliases ({aliases.length})</NwEyebrow>
@@ -305,7 +328,10 @@ export default function ItemDetailPage() {
                       <span>{a.vendors?.name ?? "Any vendor"}</span>
                       <span>·</span>
                       <span
-                        style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                        style={{
+                          fontFamily: "var(--font-jetbrains-mono)",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
                       >
                         {a.occurrence_count}×
                       </span>
@@ -316,6 +342,68 @@ export default function ItemDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Unit Conversions section */}
+        <section className="mt-6 border border-[var(--border-default)] bg-[var(--bg-card)]">
+          <div className="px-4 py-3 border-b border-[var(--border-default)] flex items-center justify-between gap-3">
+            <NwEyebrow tone="muted">Unit Conversions</NwEyebrow>
+            <Link
+              href="/cost-intelligence/conversions"
+              className="text-[10px] uppercase tracking-[0.12em] text-nw-gulf-blue hover:underline"
+              style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+            >
+              All pending conversions →
+            </Link>
+          </div>
+          <div className="p-4 space-y-3">
+            <div>
+              <div
+                className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
+                style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+              >
+                Canonical unit
+              </div>
+              <div
+                className="mt-1 text-[15px] text-[var(--text-primary)]"
+                style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+              >
+                {item.canonical_unit}
+              </div>
+            </div>
+            <div>
+              <div
+                className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
+                style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+              >
+                Conversion rules
+              </div>
+              {conversionRules.length === 0 ? (
+                <p className="mt-2 text-[13px] text-[var(--text-tertiary)]">
+                  No conversion rules yet. Rules are added automatically when you confirm AI
+                  suggestions, or manually on this page (coming soon).
+                </p>
+              ) : (
+                <ul className="mt-2 divide-y divide-[var(--border-default)]">
+                  {conversionRules.map(([fromUnit, rule]) => (
+                    <li key={fromUnit} className="py-2 text-[13px]">
+                      <span
+                        className="text-[var(--text-primary)]"
+                        style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+                      >
+                        1 {fromUnit} = {rule.ratio} {item.canonical_unit}
+                      </span>
+                      {rule.notes && (
+                        <span className="ml-2 text-[var(--text-tertiary)] italic">
+                          {rule.notes}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* Pricing history */}
         <div className="mt-6 border border-[var(--border-default)] bg-[var(--bg-card)]">
@@ -335,16 +423,21 @@ export default function ItemDetailPage() {
                     <th className="text-left px-4 py-2 font-medium">Date</th>
                     <th className="text-left px-4 py-2 font-medium">Vendor</th>
                     <th className="text-left px-4 py-2 font-medium">Job</th>
-                    <th className="text-right px-4 py-2 font-medium">Qty</th>
-                    <th className="text-right px-4 py-2 font-medium">Unit price</th>
+                    <th className="text-right px-4 py-2 font-medium">Observed</th>
+                    <th className="text-right px-4 py-2 font-medium">
+                      Price / {item.canonical_unit}
+                    </th>
                     <th className="text-right px-4 py-2 font-medium">Total</th>
-                    <th className="text-left px-4 py-2 font-medium">Source</th>
+                    <th className="text-left px-4 py-2 font-medium">Conversion</th>
                     <th className="text-left px-4 py-2 font-medium">Provenance</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pricing.map((p) => (
-                    <tr key={p.id} className="border-b border-[var(--border-default)] last:border-b-0">
+                    <tr
+                      key={p.id}
+                      className="border-b border-[var(--border-default)] last:border-b-0"
+                    >
                       <td
                         className="px-4 py-2 text-[var(--text-secondary)]"
                         style={{ fontFamily: "var(--font-jetbrains-mono)" }}
@@ -359,17 +452,36 @@ export default function ItemDetailPage() {
                       </td>
                       <td
                         className="px-4 py-2 text-right text-[var(--text-secondary)]"
-                        style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                        style={{
+                          fontFamily: "var(--font-jetbrains-mono)",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
                       >
-                        {p.quantity} {p.unit}
+                        {p.quantity} {p.observed_unit ?? p.unit}
                       </td>
                       <td className="px-4 py-2 text-right">
-                        <NwMoney cents={p.unit_price_cents} size="sm" />
+                        <NwMoney
+                          cents={p.canonical_unit_price_cents ?? p.unit_price_cents}
+                          size="sm"
+                        />
                       </td>
                       <td className="px-4 py-2 text-right">
                         <NwMoney cents={p.total_cents} size="sm" />
                       </td>
-                      <td className="px-4 py-2 text-[var(--text-tertiary)]">{p.source_type}</td>
+                      <td className="px-4 py-2 text-[var(--text-tertiary)]">
+                        {p.conversion_applied ? (
+                          <span
+                            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+                            className="text-[11px]"
+                          >
+                            {p.conversion_applied.source === "same_unit"
+                              ? "—"
+                              : `×${p.conversion_applied.ratio} ${p.conversion_applied.source}`}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-1 flex-wrap">
                           {p.created_via && (
@@ -378,13 +490,9 @@ export default function ItemDetailPage() {
                             </NwBadge>
                           )}
                           {p.human_verified ? (
-                            <NwBadge variant="success" size="sm">
-                              verified
-                            </NwBadge>
+                            <NwBadge variant="success" size="sm">verified</NwBadge>
                           ) : p.auto_committed ? (
-                            <NwBadge variant="warning" size="sm">
-                              auto
-                            </NwBadge>
+                            <NwBadge variant="warning" size="sm">auto</NwBadge>
                           ) : null}
                         </div>
                       </td>
@@ -424,7 +532,10 @@ export default function ItemDetailPage() {
                     </td>
                     <td
                       className="px-4 py-2 text-right text-[var(--text-secondary)]"
-                      style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                      style={{
+                        fontFamily: "var(--font-jetbrains-mono)",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
                     >
                       {j.planned_quantity ?? "—"}
                     </td>
@@ -433,7 +544,10 @@ export default function ItemDetailPage() {
                     </td>
                     <td
                       className="px-4 py-2 text-right text-[var(--text-secondary)]"
-                      style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                      style={{
+                        fontFamily: "var(--font-jetbrains-mono)",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
                     >
                       {j.actual_quantity ?? "—"}
                     </td>

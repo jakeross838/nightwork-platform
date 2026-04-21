@@ -85,7 +85,13 @@ export async function correctLine(
     throw new Error(`correctLine: failed to record correction: ${correctionErr.message}`);
   }
 
-  // Now commit the corrected line to the spine
+  // Now commit the corrected line to the spine. The vip_after_insert
+  // trigger pulls raw_description off invoice_extraction_lines and
+  // upserts item_aliases keyed on (org_id, item_id, vendor_id,
+  // lower(alias_text)), incrementing occurrence_count on conflict. So
+  // the alias for the corrected item gets learned as a side-effect of
+  // the commit — closing the learning loop without a second DB round-
+  // trip from the application layer.
   const result = await commitLineToSpine(supabase, extractionLineId, {
     verifiedBy: correctedBy,
     newStatus: "corrected",
