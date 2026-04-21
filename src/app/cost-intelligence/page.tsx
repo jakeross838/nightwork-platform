@@ -66,8 +66,11 @@ export default function CostIntelligenceHubPage() {
         .order("canonical_name"),
       supabase
         .from("vendor_item_pricing")
-        .select("item_id, total_cents, vendor_id, job_id, transaction_date")
-        .is("deleted_at", null),
+        .select(
+          "item_id, total_cents, landed_total_cents, tax_cents, overhead_allocated_cents, vendor_id, job_id, transaction_date"
+        )
+        .is("deleted_at", null)
+        .limit(50000),
       supabase
         .from("invoice_extraction_lines")
         .select("id, created_at", { count: "exact" })
@@ -131,17 +134,27 @@ export default function CostIntelligenceHubPage() {
     let totalSpendCents = 0;
     for (const row of (pricingRows ?? []) as Array<{
       item_id: string;
-      total_cents: number;
+      total_cents: number | null;
+      landed_total_cents: number | null;
+      tax_cents: number | null;
+      overhead_allocated_cents: number | null;
       vendor_id: string | null;
       job_id: string | null;
       transaction_date: string | null;
     }>) {
+      const effectiveCents =
+        row.total_cents ??
+        (row.landed_total_cents != null
+          ? row.landed_total_cents -
+            (row.tax_cents ?? 0) -
+            (row.overhead_allocated_cents ?? 0)
+          : 0);
       let a = aggByItem.get(row.item_id);
       if (!a) {
         a = { total_cents: 0, count: 0, vendors: new Set(), jobs: new Set(), last_seen: null };
         aggByItem.set(row.item_id, a);
       }
-      a.total_cents += row.total_cents ?? 0;
+      a.total_cents += effectiveCents;
       a.count += 1;
       if (row.vendor_id) a.vendors.add(row.vendor_id);
       if (row.job_id) a.jobs.add(row.job_id);
@@ -149,7 +162,7 @@ export default function CostIntelligenceHubPage() {
         a.last_seen = row.transaction_date;
       }
       totalPricingRows++;
-      totalSpendCents += row.total_cents ?? 0;
+      totalSpendCents += effectiveCents;
       if (row.vendor_id) allVendors.add(row.vendor_id);
       if (row.job_id) allJobs.add(row.job_id);
     }
