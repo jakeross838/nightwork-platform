@@ -8,22 +8,38 @@ import type {
   PricingModel,
 } from "@/lib/cost-intelligence/types";
 
+/**
+ * Tab order for the verification queue — maps 1:1 to line_nature values,
+ * plus a Review catch-all for lines the AI could not classify. BOM spec
+ * lines (line_nature='bom_spec') never appear in main tabs — they render
+ * as metadata on the scope line they attach to.
+ */
 export type QueueTab =
   | "materials"
   | "labor"
-  | "services"
+  | "scope"
   | "equipment"
-  | "flagged"
-  | "notes";
+  | "services"
+  | "review";
 
-export const ITEM_TYPE_BY_TAB: Record<
-  Extract<QueueTab, "materials" | "labor" | "services" | "equipment">,
-  ItemType
+export type LineNature =
+  | "material"
+  | "labor"
+  | "scope"
+  | "equipment"
+  | "service"
+  | "bom_spec"
+  | "unclassified";
+
+export const NATURE_BY_TAB: Record<
+  Exclude<QueueTab, "review">,
+  LineNature
 > = {
   materials: "material",
   labor: "labor",
-  services: "service",
+  scope: "scope",
   equipment: "equipment",
+  services: "service",
 };
 
 export interface QueueComponent {
@@ -65,6 +81,9 @@ export interface QueueLine {
   extracted_scope_size_value: number | null;
   extracted_scope_size_confidence: number | null;
   extracted_scope_size_source: string | null;
+  line_nature: LineNature | null;
+  scope_split_into_components: boolean;
+  scope_estimated_material_cents: number | null;
   invoice: {
     id: string;
     invoice_number: string | null;

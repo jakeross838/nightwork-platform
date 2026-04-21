@@ -2,7 +2,6 @@
 
 import NwMoney from "@/components/nw/Money";
 import NwButton from "@/components/nw/Button";
-import NwBadge from "@/components/nw/Badge";
 import type { LineGroup } from "@/lib/cost-intelligence/group-extraction-lines";
 import { COMPONENT_TYPE_LABELS, type QueueLine } from "./queue-types";
 
@@ -16,11 +15,6 @@ interface Props {
   onSelect: () => void;
   line?: QueueLine;
   group?: LineGroup<QueueLine>;
-  /** For flagged + notes tabs. */
-  checkbox?: {
-    checked: boolean;
-    onToggle: () => void;
-  } | null;
 }
 
 export default function QueueItem({
@@ -29,7 +23,6 @@ export default function QueueItem({
   onSelect,
   line,
   group,
-  checkbox,
 }: Props) {
   const accentStyle = isSelected
     ? "border-l-[4px] border-l-[var(--nw-stone-blue)] bg-[var(--bg-subtle)]"
@@ -121,18 +114,6 @@ export default function QueueItem({
         className={`w-full border-b border-[var(--border-default)] transition-colors ${accentStyle}`}
       >
         <div className="flex items-start gap-2 px-3 py-3">
-          {checkbox && (
-            <input
-              type="checkbox"
-              checked={checkbox.checked}
-              onChange={(e) => {
-                e.stopPropagation();
-                checkbox.onToggle();
-              }}
-              className="mt-1 h-[14px] w-[14px] shrink-0"
-              aria-label="Select line"
-            />
-          )}
           <button type="button" onClick={onSelect} className="flex-1 min-w-0 text-left">
             <div
               className="text-[12px] text-[var(--text-primary)] truncate"
@@ -177,11 +158,6 @@ export default function QueueItem({
                   <span className="text-[var(--nw-warn)]"> · scope size needed</span>
                 )}
               </div>
-              {line.is_transaction_line && line.transaction_line_type && (
-                <NwBadge variant="neutral" size="sm">
-                  {line.transaction_line_type.replace(/_/g, " ")}
-                </NwBadge>
-              )}
             </div>
           </button>
         </div>

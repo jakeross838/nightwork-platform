@@ -12,10 +12,9 @@ import VerificationQueue, {
   type QueueSelection,
 } from "@/components/cost-intelligence/verification-queue";
 import VerificationDetailPanel from "@/components/cost-intelligence/verification-detail-panel";
-import FlaggedDetailPanel from "@/components/cost-intelligence/flagged-detail-panel";
-import NotesDetailPanel from "@/components/cost-intelligence/notes-detail-panel";
 import {
-  ITEM_TYPE_BY_TAB,
+  NATURE_BY_TAB,
+  type LineNature,
   type QueueLine,
   type QueueTab,
 } from "@/components/cost-intelligence/queue-types";
@@ -53,6 +52,9 @@ type LineQueryRow = {
   extracted_scope_size_value: number | null;
   extracted_scope_size_confidence: number | null;
   extracted_scope_size_source: string | null;
+  line_nature: LineNature | null;
+  scope_split_into_components: boolean | null;
+  scope_estimated_material_cents: number | null;
   invoice_extractions: {
     id: string;
     raw_ocr_text: string | null;
@@ -89,19 +91,18 @@ function VerificationPageInner() {
   const [activeTab, setActiveTab] = useState<QueueTab>("materials");
   const [selection, setSelection] = useState<QueueSelection | null>(null);
 
-  // Flagged + Notes bulk state (per active tab)
-  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
-  const [bulkBusy, setBulkBusy] = useState(false);
-
   const fetchData = useCallback(async () => {
     setLoading(true);
+    // bom_spec lines are filtered out of the main queue — they appear as
+    // attached metadata on the scope line's detail panel, not as queue rows.
     let linesQ = supabase
       .from("invoice_extraction_lines")
       .select(
-        "id, extraction_id, raw_description, raw_quantity, raw_unit_text, raw_unit_price_cents, raw_total_cents, match_tier, match_confidence, match_confidence_score, classification_confidence, match_reasoning, created_at, is_transaction_line, transaction_line_type, line_tax_cents, overhead_allocated_cents, proposed_item_id, proposed_item_data, proposed_pricing_model, proposed_scope_size_metric, extracted_scope_size_value, extracted_scope_size_confidence, extracted_scope_size_source, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, raw_ocr_text, invoices!inner(id, invoice_number, invoice_date, vendor_id, original_file_url, vendors(name)))"
+        "id, extraction_id, raw_description, raw_quantity, raw_unit_text, raw_unit_price_cents, raw_total_cents, match_tier, match_confidence, match_confidence_score, classification_confidence, match_reasoning, created_at, is_transaction_line, transaction_line_type, line_tax_cents, overhead_allocated_cents, proposed_item_id, proposed_item_data, proposed_pricing_model, proposed_scope_size_metric, extracted_scope_size_value, extracted_scope_size_confidence, extracted_scope_size_source, line_nature, scope_split_into_components, scope_estimated_material_cents, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, raw_ocr_text, invoices!inner(id, invoice_number, invoice_date, vendor_id, original_file_url, vendors(name)))"
       )
       .eq("verification_status", "pending")
       .eq("is_allocated_overhead", false)
+      .neq("line_nature", "bom_spec")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(1000);
@@ -186,6 +187,9 @@ function VerificationPageInner() {
         line_tax_cents: r.line_tax_cents,
         overhead_allocated_cents: r.overhead_allocated_cents,
         raw_ocr_text: r.invoice_extractions?.raw_ocr_text ?? null,
+        line_nature: r.line_nature,
+        scope_split_into_components: r.scope_split_into_components ?? false,
+        scope_estimated_material_cents: r.scope_estimated_material_cents,
         invoice: {
           id: inv.id,
           invoice_number: inv.invoice_number,
@@ -206,34 +210,46 @@ function VerificationPageInner() {
     void fetchData();
   }, [fetchData]);
 
-  // Reset selection + bulk state when tab changes
+  // Reset selection when tab changes
   useEffect(() => {
     setSelection(null);
-    setBulkSelected(new Set());
   }, [activeTab]);
 
-  // Partition lines by tab
+  // Partition by line_nature — the Review tab captures unclassified + any
+  // line that somehow lacks a nature (e.g. legacy rows from before migration
+  // 00058) so nothing falls through the cracks.
   const linesByTab = useMemo(() => {
     const result: Record<QueueTab, QueueLine[]> = {
       materials: [],
       labor: [],
-      services: [],
+      scope: [],
       equipment: [],
-      flagged: [],
-      notes: [],
+      services: [],
+      review: [],
     };
     for (const l of lines) {
-      if (l.is_transaction_line) {
-        if (l.transaction_line_type === "zero_dollar_note") result.notes.push(l);
-        else result.flagged.push(l);
-        continue;
+      switch (l.line_nature) {
+        case "material":
+          result.materials.push(l);
+          break;
+        case "labor":
+          result.labor.push(l);
+          break;
+        case "scope":
+          result.scope.push(l);
+          break;
+        case "equipment":
+          result.equipment.push(l);
+          break;
+        case "service":
+          result.services.push(l);
+          break;
+        case "unclassified":
+        case null:
+        default:
+          result.review.push(l);
+          break;
       }
-      const itemType = l.proposed_item_data?.item_type ?? null;
-      if (itemType === ITEM_TYPE_BY_TAB.materials) result.materials.push(l);
-      else if (itemType === ITEM_TYPE_BY_TAB.labor) result.labor.push(l);
-      else if (itemType === ITEM_TYPE_BY_TAB.services) result.services.push(l);
-      else if (itemType === ITEM_TYPE_BY_TAB.equipment) result.equipment.push(l);
-      else result.materials.push(l); // default bucket for 'other'/'subcontract'/unknown
     }
     return result;
   }, [lines]);
@@ -242,10 +258,10 @@ function VerificationPageInner() {
     () => ({
       materials: linesByTab.materials.length,
       labor: linesByTab.labor.length,
-      services: linesByTab.services.length,
+      scope: linesByTab.scope.length,
       equipment: linesByTab.equipment.length,
-      flagged: linesByTab.flagged.length,
-      notes: linesByTab.notes.length,
+      services: linesByTab.services.length,
+      review: linesByTab.review.length,
     }),
     [linesByTab]
   );
@@ -255,7 +271,6 @@ function VerificationPageInner() {
   const handleApproved = useCallback((affectedIds: string[]) => {
     setLines((prev) => prev.filter((l) => !affectedIds.includes(l.id)));
     setSelection(null);
-    setBulkSelected(new Set());
   }, []);
 
   // Build the detail-panel selection object from the queue selection
@@ -271,90 +286,9 @@ function VerificationPageInner() {
     return { kind: "group" as const, key: selection.key, lines: selectedLines };
   }, [selection, lines]);
 
-  // Bulk dismiss (flagged + notes tabs)
-  const toggleBulk = useCallback((lineId: string) => {
-    setBulkSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(lineId)) next.delete(lineId);
-      else next.add(lineId);
-      return next;
-    });
-  }, []);
-
-  const selectAllVisible = useCallback((ids: string[]) => {
-    setBulkSelected((prev) => {
-      const allSelected = ids.length > 0 && ids.every((id) => prev.has(id));
-      if (allSelected) return new Set();
-      return new Set(ids);
-    });
-  }, []);
-
-  const dismissIds = useCallback(
-    async (ids: string[], fallbackType: TransactionLineType) => {
-      if (ids.length === 0) return;
-      setBulkBusy(true);
-      let ok = 0;
-      let fail = 0;
-      for (const id of ids) {
-        try {
-          const line = lines.find((l) => l.id === id);
-          const type = line?.transaction_line_type ?? fallbackType;
-          const res = await fetch(
-            `/api/cost-intelligence/extraction-lines/${id}/mark-non-item`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ transaction_line_type: type }),
-            }
-          );
-          if (res.ok) ok++;
-          else fail++;
-        } catch {
-          fail++;
-        }
-      }
-      setBulkBusy(false);
-      toast.success(
-        `Dismissed ${ok}${fail ? ` · ${fail} failed` : ""}`
-      );
-      setLines((prev) => prev.filter((l) => !ids.includes(l.id)));
-      setBulkSelected(new Set());
-      setSelection(null);
-    },
-    [lines]
-  );
-
-  const dismissSelected = useCallback(() => {
-    const fallback: TransactionLineType =
-      activeTab === "notes" ? "zero_dollar_note" : "other";
-    void dismissIds(Array.from(bulkSelected), fallback);
-  }, [bulkSelected, activeTab, dismissIds]);
-
-  const dismissAll = useCallback(() => {
-    if (visibleLines.length === 0) return;
-    const fallback: TransactionLineType =
-      activeTab === "notes" ? "zero_dollar_note" : "other";
-    if (
-      !confirm(
-        `Dismiss all ${visibleLines.length} visible ${activeTab} line${
-          visibleLines.length === 1 ? "" : "s"
-        }?`
-      )
-    )
-      return;
-    void dismissIds(
-      visibleLines.map((l) => l.id),
-      fallback
-    );
-  }, [visibleLines, activeTab, dismissIds]);
-
-  const singleFlaggedLine =
-    (activeTab === "flagged" || activeTab === "notes") &&
-    selection?.kind === "single"
-      ? lines.find((l) => l.id === selection.line_id) ?? null
-      : null;
-
-  const isFlatTab = activeTab === "flagged" || activeTab === "notes";
+  // Suppress unused-var lint for NATURE_BY_TAB import when not directly used
+  // in this file — it's exported for shared consumers.
+  void NATURE_BY_TAB;
 
   return (
     <AppShell>
@@ -376,7 +310,7 @@ function VerificationPageInner() {
             Verify extracted line items
           </h1>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            Tabs filter by type. Click a line to review it.
+            Tabs filter by line nature. Review holds anything the AI could not classify.
             {invoiceFilter && (
               <>
                 {" "}
@@ -411,42 +345,16 @@ function VerificationPageInner() {
                 lines={visibleLines}
                 selection={selection}
                 onSelect={setSelection}
-                bulkState={
-                  isFlatTab
-                    ? {
-                        selectedIds: bulkSelected,
-                        onToggle: toggleBulk,
-                        onSelectAllVisible: selectAllVisible,
-                        onDismissSelected: dismissSelected,
-                        onDismissAll: dismissAll,
-                        busy: bulkBusy,
-                      }
-                    : undefined
-                }
               />
             )}
           </div>
 
           <div className="border border-[var(--border-default)] bg-[var(--bg-card)] min-h-[520px] max-h-[calc(100vh-220px)] flex flex-col overflow-hidden">
-            {activeTab === "flagged" ? (
-              <FlaggedDetailPanel
-                line={singleFlaggedLine}
-                onClose={() => setSelection(null)}
-                onResolved={(id) => handleApproved([id])}
-              />
-            ) : activeTab === "notes" ? (
-              <NotesDetailPanel
-                line={singleFlaggedLine}
-                onClose={() => setSelection(null)}
-                onResolved={(id) => handleApproved([id])}
-              />
-            ) : (
-              <VerificationDetailPanel
-                selection={detailSelection}
-                onClose={() => setSelection(null)}
-                onApproved={handleApproved}
-              />
-            )}
+            <VerificationDetailPanel
+              selection={detailSelection}
+              onClose={() => setSelection(null)}
+              onApproved={handleApproved}
+            />
           </div>
         </div>
       </main>
