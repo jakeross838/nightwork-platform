@@ -6,6 +6,7 @@ import { extractInvoice } from "@/lib/cost-intelligence/extract-invoice";
 import type {
   InvoiceExtractionRow,
   InvoiceExtractionLineRow,
+  LineCostComponentRow,
 } from "@/lib/cost-intelligence/types";
 
 export const dynamic = "force-dynamic";
@@ -56,12 +57,39 @@ export const GET = withApiError(async (_req: NextRequest, ctx: { params: Promise
     .is("deleted_at", null)
     .order("line_order", { ascending: true });
 
+  type LineFull = InvoiceExtractionLineRow & {
+    proposed_item: { id: string; canonical_name: string } | null;
+    verified_item: { id: string; canonical_name: string } | null;
+  };
+
+  const lineRows = (lines ?? []) as LineFull[];
+  const lineIds = lineRows.map((l) => l.id);
+
+  const componentsByLine = new Map<string, LineCostComponentRow[]>();
+  if (lineIds.length > 0) {
+    const { data: cmps } = await supabase
+      .from("line_cost_components")
+      .select("*")
+      .in("invoice_extraction_line_id", lineIds)
+      .is("deleted_at", null)
+      .order("display_order", { ascending: true });
+
+    for (const c of ((cmps ?? []) as LineCostComponentRow[])) {
+      if (!c.invoice_extraction_line_id) continue;
+      const list = componentsByLine.get(c.invoice_extraction_line_id) ?? [];
+      list.push(c);
+      componentsByLine.set(c.invoice_extraction_line_id, list);
+    }
+  }
+
+  const linesWithComponents = lineRows.map((l) => ({
+    ...l,
+    components: componentsByLine.get(l.id) ?? [],
+  }));
+
   return NextResponse.json({
     extraction: extraction as InvoiceExtractionRow,
-    lines: (lines ?? []) as (InvoiceExtractionLineRow & {
-      proposed_item: { id: string; canonical_name: string } | null;
-      verified_item: { id: string; canonical_name: string } | null;
-    })[],
+    lines: linesWithComponents,
   });
 });
 

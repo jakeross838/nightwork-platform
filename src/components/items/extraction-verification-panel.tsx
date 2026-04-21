@@ -11,11 +11,14 @@ import RawOcrViewer from "@/components/items/raw-ocr-viewer";
 import type {
   InvoiceExtractionRow,
   InvoiceExtractionLineRow,
+  LineCostComponentRow,
+  ComponentType,
 } from "@/lib/cost-intelligence/types";
 
 export type ExtractionLineView = InvoiceExtractionLineRow & {
   proposed_item: { id: string; canonical_name: string } | null;
   verified_item: { id: string; canonical_name: string } | null;
+  components: LineCostComponentRow[];
 };
 
 interface Props {
@@ -25,6 +28,23 @@ interface Props {
   initialLines?: ExtractionLineView[];
 }
 
+const COMPONENT_TYPE_LABELS: Record<ComponentType, string> = {
+  material: "Material",
+  fabrication: "Fabrication",
+  installation: "Installation",
+  labor: "Labor",
+  equipment_rental: "Equipment",
+  delivery: "Delivery",
+  fuel_surcharge: "Fuel",
+  handling: "Handling",
+  restocking: "Restocking",
+  tax: "Tax",
+  waste_disposal: "Waste",
+  permit_fee: "Permit",
+  bundled: "Bundled",
+  other: "Other",
+};
+
 export default function ExtractionVerificationPanel({
   invoiceId,
   initialExtraction = null,
@@ -33,7 +53,6 @@ export default function ExtractionVerificationPanel({
   const [extraction, setExtraction] = useState<InvoiceExtractionRow | null>(initialExtraction);
   const [lines, setLines] = useState<ExtractionLineView[]>(initialLines);
   const [loading, setLoading] = useState(!initialExtraction);
-  const [busyLineId, setBusyLineId] = useState<string | null>(null);
   const [ocrOpen, setOcrOpen] = useState(false);
   const [extractBusy, setExtractBusy] = useState(false);
 
@@ -77,51 +96,10 @@ export default function ExtractionVerificationPanel({
     }
   }, [invoiceId, load]);
 
-  const approveLine = useCallback(async (lineId: string) => {
-    setBusyLineId(lineId);
-    try {
-      const res = await fetch(`/api/cost-intelligence/lines/${lineId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve" }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? `Status ${res.status}`);
-      }
-      toast.success("Line committed to spine");
-      await load();
-    } catch (err) {
-      toast.error(`Approve failed: ${err instanceof Error ? err.message : err}`);
-    } finally {
-      setBusyLineId(null);
-    }
-  }, [load]);
-
-  const rejectLine = useCallback(async (lineId: string) => {
-    if (!confirm("Reject this line? It will not enter cost intelligence.")) return;
-    setBusyLineId(lineId);
-    try {
-      const res = await fetch(`/api/cost-intelligence/lines/${lineId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reject" }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? `Status ${res.status}`);
-      }
-      toast.success("Line rejected");
-      await load();
-    } catch (err) {
-      toast.error(`Reject failed: ${err instanceof Error ? err.message : err}`);
-    } finally {
-      setBusyLineId(null);
-    }
-  }, [load]);
-
   const pendingCount = lines.filter((l) => l.verification_status === "pending").length;
-  const verifiedCount = lines.filter((l) => ["verified", "corrected", "auto_committed"].includes(l.verification_status)).length;
+  const verifiedCount = lines.filter((l) =>
+    ["verified", "corrected", "auto_committed"].includes(l.verification_status)
+  ).length;
   const rejectedCount = lines.filter((l) => l.verification_status === "rejected").length;
 
   const progressPct = lines.length > 0 ? Math.round((verifiedCount / lines.length) * 100) : 0;
@@ -138,7 +116,7 @@ export default function ExtractionVerificationPanel({
     <section className="mt-10 border-t border-[var(--border-default)] pt-8">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <NwEyebrow tone="accent">Extraction Verification · Cost Intelligence</NwEyebrow>
+          <NwEyebrow tone="accent">Extraction · Cost Intelligence</NwEyebrow>
           <h2
             className="mt-2 text-[22px] tracking-[-0.02em] text-[var(--text-primary)]"
             style={{ fontFamily: "var(--font-space-grotesk)" }}
@@ -146,17 +124,18 @@ export default function ExtractionVerificationPanel({
             AI-extracted line items
           </h2>
           <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-            Each line must be verified before it enters the cost intelligence database.
+            Status and component breakdowns. To classify or edit, open the
+            verification queue.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link
-            href="/cost-intelligence/verification"
-            className="inline-flex items-center h-[32px] px-3 border border-[var(--border-default)] text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+            href={`/cost-intelligence/verification?invoice_id=${invoiceId}`}
+            className="inline-flex items-center h-[32px] px-3 border border-[var(--nw-stone-blue)] text-[11px] uppercase tracking-[0.12em] text-[var(--nw-stone-blue)] hover:bg-[var(--bg-subtle)]"
             style={{ fontFamily: "var(--font-jetbrains-mono)" }}
           >
-            Open verification queue →
+            → Verify in full queue
           </Link>
           <NwButton
             variant="ghost"
@@ -224,7 +203,7 @@ export default function ExtractionVerificationPanel({
             <div className="min-w-[140px]">
               <div className="h-[4px] bg-[var(--bg-subtle)] relative">
                 <div
-                  className="absolute inset-y-0 left-0 bg-nw-stone-blue"
+                  className="absolute inset-y-0 left-0 bg-[var(--nw-stone-blue)]"
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
@@ -238,26 +217,18 @@ export default function ExtractionVerificationPanel({
           </div>
 
           {/* Raw OCR drawer */}
-          {ocrOpen && extraction ? (
-            <RawOcrViewer extraction={extraction} />
-          ) : null}
+          {ocrOpen && extraction ? <RawOcrViewer extraction={extraction} /> : null}
 
-          {/* Invoice totals (pre-tax + tax + overhead + total) */}
+          {/* Invoice totals */}
           <InvoiceTotalsPanel extraction={extraction} lineCount={lines.length} />
 
-          {/* Line list */}
+          {/* Line list — read-only */}
           {lines.length === 0 ? (
             <p className="text-[13px] text-[var(--text-tertiary)]">No lines extracted.</p>
           ) : (
             <ul className="space-y-3">
               {lines.map((line) => (
-                <LineRow
-                  key={line.id}
-                  line={line}
-                  busy={busyLineId === line.id}
-                  onApprove={() => approveLine(line.id)}
-                  onReject={() => rejectLine(line.id)}
-                />
+                <LineRow key={line.id} line={line} invoiceId={invoiceId} />
               ))}
             </ul>
           )}
@@ -269,21 +240,15 @@ export default function ExtractionVerificationPanel({
 
 interface LineRowProps {
   line: ExtractionLineView;
-  busy: boolean;
-  onApprove: () => void;
-  onReject: () => void;
+  invoiceId: string;
 }
 
-function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
+function LineRow({ line, invoiceId }: LineRowProps) {
   const status = line.verification_status;
   const tier = line.match_tier;
   const confidence = line.match_confidence ?? 0;
   const isOverhead = line.is_allocated_overhead;
 
-  // Allocated-overhead rows are informational only — they were moved to the
-  // invoice-level overhead bucket and allocated proportionally. Show them
-  // greyed out with no action buttons so users understand the mechanic
-  // without being tempted to verify them individually.
   if (isOverhead) {
     return (
       <li className="border border-dashed border-[var(--border-default)] bg-[var(--bg-subtle)] p-4 grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-4 items-start opacity-80">
@@ -297,29 +262,21 @@ function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-tertiary)]">
             <span>
-              amount{" "}
-              <NwMoney cents={line.raw_total_cents} size="sm" variant="emphasized" showCents />
+              amount <NwMoney cents={line.raw_total_cents} size="sm" variant="emphasized" showCents />
             </span>
           </div>
         </div>
         <div>
-          <NwEyebrow tone="muted">Allocated to line items</NwEyebrow>
+          <NwEyebrow tone="muted">Allocated</NwEyebrow>
           <p className="mt-2 text-[12px] italic text-[var(--text-tertiary)] leading-relaxed">
-            This {line.overhead_type ?? "overhead"} charge has been redistributed
-            proportionally to the real line items below by pre-tax total. No item is
-            created for it.
+            Redistributed proportionally to real line items by pre-tax total. No item is created
+            for it.
           </p>
         </div>
         <div className="flex flex-col items-end gap-2 min-w-[160px]">
           <NwBadge variant="neutral" size="sm">
             {(line.overhead_type ?? "overhead").replace(/_/g, " ")}
           </NwBadge>
-          <span
-            className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
-            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
-          >
-            Allocated
-          </span>
         </div>
       </li>
     );
@@ -329,6 +286,7 @@ function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
     if (status === "verified" || status === "corrected" || status === "auto_committed")
       return <NwBadge variant="success">{status}</NwBadge>;
     if (status === "rejected") return <NwBadge variant="danger">rejected</NwBadge>;
+    if (status === "not_item") return <NwBadge variant="neutral">not an item</NwBadge>;
     return <NwBadge variant="warning">pending</NwBadge>;
   })();
 
@@ -338,12 +296,11 @@ function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
       tier === "alias_match" || tier === "trigram_match"
         ? "accent"
         : tier === "ai_semantic_match"
-          ? "info"
-          : "warning";
-    const label = tier.replace(/_/g, " ");
+        ? "info"
+        : "warning";
     return (
       <NwBadge variant={variant} size="sm">
-        {label}
+        {tier.replace(/_/g, " ")}
       </NwBadge>
     );
   })();
@@ -354,11 +311,8 @@ function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
     line.proposed_item_data?.canonical_name ??
     "(unclassified)";
 
-  const actionable = status === "pending";
-  const overheadShare = line.overhead_allocated_cents ?? 0;
-  const lineTax = line.line_tax_cents ?? 0;
-  const landed = line.landed_total_cents ?? ((line.raw_total_cents ?? 0) + overheadShare + lineTax);
-  const showLanded = overheadShare > 0 || lineTax > 0;
+  const components = line.components ?? [];
+  const componentsSum = components.reduce((s, c) => s + c.amount_cents, 0);
 
   return (
     <li className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4 grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-4 items-start">
@@ -377,7 +331,10 @@ function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
               qty{" "}
               <span
                 className="text-[var(--text-secondary)]"
-                style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono)",
+                  fontVariantNumeric: "tabular-nums",
+                }}
               >
                 {line.raw_quantity}
               </span>
@@ -390,56 +347,70 @@ function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
             </span>
           )}
           <span>
-            total{" "}
-            <NwMoney
-              cents={line.raw_total_cents}
-              size="sm"
-              variant="emphasized"
-              showCents
-            />
+            total <NwMoney cents={line.raw_total_cents} size="sm" variant="emphasized" showCents />
           </span>
         </div>
-        {showLanded ? (
+
+        {components.length > 0 && (
           <div
-            className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-[var(--text-tertiary)]"
+            className="mt-3 border border-[var(--border-default)] bg-[var(--bg-subtle)] p-2 text-[11px]"
             style={{ fontFamily: "var(--font-jetbrains-mono)" }}
           >
-            {overheadShare > 0 ? (
-              <span>
-                + <NwMoney cents={overheadShare} size="sm" showCents /> overhead
-              </span>
-            ) : null}
-            {lineTax > 0 ? (
-              <span>
-                + <NwMoney cents={lineTax} size="sm" showCents /> tax
-              </span>
-            ) : null}
-            <span>
-              landed{" "}
-              <span className="text-[var(--text-secondary)]">
-                <NwMoney cents={landed} size="sm" showCents />
-              </span>
-            </span>
+            <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)] mb-1">
+              Components
+            </div>
+            <div className="space-y-0.5">
+              {components.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between gap-3 text-[var(--text-secondary)]"
+                >
+                  <span className="truncate">
+                    {COMPONENT_TYPE_LABELS[c.component_type] ?? c.component_type}
+                    {c.notes ? (
+                      <span className="text-[var(--text-tertiary)] italic"> · {c.notes}</span>
+                    ) : null}
+                  </span>
+                  <span
+                    className="text-[var(--text-primary)]"
+                    style={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    <NwMoney cents={c.amount_cents} size="sm" />
+                  </span>
+                </div>
+              ))}
+              {Math.abs(componentsSum - (line.raw_total_cents ?? 0)) > 5 && (
+                <div className="pt-1 text-[10px] text-[var(--nw-warn)]">
+                  Components sum off by $
+                  {(Math.abs(componentsSum - (line.raw_total_cents ?? 0)) / 100).toFixed(2)}
+                </div>
+              )}
+            </div>
           </div>
-        ) : null}
+        )}
       </div>
 
-      {/* MIDDLE — AI proposal */}
+      {/* MIDDLE — classification */}
       <div>
-        <NwEyebrow tone="accent">AI proposal</NwEyebrow>
+        <NwEyebrow tone="accent">Classification</NwEyebrow>
         <p className="mt-2 text-[13px] text-[var(--text-primary)] font-medium">{proposedName}</p>
         {line.proposed_item_data ? (
           <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
             {line.proposed_item_data.item_type}
             {line.proposed_item_data.category ? ` · ${line.proposed_item_data.category}` : ""}
-            {line.proposed_item_data.subcategory ? ` · ${line.proposed_item_data.subcategory}` : ""}
+            {line.proposed_item_data.subcategory
+              ? ` · ${line.proposed_item_data.subcategory}`
+              : ""}
           </p>
         ) : null}
         <div className="mt-2 flex items-center gap-2 flex-wrap">
           {tierBadge}
           <span
             className="text-[11px] text-[var(--text-secondary)]"
-            style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+            style={{
+              fontFamily: "var(--font-jetbrains-mono)",
+              fontVariantNumeric: "tabular-nums",
+            }}
           >
             {Math.round(confidence * 100)}%
           </span>
@@ -451,40 +422,18 @@ function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
         ) : null}
       </div>
 
-      {/* RIGHT — actions + status */}
-      <div className="flex flex-col items-end gap-2 min-w-[160px]">
+      {/* RIGHT — status only (no actions) */}
+      <div className="flex flex-col items-end gap-2 min-w-[180px]">
         {statusBadge}
-        <div className="flex flex-col gap-2 w-full">
-          <NwButton
-            variant="primary"
-            size="sm"
-            disabled={!actionable || busy}
-            loading={busy && actionable}
-            onClick={onApprove}
-          >
-            Approve
-          </NwButton>
+        {status === "pending" && (
           <Link
-            href="/cost-intelligence/verification"
-            className={`inline-flex items-center justify-center h-[30px] px-3 border text-[11px] uppercase tracking-[0.12em] ${
-              !actionable
-                ? "border-[var(--border-default)] text-[var(--text-tertiary)] pointer-events-none opacity-60"
-                : "border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
-            }`}
+            href={`/cost-intelligence/verification?invoice_id=${invoiceId}`}
+            className="inline-flex items-center justify-center h-[30px] px-3 border border-[var(--border-default)] text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
             style={{ fontFamily: "var(--font-jetbrains-mono)" }}
-            title="Edit classification in the full verification queue"
           >
-            Edit in queue →
+            Verify in queue →
           </Link>
-          <NwButton
-            variant="danger"
-            size="sm"
-            disabled={!actionable || busy}
-            onClick={onReject}
-          >
-            Reject
-          </NwButton>
-        </div>
+        )}
       </div>
     </li>
   );
@@ -507,7 +456,6 @@ function InvoiceTotalsPanel({
   const diff = total != null && subtotal != null ? total - implied : null;
   const reconcileOk = diff == null || Math.abs(diff) <= 2;
 
-  // Nothing to show if extraction has no totals captured yet
   if (subtotal == null && tax === 0 && overhead.length === 0 && total == null) {
     return null;
   }
@@ -537,7 +485,8 @@ function InvoiceTotalsPanel({
               Tax
             </span>
             <span className="text-[var(--text-tertiary)] text-[10px] italic self-center">
-              {taxRate != null ? `${(taxRate * 100).toFixed(2)}% rate` : "rate unknown"} · prorated to taxable lines
+              {taxRate != null ? `${(taxRate * 100).toFixed(2)}% rate` : "rate unknown"} · prorated
+              to taxable lines
             </span>
             <span className="text-right text-[var(--text-primary)] whitespace-nowrap">
               <NwMoney cents={tax} size="sm" showCents />
@@ -567,7 +516,9 @@ function InvoiceTotalsPanel({
             </span>
             <span className="text-[var(--text-tertiary)] text-[10px] italic self-center">
               {lineCount} line{lineCount === 1 ? "" : "s"}
-              {reconcileOk ? " · reconciled" : ` · mismatch ${diff && diff > 0 ? "+" : ""}${((diff ?? 0) / 100).toFixed(2)}`}
+              {reconcileOk
+                ? " · reconciled"
+                : ` · mismatch ${diff && diff > 0 ? "+" : ""}${((diff ?? 0) / 100).toFixed(2)}`}
             </span>
             <span className="text-right text-[var(--text-primary)] font-medium whitespace-nowrap">
               <NwMoney cents={total} size="sm" variant="emphasized" showCents />
