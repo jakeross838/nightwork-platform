@@ -12,25 +12,12 @@ import ItemsGroupedTable, {
   type GroupBy,
 } from "@/components/items/items-grouped-table";
 
-type ItemType = "material" | "labor" | "equipment" | "service" | "subcontract" | "other";
-
-const TYPE_OPTIONS: Array<{ value: "" | ItemType; label: string }> = [
-  { value: "", label: "All types" },
-  { value: "material", label: "Material" },
-  { value: "labor", label: "Labor" },
-  { value: "equipment", label: "Equipment" },
-  { value: "service", label: "Service" },
-  { value: "subcontract", label: "Subcontract" },
-  { value: "other", label: "Other" },
-];
-
 const GROUPING_STORAGE_KEY = "cost-intel-items-grouping";
 
 export default function CostIntelligenceItemsPage() {
   const [items, setItems] = useState<ItemRowWithAgg[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"" | ItemType>("");
   const [verifiedFilter, setVerifiedFilter] = useState<"" | "verified" | "unverified">("");
   const [groupBy, setGroupBy] = useState<GroupBy>("category");
 
@@ -147,7 +134,6 @@ export default function CostIntelligenceItemsPage() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return items.filter((it) => {
-      if (typeFilter && it.item_type !== typeFilter) return false;
       if (verifiedFilter === "verified" && !it.human_verified) return false;
       if (verifiedFilter === "unverified" && it.human_verified) return false;
       if (q) {
@@ -156,7 +142,7 @@ export default function CostIntelligenceItemsPage() {
       }
       return true;
     });
-  }, [items, search, typeFilter, verifiedFilter]);
+  }, [items, search, verifiedFilter]);
 
   return (
     <AppShell>
@@ -194,17 +180,6 @@ export default function CostIntelligenceItemsPage() {
             className="px-3 h-[36px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[13px] text-[var(--text-primary)] min-w-[260px]"
           />
           <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-            className="px-3 h-[36px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[13px] text-[var(--text-primary)]"
-          >
-            {TYPE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <select
             value={verifiedFilter}
             onChange={(e) => setVerifiedFilter(e.target.value as typeof verifiedFilter)}
             className="px-3 h-[36px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[13px] text-[var(--text-primary)]"
@@ -231,10 +206,9 @@ export default function CostIntelligenceItemsPage() {
             items={filtered}
             onClear={() => {
               setSearch("");
-              setTypeFilter("");
               setVerifiedFilter("");
             }}
-            showClear={Boolean(search || typeFilter || verifiedFilter)}
+            showClear={Boolean(search || verifiedFilter)}
           />
         )}
       </main>
