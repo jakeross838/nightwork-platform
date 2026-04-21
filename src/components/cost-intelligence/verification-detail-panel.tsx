@@ -328,6 +328,8 @@ export default function VerificationDetailPanel({
         <InvoicePdfPreview
           fileUrl={invoice?.signed_pdf_url}
           invoiceId={invoice?.id}
+          pageNumber={primaryLine.source_page_number ?? 1}
+          highlightText={primaryLine.raw_description}
         />
 
         <LineContextDisplay line={primaryLine} />

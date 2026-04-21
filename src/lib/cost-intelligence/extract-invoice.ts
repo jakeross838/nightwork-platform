@@ -239,6 +239,12 @@ type InvoiceSlim = {
     tax?: number | null;
     total_amount?: number | null;
   } | null;
+  /** JSONB copy of the AI's parsed line_items. We only need source_page_number
+   *  from here — the structured values for extraction come from
+   *  invoice_line_items (a proper table). Matched to extraction lines by
+   *  position (line_index). Older invoices parsed before Phase 2 won't have
+   *  source_page_number set. */
+  line_items: Array<{ source_page_number?: number | null } & Record<string, unknown>> | null;
 };
 
 type InvoiceLineSlim = {
@@ -260,7 +266,7 @@ export async function extractInvoice(
   const { data: invoiceRow, error: invoiceErr } = await supabase
     .from("invoices")
     .select(
-      "id, org_id, vendor_id, vendor_name_raw, invoice_date, original_file_url, total_amount, ai_raw_response"
+      "id, org_id, vendor_id, vendor_name_raw, invoice_date, original_file_url, total_amount, ai_raw_response, line_items"
     )
     .eq("id", invoiceId)
     .is("deleted_at", null)
@@ -317,6 +323,19 @@ export async function extractInvoice(
     .order("line_index", { ascending: true });
 
   const lineItems = (lineData ?? []) as InvoiceLineSlim[];
+
+  // Build line_index → source_page_number lookup from the invoice's JSONB
+  // line_items copy. Claude's parse response carries 1-indexed PDF page
+  // numbers per line; the extraction loop below threads them onto every
+  // invoice_extraction_lines insert so the verification viewer can jump to
+  // the right page on selection. Null for invoices parsed before Phase 2.
+  const sourcePageByIndex = new Map<number, number | null>();
+  const rawParsedLineItems = Array.isArray(invoice.line_items) ? invoice.line_items : [];
+  rawParsedLineItems.forEach((li, idx) => {
+    const raw = li?.source_page_number;
+    const page = typeof raw === "number" && Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : null;
+    sourcePageByIndex.set(idx, page);
+  });
 
   // 4. Build vendor context once
   const vendorContext = await buildVendorContext(
@@ -514,6 +533,7 @@ export async function extractInvoice(
           verification_status: "pending",
           is_allocated_overhead: true,
           overhead_type: overhead.overhead_type,
+          source_page_number: sourcePageByIndex.get(li.line_index ?? 0) ?? null,
         })
         .select("id")
         .single();
@@ -607,6 +627,7 @@ export async function extractInvoice(
           candidates_considered: null,
           verification_status: "pending",
           line_nature: "bom_spec",
+          source_page_number: sourcePageByIndex.get(li.line_index ?? 0) ?? null,
         })
         .select("id")
         .single();
@@ -689,6 +710,7 @@ export async function extractInvoice(
         extracted_scope_size_source:
           match.pricing_model === "scope" ? match.scope_size_source : null,
         line_nature: resolvedNature,
+        source_page_number: sourcePageByIndex.get(li.line_index ?? 0) ?? null,
       })
       .select("id")
       .single();

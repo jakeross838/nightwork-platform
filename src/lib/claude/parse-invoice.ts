@@ -51,6 +51,8 @@ Extract every field you can find. For fields you cannot find, return null. Be th
 
 For T&M (time and materials) invoices with daily labor entries, parse each line with crew size, hours, and rate. Verify that the total equals the sum of line amounts.
 
+PAGE NUMBER (MANDATORY): For each line item, include the 1-indexed PDF page number where the line appears in line_items[].source_page_number. If the invoice is a single page, use 1 for all lines. If you cannot determine the page, return null. This is used by downstream UI to jump the viewer to the right page when a user selects the line.
+
 CHANGE ORDER DETECTION (MANDATORY — BIAS TOWARD TRUE): Determine if this invoice is likely a change order. Set is_change_order: true at the invoice level if ANY of the following phrases appear anywhere on the document (case-insensitive, partial match):
  - "change order", "CO #", "PCCO"
  - "additional", "extra", "added" (any form of the word)
@@ -107,6 +109,7 @@ Return ONLY valid JSON matching this exact schema (no markdown, no code fences):
  "amount": "number",
  "is_change_order": "boolean",
  "co_reference": "string | null",
+ "source_page_number": "number | null — 1-indexed PDF page where this line appears. Use 1 for single-page invoices. Null if unable to determine.",
  "cost_code_suggestion": {
  "code": "string | null — 5-digit code (with C suffix if change order line)",
  "description": "string | null",
