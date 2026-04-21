@@ -46,6 +46,14 @@ interface BodyComponent {
   unit_rate_cents?: number | null;
 }
 
+interface ScopePayload {
+  pricing_model?: "scope" | "unit";
+  scope_size_metric?: string | null;
+  scope_size_value?: number | null;
+  scope_size_source?: string | null;
+  scope_size_confidence?: number | null;
+}
+
 interface Body {
   line_ids?: string[];
   classification?: {
@@ -59,7 +67,21 @@ interface Body {
    */
   components?: BodyComponent[];
   correction_notes?: string;
+  /**
+   * Scope details to apply uniformly to every line. Absent = leave
+   * extraction_line scope fields alone.
+   */
+  scope?: ScopePayload | null;
 }
+
+const ALLOWED_SCOPE_SOURCES = new Set([
+  "invoice_extraction",
+  "manual",
+  "job_characteristics",
+  "daily_log",
+  "plan_ai",
+  "inferred",
+]);
 
 function validateComponent(c: unknown): BodyComponent | null {
   if (!c || typeof c !== "object") return null;
@@ -224,6 +246,49 @@ export const POST = withApiError(async (req: NextRequest) => {
       if (insErr) {
         errors.push({ line_id: lineId, error: `Insert components failed: ${insErr.message}` });
       }
+    }
+  }
+
+  // Apply scope updates uniformly (if provided).
+  if (body.scope && body.scope.pricing_model === "scope") {
+    const rawScope = body.scope;
+    const metric =
+      typeof rawScope.scope_size_metric === "string" && rawScope.scope_size_metric.trim().length > 0
+        ? rawScope.scope_size_metric.trim().toLowerCase().replace(/\s+/g, "_")
+        : null;
+    const value =
+      typeof rawScope.scope_size_value === "number" &&
+      Number.isFinite(rawScope.scope_size_value) &&
+      rawScope.scope_size_value > 0
+        ? rawScope.scope_size_value
+        : null;
+    const source =
+      value != null
+        ? typeof rawScope.scope_size_source === "string" &&
+          ALLOWED_SCOPE_SOURCES.has(rawScope.scope_size_source)
+          ? rawScope.scope_size_source
+          : "manual"
+        : null;
+    const confidence =
+      value != null &&
+      typeof rawScope.scope_size_confidence === "number" &&
+      Number.isFinite(rawScope.scope_size_confidence)
+        ? Math.max(0, Math.min(1, rawScope.scope_size_confidence))
+        : null;
+
+    const { error: scopeErr } = await supabase
+      .from("invoice_extraction_lines")
+      .update({
+        proposed_pricing_model: "scope",
+        proposed_scope_size_metric: metric,
+        extracted_scope_size_value: value,
+        extracted_scope_size_source: source,
+        extracted_scope_size_confidence: confidence,
+      })
+      .in("id", lineIds);
+
+    if (scopeErr) {
+      errors.push({ line_id: "group", error: `Scope update failed: ${scopeErr.message}` });
     }
   }
 
