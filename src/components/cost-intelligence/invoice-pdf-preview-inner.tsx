@@ -5,11 +5,12 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 
-// pdfjs ships its worker as a separate file. Serving it from unpkg keeps
-// us out of next's bundler for pdf.worker (which it refuses to emit as a
-// static asset without extra config). Version is pinned to whatever
-// react-pdf resolves locally so the API and worker always match.
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// pdfjs ships its worker as a separate file we serve from /public so the
+// browser fetches it same-origin — no CORS, no mixed-content, no CDN
+// availability concerns. The copy in /public must match the pdfjs-dist
+// version that react-pdf resolves (a postinstall copy script keeps them
+// in sync on install).
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 interface Props {
   fileUrl: string | null | undefined;
