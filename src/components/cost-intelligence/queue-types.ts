@@ -91,6 +91,7 @@ export interface QueueLine {
     vendor_id: string | null;
     vendor_name: string | null;
     original_file_url: string | null;
+    signed_pdf_url: string | null;
   } | null;
   components: QueueComponent[];
 }

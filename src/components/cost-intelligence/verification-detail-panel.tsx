@@ -391,7 +391,7 @@ export default function VerificationDetailPanel({
       {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-5 py-4 space-y-5">
         <InvoicePdfPreview
-          fileUrl={invoice?.original_file_url}
+          fileUrl={invoice?.signed_pdf_url}
           invoiceId={invoice?.id}
         />
 

@@ -158,6 +158,29 @@ function VerificationPageInner() {
       }
     }
 
+    // Sign PDF storage paths once per unique invoice file so the detail
+    // panel's <iframe> gets a browser-fetchable URL. The invoice-files
+    // bucket is private; raw paths resolve as relative URLs against the
+    // current page and 404.
+    const uniquePaths = Array.from(
+      new Set(
+        rows
+          .map((r) => r.invoice_extractions?.invoices?.original_file_url)
+          .filter((p): p is string => Boolean(p))
+      )
+    );
+    const signedUrlByPath = new Map<string, string>();
+    await Promise.all(
+      uniquePaths.map(async (path) => {
+        const { data, error } = await supabase.storage
+          .from("invoice-files")
+          .createSignedUrl(path, 3600);
+        if (!error && data?.signedUrl) {
+          signedUrlByPath.set(path, data.signedUrl);
+        }
+      })
+    );
+
     const mapped: QueueLine[] = rows.map((r) => {
       const inv = r.invoice_extractions!.invoices!;
       return {
@@ -197,6 +220,9 @@ function VerificationPageInner() {
           vendor_id: inv.vendor_id,
           vendor_name: inv.vendors?.name ?? null,
           original_file_url: inv.original_file_url,
+          signed_pdf_url: inv.original_file_url
+            ? signedUrlByPath.get(inv.original_file_url) ?? null
+            : null,
         },
         components: componentsByLine.get(r.id) ?? [],
       };
