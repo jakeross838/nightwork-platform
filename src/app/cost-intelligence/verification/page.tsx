@@ -302,14 +302,9 @@ function VerificationPageInner() {
   // Build the detail-panel selection object from the queue selection
   const detailSelection = useMemo(() => {
     if (!selection) return null;
-    if (selection.kind === "single") {
-      const line = lines.find((l) => l.id === selection.line_id);
-      if (!line) return null;
-      return { kind: "single" as const, line };
-    }
-    const selectedLines = lines.filter((l) => selection.line_ids.includes(l.id));
-    if (selectedLines.length === 0) return null;
-    return { kind: "group" as const, key: selection.key, lines: selectedLines };
+    const line = lines.find((l) => l.id === selection.line_id);
+    if (!line) return null;
+    return { kind: "single" as const, line };
   }, [selection, lines]);
 
   // Suppress unused-var lint for NATURE_BY_TAB import when not directly used

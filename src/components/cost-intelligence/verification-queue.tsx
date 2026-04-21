@@ -3,12 +3,11 @@
 import { useMemo } from "react";
 import VendorGroup from "./vendor-group";
 import QueueItem from "./queue-item";
-import { groupExtractionLines } from "@/lib/cost-intelligence/group-extraction-lines";
 import type { QueueLine, QueueTab } from "./queue-types";
 
-export type QueueSelection =
-  | { kind: "group"; key: string; line_ids: string[] }
-  | { kind: "single"; line_id: string };
+// Selection is always a single line now — same-item batching was removed
+// per user feedback that it hid detail needed for confident verification.
+export type QueueSelection = { kind: "single"; line_id: string };
 
 interface Props {
   tab: QueueTab;
@@ -79,59 +78,21 @@ export default function VerificationQueue({
               subtotalCents={subtotal}
               defaultOpen={true}
             >
-              <GroupedVendorLines
-                lines={v.lines}
-                selection={selection}
-                onSelect={onSelect}
-              />
+              {v.lines.map((line) => (
+                <QueueItem
+                  key={line.id}
+                  selection={{ kind: "single", line_id: line.id }}
+                  isSelected={
+                    selection?.kind === "single" && selection.line_id === line.id
+                  }
+                  onSelect={() => onSelect({ kind: "single", line_id: line.id })}
+                  line={line}
+                />
+              ))}
             </VendorGroup>
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function GroupedVendorLines({
-  lines,
-  selection,
-  onSelect,
-}: {
-  lines: QueueLine[];
-  selection: QueueSelection | null;
-  onSelect: (selection: QueueSelection | null) => void;
-}) {
-  const grouped = useMemo(() => groupExtractionLines(lines), [lines]);
-
-  return (
-    <div>
-      {grouped.groups.map((g) => (
-        <QueueItem
-          key={g.key}
-          selection={{
-            kind: "group",
-            key: g.key,
-          }}
-          isSelected={selection?.kind === "group" && selection.key === g.key}
-          onSelect={() =>
-            onSelect({
-              kind: "group",
-              key: g.key,
-              line_ids: g.lines.map((l) => l.id),
-            })
-          }
-          group={g}
-        />
-      ))}
-      {grouped.singles.map((line) => (
-        <QueueItem
-          key={line.id}
-          selection={{ kind: "single", line_id: line.id }}
-          isSelected={selection?.kind === "single" && selection.line_id === line.id}
-          onSelect={() => onSelect({ kind: "single", line_id: line.id })}
-          line={line}
-        />
-      ))}
     </div>
   );
 }
