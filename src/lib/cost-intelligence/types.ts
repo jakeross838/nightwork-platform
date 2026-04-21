@@ -42,7 +42,17 @@ export type LineVerificationStatus =
   | "verified"
   | "corrected"
   | "rejected"
-  | "auto_committed";
+  | "auto_committed"
+  | "not_item";
+
+export type TransactionLineType =
+  | "progress_payment"
+  | "draw"
+  | "rental_period"
+  | "service_period"
+  | "change_order_narrative"
+  | "partial_payment"
+  | "other";
 
 export type SourceType =
   | "invoice"
@@ -172,6 +182,8 @@ export interface InvoiceExtractionLineRow {
   proposed_item_data: ProposedItemData | null;
   match_tier: MatchTier | null;
   match_confidence: number | null;
+  match_confidence_score: number | null;
+  classification_confidence: number | null;
   match_reasoning: string | null;
   candidates_considered: CandidateConsideration[] | null;
   verification_status: LineVerificationStatus;
@@ -186,6 +198,9 @@ export interface InvoiceExtractionLineRow {
   landed_total_cents: number | null;
   is_allocated_overhead: boolean;
   overhead_type: OverheadType | null;
+  is_transaction_line: boolean;
+  transaction_line_type: TransactionLineType | null;
+  non_item_reason: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -238,7 +253,12 @@ export interface VendorItemPricingRow {
 export interface MatchResult {
   item_id: string | null;
   proposed_item_data: ProposedItemData | null;
+  /** Legacy: equal to match_confidence. Kept until all consumers migrate. */
   confidence: number;
+  /** How sure the AI is that matched_item_id is correct. 0 when match=new. */
+  match_confidence: number;
+  /** How sure the AI is about the proposed type/category/specs. Meaningful for every tier. */
+  classification_confidence: number;
   created_via: MatchTier;
   reasoning: string;
   candidates_considered: CandidateConsideration[];

@@ -22,6 +22,16 @@ import type {
   ItemUnit,
 } from "./types";
 
+/**
+ * MatchResult extension for callers that want the split confidence values
+ * introduced in migration 00055. Existing .confidence field is kept as the
+ * match_confidence for backward compatibility.
+ */
+export interface MatchConfidences {
+  match_confidence: number;
+  classification_confidence: number;
+}
+
 const MATCH_MODEL = "claude-sonnet-4-20250514";
 
 export interface MatchInput {
@@ -62,6 +72,8 @@ export async function matchItem(
       item_id: null,
       proposed_item_data: null,
       confidence: 0,
+      match_confidence: 0,
+      classification_confidence: 0,
       created_via: "ai_new_item",
       reasoning: "Empty raw description — cannot classify",
       candidates_considered: [],
@@ -84,6 +96,8 @@ export async function matchItem(
         item_id: exactAlias.item_id as string,
         proposed_item_data: null,
         confidence: 1.0,
+        match_confidence: 1.0,
+        classification_confidence: 1.0,
         created_via: "alias_match",
         reasoning: `Exact alias match for this vendor ("${raw}" seen ${
           (exactAlias.occurrence_count as number) ?? 1
@@ -144,6 +158,8 @@ export async function matchItem(
         item_id: matches[0].item_id,
         proposed_item_data: null,
         confidence: matches[0].similarity,
+        match_confidence: matches[0].similarity,
+        classification_confidence: matches[0].similarity,
         created_via: "trigram_match",
         reasoning: `Fuzzy match (${Math.round(matches[0].similarity * 100)}% similar) to vendor's previous "${matches[0].alias_text}"`,
         candidates_considered: matches.map((m) => ({
@@ -295,11 +311,26 @@ NEW LINE TO CLASSIFY:
 - unit price (¢): ${input.raw_unit_price_cents ?? "?"}
 - total (USD): $${totalDollars}
 
+IMPORTANT — return TWO SEPARATE confidence values:
+
+1. match_confidence (0.0-1.0):
+   - How certain you are that the matched_item_id is correct.
+   - ALWAYS 0.0 if match == "new" — you didn't match anything.
+   - Only meaningful when match == "existing".
+
+2. classification_confidence (0.0-1.0):
+   - How certain you are about the classification (item_type, category, specs).
+   - Independent of whether it matches an existing item.
+   - For "new" items: how confident the proposed type / category / specs are right.
+   - For "existing" matches: how clearly classifiable the line is.
+   - This should almost never be 0 — you've looked at the text and picked a type.
+
 Respond with JSON ONLY (no markdown, no code fences):
 {
   "match": "existing" | "new",
   "matched_item_id": "uuid-of-candidate" | null,
-  "confidence": 0.0-1.0,
+  "match_confidence": 0.0-1.0,
+  "classification_confidence": 0.0-1.0,
   "reasoning": "one sentence",
   "candidates_considered": [{"item_id": "uuid", "canonical_name": "...", "rejected_reason": "..."}],
   "proposed_item": {
@@ -312,9 +343,9 @@ Respond with JSON ONLY (no markdown, no code fences):
   }
 }
 
-If match="existing", set matched_item_id to the candidate's id and the proposed_item field can be omitted or set to null.
+If match="existing", set matched_item_id to the candidate's id. proposed_item may be omitted.
 If match="new", leave matched_item_id null and fully populate proposed_item.
-Confidence below 0.75 → treat as ambiguous, prefer "new".`;
+If match_confidence < 0.75, prefer "new" over a shaky match.`;
 
   const response = await callClaude({
     model: MATCH_MODEL,
@@ -351,6 +382,15 @@ Confidence below 0.75 → treat as ambiguous, prefer "new".`;
       }))
     : [];
 
+  // Prefer the split fields when the AI emits them; fall back to the
+  // legacy single `confidence` for older/short responses.
+  const matchConf = clamp01(
+    parsed.match_confidence ?? parsed.confidence ?? (parsed.match === "new" ? 0 : 0.75)
+  );
+  const classConf = clamp01(
+    parsed.classification_confidence ?? parsed.confidence ?? 0.6
+  );
+
   if (parsed.match === "existing" && parsed.matched_item_id) {
     // Verify the matched_item_id exists in our candidates to prevent hallucination
     const valid = candidates.some((c) => c.id === parsed.matched_item_id);
@@ -359,7 +399,9 @@ Confidence below 0.75 → treat as ambiguous, prefer "new".`;
       return {
         item_id: parsed.matched_item_id,
         proposed_item_data: null,
-        confidence: clamp01(parsed.confidence ?? 0.75),
+        confidence: matchConf,
+        match_confidence: matchConf,
+        classification_confidence: classConf,
         created_via: "ai_semantic_match",
         reasoning:
           parsed.reasoning ??
@@ -388,7 +430,9 @@ Confidence below 0.75 → treat as ambiguous, prefer "new".`;
   return {
     item_id: null,
     proposed_item_data: proposedItem,
-    confidence: clamp01(parsed.confidence ?? 0.6),
+    confidence: 0, // match_confidence is 0 for new items
+    match_confidence: 0,
+    classification_confidence: classConf,
     created_via: "ai_new_item",
     reasoning: parsed.reasoning ?? "AI proposed a new canonical item",
     candidates_considered: candidatesConsidered,
@@ -398,7 +442,10 @@ Confidence below 0.75 → treat as ambiguous, prefer "new".`;
 type AiMatchResponse = {
   match?: "existing" | "new";
   matched_item_id?: string | null;
+  /** Legacy single-confidence field; some responses may still emit this. */
   confidence?: number;
+  match_confidence?: number;
+  classification_confidence?: number;
   reasoning?: string;
   candidates_considered?: Array<{
     item_id?: string;
@@ -426,7 +473,9 @@ function fallbackNewItem(input: MatchInput, reason: string): MatchResult {
       specs: {},
       unit: normalizeUnit(input.raw_unit_text),
     },
-    confidence: 0.3,
+    confidence: 0,
+    match_confidence: 0,
+    classification_confidence: 0.3,
     created_via: "ai_new_item",
     reasoning: `Fallback: ${reason}`,
     candidates_considered: [],
