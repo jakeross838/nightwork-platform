@@ -5,10 +5,10 @@ import type { QueueTab } from "./queue-types";
 const TABS: Array<{ id: QueueTab; label: string }> = [
   { id: "materials", label: "Materials" },
   { id: "labor", label: "Labor" },
-  { id: "services", label: "Services" },
+  { id: "scope", label: "Scope" },
   { id: "equipment", label: "Equipment" },
-  { id: "flagged", label: "Flagged" },
-  { id: "notes", label: "Notes" },
+  { id: "services", label: "Services" },
+  { id: "review", label: "Review" },
 ];
 
 interface Props {
@@ -23,6 +23,7 @@ export default function VerificationTabs({ active, counts, onChange }: Props) {
       {TABS.map((t) => {
         const isActive = active === t.id;
         const count = counts[t.id] ?? 0;
+        const reviewNeedsAttention = t.id === "review" && count > 0;
         return (
           <button
             key={t.id}
@@ -31,6 +32,8 @@ export default function VerificationTabs({ active, counts, onChange }: Props) {
             className={`flex items-center gap-2 px-4 h-[40px] text-[12px] border-b-[2px] -mb-px transition-colors ${
               isActive
                 ? "border-[var(--nw-stone-blue)] text-[var(--text-primary)]"
+                : reviewNeedsAttention
+                ? "border-transparent text-[var(--nw-warn)] hover:text-[var(--text-primary)]"
                 : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
@@ -44,6 +47,8 @@ export default function VerificationTabs({ active, counts, onChange }: Props) {
               className={`inline-flex items-center justify-center min-w-[22px] h-[18px] px-1.5 text-[10px] border ${
                 isActive
                   ? "border-[var(--nw-stone-blue)] text-[var(--nw-stone-blue)]"
+                  : reviewNeedsAttention
+                  ? "border-[var(--nw-warn)] text-[var(--nw-warn)]"
                   : "border-[var(--border-default)] text-[var(--text-tertiary)]"
               }`}
               style={{
