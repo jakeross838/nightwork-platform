@@ -62,6 +62,7 @@ export default function VerificationQueuePage() {
         "id, line_order, raw_description, raw_quantity, raw_total_cents, raw_unit_text, match_tier, match_confidence, match_reasoning, verification_status, created_at, extraction_id, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, invoice_id, verification_status, invoices!inner(id, invoice_number, vendor_name_raw, vendor_id, job_id, vendors(name), jobs(name)))"
       )
       .eq("verification_status", "pending")
+      .eq("is_allocated_overhead", false)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(500);

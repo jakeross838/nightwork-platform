@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwBadge from "@/components/nw/Badge";
 import NwButton from "@/components/nw/Button";
@@ -521,7 +521,7 @@ function InvoiceTotalsPanel({
     <div className="mb-4 border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
       <NwEyebrow tone="muted">Invoice totals</NwEyebrow>
       <div
-        className="mt-3 grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-x-6 gap-y-1.5 text-[12px]"
+        className="mt-3 grid grid-cols-[auto_1fr_auto] gap-x-6 gap-y-1.5 text-[12px]"
         style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
       >
         {subtotal != null ? (
@@ -530,7 +530,7 @@ function InvoiceTotalsPanel({
               Subtotal
             </span>
             <span className="text-[var(--text-tertiary)] text-[10px] italic self-center">pre-tax</span>
-            <span className="text-right text-[var(--text-primary)]">
+            <span className="text-right text-[var(--text-primary)] whitespace-nowrap">
               <NwMoney cents={subtotal} size="sm" showCents />
             </span>
           </>
@@ -544,32 +544,29 @@ function InvoiceTotalsPanel({
             <span className="text-[var(--text-tertiary)] text-[10px] italic self-center">
               {taxRate != null ? `${(taxRate * 100).toFixed(2)}% rate` : "rate unknown"} · prorated to taxable lines
             </span>
-            <span className="text-right text-[var(--text-primary)]">
+            <span className="text-right text-[var(--text-primary)] whitespace-nowrap">
               <NwMoney cents={tax} size="sm" showCents />
             </span>
           </>
         ) : null}
 
         {overhead.map((o, i) => (
-          <div
-            key={i}
-            className="col-span-3 grid grid-cols-subgrid border-t border-[var(--border-default)] pt-1.5"
-          >
+          <Fragment key={i}>
             <span className="text-[var(--text-tertiary)] uppercase tracking-[0.12em] text-[10px] self-center">
               {(o.type ?? "overhead").replace(/_/g, " ")}
             </span>
             <span className="text-[var(--text-tertiary)] text-[10px] italic self-center truncate">
               {o.description || "allocated across lines"}
             </span>
-            <span className="text-right text-[var(--text-primary)]">
+            <span className="text-right text-[var(--text-primary)] whitespace-nowrap">
               <NwMoney cents={o.amount_cents ?? 0} size="sm" showCents />
             </span>
-          </div>
+          </Fragment>
         ))}
 
         {total != null ? (
           <>
-            <span className="col-span-3 border-t border-[var(--border-default)] pt-1.5" aria-hidden />
+            <span className="col-span-3 border-t border-[var(--border-default)] pt-0.5" aria-hidden />
             <span className="text-[var(--text-primary)] uppercase tracking-[0.12em] text-[10px] self-center font-medium">
               Total
             </span>
@@ -577,7 +574,7 @@ function InvoiceTotalsPanel({
               {lineCount} line{lineCount === 1 ? "" : "s"}
               {reconcileOk ? " · reconciled" : ` · mismatch ${diff && diff > 0 ? "+" : ""}${((diff ?? 0) / 100).toFixed(2)}`}
             </span>
-            <span className="text-right text-[var(--text-primary)] font-medium">
+            <span className="text-right text-[var(--text-primary)] font-medium whitespace-nowrap">
               <NwMoney cents={total} size="sm" variant="emphasized" showCents />
             </span>
           </>
