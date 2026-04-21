@@ -24,6 +24,7 @@ import {
   detectOverheadLine,
   type AllocationLine,
 } from "./allocate-overhead";
+import { detectTransactionLine } from "./classify-transaction-line";
 import type {
   CostIntelligenceSettings,
   InvoiceExtractionLineRow,
@@ -258,6 +259,47 @@ export async function extractInvoice(
 
     const overhead = detectOverheadLine(li.description);
 
+    // Transaction-line pre-filter. Billing events (progress payments,
+    // draws, rental periods, recurring services) are not catalog items.
+    // Flag them so they render with a distinct badge and the PM can
+    // one-click dismiss via the "Not an item" action.
+    const transaction = !overhead ? detectTransactionLine(li.description) : null;
+    if (transaction?.is_transaction) {
+      const { data: tRow, error: tErr } = await supabase
+        .from("invoice_extraction_lines")
+        .insert({
+          org_id: orgId,
+          extraction_id: extractionId,
+          invoice_line_item_id: li.id,
+          line_order: li.line_index ?? 0,
+          raw_description: li.description ?? "",
+          raw_quantity: li.qty,
+          raw_unit_price_cents: rawUnitPriceCents,
+          raw_total_cents: rawTotalCents,
+          raw_unit_text: li.unit,
+          proposed_item_id: null,
+          proposed_item_data: null,
+          match_tier: null,
+          match_confidence: null,
+          match_confidence_score: null,
+          classification_confidence: null,
+          match_reasoning: `Transaction line detected (${transaction.type}): ${transaction.reasoning}. Skipping item match.`,
+          candidates_considered: null,
+          verification_status: "pending",
+          is_transaction_line: true,
+          transaction_line_type: transaction.type,
+        })
+        .select("id")
+        .single();
+
+      if (tErr || !tRow) {
+        console.warn(`[extract] transaction line insert failed: ${tErr?.message}`);
+        continue;
+      }
+      tierBreakdown["transaction_line"] = (tierBreakdown["transaction_line"] ?? 0) + 1;
+      continue;
+    }
+
     if (overhead) {
       // Overhead lines: stage them with is_allocated_overhead=true but do not
       // run matchItem (we're not trying to catalog "delivery charge" as an
@@ -336,6 +378,8 @@ export async function extractInvoice(
         proposed_item_data: match.proposed_item_data,
         match_tier: match.created_via,
         match_confidence: match.confidence,
+        match_confidence_score: match.match_confidence,
+        classification_confidence: match.classification_confidence,
         match_reasoning: match.reasoning,
         candidates_considered: match.candidates_considered,
         verification_status: "pending",
