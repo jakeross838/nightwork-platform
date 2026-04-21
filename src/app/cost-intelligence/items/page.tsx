@@ -12,25 +12,12 @@ import ItemsGroupedTable, {
   type GroupBy,
 } from "@/components/items/items-grouped-table";
 
-type ItemType = "material" | "labor" | "equipment" | "service" | "subcontract" | "other";
-
-const TYPE_OPTIONS: Array<{ value: "" | ItemType; label: string }> = [
-  { value: "", label: "All types" },
-  { value: "material", label: "Material" },
-  { value: "labor", label: "Labor" },
-  { value: "equipment", label: "Equipment" },
-  { value: "service", label: "Service" },
-  { value: "subcontract", label: "Subcontract" },
-  { value: "other", label: "Other" },
-];
-
 const GROUPING_STORAGE_KEY = "cost-intel-items-grouping";
 
 export default function CostIntelligenceItemsPage() {
   const [items, setItems] = useState<ItemRowWithAgg[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"" | ItemType>("");
   const [verifiedFilter, setVerifiedFilter] = useState<"" | "verified" | "unverified">("");
   const [groupBy, setGroupBy] = useState<GroupBy>("category");
 
@@ -72,10 +59,18 @@ export default function CostIntelligenceItemsPage() {
       scope_size_metric: string | null;
     }>;
 
+    // Tracked spend aggregates pretax `total_cents` when available and falls
+    // back to `landed_total_cents` (includes tax + overhead) only if the
+    // pretax column is NULL — matches the Cost-Lookup widget's semantics.
+    // Explicit .limit(50000) bypasses PostgREST's default 1000-row ceiling
+    // so large orgs don't silently undercount spend.
     const { data: pricingRows } = await supabase
       .from("vendor_item_pricing")
-      .select("item_id, total_cents, vendor_id, job_id, transaction_date")
-      .is("deleted_at", null);
+      .select(
+        "item_id, total_cents, landed_total_cents, tax_cents, overhead_allocated_cents, vendor_id, job_id, transaction_date"
+      )
+      .is("deleted_at", null)
+      .limit(50000);
 
     type Agg = {
       total_cents: number;
@@ -87,17 +82,27 @@ export default function CostIntelligenceItemsPage() {
     const aggByItem = new Map<string, Agg>();
     for (const row of (pricingRows ?? []) as Array<{
       item_id: string;
-      total_cents: number;
+      total_cents: number | null;
+      landed_total_cents: number | null;
+      tax_cents: number | null;
+      overhead_allocated_cents: number | null;
       vendor_id: string | null;
       job_id: string | null;
       transaction_date: string | null;
     }>) {
+      const effectiveCents =
+        row.total_cents ??
+        (row.landed_total_cents != null
+          ? row.landed_total_cents -
+            (row.tax_cents ?? 0) -
+            (row.overhead_allocated_cents ?? 0)
+          : 0);
       let a = aggByItem.get(row.item_id);
       if (!a) {
         a = { total_cents: 0, count: 0, vendors: new Set(), jobs: new Set(), last_seen: null };
         aggByItem.set(row.item_id, a);
       }
-      a.total_cents += row.total_cents ?? 0;
+      a.total_cents += effectiveCents;
       a.count += 1;
       if (row.vendor_id) a.vendors.add(row.vendor_id);
       if (row.job_id) a.jobs.add(row.job_id);
@@ -129,7 +134,6 @@ export default function CostIntelligenceItemsPage() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return items.filter((it) => {
-      if (typeFilter && it.item_type !== typeFilter) return false;
       if (verifiedFilter === "verified" && !it.human_verified) return false;
       if (verifiedFilter === "unverified" && it.human_verified) return false;
       if (q) {
@@ -138,7 +142,7 @@ export default function CostIntelligenceItemsPage() {
       }
       return true;
     });
-  }, [items, search, typeFilter, verifiedFilter]);
+  }, [items, search, verifiedFilter]);
 
   return (
     <AppShell>
@@ -176,17 +180,6 @@ export default function CostIntelligenceItemsPage() {
             className="px-3 h-[36px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[13px] text-[var(--text-primary)] min-w-[260px]"
           />
           <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-            className="px-3 h-[36px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[13px] text-[var(--text-primary)]"
-          >
-            {TYPE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <select
             value={verifiedFilter}
             onChange={(e) => setVerifiedFilter(e.target.value as typeof verifiedFilter)}
             className="px-3 h-[36px] border border-[var(--border-default)] bg-[var(--bg-card)] text-[13px] text-[var(--text-primary)]"
@@ -213,10 +206,9 @@ export default function CostIntelligenceItemsPage() {
             items={filtered}
             onClear={() => {
               setSearch("");
-              setTypeFilter("");
               setVerifiedFilter("");
             }}
-            showClear={Boolean(search || typeFilter || verifiedFilter)}
+            showClear={Boolean(search || verifiedFilter)}
           />
         )}
       </main>
