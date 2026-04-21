@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app-shell";
-import FinancialViewTabs from "@/components/financial-view-tabs";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwBadge from "@/components/nw/Badge";
 import NwButton from "@/components/nw/Button";
@@ -209,14 +208,12 @@ export default function VerificationQueuePage() {
   return (
     <AppShell>
       <main className="max-w-[1400px] mx-auto px-6 py-8">
-        <FinancialViewTabs active="items" />
-
         <Link
-          href="/items"
+          href="/cost-intelligence"
           className="text-[11px] text-[var(--text-tertiary)] hover:text-nw-gulf-blue uppercase tracking-[0.12em]"
           style={{ fontFamily: "var(--font-jetbrains-mono)" }}
         >
-          ← All items
+          ← Cost Intelligence
         </Link>
 
         <div className="mt-4 flex items-start justify-between gap-4 mb-6">

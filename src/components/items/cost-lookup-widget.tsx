@@ -22,10 +22,11 @@ type VendorComparison = {
   landed_total_cents: number;
   avg_unit_cents: number;
   avg_unit_landed_cents: number;
+  avg_canonical_unit_cents: number;
   last_txn: string | null;
 };
 
-type PriceMode = "pretax" | "landed";
+type PriceMode = "canonical" | "landed";
 
 type PriceTrendPoint = {
   date: string;
@@ -41,7 +42,8 @@ export default function CostLookupWidget() {
   const [trend, setTrend] = useState<PriceTrendPoint[]>([]);
   const [searching, setSearching] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [priceMode, setPriceMode] = useState<PriceMode>("pretax");
+  const [priceMode, setPriceMode] = useState<PriceMode>("canonical");
+  const [canonicalUnit, setCanonicalUnit] = useState<string | null>(null);
 
   const runSearch = useCallback(async (q: string) => {
     setSearching(true);
@@ -81,18 +83,24 @@ export default function CostLookupWidget() {
         unit_price_cents: number;
         quantity: number;
         total_cents: number;
+        canonical_quantity?: number | null;
+        canonical_unit_price_cents?: number | null;
         tax_cents?: number | null;
         overhead_allocated_cents?: number | null;
         landed_total_cents?: number | null;
         transaction_date: string;
         vendors: { name: string } | null;
       };
-      const json = (await res.json()) as { pricing: PricingRow[] };
+      const json = (await res.json()) as {
+        item?: { canonical_unit?: string | null };
+        pricing: PricingRow[];
+      };
+      setCanonicalUnit(json.item?.canonical_unit ?? null);
       const rows = json.pricing ?? [];
 
       const map = new Map<
         string,
-        VendorComparison & { total_qty: number }
+        VendorComparison & { total_qty: number; total_canonical_qty: number }
       >();
       for (const r of rows) {
         const key = r.vendor_id;
@@ -104,8 +112,10 @@ export default function CostLookupWidget() {
             total_cents: 0,
             landed_total_cents: 0,
             total_qty: 0,
+            total_canonical_qty: 0,
             avg_unit_cents: 0,
             avg_unit_landed_cents: 0,
+            avg_canonical_unit_cents: 0,
             last_txn: null,
           });
         }
@@ -118,6 +128,7 @@ export default function CostLookupWidget() {
         b.total_cents += pretax;
         b.landed_total_cents += landed;
         b.total_qty += Number(r.quantity ?? 0);
+        b.total_canonical_qty += Number(r.canonical_quantity ?? r.quantity ?? 0);
         if (!b.last_txn || r.transaction_date > b.last_txn) b.last_txn = r.transaction_date;
       }
 
@@ -136,19 +147,25 @@ export default function CostLookupWidget() {
             b.total_qty > 0
               ? Math.round(b.landed_total_cents / b.total_qty)
               : Math.round(b.landed_total_cents / Math.max(1, b.txn_count)),
+          avg_canonical_unit_cents:
+            b.total_canonical_qty > 0
+              ? Math.round(b.total_cents / b.total_canonical_qty)
+              : Math.round(b.total_cents / Math.max(1, b.txn_count)),
           last_txn: b.last_txn,
         }))
-        .sort((a, b) => a.avg_unit_cents - b.avg_unit_cents);
+        .sort((a, b) => a.avg_canonical_unit_cents - b.avg_canonical_unit_cents);
       setComparison(comp);
 
-      // Price trend (chronological)
+      // Price trend (chronological) — canonical unit price
       setTrend(
         rows
           .slice()
           .sort((a, b) => a.transaction_date.localeCompare(b.transaction_date))
           .map((r) => ({
             date: r.transaction_date,
-            unit_price_cents: Math.round(r.unit_price_cents ?? 0),
+            unit_price_cents: Math.round(
+              r.canonical_unit_price_cents ?? r.unit_price_cents ?? 0
+            ),
             vendor: r.vendors?.name ?? "—",
           }))
       );
@@ -229,7 +246,7 @@ export default function CostLookupWidget() {
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div>
               <Link
-                href={`/items/${selected.id}`}
+                href={`/cost-intelligence/items/${selected.id}`}
                 className="text-[16px] font-medium text-[var(--text-primary)] hover:text-nw-gulf-blue hover:underline"
               >
                 {selected.canonical_name}
@@ -252,14 +269,14 @@ export default function CostLookupWidget() {
               >
                 <button
                   type="button"
-                  onClick={() => setPriceMode("pretax")}
+                  onClick={() => setPriceMode("canonical")}
                   className={`px-2 h-[26px] text-[10px] uppercase tracking-[0.12em] ${
-                    priceMode === "pretax"
+                    priceMode === "canonical"
                       ? "bg-nw-stone-blue text-nw-white-sand"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   }`}
                 >
-                  Pre-tax
+                  Canonical{canonicalUnit ? ` · ${canonicalUnit}` : ""}
                 </button>
                 <button
                   type="button"
@@ -302,7 +319,9 @@ export default function CostLookupWidget() {
                   <tbody>
                     {comparison.map((b, i) => {
                       const unitCents =
-                        priceMode === "landed" ? b.avg_unit_landed_cents : b.avg_unit_cents;
+                        priceMode === "landed"
+                          ? b.avg_unit_landed_cents
+                          : b.avg_canonical_unit_cents;
                       const totalCents =
                         priceMode === "landed" ? b.landed_total_cents : b.total_cents;
                       return (
@@ -345,9 +364,9 @@ export default function CostLookupWidget() {
                 </table>
               </div>
               <p className="mt-2 text-[10px] text-[var(--text-tertiary)] italic">
-                {priceMode === "pretax"
-                  ? "Pre-tax unit prices (cleanest cross-vendor comparison). Actual delivered cost varies with tax jurisdiction and delivery charges."
-                  : "Landed prices include sales tax and allocated delivery / freight / fuel overhead. Toggle back to pre-tax for cleanest comparison."}
+                {priceMode === "canonical"
+                  ? `Canonical unit pricing${canonicalUnit ? ` (per ${canonicalUnit})` : ""} — normalized across whatever unit each vendor uses on their invoices. Pre-tax.`
+                  : "Landed prices include sales tax and allocated delivery / freight / fuel overhead. Toggle back to canonical for cleanest comparison."}
               </p>
 
               {/* Simple trend bars — min/max normalized */}
