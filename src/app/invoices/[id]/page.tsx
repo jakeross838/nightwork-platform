@@ -2657,10 +2657,11 @@ export default function InvoiceReviewPage() {
  ) : null}
  </div>
  </div>
-
- {/* Cost Intelligence verification — staged line items awaiting review */}
- <ExtractionVerificationPanel invoiceId={invoice.id} />
  </div>
+
+ {/* Cost Intelligence verification — staged line items awaiting review.
+     Renders full-width below the main invoice grid. */}
+ <ExtractionVerificationPanel invoiceId={invoice.id} />
  </main>
 
  {/* ── Sticky Mobile Action Bar ── */}
