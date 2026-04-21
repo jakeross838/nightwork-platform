@@ -21,7 +21,7 @@ export default async function PlatformAdminLayout({
 
   // Counts for sidebar badges.
   const supabase = createServerClient();
-  const [feedbackRes, supportRes] = await Promise.all([
+  const [feedbackRes, supportRes, pendingLinesRes, pendingConversionsRes] = await Promise.all([
     supabase
       .from("feedback_notes")
       .select("id", { count: "exact", head: true })
@@ -30,9 +30,21 @@ export default async function PlatformAdminLayout({
       .from("support_conversations")
       .select("id", { count: "exact", head: true })
       .eq("status", "escalated"),
+    supabase
+      .from("invoice_extraction_lines")
+      .select("id", { count: "exact", head: true })
+      .eq("verification_status", "pending")
+      .eq("is_allocated_overhead", false)
+      .is("deleted_at", null),
+    supabase
+      .from("unit_conversion_suggestions")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending")
+      .is("deleted_at", null),
   ]);
   const unresolvedFeedback = feedbackRes.count ?? 0;
   const escalatedSupport = supportRes.count ?? 0;
+  const pendingCostIntel = (pendingLinesRes.count ?? 0) + (pendingConversionsRes.count ?? 0);
 
   return (
     <div
@@ -81,6 +93,7 @@ export default async function PlatformAdminLayout({
         <PlatformSidebar
           unresolvedFeedback={unresolvedFeedback}
           escalatedSupport={escalatedSupport}
+          pendingCostIntel={pendingCostIntel}
         />
         <main className="flex-1 min-w-0">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8">

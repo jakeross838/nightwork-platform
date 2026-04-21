@@ -14,9 +14,11 @@ type NavItem = {
 export default function PlatformSidebar({
   unresolvedFeedback,
   escalatedSupport,
+  pendingCostIntel,
 }: {
   unresolvedFeedback?: number;
   escalatedSupport?: number;
+  pendingCostIntel?: number;
 }) {
   const pathname = usePathname();
 
@@ -34,10 +36,11 @@ export default function PlatformSidebar({
       label: "Feedback",
       badge: unresolvedFeedback ?? null,
     },
-    { href: "/admin/platform/items", label: "CI · Items" },
-    { href: "/admin/platform/pricing", label: "CI · Pricing" },
-    { href: "/admin/platform/extractions", label: "CI · Extractions" },
-    { href: "/admin/platform/classifications", label: "CI · Corrections" },
+    {
+      href: "/admin/platform/cost-intelligence",
+      label: "Cost Intelligence",
+      badge: pendingCostIntel ?? null,
+    },
     { href: "/admin/platform/audit", label: "Audit log" },
     {
       href: "/admin/platform/audit?action=impersonate_start",
