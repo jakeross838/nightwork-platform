@@ -649,10 +649,14 @@ export async function extractInvoice(
     if (match.item_id) matchedExisting++;
     else newItemsProposed++;
 
-    // line_nature is authoritative from the classifier. But when the
-    // classifier said 'unclassified', we still honor it and surface in the
-    // Review tab — we do NOT try to infer from item_type here.
-    const resolvedNature: LineNature = cls.line_nature;
+    // line_nature is authoritative from the classifier unless matchItem
+    // signals the proposed name is too generic to catalog — in that case
+    // the line drops to the Review tab so a PM can supply a specific name
+    // or skip it.
+    const matchIsTooGeneric = match.reasoning.startsWith("Name too generic");
+    const resolvedNature: LineNature = matchIsTooGeneric
+      ? "unclassified"
+      : cls.line_nature;
 
     const { data: lineInsert, error: lineErr } = await supabase
       .from("invoice_extraction_lines")

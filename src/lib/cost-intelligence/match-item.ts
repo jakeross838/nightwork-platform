@@ -13,6 +13,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { callClaude } from "@/lib/claude";
+import { isNameTooGeneric, normalizeItemName } from "./normalize-item-name";
 import type {
   MatchResult,
   VendorContext,
@@ -701,23 +702,50 @@ If match_confidence < 0.75, prefer "new" over a shaky match.`;
     return fallbackNewItem(input, "AI returned neither valid match nor proposal");
   }
 
+  // Normalize the proposed name so "MYSTERY FOREST 3CM-AGM" and "mystery
+  // forest 3cm - AGM" collapse to one canonical variant before match-tier
+  // fingerprinting and spine insertion.
+  const normalizedName = normalizeItemName(prop.canonical_name);
+  const itemTypeResolved = normalizeItemType(prop.item_type);
+
   const proposedItem: ProposedItemData = {
-    canonical_name: prop.canonical_name,
-    item_type: normalizeItemType(prop.item_type),
+    canonical_name: normalizedName || prop.canonical_name,
+    item_type: itemTypeResolved,
     category: prop.category ?? null,
     subcategory: prop.subcategory ?? null,
     specs: (prop.specs as Record<string, unknown>) ?? {},
     unit: normalizeUnit(prop.unit),
   };
 
+  // Generic-name gate: if the AI's best attempt at a canonical name is too
+  // generic to live in the catalog ("tile", "lumber"), return the proposal
+  // but flag it so the extractor routes to Review. The extractor uses
+  // match-tier='ai_new_item' + reasoning prefix 'Name too generic' to tag
+  // the line_nature as 'unclassified'.
+  const tooGeneric = isNameTooGeneric(proposedItem.canonical_name, {
+    item_type: itemTypeResolved,
+    category: proposedItem.category,
+    vendor_name: context.vendor_name,
+    raw_description: input.raw_description,
+  });
+
+  const baseReasoning =
+    parsed.reasoning ?? "AI proposed a new canonical item";
+  const reasoning = tooGeneric
+    ? `Name too generic for catalog: "${proposedItem.canonical_name}". ${baseReasoning}`
+    : baseReasoning;
+
   return {
     item_id: null,
     proposed_item_data: proposedItem,
     confidence: 0, // match_confidence is 0 for new items
     match_confidence: 0,
-    classification_confidence: classConf,
+    // Force low classification confidence when we'd flag it as generic so
+    // downstream auto-commit gates stay well below threshold regardless of
+    // org settings.
+    classification_confidence: tooGeneric ? Math.min(classConf, 0.35) : classConf,
     created_via: "ai_new_item",
-    reasoning: parsed.reasoning ?? "AI proposed a new canonical item",
+    reasoning,
     candidates_considered: candidatesConsidered,
     components,
     ...scopeInfo,
