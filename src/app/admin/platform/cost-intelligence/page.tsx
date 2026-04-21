@@ -3,10 +3,17 @@ import { createServerClient } from "@/lib/supabase/server";
 import Eyebrow from "@/components/nw/Eyebrow";
 import Badge, { type BadgeVariant } from "@/components/nw/Badge";
 import Money from "@/components/nw/Money";
+import BootstrapAliasesPanel from "@/components/admin/bootstrap-aliases-panel";
 
 export const dynamic = "force-dynamic";
 
-type Tab = "items" | "pricing" | "extractions" | "classifications" | "conversions";
+type Tab =
+  | "items"
+  | "pricing"
+  | "extractions"
+  | "classifications"
+  | "conversions"
+  | "bootstrap";
 
 const TAB_ORDER: Array<{ key: Tab; label: string }> = [
   { key: "items", label: "Items" },
@@ -14,11 +21,18 @@ const TAB_ORDER: Array<{ key: Tab; label: string }> = [
   { key: "extractions", label: "Extractions" },
   { key: "classifications", label: "Classifications" },
   { key: "conversions", label: "Conversions" },
+  { key: "bootstrap", label: "Bootstrap" },
 ];
 
 function parseTab(v: string | string[] | undefined): Tab {
   const s = Array.isArray(v) ? v[0] : v;
-  if (s === "pricing" || s === "extractions" || s === "classifications" || s === "conversions") {
+  if (
+    s === "pricing" ||
+    s === "extractions" ||
+    s === "classifications" ||
+    s === "conversions" ||
+    s === "bootstrap"
+  ) {
     return s;
   }
   return "items";
@@ -53,6 +67,7 @@ export default async function PlatformCostIntelligencePage({
         {tab === "extractions" && <ExtractionsTab />}
         {tab === "classifications" && <ClassificationsTab />}
         {tab === "conversions" && <ConversionsTab />}
+        {tab === "bootstrap" && <BootstrapTab />}
       </div>
     </div>
   );
@@ -732,4 +747,40 @@ async function ConversionsTab() {
       </table>
     </div>
   );
+}
+
+// ============================================================================
+// BOOTSTRAP tab (admin-only batch commit of pending ai_new_item lines)
+// ============================================================================
+
+async function BootstrapTab() {
+  const supabase = createServerClient();
+
+  // Count pending ai_new_item lines per org so the picker shows
+  // meaningful state. Include only orgs that have anything to bootstrap.
+  const { data: pendingRows } = await supabase
+    .from("invoice_extraction_lines")
+    .select("org_id, classification_confidence, organizations(id, name)")
+    .eq("verification_status", "pending")
+    .eq("is_allocated_overhead", false)
+    .eq("is_transaction_line", false)
+    .eq("match_tier", "ai_new_item")
+    .is("deleted_at", null);
+
+  type Row = {
+    org_id: string;
+    classification_confidence: number | null;
+    organizations: { id: string; name: string } | { id: string; name: string }[] | null;
+  };
+  const byOrg = new Map<string, { id: string; name: string; pending_count: number }>();
+  for (const raw of (pendingRows ?? []) as Row[]) {
+    const org = Array.isArray(raw.organizations) ? raw.organizations[0] : raw.organizations;
+    if (!org) continue;
+    const entry = byOrg.get(org.id) ?? { id: org.id, name: org.name, pending_count: 0 };
+    entry.pending_count += 1;
+    byOrg.set(org.id, entry);
+  }
+  const orgs = Array.from(byOrg.values()).sort((a, b) => b.pending_count - a.pending_count);
+
+  return <BootstrapAliasesPanel orgs={orgs} />;
 }
