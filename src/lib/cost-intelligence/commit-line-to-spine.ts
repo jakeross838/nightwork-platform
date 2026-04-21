@@ -89,6 +89,15 @@ export async function commitLineToSpine(
     throw new Error(`commitLineToSpine: extraction missing for line ${extractionLineId}`);
   }
 
+  // Overhead/delivery lines do not represent real items — they are allocated
+  // across the real lines in allocate-overhead.ts. Never let them enter the
+  // spine.
+  if ((extractionLine as unknown as { is_allocated_overhead?: boolean }).is_allocated_overhead) {
+    throw new Error(
+      `commitLineToSpine: line ${extractionLineId} is an allocated-overhead row — cannot commit`
+    );
+  }
+
   // 2. Load invoice for job_id / vendor_id / invoice_date
   const { data: invoiceData, error: invoiceErr } = await supabase
     .from("invoices")
@@ -167,6 +176,16 @@ export async function commitLineToSpine(
 
   const isAutoCommit = opts.newStatus === "auto_committed";
 
+  // Pull tax + overhead allocation from the extraction line so the spine
+  // row carries landed-cost context even though cross-vendor queries still
+  // default to the pre-tax total_cents.
+  const lineTax = (extractionLine as unknown as { line_tax_cents?: number | null }).line_tax_cents ?? 0;
+  const lineOverhead =
+    (extractionLine as unknown as { overhead_allocated_cents?: number | null }).overhead_allocated_cents ?? 0;
+  const lineIsTaxable =
+    (extractionLine as unknown as { line_is_taxable?: boolean | null }).line_is_taxable ?? null;
+  const taxRate = (extraction as unknown as { invoice_tax_rate?: number | null }).invoice_tax_rate ?? null;
+
   // 5. Insert vendor_item_pricing row
   const { data: vip, error: vipErr } = await supabase
     .from("vendor_item_pricing")
@@ -178,6 +197,10 @@ export async function commitLineToSpine(
       quantity,
       total_cents: totalCents,
       unit,
+      tax_cents: lineTax,
+      tax_rate: taxRate,
+      is_taxable: lineIsTaxable,
+      overhead_allocated_cents: lineOverhead,
       job_id: invoice.job_id,
       cost_code_id: ccId,
       source_type: "invoice_line",

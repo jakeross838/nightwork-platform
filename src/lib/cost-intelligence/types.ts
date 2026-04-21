@@ -86,6 +86,13 @@ export interface ProposedItemData {
   unit: ItemUnit;
 }
 
+export interface InvoiceOverheadEntry {
+  type: string;
+  amount_cents: number;
+  description: string;
+  source_line_id?: string;
+}
+
 export interface InvoiceExtractionRow {
   id: string;
   org_id: string;
@@ -105,10 +112,24 @@ export interface InvoiceExtractionRow {
   verified_by: string | null;
   auto_committed: boolean;
   auto_commit_reason: string | null;
+  invoice_subtotal_cents: number | null;
+  invoice_tax_cents: number;
+  invoice_tax_rate: number | null;
+  invoice_overhead: InvoiceOverheadEntry[];
+  invoice_total_cents: number | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
 }
+
+export type OverheadType =
+  | "delivery"
+  | "freight"
+  | "shipping"
+  | "fuel_surcharge"
+  | "handling"
+  | "restocking"
+  | "core_charge";
 
 export interface InvoiceExtractionLineRow {
   id: string;
@@ -133,6 +154,12 @@ export interface InvoiceExtractionLineRow {
   verified_by: string | null;
   correction_notes: string | null;
   vendor_item_pricing_id: string | null;
+  line_tax_cents: number;
+  line_is_taxable: boolean | null;
+  overhead_allocated_cents: number;
+  landed_total_cents: number | null;
+  is_allocated_overhead: boolean;
+  overhead_type: OverheadType | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -154,6 +181,11 @@ export interface VendorItemPricingRow {
   quantity: number;
   total_cents: number;
   unit: string;
+  tax_cents: number;
+  tax_rate: number | null;
+  is_taxable: boolean | null;
+  overhead_allocated_cents: number;
+  landed_total_cents: number | null;
   job_id: string | null;
   cost_code_id: string | null;
   scope_tags: string[] | null;

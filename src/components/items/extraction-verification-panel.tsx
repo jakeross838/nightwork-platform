@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwBadge from "@/components/nw/Badge";
 import NwButton from "@/components/nw/Button";
@@ -241,6 +241,9 @@ export default function ExtractionVerificationPanel({
             <RawOcrViewer extraction={extraction} />
           ) : null}
 
+          {/* Invoice totals (pre-tax + tax + overhead + total) */}
+          <InvoiceTotalsPanel extraction={extraction} lineCount={lines.length} />
+
           {/* Line list */}
           {lines.length === 0 ? (
             <p className="text-[13px] text-[var(--text-tertiary)]">No lines extracted.</p>
@@ -284,6 +287,52 @@ function LineRow({ line, busy, onApprove, onEdit, onReject }: LineRowProps) {
   const status = line.verification_status;
   const tier = line.match_tier;
   const confidence = line.match_confidence ?? 0;
+  const isOverhead = line.is_allocated_overhead;
+
+  // Allocated-overhead rows are informational only — they were moved to the
+  // invoice-level overhead bucket and allocated proportionally. Show them
+  // greyed out with no action buttons so users understand the mechanic
+  // without being tempted to verify them individually.
+  if (isOverhead) {
+    return (
+      <li className="border border-dashed border-[var(--border-default)] bg-[var(--bg-subtle)] p-4 grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-4 items-start opacity-80">
+        <div>
+          <NwEyebrow tone="muted">Invoice-level charge</NwEyebrow>
+          <p
+            className="mt-2 text-[13px] text-[var(--text-secondary)]"
+            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+          >
+            {line.raw_description}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-[var(--text-tertiary)]">
+            <span>
+              amount{" "}
+              <NwMoney cents={line.raw_total_cents} size="sm" variant="emphasized" showCents />
+            </span>
+          </div>
+        </div>
+        <div>
+          <NwEyebrow tone="muted">Allocated to line items</NwEyebrow>
+          <p className="mt-2 text-[12px] italic text-[var(--text-tertiary)] leading-relaxed">
+            This {line.overhead_type ?? "overhead"} charge has been redistributed
+            proportionally to the real line items below by pre-tax total. No item is
+            created for it.
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2 min-w-[160px]">
+          <NwBadge variant="neutral" size="sm">
+            {(line.overhead_type ?? "overhead").replace(/_/g, " ")}
+          </NwBadge>
+          <span
+            className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
+            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+          >
+            Allocated
+          </span>
+        </div>
+      </li>
+    );
+  }
 
   const statusBadge = (() => {
     if (status === "verified" || status === "corrected" || status === "auto_committed")
@@ -315,6 +364,10 @@ function LineRow({ line, busy, onApprove, onEdit, onReject }: LineRowProps) {
     "(unclassified)";
 
   const actionable = status === "pending";
+  const overheadShare = line.overhead_allocated_cents ?? 0;
+  const lineTax = line.line_tax_cents ?? 0;
+  const landed = line.landed_total_cents ?? ((line.raw_total_cents ?? 0) + overheadShare + lineTax);
+  const showLanded = overheadShare > 0 || lineTax > 0;
 
   return (
     <li className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4 grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-4 items-start">
@@ -355,6 +408,29 @@ function LineRow({ line, busy, onApprove, onEdit, onReject }: LineRowProps) {
             />
           </span>
         </div>
+        {showLanded ? (
+          <div
+            className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-[var(--text-tertiary)]"
+            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+          >
+            {overheadShare > 0 ? (
+              <span>
+                + <NwMoney cents={overheadShare} size="sm" showCents /> overhead
+              </span>
+            ) : null}
+            {lineTax > 0 ? (
+              <span>
+                + <NwMoney cents={lineTax} size="sm" showCents /> tax
+              </span>
+            ) : null}
+            <span>
+              landed{" "}
+              <span className="text-[var(--text-secondary)]">
+                <NwMoney cents={landed} size="sm" showCents />
+              </span>
+            </span>
+          </div>
+        ) : null}
       </div>
 
       {/* MIDDLE — AI proposal */}
@@ -416,5 +492,94 @@ function LineRow({ line, busy, onApprove, onEdit, onReject }: LineRowProps) {
         </div>
       </div>
     </li>
+  );
+}
+
+function InvoiceTotalsPanel({
+  extraction,
+  lineCount,
+}: {
+  extraction: InvoiceExtractionRow;
+  lineCount: number;
+}) {
+  const subtotal = extraction.invoice_subtotal_cents;
+  const tax = extraction.invoice_tax_cents ?? 0;
+  const taxRate = extraction.invoice_tax_rate;
+  const overhead = Array.isArray(extraction.invoice_overhead) ? extraction.invoice_overhead : [];
+  const overheadTotal = overhead.reduce((s, o) => s + (o.amount_cents ?? 0), 0);
+  const total = extraction.invoice_total_cents;
+  const implied = (subtotal ?? 0) + tax + overheadTotal;
+  const diff = total != null && subtotal != null ? total - implied : null;
+  const reconcileOk = diff == null || Math.abs(diff) <= 2;
+
+  // Nothing to show if extraction has no totals captured yet
+  if (subtotal == null && tax === 0 && overhead.length === 0 && total == null) {
+    return null;
+  }
+
+  return (
+    <div className="mb-4 border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
+      <NwEyebrow tone="muted">Invoice totals</NwEyebrow>
+      <div
+        className="mt-3 grid grid-cols-[auto_1fr_auto] gap-x-6 gap-y-1.5 text-[12px]"
+        style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+      >
+        {subtotal != null ? (
+          <>
+            <span className="text-[var(--text-tertiary)] uppercase tracking-[0.12em] text-[10px] self-center">
+              Subtotal
+            </span>
+            <span className="text-[var(--text-tertiary)] text-[10px] italic self-center">pre-tax</span>
+            <span className="text-right text-[var(--text-primary)] whitespace-nowrap">
+              <NwMoney cents={subtotal} size="sm" showCents />
+            </span>
+          </>
+        ) : null}
+
+        {tax > 0 ? (
+          <>
+            <span className="text-[var(--text-tertiary)] uppercase tracking-[0.12em] text-[10px] self-center">
+              Tax
+            </span>
+            <span className="text-[var(--text-tertiary)] text-[10px] italic self-center">
+              {taxRate != null ? `${(taxRate * 100).toFixed(2)}% rate` : "rate unknown"} · prorated to taxable lines
+            </span>
+            <span className="text-right text-[var(--text-primary)] whitespace-nowrap">
+              <NwMoney cents={tax} size="sm" showCents />
+            </span>
+          </>
+        ) : null}
+
+        {overhead.map((o, i) => (
+          <Fragment key={i}>
+            <span className="text-[var(--text-tertiary)] uppercase tracking-[0.12em] text-[10px] self-center">
+              {(o.type ?? "overhead").replace(/_/g, " ")}
+            </span>
+            <span className="text-[var(--text-tertiary)] text-[10px] italic self-center truncate">
+              {o.description || "allocated across lines"}
+            </span>
+            <span className="text-right text-[var(--text-primary)] whitespace-nowrap">
+              <NwMoney cents={o.amount_cents ?? 0} size="sm" showCents />
+            </span>
+          </Fragment>
+        ))}
+
+        {total != null ? (
+          <>
+            <span className="col-span-3 border-t border-[var(--border-default)] pt-0.5" aria-hidden />
+            <span className="text-[var(--text-primary)] uppercase tracking-[0.12em] text-[10px] self-center font-medium">
+              Total
+            </span>
+            <span className="text-[var(--text-tertiary)] text-[10px] italic self-center">
+              {lineCount} line{lineCount === 1 ? "" : "s"}
+              {reconcileOk ? " · reconciled" : ` · mismatch ${diff && diff > 0 ? "+" : ""}${((diff ?? 0) / 100).toFixed(2)}`}
+            </span>
+            <span className="text-right text-[var(--text-primary)] font-medium whitespace-nowrap">
+              <NwMoney cents={total} size="sm" variant="emphasized" showCents />
+            </span>
+          </>
+        ) : null}
+      </div>
+    </div>
   );
 }

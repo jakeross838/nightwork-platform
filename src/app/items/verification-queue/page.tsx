@@ -41,6 +41,8 @@ type QueueLine = {
   } | null;
 };
 
+const BULK_APPROVE_THRESHOLD = 0.95;
+
 export default function VerificationQueuePage() {
   const [lines, setLines] = useState<QueueLine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,7 @@ export default function VerificationQueuePage() {
   const [confidenceFilter, setConfidenceFilter] = useState<string>("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [thresholdBusy, setThresholdBusy] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -59,6 +62,7 @@ export default function VerificationQueuePage() {
         "id, line_order, raw_description, raw_quantity, raw_total_cents, raw_unit_text, match_tier, match_confidence, match_reasoning, verification_status, created_at, extraction_id, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, invoice_id, verification_status, invoices!inner(id, invoice_number, vendor_name_raw, vendor_id, job_id, vendors(name), jobs(name)))"
       )
       .eq("verification_status", "pending")
+      .eq("is_allocated_overhead", false)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(500);
@@ -113,6 +117,16 @@ export default function VerificationQueuePage() {
     [filtered]
   );
 
+  const thresholdEligible = useMemo(() => {
+    const eligibleTiers = new Set(["alias_match", "trigram_match", "ai_semantic_match"]);
+    return filtered.filter(
+      (l) =>
+        l.match_tier != null &&
+        eligibleTiers.has(l.match_tier) &&
+        (l.match_confidence ?? 0) >= BULK_APPROVE_THRESHOLD
+    );
+  }, [filtered]);
+
   const toggleSelect = useCallback((lineId: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -153,6 +167,44 @@ export default function VerificationQueuePage() {
     setSelected(new Set());
     await fetchData();
   }, [selected, fetchData]);
+
+  const approveAboveThreshold = useCallback(async () => {
+    const eligibleCount = thresholdEligible.length;
+    if (eligibleCount === 0) {
+      toast.info("No lines meet the auto-approve threshold (≥95% confidence, alias/trigram/ai_semantic)");
+      return;
+    }
+    const confirmed = confirm(
+      `Approve all ${eligibleCount} line${eligibleCount === 1 ? "" : "s"} at ≥${Math.round(
+        BULK_APPROVE_THRESHOLD * 100
+      )}% confidence (alias / trigram / ai_semantic)?\n\nai_new_item lines always require manual review.`
+    );
+    if (!confirmed) return;
+    setThresholdBusy(true);
+    try {
+      const res = await fetch(`/api/cost-intelligence/lines/bulk-approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          confidence_threshold: BULK_APPROVE_THRESHOLD,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? `Status ${res.status}`);
+      toast.success(
+        `Approved ${json.count_approved}/${json.count_eligible} lines${
+          json.count_failed ? ` · ${json.count_failed} failed` : ""
+        }`
+      );
+      await fetchData();
+    } catch (err) {
+      toast.error(
+        `Bulk approve failed: ${err instanceof Error ? err.message : err}`
+      );
+    } finally {
+      setThresholdBusy(false);
+    }
+  }, [thresholdEligible.length, fetchData]);
 
   return (
     <AppShell>
@@ -248,6 +300,16 @@ export default function VerificationQueuePage() {
           </select>
 
           <div className="ml-auto flex items-center gap-2">
+            <NwButton
+              variant="primary"
+              size="sm"
+              onClick={approveAboveThreshold}
+              loading={thresholdBusy}
+              disabled={thresholdEligible.length === 0 || thresholdBusy || bulkBusy}
+              title="Approve every alias / trigram / ai_semantic line at ≥95% confidence"
+            >
+              Approve ≥95% ({thresholdEligible.length})
+            </NwButton>
             <NwButton
               variant="secondary"
               size="sm"

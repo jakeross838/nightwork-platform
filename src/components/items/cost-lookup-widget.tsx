@@ -19,9 +19,13 @@ type VendorComparison = {
   vendor_name: string;
   txn_count: number;
   total_cents: number;
+  landed_total_cents: number;
   avg_unit_cents: number;
+  avg_unit_landed_cents: number;
   last_txn: string | null;
 };
+
+type PriceMode = "pretax" | "landed";
 
 type PriceTrendPoint = {
   date: string;
@@ -37,6 +41,7 @@ export default function CostLookupWidget() {
   const [trend, setTrend] = useState<PriceTrendPoint[]>([]);
   const [searching, setSearching] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [priceMode, setPriceMode] = useState<PriceMode>("pretax");
 
   const runSearch = useCallback(async (q: string) => {
     setSearching(true);
@@ -76,13 +81,19 @@ export default function CostLookupWidget() {
         unit_price_cents: number;
         quantity: number;
         total_cents: number;
+        tax_cents?: number | null;
+        overhead_allocated_cents?: number | null;
+        landed_total_cents?: number | null;
         transaction_date: string;
         vendors: { name: string } | null;
       };
       const json = (await res.json()) as { pricing: PricingRow[] };
       const rows = json.pricing ?? [];
 
-      const map = new Map<string, VendorComparison & { total_qty: number }>();
+      const map = new Map<
+        string,
+        VendorComparison & { total_qty: number }
+      >();
       for (const r of rows) {
         const key = r.vendor_id;
         if (!map.has(key)) {
@@ -91,14 +102,21 @@ export default function CostLookupWidget() {
             vendor_name: r.vendors?.name ?? "(unknown)",
             txn_count: 0,
             total_cents: 0,
+            landed_total_cents: 0,
             total_qty: 0,
             avg_unit_cents: 0,
+            avg_unit_landed_cents: 0,
             last_txn: null,
           });
         }
         const b = map.get(key)!;
         b.txn_count++;
-        b.total_cents += r.total_cents ?? 0;
+        const pretax = r.total_cents ?? 0;
+        const landed =
+          r.landed_total_cents ??
+          pretax + (r.tax_cents ?? 0) + (r.overhead_allocated_cents ?? 0);
+        b.total_cents += pretax;
+        b.landed_total_cents += landed;
         b.total_qty += Number(r.quantity ?? 0);
         if (!b.last_txn || r.transaction_date > b.last_txn) b.last_txn = r.transaction_date;
       }
@@ -109,10 +127,15 @@ export default function CostLookupWidget() {
           vendor_name: b.vendor_name,
           txn_count: b.txn_count,
           total_cents: b.total_cents,
+          landed_total_cents: b.landed_total_cents,
           avg_unit_cents:
             b.total_qty > 0
               ? Math.round(b.total_cents / b.total_qty)
               : Math.round(b.total_cents / Math.max(1, b.txn_count)),
+          avg_unit_landed_cents:
+            b.total_qty > 0
+              ? Math.round(b.landed_total_cents / b.total_qty)
+              : Math.round(b.landed_total_cents / Math.max(1, b.txn_count)),
           last_txn: b.last_txn,
         }))
         .sort((a, b) => a.avg_unit_cents - b.avg_unit_cents);
@@ -217,11 +240,40 @@ export default function CostLookupWidget() {
                 {selected.unit ? ` · unit ${selected.unit}` : ""}
               </div>
             </div>
-            {comparison.length > 0 ? (
-              <NwBadge variant="accent" size="sm">
-                {comparison.length} vendor{comparison.length === 1 ? "" : "s"}
-              </NwBadge>
-            ) : null}
+            <div className="flex items-center gap-2">
+              {comparison.length > 0 ? (
+                <NwBadge variant="accent" size="sm">
+                  {comparison.length} vendor{comparison.length === 1 ? "" : "s"}
+                </NwBadge>
+              ) : null}
+              <div
+                className="inline-flex items-center border border-[var(--border-default)]"
+                style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setPriceMode("pretax")}
+                  className={`px-2 h-[26px] text-[10px] uppercase tracking-[0.12em] ${
+                    priceMode === "pretax"
+                      ? "bg-nw-stone-blue text-nw-white-sand"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  }`}
+                >
+                  Pre-tax
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPriceMode("landed")}
+                  className={`px-2 h-[26px] text-[10px] uppercase tracking-[0.12em] border-l border-[var(--border-default)] ${
+                    priceMode === "landed"
+                      ? "bg-nw-stone-blue text-nw-white-sand"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  }`}
+                >
+                  Landed
+                </button>
+              </div>
+            </div>
           </div>
 
           {loadingDetail ? (
@@ -248,44 +300,55 @@ export default function CostLookupWidget() {
                     </tr>
                   </thead>
                   <tbody>
-                    {comparison.map((b, i) => (
-                      <tr
-                        key={b.vendor_id}
-                        className="border-b border-[var(--border-default)] last:border-b-0"
-                      >
-                        <td className="px-3 py-2">
-                          <span className="text-[var(--text-primary)]">{b.vendor_name}</span>
-                          {i === 0 ? (
-                            <span className="ml-2">
-                              <NwBadge variant="success" size="sm">
-                                lowest
-                              </NwBadge>
-                            </span>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <NwMoney cents={b.avg_unit_cents} size="sm" />
-                        </td>
-                        <td
-                          className="px-3 py-2 text-right text-[var(--text-secondary)]"
-                          style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                    {comparison.map((b, i) => {
+                      const unitCents =
+                        priceMode === "landed" ? b.avg_unit_landed_cents : b.avg_unit_cents;
+                      const totalCents =
+                        priceMode === "landed" ? b.landed_total_cents : b.total_cents;
+                      return (
+                        <tr
+                          key={b.vendor_id}
+                          className="border-b border-[var(--border-default)] last:border-b-0"
                         >
-                          {b.txn_count}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <NwMoney cents={b.total_cents} size="sm" />
-                        </td>
-                        <td
-                          className="px-3 py-2 text-[var(--text-tertiary)]"
-                          style={{ fontFamily: "var(--font-jetbrains-mono)" }}
-                        >
-                          {b.last_txn ?? "—"}
-                        </td>
-                      </tr>
-                    ))}
+                          <td className="px-3 py-2">
+                            <span className="text-[var(--text-primary)]">{b.vendor_name}</span>
+                            {i === 0 ? (
+                              <span className="ml-2">
+                                <NwBadge variant="success" size="sm">
+                                  lowest
+                                </NwBadge>
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <NwMoney cents={unitCents} size="sm" />
+                          </td>
+                          <td
+                            className="px-3 py-2 text-right text-[var(--text-secondary)]"
+                            style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
+                          >
+                            {b.txn_count}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <NwMoney cents={totalCents} size="sm" />
+                          </td>
+                          <td
+                            className="px-3 py-2 text-[var(--text-tertiary)]"
+                            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+                          >
+                            {b.last_txn ?? "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
+              <p className="mt-2 text-[10px] text-[var(--text-tertiary)] italic">
+                {priceMode === "pretax"
+                  ? "Pre-tax unit prices (cleanest cross-vendor comparison). Actual delivered cost varies with tax jurisdiction and delivery charges."
+                  : "Landed prices include sales tax and allocated delivery / freight / fuel overhead. Toggle back to pre-tax for cleanest comparison."}
+              </p>
 
               {/* Simple trend bars — min/max normalized */}
               {trend.length > 1 ? (

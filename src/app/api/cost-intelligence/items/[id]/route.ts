@@ -38,7 +38,7 @@ export const GET = withApiError(async (_req: NextRequest, ctx: { params: Promise
 
   const { data: pricing } = await supabase
     .from("vendor_item_pricing")
-    .select("id, vendor_id, unit_price_cents, quantity, total_cents, unit, job_id, source_type, transaction_date, ai_confidence, created_via, human_verified, auto_committed, vendors(id,name), jobs(id,name)")
+    .select("id, vendor_id, unit_price_cents, quantity, total_cents, unit, tax_cents, overhead_allocated_cents, landed_total_cents, job_id, source_type, transaction_date, ai_confidence, created_via, human_verified, auto_committed, vendors(id,name), jobs(id,name)")
     .eq("item_id", id)
     .eq("org_id", membership.org_id)
     .is("deleted_at", null)

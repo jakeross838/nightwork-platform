@@ -18,6 +18,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildVendorContext, matchItem } from "./match-item";
 import { commitLineToSpine } from "./commit-line-to-spine";
+import {
+  applyAllocationsToLines,
+  computeAllocations,
+  detectOverheadLine,
+  type AllocationLine,
+} from "./allocate-overhead";
 import type {
   CostIntelligenceSettings,
   InvoiceExtractionLineRow,
@@ -25,8 +31,22 @@ import type {
   MatchResult,
 } from "./types";
 
-const EXTRACTION_PROMPT_VERSION = "v1.0";
+const EXTRACTION_PROMPT_VERSION = "v1.1";
 const EXTRACTION_MODEL = "claude-sonnet-4-20250514";
+
+interface InvoiceOverheadEntry {
+  type: string;
+  amount_cents: number;
+  description: string;
+  source_line_id: string;
+}
+
+function dollarsToCents(value: unknown): number | null {
+  if (value == null) return null;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.round(n * 100);
+}
 
 export interface ExtractInvoiceOptions {
   /** Force re-extraction even if an extraction row already exists. */
@@ -56,6 +76,12 @@ type InvoiceSlim = {
   vendor_name_raw: string | null;
   invoice_date: string | null;
   original_file_url: string | null;
+  total_amount: number | null;
+  ai_raw_response: {
+    subtotal?: number | null;
+    tax?: number | null;
+    total_amount?: number | null;
+  } | null;
 };
 
 type InvoiceLineSlim = {
@@ -76,7 +102,9 @@ export async function extractInvoice(
   // 1. Load invoice
   const { data: invoiceRow, error: invoiceErr } = await supabase
     .from("invoices")
-    .select("id, org_id, vendor_id, vendor_name_raw, invoice_date, original_file_url")
+    .select(
+      "id, org_id, vendor_id, vendor_name_raw, invoice_date, original_file_url, total_amount, ai_raw_response"
+    )
     .eq("id", invoiceId)
     .is("deleted_at", null)
     .single();
@@ -144,6 +172,18 @@ export async function extractInvoice(
   // 5. Load org settings for auto-commit gate
   const settings = await loadOrgSettings(supabase, orgId);
 
+  // 5b. Pull invoice-level totals (tax / subtotal / total) from the Claude
+  //     Vision response captured at upload time. Stored as dollars — convert.
+  const aiResp = invoice.ai_raw_response ?? null;
+  const invoiceSubtotalCents = dollarsToCents(aiResp?.subtotal);
+  const invoiceTaxCents = dollarsToCents(aiResp?.tax) ?? 0;
+  const invoiceTotalFromAiCents = dollarsToCents(aiResp?.total_amount);
+  const invoiceTotalCents = invoiceTotalFromAiCents ?? invoice.total_amount ?? null;
+  const invoiceTaxRate =
+    invoiceSubtotalCents && invoiceSubtotalCents > 0 && invoiceTaxCents > 0
+      ? Number((invoiceTaxCents / invoiceSubtotalCents).toFixed(4))
+      : null;
+
   // 6. Create (or update) the extraction row
   let extractionId: string;
   if (existingExtraction) {
@@ -167,6 +207,11 @@ export async function extractInvoice(
         verified_by: null,
         auto_committed: false,
         auto_commit_reason: null,
+        invoice_subtotal_cents: invoiceSubtotalCents,
+        invoice_tax_cents: invoiceTaxCents,
+        invoice_tax_rate: invoiceTaxRate,
+        invoice_overhead: [],
+        invoice_total_cents: invoiceTotalCents,
       })
       .eq("id", extractionId);
   } else {
@@ -181,6 +226,11 @@ export async function extractInvoice(
         field_confidences: {},
         verification_status: "pending",
         total_lines_count: lineItems.length,
+        invoice_subtotal_cents: invoiceSubtotalCents,
+        invoice_tax_cents: invoiceTaxCents,
+        invoice_tax_rate: invoiceTaxRate,
+        invoice_overhead: [],
+        invoice_total_cents: invoiceTotalCents,
       })
       .select("id")
       .single();
@@ -191,17 +241,67 @@ export async function extractInvoice(
     extractionId = inserted.id as string;
   }
 
-  // 7. For each line, run matching and stage
+  // 7. For each line, detect overhead (delivery/freight/etc) first — those
+  //    bypass matchItem since they will be reallocated. Real lines run the
+  //    full tiered matcher.
   const tierBreakdown: Record<string, number> = {};
   let newItemsProposed = 0;
   let matchedExisting = 0;
 
   const insertedLines: Array<{ id: string; match: MatchResult; rawTotalCents: number }> = [];
+  const overheadEntries: InvoiceOverheadEntry[] = [];
 
   for (const li of lineItems) {
     const rawTotalCents = li.amount_cents ?? 0;
     const rawUnitPriceCents =
       li.rate != null && Number.isFinite(li.rate) ? Math.round(li.rate * 100) : null;
+
+    const overhead = detectOverheadLine(li.description);
+
+    if (overhead) {
+      // Overhead lines: stage them with is_allocated_overhead=true but do not
+      // run matchItem (we're not trying to catalog "delivery charge" as an
+      // item). They stay visible in the verification UI, greyed out.
+      const { data: oRow, error: oErr } = await supabase
+        .from("invoice_extraction_lines")
+        .insert({
+          org_id: orgId,
+          extraction_id: extractionId,
+          invoice_line_item_id: li.id,
+          line_order: li.line_index ?? 0,
+          raw_description: li.description ?? "",
+          raw_quantity: li.qty,
+          raw_unit_price_cents: rawUnitPriceCents,
+          raw_total_cents: rawTotalCents,
+          raw_unit_text: li.unit,
+          proposed_item_id: null,
+          proposed_item_data: null,
+          match_tier: null,
+          match_confidence: null,
+          match_reasoning: `Detected invoice-level ${overhead.overhead_type} charge — allocated proportionally to real lines`,
+          candidates_considered: null,
+          verification_status: "pending",
+          is_allocated_overhead: true,
+          overhead_type: overhead.overhead_type,
+        })
+        .select("id")
+        .single();
+
+      if (oErr || !oRow) {
+        console.warn(
+          `[extract] overhead line insert failed: ${oErr?.message}`
+        );
+        continue;
+      }
+      overheadEntries.push({
+        type: overhead.overhead_type,
+        amount_cents: rawTotalCents,
+        description: li.description ?? "",
+        source_line_id: oRow.id as string,
+      });
+      tierBreakdown["overhead_allocated"] = (tierBreakdown["overhead_allocated"] ?? 0) + 1;
+      continue;
+    }
 
     const match = await matchItem(
       supabase,
@@ -255,28 +355,59 @@ export async function extractInvoice(
     });
   }
 
-  // 8. Auto-commit pass (if org enabled)
+  // 7b. Persist detected overhead on the extraction + run allocation pass
+  if (overheadEntries.length > 0) {
+    await supabase
+      .from("invoice_extractions")
+      .update({ invoice_overhead: overheadEntries })
+      .eq("id", extractionId);
+  }
+
+  const overheadTotalCents = overheadEntries.reduce((s, o) => s + o.amount_cents, 0);
+  if (overheadTotalCents > 0 || invoiceTaxCents > 0) {
+    const allocationLines: AllocationLine[] = insertedLines.map((s) => ({
+      id: s.id,
+      raw_total_cents: s.rawTotalCents,
+      is_allocated_overhead: false,
+      line_is_taxable: null,
+    }));
+    const result = computeAllocations(allocationLines, overheadTotalCents, invoiceTaxCents);
+    await applyAllocationsToLines(supabase, result);
+  }
+
+  // 8. Auto-commit pass (if org enabled):
+  //    - alias_match / trigram_match ALWAYS auto-commit — these are
+  //      deterministic matches against vendor-scoped prior verifications.
+  //    - ai_semantic_match only if confidence >= org threshold (default 0.95).
+  //    - ai_new_item NEVER auto-commits — new items always need a human eye
+  //      before joining the catalog.
   let linesAutoCommitted = 0;
   let autoCommitReason: string | null = null;
   if (settings.auto_commit_enabled && invoice.vendor_id) {
     const threshold = settings.auto_commit_threshold;
     for (const staged of insertedLines) {
-      if (staged.match.confidence >= threshold) {
-        try {
-          await commitLineToSpine(supabase, staged.id, {
-            verifiedBy: null,
-            newStatus: "auto_committed",
-          });
-          linesAutoCommitted++;
-        } catch (err) {
-          console.warn(
-            `[extract] auto-commit failed for line ${staged.id}: ${err instanceof Error ? err.message : err}`
-          );
-        }
+      const tier = staged.match.created_via;
+      const shouldAutoCommit =
+        tier === "alias_match" ||
+        tier === "trigram_match" ||
+        (tier === "ai_semantic_match" && staged.match.confidence >= threshold);
+
+      if (!shouldAutoCommit) continue;
+
+      try {
+        await commitLineToSpine(supabase, staged.id, {
+          verifiedBy: null,
+          newStatus: "auto_committed",
+        });
+        linesAutoCommitted++;
+      } catch (err) {
+        console.warn(
+          `[extract] auto-commit failed for line ${staged.id}: ${err instanceof Error ? err.message : err}`
+        );
       }
     }
     if (linesAutoCommitted > 0) {
-      autoCommitReason = `Auto-committed ${linesAutoCommitted}/${insertedLines.length} lines at confidence >= ${threshold}`;
+      autoCommitReason = `Auto-committed ${linesAutoCommitted}/${insertedLines.length} lines (alias/trigram always; ai_semantic >= ${threshold})`;
       await supabase
         .from("invoice_extractions")
         .update({
