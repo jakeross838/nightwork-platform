@@ -26,6 +26,11 @@ import type {
   ProposedItemData,
   CreatedVia,
 } from "./types";
+import {
+  applyConversion,
+  resolveConversionWithAI,
+  type ItemForConversion,
+} from "./convert-units";
 
 export interface CommitLineOptions {
   /** User doing the verification (null for auto-commit path). */
@@ -146,6 +151,8 @@ export async function commitLineToSpine(
         subcategory: proposal.subcategory,
         specs: proposal.specs ?? {},
         unit: proposal.unit,
+        canonical_unit: proposal.unit,
+        conversion_rules: {},
         first_seen_source: "invoice_extraction",
         ai_confidence: extractionLine.match_confidence,
         human_verified: opts.newStatus !== "auto_committed",
@@ -176,6 +183,42 @@ export async function commitLineToSpine(
 
   const isAutoCommit = opts.newStatus === "auto_committed";
 
+  // 4b. Resolve unit conversion — observed unit on the invoice vs the
+  //     item's canonical unit. Applied ratio stored on the pricing row so
+  //     cost-intelligence queries can use canonical_* for comparison.
+  const { data: itemForConv } = await supabase
+    .from("items")
+    .select("id, org_id, canonical_unit, conversion_rules, category, subcategory, canonical_name")
+    .eq("id", itemId)
+    .maybeSingle();
+
+  const conversion = itemForConv
+    ? await resolveConversionWithAI(
+        supabase,
+        itemForConv as ItemForConversion & { canonical_name: string },
+        unit,
+        {
+          orgId: invoice.org_id,
+          userId: opts.verifiedBy,
+          sourceExtractionLineId: extractionLine.id,
+        }
+      )
+    : { ratio: 1, source: "no_conversion" as const };
+
+  const canonicalUnit = (itemForConv as { canonical_unit?: string } | null)?.canonical_unit ?? unit;
+  const { canonicalQty, canonicalUnitPriceCents } = applyConversion(
+    quantity,
+    unitPriceCents,
+    conversion.ratio
+  );
+  const conversionApplied = {
+    from_unit: unit,
+    to_unit: canonicalUnit,
+    ratio: conversion.ratio,
+    source: conversion.source,
+    ...(conversion.suggestion_id ? { suggestion_id: conversion.suggestion_id } : {}),
+  };
+
   // Pull tax + overhead allocation from the extraction line so the spine
   // row carries landed-cost context even though cross-vendor queries still
   // default to the pre-tax total_cents.
@@ -201,6 +244,12 @@ export async function commitLineToSpine(
       tax_rate: taxRate,
       is_taxable: lineIsTaxable,
       overhead_allocated_cents: lineOverhead,
+      observed_unit: unit,
+      observed_quantity: quantity,
+      observed_unit_price_cents: unitPriceCents,
+      canonical_quantity: canonicalQty,
+      canonical_unit_price_cents: canonicalUnitPriceCents,
+      conversion_applied: conversionApplied,
       job_id: invoice.job_id,
       cost_code_id: ccId,
       source_type: "invoice_line",
