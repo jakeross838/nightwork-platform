@@ -1,12 +1,12 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwBadge from "@/components/nw/Badge";
 import NwButton from "@/components/nw/Button";
 import NwMoney from "@/components/nw/Money";
 import { toast } from "@/lib/utils/toast";
-import LineCorrectionModal from "@/components/items/line-correction-modal";
 import RawOcrViewer from "@/components/items/raw-ocr-viewer";
 import type {
   InvoiceExtractionRow,
@@ -34,7 +34,6 @@ export default function ExtractionVerificationPanel({
   const [lines, setLines] = useState<ExtractionLineView[]>(initialLines);
   const [loading, setLoading] = useState(!initialExtraction);
   const [busyLineId, setBusyLineId] = useState<string | null>(null);
-  const [correctionLine, setCorrectionLine] = useState<ExtractionLineView | null>(null);
   const [ocrOpen, setOcrOpen] = useState(false);
   const [extractBusy, setExtractBusy] = useState(false);
 
@@ -121,11 +120,6 @@ export default function ExtractionVerificationPanel({
     }
   }, [load]);
 
-  const onCorrectionSaved = useCallback(async () => {
-    setCorrectionLine(null);
-    await load();
-  }, [load]);
-
   const pendingCount = lines.filter((l) => l.verification_status === "pending").length;
   const verifiedCount = lines.filter((l) => ["verified", "corrected", "auto_committed"].includes(l.verification_status)).length;
   const rejectedCount = lines.filter((l) => l.verification_status === "rejected").length;
@@ -157,6 +151,13 @@ export default function ExtractionVerificationPanel({
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/cost-intelligence/verification"
+            className="inline-flex items-center h-[32px] px-3 border border-[var(--border-default)] text-[11px] uppercase tracking-[0.12em] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+          >
+            Open verification queue →
+          </Link>
           <NwButton
             variant="ghost"
             size="sm"
@@ -255,20 +256,11 @@ export default function ExtractionVerificationPanel({
                   line={line}
                   busy={busyLineId === line.id}
                   onApprove={() => approveLine(line.id)}
-                  onEdit={() => setCorrectionLine(line)}
                   onReject={() => rejectLine(line.id)}
                 />
               ))}
             </ul>
           )}
-
-          {correctionLine ? (
-            <LineCorrectionModal
-              line={correctionLine}
-              onClose={() => setCorrectionLine(null)}
-              onSaved={onCorrectionSaved}
-            />
-          ) : null}
         </>
       )}
     </section>
@@ -279,11 +271,10 @@ interface LineRowProps {
   line: ExtractionLineView;
   busy: boolean;
   onApprove: () => void;
-  onEdit: () => void;
   onReject: () => void;
 }
 
-function LineRow({ line, busy, onApprove, onEdit, onReject }: LineRowProps) {
+function LineRow({ line, busy, onApprove, onReject }: LineRowProps) {
   const status = line.verification_status;
   const tier = line.match_tier;
   const confidence = line.match_confidence ?? 0;
@@ -473,14 +464,18 @@ function LineRow({ line, busy, onApprove, onEdit, onReject }: LineRowProps) {
           >
             Approve
           </NwButton>
-          <NwButton
-            variant="secondary"
-            size="sm"
-            disabled={!actionable || busy}
-            onClick={onEdit}
+          <Link
+            href="/cost-intelligence/verification"
+            className={`inline-flex items-center justify-center h-[30px] px-3 border text-[11px] uppercase tracking-[0.12em] ${
+              !actionable
+                ? "border-[var(--border-default)] text-[var(--text-tertiary)] pointer-events-none opacity-60"
+                : "border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+            }`}
+            style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+            title="Edit classification in the full verification queue"
           >
-            Edit
-          </NwButton>
+            Edit in queue →
+          </Link>
           <NwButton
             variant="danger"
             size="sm"
