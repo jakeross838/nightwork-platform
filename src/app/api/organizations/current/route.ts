@@ -24,6 +24,7 @@ const EDITABLE_COLUMNS = new Set([
   "payment_schedule_config",
   "onboarding_complete",
   "builder_type",
+  "cost_intelligence_settings",
 ]);
 
 export const PATCH = withApiError(async (request: NextRequest) => {

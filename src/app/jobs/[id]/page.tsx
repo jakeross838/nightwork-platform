@@ -13,6 +13,7 @@ import NwCard from "@/components/nw/Card";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwButton from "@/components/nw/Button";
 import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
+import HomeCharacteristicsPanel from "@/components/jobs/home-characteristics-panel";
 
 function jobStatusVariant(status: string): BadgeVariant {
   if (status === "active") return "success";
@@ -542,6 +543,10 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             </div>
           )}
         </NwCard>
+
+        <div className="mt-6">
+          <HomeCharacteristicsPanel jobId={job.id} />
+        </div>
       </main>
 
       <style jsx>{`

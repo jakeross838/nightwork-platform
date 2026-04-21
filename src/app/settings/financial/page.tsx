@@ -15,6 +15,12 @@ export default async function FinancialSettingsPage() {
         default_deposit_percentage: Number(org.default_deposit_percentage),
         payment_schedule_type: org.payment_schedule_type,
         payment_schedule_config: org.payment_schedule_config,
+        cost_intelligence_settings: {
+          auto_commit_enabled: org.cost_intelligence_settings?.auto_commit_enabled ?? false,
+          auto_commit_threshold: org.cost_intelligence_settings?.auto_commit_threshold ?? 0.95,
+          verification_required_for_low_confidence:
+            org.cost_intelligence_settings?.verification_required_for_low_confidence ?? true,
+        },
       }}
     />
   );

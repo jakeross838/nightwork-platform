@@ -11,6 +11,11 @@ type Props = {
     default_deposit_percentage: number;
     payment_schedule_type: PaymentScheduleType;
     payment_schedule_config: Record<string, unknown>;
+    cost_intelligence_settings: {
+      auto_commit_enabled: boolean;
+      auto_commit_threshold: number;
+      verification_required_for_low_confidence: boolean;
+    };
   };
 };
 
@@ -32,6 +37,12 @@ export default function FinancialSettingsForm({ org }: Props) {
   const [customPayDay, setCustomPayDay] = useState<number>(
     (org.payment_schedule_config?.pay_day as number) ?? 30
   );
+  const [autoCommitEnabled, setAutoCommitEnabled] = useState(
+    org.cost_intelligence_settings.auto_commit_enabled
+  );
+  const [autoCommitThreshold, setAutoCommitThreshold] = useState(
+    Math.round(org.cost_intelligence_settings.auto_commit_threshold * 100)
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
@@ -51,6 +62,12 @@ export default function FinancialSettingsForm({ org }: Props) {
           default_deposit_percentage: Number((deposit / 100).toFixed(4)),
           payment_schedule_type: scheduleType,
           payment_schedule_config: config,
+          cost_intelligence_settings: {
+            auto_commit_enabled: autoCommitEnabled,
+            auto_commit_threshold: Math.max(0.5, Math.min(1, autoCommitThreshold / 100)),
+            verification_required_for_low_confidence:
+              org.cost_intelligence_settings.verification_required_for_low_confidence,
+          },
         }),
       });
       if (!res.ok) {
@@ -121,6 +138,56 @@ export default function FinancialSettingsForm({ org }: Props) {
             />
           </div>
         )}
+      </Section>
+
+      <Section title="Cost Intelligence">
+        <p className="text-[12px] text-[color:var(--text-secondary)] leading-relaxed">
+          When enabled, AI extractions with confidence above the threshold are
+          automatically committed to the cost intelligence database without
+          requiring per-line verification. Default is OFF — every extraction
+          waits for human verification.
+        </p>
+
+        <label className="flex items-center gap-3 mt-2">
+          <input
+            type="checkbox"
+            checked={autoCommitEnabled}
+            onChange={(e) => setAutoCommitEnabled(e.target.checked)}
+            className="h-[16px] w-[16px]"
+          />
+          <span className="text-[13px] text-[color:var(--text-primary)]">
+            Enable auto-commit for high-confidence extractions
+          </span>
+        </label>
+
+        <div className={autoCommitEnabled ? "opacity-100" : "opacity-50 pointer-events-none"}>
+          <label className="block mt-3">
+            <span className="block text-[10px] uppercase mb-1 nw-eyebrow">
+              Auto-commit threshold ({autoCommitThreshold}%)
+            </span>
+            <input
+              type="range"
+              min={80}
+              max={99}
+              step={1}
+              value={autoCommitThreshold}
+              onChange={(e) => setAutoCommitThreshold(Number(e.target.value))}
+              className="w-full"
+            />
+            <div
+              className="mt-1 flex justify-between text-[10px] uppercase"
+              style={{ fontFamily: "var(--font-jetbrains-mono)", letterSpacing: "0.14em", color: "var(--text-tertiary)" }}
+            >
+              <span>80%</span>
+              <span>99%</span>
+            </div>
+          </label>
+          <p className="text-[11px] text-[color:var(--text-secondary)] mt-2">
+            ⚠ Auto-commit accelerates data flow but reduces human verification.
+            Recommended only for established vendor relationships where AI
+            accuracy has been validated.
+          </p>
+        </div>
       </Section>
 
       <div className="flex items-center gap-3 pt-2">
