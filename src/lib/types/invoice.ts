@@ -14,6 +14,11 @@ export interface ParsedLineItem {
  is_change_order?: boolean;
  co_reference?: string | null;
  cost_code_suggestion?: LineItemCostCodeSuggestion | null;
+ /** 1-indexed page where this line appears in the invoice PDF. Null when
+  *  Claude could not determine a page (or for single-page invoices we still
+  *  expect 1). Used by the verification queue to jump the PDF viewer to the
+  *  correct page and highlight the row. */
+ source_page_number?: number | null;
 }
 
 export interface ConfidenceDetails {

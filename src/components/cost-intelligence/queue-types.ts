@@ -84,6 +84,7 @@ export interface QueueLine {
   line_nature: LineNature | null;
   scope_split_into_components: boolean;
   scope_estimated_material_cents: number | null;
+  source_page_number: number | null;
   invoice: {
     id: string;
     invoice_number: string | null;

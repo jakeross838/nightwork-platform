@@ -55,6 +55,7 @@ type LineQueryRow = {
   line_nature: LineNature | null;
   scope_split_into_components: boolean | null;
   scope_estimated_material_cents: number | null;
+  source_page_number: number | null;
   invoice_extractions: {
     id: string;
     raw_ocr_text: string | null;
@@ -98,7 +99,7 @@ function VerificationPageInner() {
     let linesQ = supabase
       .from("invoice_extraction_lines")
       .select(
-        "id, extraction_id, raw_description, raw_quantity, raw_unit_text, raw_unit_price_cents, raw_total_cents, match_tier, match_confidence, match_confidence_score, classification_confidence, match_reasoning, created_at, is_transaction_line, transaction_line_type, line_tax_cents, overhead_allocated_cents, proposed_item_id, proposed_item_data, proposed_pricing_model, proposed_scope_size_metric, extracted_scope_size_value, extracted_scope_size_confidence, extracted_scope_size_source, line_nature, scope_split_into_components, scope_estimated_material_cents, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, raw_ocr_text, invoices!inner(id, invoice_number, invoice_date, vendor_id, original_file_url, vendors(name)))"
+        "id, extraction_id, raw_description, raw_quantity, raw_unit_text, raw_unit_price_cents, raw_total_cents, match_tier, match_confidence, match_confidence_score, classification_confidence, match_reasoning, created_at, is_transaction_line, transaction_line_type, line_tax_cents, overhead_allocated_cents, proposed_item_id, proposed_item_data, proposed_pricing_model, proposed_scope_size_metric, extracted_scope_size_value, extracted_scope_size_confidence, extracted_scope_size_source, line_nature, scope_split_into_components, scope_estimated_material_cents, source_page_number, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, raw_ocr_text, invoices!inner(id, invoice_number, invoice_date, vendor_id, original_file_url, vendors(name)))"
       )
       .eq("verification_status", "pending")
       .eq("is_allocated_overhead", false)
@@ -213,6 +214,7 @@ function VerificationPageInner() {
         line_nature: r.line_nature,
         scope_split_into_components: r.scope_split_into_components ?? false,
         scope_estimated_material_cents: r.scope_estimated_material_cents,
+        source_page_number: r.source_page_number,
         invoice: {
           id: inv.id,
           invoice_number: inv.invoice_number,
