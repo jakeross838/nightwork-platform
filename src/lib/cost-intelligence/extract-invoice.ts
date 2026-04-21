@@ -25,6 +25,14 @@ import {
   type AllocationLine,
 } from "./allocate-overhead";
 import { detectTransactionLine } from "./classify-transaction-line";
+import {
+  classifyLineNatures,
+  type ClassifierLineInput,
+  type LineClassification,
+  type LineNature,
+  type SkippedLineResult,
+  type SkipReason,
+} from "./classify-line-natures";
 import type {
   CostIntelligenceSettings,
   InvoiceExtractionLineRow,
@@ -153,8 +161,35 @@ async function persistLineComponents(
   }
 }
 
-const EXTRACTION_PROMPT_VERSION = "v1.1";
+const EXTRACTION_PROMPT_VERSION = "v1.2";
 const EXTRACTION_MODEL = "claude-sonnet-4-20250514";
+
+/**
+ * Map the regex detector's transaction_line_type into the skipped_lines
+ * skip_reason taxonomy stored on invoice_extractions.skipped_lines. Keeps the
+ * skip_reason vocabulary stable whether the regex or the AI flagged the row.
+ */
+function regexTransactionToSkipReason(
+  type: string | null | undefined
+): SkipReason {
+  switch (type) {
+    case "draw":
+      return "draw";
+    case "progress_payment":
+      return "progress_payment";
+    case "change_order_narrative":
+      return "change_order_narrative";
+    case "partial_payment":
+      return "flagged_transaction";
+    case "rental_period":
+    case "service_period":
+      return "flagged_transaction";
+    case "zero_dollar_note":
+      return "admin_note";
+    default:
+      return "other_non_item";
+  }
+}
 
 interface InvoiceOverheadEntry {
   type: string;
@@ -332,6 +367,18 @@ export async function extractInvoice(
       .update({ deleted_at: new Date().toISOString() })
       .eq("extraction_id", existingExtraction.id);
 
+    // Also soft-delete any prior BOM attachments tied to the extraction's
+    // lines — re-extraction rebuilds them fresh. Note lines themselves are
+    // soft-deleted just above; this is the belt-and-braces step for any
+    // attachment rows that would otherwise hang off dead lines.
+    if (ids.length > 0) {
+      await supabase
+        .from("line_bom_attachments")
+        .update({ deleted_at: new Date().toISOString() })
+        .or(`scope_extraction_line_id.in.(${ids.join(",")}),bom_extraction_line_id.in.(${ids.join(",")})`)
+        .is("deleted_at", null);
+    }
+
     extractionId = existingExtraction.id;
     await supabase
       .from("invoice_extractions")
@@ -351,6 +398,7 @@ export async function extractInvoice(
         invoice_tax_rate: invoiceTaxRate,
         invoice_overhead: [],
         invoice_total_cents: invoiceTotalCents,
+        skipped_lines: [],
       })
       .eq("id", extractionId);
   } else {
@@ -370,6 +418,7 @@ export async function extractInvoice(
         invoice_tax_rate: invoiceTaxRate,
         invoice_overhead: [],
         invoice_total_cents: invoiceTotalCents,
+        skipped_lines: [],
       })
       .select("id")
       .single();
@@ -380,15 +429,42 @@ export async function extractInvoice(
     extractionId = inserted.id as string;
   }
 
-  // 7. For each line, detect overhead (delivery/freight/etc) first — those
-  //    bypass matchItem since they will be reallocated. Real lines run the
-  //    full tiered matcher.
+  // 7. THREE-PHASE LINE PIPELINE
+  //
+  //   A. Regex pre-filter: detect overhead (delivery/freight) + transaction
+  //      lines (draws, progress payments, CO narratives). Overhead still gets
+  //      a line row with is_allocated_overhead=true. Transaction lines are
+  //      collected into skippedBuffer and NEVER persisted — their raw content
+  //      lives on invoice_extractions.skipped_lines for audit.
+  //
+  //   B. Invoice-level AI classifier (classifyLineNatures): assigns
+  //      line_nature to everything the regex didn't pre-filter, identifies
+  //      additional admin notes/non-item lines to skip, and proposes BOM
+  //      attachments from $0 spec lines to scope lines on the same invoice.
+  //
+  //   C. Per-line matchItem: runs only on real catalog lines (nature in
+  //      material / labor / scope / equipment / service / unclassified). BOM
+  //      spec lines get a lightweight insert with line_nature='bom_spec' and
+  //      no matchItem / no components.
+
   const tierBreakdown: Record<string, number> = {};
   let newItemsProposed = 0;
   let matchedExisting = 0;
 
   const insertedLines: Array<{ id: string; match: MatchResult; rawTotalCents: number }> = [];
   const overheadEntries: InvoiceOverheadEntry[] = [];
+  const skippedBuffer: SkippedLineResult[] = [];
+  // Maps the invoice-line's line_index (NOT extraction_line_id) to the DB id
+  // of the extraction_line we persisted. Used to resolve BOM attachment
+  // target references after all lines are inserted.
+  const lineIdByIndex = new Map<number, string>();
+
+  // Lines that survive the regex pre-filter and need AI nature classification.
+  const classifyBucket: Array<{
+    li: InvoiceLineSlim;
+    rawTotalCents: number;
+    rawUnitPriceCents: number | null;
+  }> = [];
 
   for (const li of lineItems) {
     const rawTotalCents = li.amount_cents ?? 0;
@@ -396,45 +472,20 @@ export async function extractInvoice(
       li.rate != null && Number.isFinite(li.rate) ? Math.round(li.rate * 100) : null;
 
     const overhead = detectOverheadLine(li.description);
-
-    // Transaction-line pre-filter. Billing events (progress payments,
-    // draws, rental periods, recurring services) are not catalog items.
-    // Flag them so they render with a distinct badge and the PM can
-    // one-click dismiss via the "Not an item" action.
     const transaction = !overhead ? detectTransactionLine(li.description) : null;
-    if (transaction?.is_transaction) {
-      const { data: tRow, error: tErr } = await supabase
-        .from("invoice_extraction_lines")
-        .insert({
-          org_id: orgId,
-          extraction_id: extractionId,
-          invoice_line_item_id: li.id,
-          line_order: li.line_index ?? 0,
-          raw_description: li.description ?? "",
-          raw_quantity: li.qty,
-          raw_unit_price_cents: rawUnitPriceCents,
-          raw_total_cents: rawTotalCents,
-          raw_unit_text: li.unit,
-          proposed_item_id: null,
-          proposed_item_data: null,
-          match_tier: null,
-          match_confidence: null,
-          match_confidence_score: null,
-          classification_confidence: null,
-          match_reasoning: `Transaction line detected (${transaction.type}): ${transaction.reasoning}. Skipping item match.`,
-          candidates_considered: null,
-          verification_status: "pending",
-          is_transaction_line: true,
-          transaction_line_type: transaction.type,
-        })
-        .select("id")
-        .single();
 
-      if (tErr || !tRow) {
-        console.warn(`[extract] transaction line insert failed: ${tErr?.message}`);
-        continue;
-      }
-      tierBreakdown["transaction_line"] = (tierBreakdown["transaction_line"] ?? 0) + 1;
+    if (transaction?.is_transaction) {
+      // Collect into skippedBuffer, do NOT persist as extraction_line. The
+      // queue should never see these rows.
+      skippedBuffer.push({
+        line_index: li.line_index ?? 0,
+        raw_description: li.description ?? "",
+        amount_cents: rawTotalCents,
+        skip_reason: regexTransactionToSkipReason(transaction.type),
+        detected_type: transaction.type ?? "other",
+      });
+      tierBreakdown["skipped_regex_transaction"] =
+        (tierBreakdown["skipped_regex_transaction"] ?? 0) + 1;
       continue;
     }
 
@@ -483,6 +534,104 @@ export async function extractInvoice(
       continue;
     }
 
+    classifyBucket.push({ li, rawTotalCents, rawUnitPriceCents });
+  }
+
+  // Phase B — invoice-level AI classifier.
+  const classifierInput: ClassifierLineInput[] = classifyBucket.map(({ li, rawTotalCents, rawUnitPriceCents }) => ({
+    line_index: li.line_index ?? 0,
+    description: li.description ?? "",
+    amount_cents: rawTotalCents,
+    qty: li.qty,
+    unit: li.unit,
+    rate_cents: rawUnitPriceCents,
+  }));
+
+  const classification =
+    classifierInput.length > 0
+      ? await classifyLineNatures(classifierInput, {
+          org_id: orgId,
+          user_id: opts.triggeredBy ?? null,
+          invoice_id: invoiceId,
+          vendor_name: invoice.vendor_name_raw,
+        })
+      : { lines: [], skipped_lines: [] };
+
+  const natureByIndex = new Map<number, LineClassification>();
+  for (const entry of classification.lines) {
+    natureByIndex.set(entry.line_index, entry);
+  }
+  for (const entry of classification.skipped_lines) {
+    skippedBuffer.push(entry);
+    tierBreakdown["skipped_ai"] = (tierBreakdown["skipped_ai"] ?? 0) + 1;
+  }
+
+  // Proposals collected here; resolved to DB ids after all lines are inserted.
+  interface BomProposalPending {
+    bom_line_index: number;
+    scope_line_index: number;
+    confidence: number;
+    reasoning: string;
+    product_description: string | null;
+    product_specs: Record<string, unknown>;
+  }
+  const bomProposals: BomProposalPending[] = [];
+
+  // Phase C — insert real lines (+ bom_spec lines) and run matchItem on real ones.
+  for (const { li, rawTotalCents, rawUnitPriceCents } of classifyBucket) {
+    const cls = natureByIndex.get(li.line_index ?? 0);
+    if (!cls) continue; // AI moved it to skipped_lines — nothing to insert.
+
+    if (cls.line_nature === "bom_spec") {
+      // BOM spec lines do NOT get an item match or component rows — they're
+      // product descriptions attached to a scope line.
+      const { data: bRow, error: bErr } = await supabase
+        .from("invoice_extraction_lines")
+        .insert({
+          org_id: orgId,
+          extraction_id: extractionId,
+          invoice_line_item_id: li.id,
+          line_order: li.line_index ?? 0,
+          raw_description: li.description ?? "",
+          raw_quantity: li.qty,
+          raw_unit_price_cents: rawUnitPriceCents,
+          raw_total_cents: rawTotalCents,
+          raw_unit_text: li.unit,
+          proposed_item_id: null,
+          proposed_item_data: null,
+          match_tier: null,
+          match_confidence: null,
+          match_confidence_score: null,
+          classification_confidence: cls.nature_confidence,
+          match_reasoning: `BOM spec line (confidence ${cls.nature_confidence.toFixed(2)}): ${cls.nature_reasoning}`,
+          candidates_considered: null,
+          verification_status: "pending",
+          line_nature: "bom_spec",
+        })
+        .select("id")
+        .single();
+
+      if (bErr || !bRow) {
+        console.warn(`[extract] bom_spec insert failed: ${bErr?.message}`);
+        continue;
+      }
+      lineIdByIndex.set(li.line_index ?? 0, bRow.id as string);
+      tierBreakdown["bom_spec"] = (tierBreakdown["bom_spec"] ?? 0) + 1;
+
+      if (cls.proposed_bom_attachment) {
+        bomProposals.push({
+          bom_line_index: li.line_index ?? 0,
+          scope_line_index: cls.proposed_bom_attachment.target_line_index,
+          confidence: cls.proposed_bom_attachment.confidence,
+          reasoning: cls.proposed_bom_attachment.reasoning,
+          product_description: cls.proposed_bom_attachment.product_description,
+          product_specs: cls.proposed_bom_attachment.product_specs,
+        });
+      }
+      continue;
+    }
+
+    // Real catalog line — run matchItem as before, persist with line_nature.
     const match = await matchItem(
       supabase,
       {
@@ -499,6 +648,11 @@ export async function extractInvoice(
     tierBreakdown[match.created_via] = (tierBreakdown[match.created_via] ?? 0) + 1;
     if (match.item_id) matchedExisting++;
     else newItemsProposed++;
+
+    // line_nature is authoritative from the classifier. But when the
+    // classifier said 'unclassified', we still honor it and surface in the
+    // Review tab — we do NOT try to infer from item_type here.
+    const resolvedNature: LineNature = cls.line_nature;
 
     const { data: lineInsert, error: lineErr } = await supabase
       .from("invoice_extraction_lines")
@@ -530,6 +684,7 @@ export async function extractInvoice(
           match.pricing_model === "scope" ? match.scope_size_confidence : null,
         extracted_scope_size_source:
           match.pricing_model === "scope" ? match.scope_size_source : null,
+        line_nature: resolvedNature,
       })
       .select("id")
       .single();
@@ -538,6 +693,8 @@ export async function extractInvoice(
       console.warn(`[extract] line insert failed for invoice ${invoiceId} line ${li.id}: ${lineErr?.message}`);
       continue;
     }
+
+    lineIdByIndex.set(li.line_index ?? 0, lineInsert.id as string);
 
     await persistLineComponents(
       supabase,
@@ -555,6 +712,67 @@ export async function extractInvoice(
       rawTotalCents,
     });
   }
+
+  // 7b. Persist accumulated skipped_lines on the extraction row.
+  if (skippedBuffer.length > 0) {
+    await supabase
+      .from("invoice_extractions")
+      .update({
+        skipped_lines: skippedBuffer.map((s) => ({
+          line_index: s.line_index,
+          raw_description: s.raw_description,
+          amount_cents: s.amount_cents,
+          skip_reason: s.skip_reason,
+          detected_type: s.detected_type,
+        })),
+      })
+      .eq("id", extractionId);
+  }
+
+  // 7c. Create BOM attachments. Confidence tiering:
+  //       >= 0.85 → ai_auto + confirmed
+  //       0.5-0.85 → ai_suggested + pending
+  //       < 0.5 → drop (classifier should already have classified as
+  //                unclassified, but be defensive)
+  let bomAutoConfirmed = 0;
+  let bomSuggested = 0;
+  for (const prop of bomProposals) {
+    const bomLineId = lineIdByIndex.get(prop.bom_line_index);
+    const scopeLineId = lineIdByIndex.get(prop.scope_line_index);
+    if (!bomLineId || !scopeLineId) continue;
+    // Target must be a scope line — classifier should guarantee this but
+    // verify against our insertedLines metadata to catch prompt drift.
+    const scopeInserted = insertedLines.find((l) => l.id === scopeLineId);
+    if (!scopeInserted) continue;
+    if (prop.confidence < 0.5) continue;
+
+    const source = prop.confidence >= 0.85 ? "ai_auto" : "ai_suggested";
+    const status = source === "ai_auto" ? "confirmed" : "pending";
+
+    const { error: bErr } = await supabase.from("line_bom_attachments").insert({
+      org_id: orgId,
+      scope_extraction_line_id: scopeLineId,
+      bom_extraction_line_id: bomLineId,
+      ai_confidence: prop.confidence,
+      ai_reasoning: prop.reasoning,
+      attachment_source: source,
+      confirmation_status: status,
+      confirmed_at: status === "confirmed" ? new Date().toISOString() : null,
+      product_description: prop.product_description,
+      product_specs: prop.product_specs,
+    });
+
+    if (bErr) {
+      console.warn(
+        `[extract] BOM attachment insert failed (scope=${scopeLineId}, bom=${bomLineId}): ${bErr.message}`
+      );
+      continue;
+    }
+    if (source === "ai_auto") bomAutoConfirmed++;
+    else bomSuggested++;
+  }
+  if (bomAutoConfirmed > 0) tierBreakdown["bom_ai_auto"] = bomAutoConfirmed;
+  if (bomSuggested > 0) tierBreakdown["bom_ai_suggested"] = bomSuggested;
 
   // 7b. Persist detected overhead on the extraction + run allocation pass
   if (overheadEntries.length > 0) {
