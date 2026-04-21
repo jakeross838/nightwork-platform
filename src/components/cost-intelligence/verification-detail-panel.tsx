@@ -397,11 +397,11 @@ export default function VerificationDetailPanel({
 
         <LineContextDisplay line={primaryLine} />
 
-        {!isGroup && primaryLine.line_nature !== "scope" && (
+        {primaryLine.line_nature !== "scope" && (
           <ReviewControls
-            lineId={primaryLine.id}
+            lineIds={lineIds}
             currentNature={primaryLine.line_nature}
-            onReclassified={(id) => onApproved([id])}
+            onReclassified={(ids) => onApproved(ids)}
           />
         )}
 

@@ -17,9 +17,9 @@ const OPTIONS: Array<{ value: ReclassifyTarget; label: string }> = [
 ];
 
 interface Props {
-  lineId: string;
+  lineIds: string[];
   currentNature: LineNature | null;
-  onReclassified: (lineId: string) => void;
+  onReclassified: (lineIds: string[]) => void;
 }
 
 /**
@@ -27,9 +27,13 @@ interface Props {
  * when a line is unclassified. Moves the line out of the Review tab into
  * the selected nature tab, or skips it entirely (soft-deletes + records
  * on invoice_extractions.skipped_lines).
+ *
+ * When multiple lineIds are passed (group selection), the action loops
+ * over all of them — the group queue view bundles identical-text lines,
+ * so applying the same nature to the whole set is the expected behavior.
  */
 export default function ReviewControls({
-  lineId,
+  lineIds,
   currentNature,
   onReclassified,
 }: Props) {
@@ -37,24 +41,31 @@ export default function ReviewControls({
   const [busy, setBusy] = useState(false);
 
   if (currentNature !== "unclassified" && currentNature !== null) return null;
+  if (lineIds.length === 0) return null;
+
+  const isGroup = lineIds.length > 1;
 
   const reclassify = async () => {
     setBusy(true);
+    const success: string[] = [];
+    const failures: string[] = [];
     try {
-      const res = await fetch(
-        `/api/cost-intelligence/extraction-lines/${lineId}/reclassify`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ new_line_nature: target }),
-        }
-      );
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error ?? `Status ${res.status}`);
+      for (const id of lineIds) {
+        const res = await fetch(
+          `/api/cost-intelligence/extraction-lines/${id}/reclassify`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ new_line_nature: target }),
+          }
+        );
+        if (res.ok) success.push(id);
+        else failures.push(id);
       }
-      toast.success(`Moved to ${target}`);
-      onReclassified(lineId);
+      toast.success(
+        `Moved ${success.length}${failures.length ? ` · ${failures.length} failed` : ""} to ${target}`
+      );
+      if (success.length > 0) onReclassified(success);
     } catch (err) {
       toast.error(`Reclassify failed: ${err instanceof Error ? err.message : err}`);
     } finally {
@@ -63,21 +74,26 @@ export default function ReviewControls({
   };
 
   const skip = async () => {
-    if (!confirm("Skip this line? It will be removed from the queue and preserved on the invoice's skipped_lines audit list.")) {
-      return;
-    }
+    const message = isGroup
+      ? `Skip all ${lineIds.length} lines in this group? They'll be removed from the queue and preserved on the invoices' skipped_lines audit list.`
+      : "Skip this line? It will be removed from the queue and preserved on the invoice's skipped_lines audit list.";
+    if (!confirm(message)) return;
     setBusy(true);
+    const success: string[] = [];
+    const failures: string[] = [];
     try {
-      const res = await fetch(
-        `/api/cost-intelligence/extraction-lines/${lineId}/skip`,
-        { method: "PUT" }
-      );
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error ?? `Status ${res.status}`);
+      for (const id of lineIds) {
+        const res = await fetch(
+          `/api/cost-intelligence/extraction-lines/${id}/skip`,
+          { method: "PUT" }
+        );
+        if (res.ok) success.push(id);
+        else failures.push(id);
       }
-      toast.success("Line skipped");
-      onReclassified(lineId);
+      toast.success(
+        `Skipped ${success.length}${failures.length ? ` · ${failures.length} failed` : ""}`
+      );
+      if (success.length > 0) onReclassified(success);
     } catch (err) {
       toast.error(`Skip failed: ${err instanceof Error ? err.message : err}`);
     } finally {
@@ -90,7 +106,9 @@ export default function ReviewControls({
       <div className="flex items-baseline justify-between gap-2">
         <NwEyebrow tone="warn">Needs classification</NwEyebrow>
         <span className="text-[11px] text-[var(--text-tertiary)]">
-          AI couldn&rsquo;t confidently assign a nature
+          {isGroup
+            ? `Applies to all ${lineIds.length} lines in this group`
+            : "AI couldn’t confidently assign a nature"}
         </span>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
@@ -113,11 +131,11 @@ export default function ReviewControls({
           ))}
         </select>
         <NwButton variant="secondary" size="sm" onClick={reclassify} loading={busy}>
-          Move
+          {isGroup ? `Move all ${lineIds.length}` : "Move"}
         </NwButton>
         <span className="flex-1" />
         <NwButton variant="ghost" size="sm" onClick={skip} loading={busy}>
-          Skip this line
+          {isGroup ? `Skip all ${lineIds.length}` : "Skip this line"}
         </NwButton>
       </div>
     </section>
