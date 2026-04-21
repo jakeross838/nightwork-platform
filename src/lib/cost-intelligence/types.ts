@@ -52,6 +52,7 @@ export type TransactionLineType =
   | "service_period"
   | "change_order_narrative"
   | "partial_payment"
+  | "zero_dollar_note"
   | "other";
 
 export type SourceType =
@@ -262,7 +263,82 @@ export interface MatchResult {
   created_via: MatchTier;
   reasoning: string;
   candidates_considered: CandidateConsideration[];
+  /**
+   * Cost component breakdown detected from the raw line text. Empty array means
+   * the AI did not find explicit components — the pipeline will synthesize a
+   * single default_bundled component matching the line total.
+   */
+  components: ExtractedComponent[];
 }
+
+export type ComponentType =
+  | "material"
+  | "fabrication"
+  | "installation"
+  | "labor"
+  | "equipment_rental"
+  | "delivery"
+  | "fuel_surcharge"
+  | "handling"
+  | "restocking"
+  | "tax"
+  | "waste_disposal"
+  | "permit_fee"
+  | "bundled"
+  | "other";
+
+export type ComponentSource =
+  | "invoice_explicit"
+  | "ai_extracted"
+  | "human_added"
+  | "default_bundled";
+
+export interface ExtractedComponent {
+  component_type: ComponentType;
+  amount_cents: number;
+  source: ComponentSource;
+  notes?: string | null;
+  quantity?: number | null;
+  unit?: string | null;
+  unit_rate_cents?: number | null;
+}
+
+export interface LineCostComponentRow {
+  id: string;
+  org_id: string;
+  vendor_item_pricing_id: string | null;
+  invoice_extraction_line_id: string | null;
+  component_type: ComponentType;
+  amount_cents: number;
+  quantity: number | null;
+  unit: string | null;
+  unit_rate_cents: number | null;
+  source: ComponentSource;
+  ai_confidence: number | null;
+  notes: string | null;
+  display_order: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export const COMPONENT_TYPES: ComponentType[] = [
+  "material",
+  "fabrication",
+  "installation",
+  "labor",
+  "equipment_rental",
+  "delivery",
+  "fuel_surcharge",
+  "handling",
+  "restocking",
+  "tax",
+  "waste_disposal",
+  "permit_fee",
+  "bundled",
+  "other",
+];
 
 export interface VendorContext {
   vendor_id: string | null;

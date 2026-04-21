@@ -20,7 +20,98 @@ import type {
   CandidateConsideration,
   ItemType,
   ItemUnit,
+  ExtractedComponent,
+  ComponentType,
+  ComponentSource,
 } from "./types";
+
+const COMPONENT_TYPE_SET = new Set<ComponentType>([
+  "material",
+  "fabrication",
+  "installation",
+  "labor",
+  "equipment_rental",
+  "delivery",
+  "fuel_surcharge",
+  "handling",
+  "restocking",
+  "tax",
+  "waste_disposal",
+  "permit_fee",
+  "bundled",
+  "other",
+]);
+
+const COMPONENT_SOURCE_SET = new Set<ComponentSource>([
+  "invoice_explicit",
+  "ai_extracted",
+  "human_added",
+  "default_bundled",
+]);
+
+function dollarsToCents(v: unknown): number {
+  if (typeof v !== "number" || !Number.isFinite(v)) return 0;
+  return Math.round(v * 100);
+}
+
+function normalizeExtractedComponents(
+  raw: unknown,
+  lineTotalCents: number
+): ExtractedComponent[] {
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+
+  const out: ExtractedComponent[] = [];
+  for (const c of raw) {
+    if (!c || typeof c !== "object") continue;
+    const obj = c as Record<string, unknown>;
+    const type = typeof obj.component_type === "string" ? obj.component_type.toLowerCase() : "";
+    if (!COMPONENT_TYPE_SET.has(type as ComponentType)) continue;
+
+    let amountCents: number;
+    if (typeof obj.amount_cents === "number" && Number.isFinite(obj.amount_cents)) {
+      amountCents = Math.round(obj.amount_cents);
+    } else if (typeof obj.amount === "number") {
+      amountCents = dollarsToCents(obj.amount);
+    } else {
+      continue;
+    }
+
+    const source = typeof obj.source === "string" ? obj.source : "ai_extracted";
+    const normalizedSource: ComponentSource = COMPONENT_SOURCE_SET.has(
+      source as ComponentSource
+    )
+      ? (source as ComponentSource)
+      : "ai_extracted";
+
+    out.push({
+      component_type: type as ComponentType,
+      amount_cents: amountCents,
+      source: normalizedSource,
+      notes: typeof obj.notes === "string" ? obj.notes : null,
+      quantity:
+        typeof obj.quantity === "number" && Number.isFinite(obj.quantity)
+          ? obj.quantity
+          : null,
+      unit: typeof obj.unit === "string" ? obj.unit : null,
+      unit_rate_cents:
+        typeof obj.unit_rate_cents === "number" && Number.isFinite(obj.unit_rate_cents)
+          ? Math.round(obj.unit_rate_cents)
+          : typeof obj.unit_rate === "number"
+          ? dollarsToCents(obj.unit_rate)
+          : null,
+    });
+  }
+
+  if (out.length === 0) return [];
+
+  // Validate sum — if it diverges more than $0.05 from the line total, treat
+  // the AI output as untrustworthy and drop back to empty so the caller
+  // synthesizes a single default_bundled component. Never fabricate.
+  const sum = out.reduce((s, c) => s + c.amount_cents, 0);
+  if (Math.abs(sum - lineTotalCents) > 5) return [];
+
+  return out;
+}
 
 /**
  * MatchResult extension for callers that want the split confidence values
@@ -77,6 +168,7 @@ export async function matchItem(
       created_via: "ai_new_item",
       reasoning: "Empty raw description — cannot classify",
       candidates_considered: [],
+      components: [],
     };
   }
 
@@ -103,6 +195,7 @@ export async function matchItem(
           (exactAlias.occurrence_count as number) ?? 1
         }x previously)`,
         candidates_considered: [],
+        components: [],
       };
     }
   }
@@ -167,6 +260,7 @@ export async function matchItem(
           canonical_name: m.canonical_name,
           score: m.similarity,
         })),
+        components: [],
       };
     }
   }
@@ -325,6 +419,39 @@ IMPORTANT — return TWO SEPARATE confidence values:
    - For "existing" matches: how clearly classifiable the line is.
    - This should almost never be 0 — you've looked at the text and picked a type.
 
+COST COMPONENT DETECTION:
+
+For each line, decide whether the dollar amount is a BREAKDOWN of multiple
+components (e.g. "Material $3,800, Fabrication $1,500, Delivery $300") or a
+SINGLE BUNDLED cost (e.g. "Countertop installed: $5,621" where the vendor
+did not itemize).
+
+Valid component types:
+- material: raw goods (lumber, tile, hardware)
+- fabrication: custom cutting, shaping, or manufacturing
+- installation: on-site labor to install something
+- labor: generic on-site labor
+- equipment_rental: rental equipment
+- delivery: shipping, freight, trucking to site
+- fuel_surcharge: separately billed fuel charge
+- handling: warehouse or handling fee
+- restocking: restocking fee
+- tax: sales tax
+- waste_disposal: disposal, dumpster
+- permit_fee: permit costs
+- bundled: vendor combined multiple costs into one number — no breakdown available
+- other: catch-all, use notes
+
+Rules:
+- If the line text EXPLICITLY itemizes components, return each as a separate
+  entry with source = "invoice_explicit".
+- If the line text only shows ONE total (bundled), return a single entry with
+  component_type = "bundled", amount = the full line total, source = "ai_extracted".
+- NEVER invent or estimate a breakdown. When unsure, use "bundled".
+- Amounts MUST sum to the line total (to the cent). If you can't make them
+  balance, return a single "bundled" entry for the full amount.
+- Use amount_cents (integer) in your response, not dollars.
+
 Respond with JSON ONLY (no markdown, no code fences):
 {
   "match": "existing" | "new",
@@ -340,7 +467,15 @@ Respond with JSON ONLY (no markdown, no code fences):
     "subcategory": "string | null",
     "specs": { "key": "value" },
     "unit": "each | sf | lf | sy | cy | lb | gal | hr | day | lump_sum | pkg | box"
-  }
+  },
+  "components": [
+    {
+      "component_type": "material | fabrication | installation | labor | equipment_rental | delivery | fuel_surcharge | handling | restocking | tax | waste_disposal | permit_fee | bundled | other",
+      "amount_cents": 380000,
+      "source": "invoice_explicit | ai_extracted",
+      "notes": "optional"
+    }
+  ]
 }
 
 If match="existing", set matched_item_id to the candidate's id. proposed_item may be omitted.
@@ -370,9 +505,16 @@ If match_confidence < 0.75, prefer "new" over a shaky match.`;
   let parsed: AiMatchResponse;
   try {
     parsed = JSON.parse(jsonText) as AiMatchResponse;
-  } catch {
+  } catch (err) {
+    console.warn(
+      `[match-item] JSON.parse failed (F-022): ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
     return fallbackNewItem(input, `Claude returned invalid JSON: ${jsonText.slice(0, 200)}`);
   }
+
+  const components = normalizeExtractedComponents(parsed.components, input.raw_total_cents ?? 0);
 
   const candidatesConsidered: CandidateConsideration[] = Array.isArray(parsed.candidates_considered)
     ? parsed.candidates_considered.map((c) => ({
@@ -407,6 +549,7 @@ If match_confidence < 0.75, prefer "new" over a shaky match.`;
           parsed.reasoning ??
           `AI matched to existing item "${matched?.canonical_name}"`,
         candidates_considered: candidatesConsidered,
+        components,
       };
     }
     // Model hallucinated an id — fall through to new
@@ -436,6 +579,7 @@ If match_confidence < 0.75, prefer "new" over a shaky match.`;
     created_via: "ai_new_item",
     reasoning: parsed.reasoning ?? "AI proposed a new canonical item",
     candidates_considered: candidatesConsidered,
+    components,
   };
 }
 
@@ -460,6 +604,7 @@ type AiMatchResponse = {
     specs?: unknown;
     unit?: string;
   } | null;
+  components?: unknown;
 };
 
 function fallbackNewItem(input: MatchInput, reason: string): MatchResult {
@@ -479,6 +624,7 @@ function fallbackNewItem(input: MatchInput, reason: string): MatchResult {
     created_via: "ai_new_item",
     reasoning: `Fallback: ${reason}`,
     candidates_considered: [],
+    components: [],
   };
 }
 

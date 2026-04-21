@@ -292,11 +292,110 @@ export async function commitLineToSpine(
     );
   }
 
+  // 7. Propagate cost components from extraction_line → pricing row.
+  //    We clone (keep the originals on the extraction_line for audit) so
+  //    each row carries both references. If no components exist yet
+  //    (manual-entry path, older extraction), seed a single default_bundled.
+  await propagateComponentsToPricing(
+    supabase,
+    invoice.org_id,
+    extractionLineId,
+    vip.id as string,
+    totalCents,
+    extractionLine.proposed_item_data
+  );
+
   return {
     vendor_item_pricing_id: vip.id as string,
     item_id: itemId,
     extraction_line_id: extractionLineId,
   };
+}
+
+async function propagateComponentsToPricing(
+  supabase: SupabaseClient,
+  orgId: string,
+  extractionLineId: string,
+  pricingId: string,
+  lineTotalCents: number,
+  proposal: ProposedItemData | null
+): Promise<void> {
+  const { data: components } = await supabase
+    .from("line_cost_components")
+    .select(
+      "component_type, amount_cents, quantity, unit, unit_rate_cents, source, ai_confidence, notes, display_order"
+    )
+    .eq("invoice_extraction_line_id", extractionLineId)
+    .is("deleted_at", null)
+    .order("display_order", { ascending: true });
+
+  type Row = {
+    component_type: string;
+    amount_cents: number;
+    quantity: number | null;
+    unit: string | null;
+    unit_rate_cents: number | null;
+    source: string;
+    ai_confidence: number | null;
+    notes: string | null;
+    display_order: number;
+  };
+
+  const rows = (components ?? []) as Row[];
+
+  const toInsert =
+    rows.length > 0
+      ? rows.map((c) => ({
+          org_id: orgId,
+          vendor_item_pricing_id: pricingId,
+          invoice_extraction_line_id: extractionLineId,
+          component_type: c.component_type,
+          amount_cents: c.amount_cents,
+          quantity: c.quantity,
+          unit: c.unit,
+          unit_rate_cents: c.unit_rate_cents,
+          source: c.source,
+          ai_confidence: c.ai_confidence,
+          notes: c.notes,
+          display_order: c.display_order,
+        }))
+      : [
+          {
+            org_id: orgId,
+            vendor_item_pricing_id: pricingId,
+            invoice_extraction_line_id: extractionLineId,
+            component_type: defaultComponentTypeFor(proposal),
+            amount_cents: lineTotalCents,
+            quantity: null as number | null,
+            unit: null as string | null,
+            unit_rate_cents: null as number | null,
+            source: "default_bundled",
+            ai_confidence: null as number | null,
+            notes: null as string | null,
+            display_order: 0,
+          },
+        ];
+
+  const { error } = await supabase.from("line_cost_components").insert(toInsert);
+  if (error) {
+    console.warn(
+      `[commit-line-to-spine] component propagation failed for line ${extractionLineId}: ${error.message}`
+    );
+  }
+}
+
+function defaultComponentTypeFor(proposal: ProposedItemData | null | undefined): string {
+  switch (proposal?.item_type) {
+    case "labor":
+    case "service":
+      return "labor";
+    case "equipment":
+      return "equipment_rental";
+    case "subcontract":
+      return "bundled";
+    default:
+      return "material";
+  }
 }
 
 /**
