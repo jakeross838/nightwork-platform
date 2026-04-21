@@ -30,7 +30,96 @@ import type {
   InvoiceExtractionLineRow,
   InvoiceExtractionRow,
   MatchResult,
+  ExtractedComponent,
+  ComponentType,
+  ProposedItemData,
 } from "./types";
+
+/**
+ * Map a line's proposed item_type to the default component_type used when
+ * the AI did not return an explicit breakdown. Mirrors migration 00056's
+ * backfill logic so historical and newly-staged rows classify consistently.
+ */
+function defaultComponentTypeFor(
+  proposal: ProposedItemData | null | undefined
+): ComponentType {
+  switch (proposal?.item_type) {
+    case "labor":
+    case "service":
+      return "labor";
+    case "equipment":
+      return "equipment_rental";
+    case "subcontract":
+      return "bundled";
+    default:
+      return "material";
+  }
+}
+
+async function persistLineComponents(
+  supabase: SupabaseClient,
+  orgId: string,
+  extractionLineId: string,
+  lineTotalCents: number,
+  detected: ExtractedComponent[],
+  proposal: ProposedItemData | null
+): Promise<void> {
+  const sum = detected.reduce((s, c) => s + c.amount_cents, 0);
+  const mismatch = Math.abs(sum - lineTotalCents) > 5;
+
+  const rows: Array<{
+    org_id: string;
+    invoice_extraction_line_id: string;
+    component_type: ComponentType;
+    amount_cents: number;
+    source: string;
+    notes: string | null;
+    quantity: number | null;
+    unit: string | null;
+    unit_rate_cents: number | null;
+    display_order: number;
+  }> =
+    detected.length > 0 && !mismatch
+      ? detected.map((c, i) => ({
+          org_id: orgId,
+          invoice_extraction_line_id: extractionLineId,
+          component_type: c.component_type,
+          amount_cents: c.amount_cents,
+          source: c.source,
+          notes: c.notes ?? null,
+          quantity: c.quantity ?? null,
+          unit: c.unit ?? null,
+          unit_rate_cents: c.unit_rate_cents ?? null,
+          display_order: i,
+        }))
+      : [
+          {
+            org_id: orgId,
+            invoice_extraction_line_id: extractionLineId,
+            component_type: defaultComponentTypeFor(proposal),
+            amount_cents: lineTotalCents,
+            source: "default_bundled",
+            notes: null,
+            quantity: null,
+            unit: null,
+            unit_rate_cents: null,
+            display_order: 0,
+          },
+        ];
+
+  if (mismatch) {
+    console.warn(
+      `[extract] component sum $${(sum / 100).toFixed(2)} does not match line total $${(
+        lineTotalCents / 100
+      ).toFixed(2)} on line ${extractionLineId} — falling back to default_bundled`
+    );
+  }
+
+  const { error } = await supabase.from("line_cost_components").insert(rows);
+  if (error) {
+    console.warn(`[extract] component insert failed for line ${extractionLineId}: ${error.message}`);
+  }
+}
 
 const EXTRACTION_PROMPT_VERSION = "v1.1";
 const EXTRACTION_MODEL = "claude-sonnet-4-20250514";
@@ -188,7 +277,24 @@ export async function extractInvoice(
   // 6. Create (or update) the extraction row
   let extractionId: string;
   if (existingExtraction) {
-    // Reset for re-extraction
+    // Reset for re-extraction: soft-delete any components tied to old lines
+    // first (so the UI doesn't see orphaned components), then soft-delete
+    // the lines themselves.
+    const { data: oldLineIds } = await supabase
+      .from("invoice_extraction_lines")
+      .select("id")
+      .eq("extraction_id", existingExtraction.id)
+      .is("deleted_at", null);
+
+    const ids = ((oldLineIds ?? []) as Array<{ id: string }>).map((r) => r.id);
+    if (ids.length > 0) {
+      await supabase
+        .from("line_cost_components")
+        .update({ deleted_at: new Date().toISOString() })
+        .in("invoice_extraction_line_id", ids)
+        .is("deleted_at", null);
+    }
+
     await supabase
       .from("invoice_extraction_lines")
       .update({ deleted_at: new Date().toISOString() })
@@ -391,6 +497,15 @@ export async function extractInvoice(
       console.warn(`[extract] line insert failed for invoice ${invoiceId} line ${li.id}: ${lineErr?.message}`);
       continue;
     }
+
+    await persistLineComponents(
+      supabase,
+      orgId,
+      lineInsert.id as string,
+      rawTotalCents,
+      match.components,
+      match.proposed_item_data
+    );
 
     insertedLines.push({
       id: lineInsert.id as string,
