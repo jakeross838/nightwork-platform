@@ -10,6 +10,7 @@ import LineContextDisplay from "./line-context-display";
 import CostComponentsEditor from "./cost-components-editor";
 import ClassificationForm from "./classification-form";
 import ScopeDetailsEditor from "./scope-details-editor";
+import BomSection from "./bom-section";
 import type {
   ClassificationDraft,
   ComponentDraft,
@@ -393,6 +394,13 @@ export default function VerificationDetailPanel({
         />
 
         <LineContextDisplay line={primaryLine} />
+
+        {!isGroup && primaryLine.line_nature === "scope" && (
+          <BomSection
+            scopeLineId={primaryLine.id}
+            extractionId={primaryLine.extraction_id}
+          />
+        )}
 
         {classification.pricing_model === "scope" && (
           <ScopeDetailsEditor
