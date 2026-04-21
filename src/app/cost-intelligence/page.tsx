@@ -60,7 +60,7 @@ export default function CostIntelligenceHubPage() {
       supabase
         .from("items")
         .select(
-          "id, canonical_name, item_type, category, subcategory, unit, canonical_unit, ai_confidence, human_verified, created_at"
+          "id, canonical_name, item_type, category, subcategory, unit, canonical_unit, ai_confidence, human_verified, created_at, pricing_model, scope_size_metric"
         )
         .is("deleted_at", null)
         .order("canonical_name"),
@@ -113,6 +113,8 @@ export default function CostIntelligenceHubPage() {
       ai_confidence: number | null;
       human_verified: boolean;
       created_at: string;
+      pricing_model: "unit" | "scope";
+      scope_size_metric: string | null;
     }>;
 
     type Agg = {
