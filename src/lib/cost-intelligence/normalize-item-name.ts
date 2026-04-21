@@ -72,6 +72,20 @@ const ABBREVIATIONS = new Set<string>([
   "GC",
   "PM",
   "QA",
+  // Engineered wood / lumber grades used widely in Ross Built invoices.
+  "LSL",
+  "LVL",
+  "PSL",
+  "TJI",
+  "TGI",
+  "OSL",
+  "MDO",
+  // Wood / trim terms commonly abbreviated on invoices.
+  "T&G",
+  "T&M",
+  "R&R",
+  "B&B",
+  "P&T",
 ]);
 
 // Units that follow a digit without a space ("3cm", "1/4in"). Lower-case.
@@ -179,6 +193,13 @@ function normalizeToken(token: string): string {
   // Abbreviations kept in uppercase (including hyphenated forms like NM-B).
   const upper = token.toUpperCase();
   if (ABBREVIATIONS.has(upper)) return upper;
+
+  // Preserve brand/product casing when the AI returned a mixed-case token
+  // (e.g. "TimberStrand", "iPhone", "eBay"). If it has at least one
+  // uppercase AND at least one lowercase letter, don't touch it.
+  const hasUpper = /[A-Z]/.test(token);
+  const hasLower = /[a-z]/.test(token);
+  if (hasUpper && hasLower) return token;
 
   // Hyphenated compound: recurse per segment so "3cm-slab" becomes "3cm-Slab"
   // and "NM-B" stays uppercase via the abbreviation check above.
