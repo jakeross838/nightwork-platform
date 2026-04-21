@@ -105,6 +105,23 @@
     left: 0;
   }
 
+  /* PDF line highlight — wraps text-layer substrings that match the
+     selected extraction line's raw_description. Translucent so the
+     canvas glyphs underneath stay legible. The react-pdf text layer
+     already sets color: transparent on descendants, so we inherit that
+     and just paint a background. */
+  .nw-highlight {
+    background: rgba(253, 224, 71, 0.55); /* yellow-300, alpha 55% */
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+  }
+  :root[data-theme="dark"] .nw-highlight,
+  [data-theme="dark"] .nw-highlight {
+    background: rgba(202, 138, 4, 0.5); /* amber-600, alpha 50% */
+    color: inherit;
+  }
+
   /* Section header with rule */
   .section-label {
     font-size: 14px;
