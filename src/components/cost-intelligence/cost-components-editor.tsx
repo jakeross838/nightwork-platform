@@ -16,6 +16,7 @@ const COMPONENT_TYPES: ComponentType[] = [
   "fabrication",
   "installation",
   "labor",
+  "labor_and_material",
   "equipment_rental",
   "delivery",
   "fuel_surcharge",
