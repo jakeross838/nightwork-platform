@@ -11,6 +11,8 @@ import CostComponentsEditor from "./cost-components-editor";
 import ClassificationForm from "./classification-form";
 import ScopeDetailsEditor from "./scope-details-editor";
 import BomSection from "./bom-section";
+import ScopeSplitControls from "./scope-split-controls";
+import ReviewControls from "./review-controls";
 import type {
   ClassificationDraft,
   ComponentDraft,
@@ -395,11 +397,37 @@ export default function VerificationDetailPanel({
 
         <LineContextDisplay line={primaryLine} />
 
+        {!isGroup && primaryLine.line_nature !== "scope" && (
+          <ReviewControls
+            lineId={primaryLine.id}
+            currentNature={primaryLine.line_nature}
+            onReclassified={(id) => onApproved([id])}
+          />
+        )}
+
         {!isGroup && primaryLine.line_nature === "scope" && (
           <BomSection
             scopeLineId={primaryLine.id}
             extractionId={primaryLine.extraction_id}
           />
+        )}
+
+        {!isGroup && primaryLine.line_nature === "scope" && (
+          <section className="border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-2">
+            <NwEyebrow tone="accent">Cost breakdown</NwEyebrow>
+            <p className="text-[12px] text-[var(--text-secondary)]">
+              {primaryLine.scope_split_into_components
+                ? "This scope has been split into material and labor components."
+                : "This scope combines labor and material in a single bundled total. Split only if you have a reliable material estimate."}
+            </p>
+            <ScopeSplitControls
+              lineId={primaryLine.id}
+              lineTotalCents={primaryLine.raw_total_cents ?? 0}
+              splitActive={primaryLine.scope_split_into_components}
+              currentMaterialCents={primaryLine.scope_estimated_material_cents}
+              onSplitChanged={() => onApproved([primaryLine.id])}
+            />
+          </section>
         )}
 
         {classification.pricing_model === "scope" && (
