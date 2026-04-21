@@ -39,18 +39,24 @@ import type {
  * Map a line's proposed item_type to the default component_type used when
  * the AI did not return an explicit breakdown. Mirrors migration 00056's
  * backfill logic so historical and newly-staged rows classify consistently.
+ *
+ * Scope items (subcontract / service / labor trade work) always default to
+ * 'labor_and_material' per migration 00057. Unit items fall back to
+ * material-ish types.
  */
 function defaultComponentTypeFor(
-  proposal: ProposedItemData | null | undefined
+  proposal: ProposedItemData | null | undefined,
+  pricingModel: "unit" | "scope" = "unit"
 ): ComponentType {
+  if (pricingModel === "scope") return "labor_and_material";
   switch (proposal?.item_type) {
     case "labor":
     case "service":
-      return "labor";
+      return "labor_and_material";
     case "equipment":
       return "equipment_rental";
     case "subcontract":
-      return "bundled";
+      return "labor_and_material";
     default:
       return "material";
   }
@@ -62,8 +68,34 @@ async function persistLineComponents(
   extractionLineId: string,
   lineTotalCents: number,
   detected: ExtractedComponent[],
-  proposal: ProposedItemData | null
+  proposal: ProposedItemData | null,
+  pricingModel: "unit" | "scope" = "unit"
 ): Promise<void> {
+  // Scope items always get a single labor_and_material component (subs
+  // don't split). Only unit items use the AI-extracted breakdown.
+  if (pricingModel === "scope") {
+    const { error } = await supabase.from("line_cost_components").insert([
+      {
+        org_id: orgId,
+        invoice_extraction_line_id: extractionLineId,
+        component_type: "labor_and_material" as ComponentType,
+        amount_cents: lineTotalCents,
+        source: "default_bundled",
+        notes: null,
+        quantity: null,
+        unit: null,
+        unit_rate_cents: null,
+        display_order: 0,
+      },
+    ]);
+    if (error) {
+      console.warn(
+        `[extract] scope component insert failed for line ${extractionLineId}: ${error.message}`
+      );
+    }
+    return;
+  }
+
   const sum = detected.reduce((s, c) => s + c.amount_cents, 0);
   const mismatch = Math.abs(sum - lineTotalCents) > 5;
 
@@ -96,7 +128,7 @@ async function persistLineComponents(
           {
             org_id: orgId,
             invoice_extraction_line_id: extractionLineId,
-            component_type: defaultComponentTypeFor(proposal),
+            component_type: defaultComponentTypeFor(proposal, pricingModel),
             amount_cents: lineTotalCents,
             source: "default_bundled",
             notes: null,
@@ -489,6 +521,15 @@ export async function extractInvoice(
         match_reasoning: match.reasoning,
         candidates_considered: match.candidates_considered,
         verification_status: "pending",
+        proposed_pricing_model: match.pricing_model,
+        proposed_scope_size_metric:
+          match.pricing_model === "scope" ? match.scope_size_metric : null,
+        extracted_scope_size_value:
+          match.pricing_model === "scope" ? match.scope_size_value : null,
+        extracted_scope_size_confidence:
+          match.pricing_model === "scope" ? match.scope_size_confidence : null,
+        extracted_scope_size_source:
+          match.pricing_model === "scope" ? match.scope_size_source : null,
       })
       .select("id")
       .single();
@@ -504,7 +545,8 @@ export async function extractInvoice(
       lineInsert.id as string,
       rawTotalCents,
       match.components,
-      match.proposed_item_data
+      match.proposed_item_data,
+      match.pricing_model
     );
 
     insertedLines.push({

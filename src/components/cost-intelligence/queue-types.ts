@@ -107,6 +107,7 @@ export const COMPONENT_TYPE_LABELS: Record<ComponentType, string> = {
   waste_disposal: "Waste disposal",
   permit_fee: "Permit fee",
   bundled: "Bundled",
+  labor_and_material: "Labor & material",
   other: "Other",
 };
 
