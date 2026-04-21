@@ -23,6 +23,9 @@ type VendorComparison = {
   avg_unit_cents: number;
   avg_unit_landed_cents: number;
   avg_canonical_unit_cents: number;
+  /** Scope items only: total_cents / sum(scope_size_value) across this vendor's rows with size. */
+  avg_per_metric_cents: number | null;
+  rows_with_scope_size: number;
   last_txn: string | null;
 };
 
@@ -44,6 +47,8 @@ export default function CostLookupWidget() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [priceMode, setPriceMode] = useState<PriceMode>("canonical");
   const [canonicalUnit, setCanonicalUnit] = useState<string | null>(null);
+  const [pricingModel, setPricingModel] = useState<"unit" | "scope">("unit");
+  const [scopeSizeMetric, setScopeSizeMetric] = useState<string | null>(null);
 
   const runSearch = useCallback(async (q: string) => {
     setSearching(true);
@@ -88,19 +93,33 @@ export default function CostLookupWidget() {
         tax_cents?: number | null;
         overhead_allocated_cents?: number | null;
         landed_total_cents?: number | null;
+        scope_size_value?: number | null;
         transaction_date: string;
         vendors: { name: string } | null;
       };
       const json = (await res.json()) as {
-        item?: { canonical_unit?: string | null };
+        item?: {
+          canonical_unit?: string | null;
+          pricing_model?: "unit" | "scope";
+          scope_size_metric?: string | null;
+        };
         pricing: PricingRow[];
       };
       setCanonicalUnit(json.item?.canonical_unit ?? null);
+      const itemPricingModel: "unit" | "scope" =
+        json.item?.pricing_model === "scope" ? "scope" : "unit";
+      setPricingModel(itemPricingModel);
+      setScopeSizeMetric(json.item?.scope_size_metric ?? null);
       const rows = json.pricing ?? [];
 
       const map = new Map<
         string,
-        VendorComparison & { total_qty: number; total_canonical_qty: number }
+        VendorComparison & {
+          total_qty: number;
+          total_canonical_qty: number;
+          scope_total_cents: number;
+          scope_total_size: number;
+        }
       >();
       for (const r of rows) {
         const key = r.vendor_id;
@@ -116,6 +135,10 @@ export default function CostLookupWidget() {
             avg_unit_cents: 0,
             avg_unit_landed_cents: 0,
             avg_canonical_unit_cents: 0,
+            avg_per_metric_cents: null,
+            rows_with_scope_size: 0,
+            scope_total_cents: 0,
+            scope_total_size: 0,
             last_txn: null,
           });
         }
@@ -129,6 +152,11 @@ export default function CostLookupWidget() {
         b.landed_total_cents += landed;
         b.total_qty += Number(r.quantity ?? 0);
         b.total_canonical_qty += Number(r.canonical_quantity ?? r.quantity ?? 0);
+        if (r.scope_size_value != null && r.scope_size_value > 0) {
+          b.scope_total_cents += pretax;
+          b.scope_total_size += Number(r.scope_size_value);
+          b.rows_with_scope_size++;
+        }
         if (!b.last_txn || r.transaction_date > b.last_txn) b.last_txn = r.transaction_date;
       }
 
@@ -151,9 +179,21 @@ export default function CostLookupWidget() {
             b.total_canonical_qty > 0
               ? Math.round(b.total_cents / b.total_canonical_qty)
               : Math.round(b.total_cents / Math.max(1, b.txn_count)),
+          avg_per_metric_cents:
+            b.scope_total_size > 0
+              ? Math.round(b.scope_total_cents / b.scope_total_size)
+              : null,
+          rows_with_scope_size: b.rows_with_scope_size,
           last_txn: b.last_txn,
         }))
-        .sort((a, b) => a.avg_canonical_unit_cents - b.avg_canonical_unit_cents);
+        .sort((a, b) => {
+          if (itemPricingModel === "scope") {
+            const av = a.avg_per_metric_cents ?? Number.MAX_SAFE_INTEGER;
+            const bv = b.avg_per_metric_cents ?? Number.MAX_SAFE_INTEGER;
+            return av - bv;
+          }
+          return a.avg_canonical_unit_cents - b.avg_canonical_unit_cents;
+        });
       setComparison(comp);
 
       // Price trend (chronological) — canonical unit price
@@ -310,7 +350,11 @@ export default function CostLookupWidget() {
                   >
                     <tr className="border-b border-[var(--border-default)]">
                       <th className="text-left px-3 py-2 font-medium">Vendor</th>
-                      <th className="text-right px-3 py-2 font-medium">Avg unit</th>
+                      <th className="text-right px-3 py-2 font-medium">
+                        {pricingModel === "scope"
+                          ? `Avg / ${scopeSizeMetric ?? "size"}`
+                          : "Avg unit"}
+                      </th>
                       <th className="text-right px-3 py-2 font-medium">Txns</th>
                       <th className="text-right px-3 py-2 font-medium">Total</th>
                       <th className="text-left px-3 py-2 font-medium">Last</th>
@@ -319,11 +363,15 @@ export default function CostLookupWidget() {
                   <tbody>
                     {comparison.map((b, i) => {
                       const unitCents =
-                        priceMode === "landed"
+                        pricingModel === "scope"
+                          ? b.avg_per_metric_cents
+                          : priceMode === "landed"
                           ? b.avg_unit_landed_cents
                           : b.avg_canonical_unit_cents;
                       const totalCents =
                         priceMode === "landed" ? b.landed_total_cents : b.total_cents;
+                      const isScopeIncomplete =
+                        pricingModel === "scope" && b.avg_per_metric_cents == null;
                       return (
                         <tr
                           key={b.vendor_id}
@@ -331,7 +379,7 @@ export default function CostLookupWidget() {
                         >
                           <td className="px-3 py-2">
                             <span className="text-[var(--text-primary)]">{b.vendor_name}</span>
-                            {i === 0 ? (
+                            {i === 0 && !isScopeIncomplete ? (
                               <span className="ml-2">
                                 <NwBadge variant="success" size="sm">
                                   lowest
@@ -340,13 +388,21 @@ export default function CostLookupWidget() {
                             ) : null}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            <NwMoney cents={unitCents} size="sm" />
+                            {isScopeIncomplete ? (
+                              <span className="text-[11px] text-[var(--nw-warn)]">
+                                size needed
+                              </span>
+                            ) : (
+                              <NwMoney cents={unitCents ?? 0} size="sm" />
+                            )}
                           </td>
                           <td
                             className="px-3 py-2 text-right text-[var(--text-secondary)]"
                             style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
                           >
-                            {b.txn_count}
+                            {pricingModel === "scope"
+                              ? `${b.rows_with_scope_size}/${b.txn_count}`
+                              : b.txn_count}
                           </td>
                           <td className="px-3 py-2 text-right">
                             <NwMoney cents={totalCents} size="sm" />

@@ -23,6 +23,8 @@ export interface ItemRowWithAgg {
   vendors_count: number;
   jobs_count: number;
   last_seen: string | null;
+  pricing_model?: "unit" | "scope";
+  scope_size_metric?: string | null;
 }
 
 interface GroupSection {
@@ -256,12 +258,23 @@ function ItemsRows({ rows }: { rows: ItemRowWithAgg[] }) {
                   <div className="mt-0.5 text-[11px] text-[var(--text-tertiary)]">{it.subcategory}</div>
                 )}
               </td>
-              <td className="px-4 py-2.5 text-[var(--text-secondary)]">{it.item_type}</td>
+              <td className="px-4 py-2.5 text-[var(--text-secondary)]">
+                {it.item_type}
+                {it.pricing_model === "scope" && (
+                  <span className="ml-1">
+                    <NwBadge variant="accent" size="sm">
+                      scope
+                    </NwBadge>
+                  </span>
+                )}
+              </td>
               <td
                 className="px-4 py-2.5 text-[var(--text-secondary)]"
                 style={{ fontFamily: "var(--font-jetbrains-mono)" }}
               >
-                {it.canonical_unit}
+                {it.pricing_model === "scope"
+                  ? it.scope_size_metric ?? <span className="text-[var(--nw-warn)]">no metric</span>
+                  : it.canonical_unit}
               </td>
               <td
                 className="px-4 py-2.5 text-right text-[var(--text-secondary)]"

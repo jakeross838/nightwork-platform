@@ -23,6 +23,7 @@ import type {
   ExtractedComponent,
   ComponentType,
   ComponentSource,
+  PricingModel,
 } from "./types";
 
 const COMPONENT_TYPE_SET = new Set<ComponentType>([
@@ -39,8 +40,83 @@ const COMPONENT_TYPE_SET = new Set<ComponentType>([
   "waste_disposal",
   "permit_fee",
   "bundled",
+  "labor_and_material",
   "other",
 ]);
+
+interface ParsedScopeInfo {
+  pricing_model: PricingModel;
+  scope_size_metric: string | null;
+  scope_size_value: number | null;
+  scope_size_confidence: number | null;
+  scope_size_source: string | null;
+}
+
+function inferPricingModel(itemType: string | undefined): PricingModel {
+  if (!itemType) return "unit";
+  if (itemType === "subcontract" || itemType === "service" || itemType === "labor") {
+    return "scope";
+  }
+  return "unit";
+}
+
+function normalizeScopeInfo(
+  raw: unknown,
+  fallbackItemType: string | undefined
+): ParsedScopeInfo {
+  const fallbackModel = inferPricingModel(fallbackItemType);
+
+  if (!raw || typeof raw !== "object") {
+    return {
+      pricing_model: fallbackModel,
+      scope_size_metric: null,
+      scope_size_value: null,
+      scope_size_confidence: null,
+      scope_size_source: null,
+    };
+  }
+
+  const obj = raw as Record<string, unknown>;
+  const modelRaw = typeof obj.pricing_model === "string" ? obj.pricing_model : null;
+  const pricingModel: PricingModel =
+    modelRaw === "scope" || modelRaw === "unit" ? modelRaw : fallbackModel;
+
+  if (pricingModel !== "scope") {
+    return {
+      pricing_model: "unit",
+      scope_size_metric: null,
+      scope_size_value: null,
+      scope_size_confidence: null,
+      scope_size_source: null,
+    };
+  }
+
+  const metric =
+    typeof obj.scope_size_metric === "string" && obj.scope_size_metric.trim().length > 0
+      ? obj.scope_size_metric.trim().toLowerCase().replace(/\s+/g, "_")
+      : null;
+
+  const value =
+    typeof obj.scope_size_value === "number" && Number.isFinite(obj.scope_size_value)
+      ? obj.scope_size_value
+      : null;
+
+  const confidence =
+    typeof obj.scope_size_confidence === "number" &&
+    Number.isFinite(obj.scope_size_confidence)
+      ? Math.max(0, Math.min(1, obj.scope_size_confidence))
+      : null;
+
+  const source = typeof obj.scope_size_source === "string" ? obj.scope_size_source : null;
+
+  return {
+    pricing_model: "scope",
+    scope_size_metric: metric,
+    scope_size_value: value,
+    scope_size_confidence: confidence,
+    scope_size_source: source,
+  };
+}
 
 const COMPONENT_SOURCE_SET = new Set<ComponentSource>([
   "invoice_explicit",
@@ -169,6 +245,11 @@ export async function matchItem(
       reasoning: "Empty raw description — cannot classify",
       candidates_considered: [],
       components: [],
+      pricing_model: "unit",
+      scope_size_metric: null,
+      scope_size_value: null,
+      scope_size_confidence: null,
+      scope_size_source: null,
     };
   }
 
@@ -196,6 +277,14 @@ export async function matchItem(
         }x previously)`,
         candidates_considered: [],
         components: [],
+        // Scope fields left neutral at tier 1/2 — commit-to-spine reads the
+        // matched item's pricing_model from the items table when it creates
+        // the vendor_item_pricing row.
+        pricing_model: "unit",
+        scope_size_metric: null,
+        scope_size_value: null,
+        scope_size_confidence: null,
+        scope_size_source: null,
       };
     }
   }
@@ -261,6 +350,11 @@ export async function matchItem(
           score: m.similarity,
         })),
         components: [],
+        pricing_model: "unit",
+        scope_size_metric: null,
+        scope_size_value: null,
+        scope_size_confidence: null,
+        scope_size_source: null,
       };
     }
   }
@@ -419,12 +513,49 @@ IMPORTANT — return TWO SEPARATE confidence values:
    - For "existing" matches: how clearly classifiable the line is.
    - This should almost never be 0 — you've looked at the text and picked a type.
 
+PRICING MODEL DETECTION:
+
+For each line, decide whether the item is priced "unit" or "scope":
+
+UNIT items (pricing_model = "unit"):
+- Discrete purchasable goods (2x4 lumber, tile slabs, drill bits, fasteners).
+- Materials from suppliers, priced per unit (each, sf, lf, etc.).
+- Examples: "2x4x8 Premium Spruce", "Mystery Forest 3CM slab", "box of drywall screws".
+
+SCOPE items (pricing_model = "scope"):
+- Installed or completed work. Subcontractor invoices. Lump-sum / scope-based.
+- Labor and material bundled together by the sub; splits are NOT reliable.
+- Examples: "Standing seam roof installation", "Framing labor — 2nd floor",
+  "Stucco work — completion", "Drywall hang and tape — kitchen".
+
+For SCOPE items return these extra fields:
+- scope_size_metric: a short text slug like "roof_sf", "heated_sf", "tile_sf",
+  "stucco_sf", "drywall_sf", "paint_sf", "lf", "each", or "job". Required.
+- scope_size_value: number ONLY if the invoice visibly names a size
+  (e.g. "2,400 sf roof", "200 lf fence", "3 bathrooms"). Otherwise null.
+- scope_size_confidence: 0.0-1.0 — how sure you are the size you read off
+  the invoice applies to this line. 0.95 for a clearly labelled number,
+  0.7-0.8 for plausible inference from the description.
+- scope_size_source: "invoice_text" when you read it off the invoice,
+  "implied" when you inferred from context, null when absent.
+
+For UNIT items, set pricing_model = "unit" and omit (or null) every scope_*
+field.
+
+Never fabricate scope_size_value. If you cannot see a number on the invoice,
+leave it null — the PM will fill it in from other sources.
+
 COST COMPONENT DETECTION:
 
 For each line, decide whether the dollar amount is a BREAKDOWN of multiple
 components (e.g. "Material $3,800, Fabrication $1,500, Delivery $300") or a
 SINGLE BUNDLED cost (e.g. "Countertop installed: $5,621" where the vendor
 did not itemize).
+
+IMPORTANT for SCOPE items: return a SINGLE component of type
+"labor_and_material" whose amount equals the full line total. Subcontractors
+do not split labor from material on their scope invoices and any split you
+produce would be fabricated. Never do it for scope lines.
 
 Valid component types:
 - material: raw goods (lumber, tile, hardware)
@@ -468,9 +599,16 @@ Respond with JSON ONLY (no markdown, no code fences):
     "specs": { "key": "value" },
     "unit": "each | sf | lf | sy | cy | lb | gal | hr | day | lump_sum | pkg | box"
   },
+  "scope_info": {
+    "pricing_model": "unit" | "scope",
+    "scope_size_metric": "roof_sf" | "heated_sf" | "lf" | ... | null,
+    "scope_size_value": number | null,
+    "scope_size_confidence": 0.0-1.0 | null,
+    "scope_size_source": "invoice_text" | "implied" | null
+  },
   "components": [
     {
-      "component_type": "material | fabrication | installation | labor | equipment_rental | delivery | fuel_surcharge | handling | restocking | tax | waste_disposal | permit_fee | bundled | other",
+      "component_type": "material | fabrication | installation | labor | equipment_rental | delivery | fuel_surcharge | handling | restocking | tax | waste_disposal | permit_fee | bundled | labor_and_material | other",
       "amount_cents": 380000,
       "source": "invoice_explicit | ai_extracted",
       "notes": "optional"
@@ -515,6 +653,7 @@ If match_confidence < 0.75, prefer "new" over a shaky match.`;
   }
 
   const components = normalizeExtractedComponents(parsed.components, input.raw_total_cents ?? 0);
+  const scopeInfo = normalizeScopeInfo(parsed.scope_info, parsed.proposed_item?.item_type);
 
   const candidatesConsidered: CandidateConsideration[] = Array.isArray(parsed.candidates_considered)
     ? parsed.candidates_considered.map((c) => ({
@@ -550,6 +689,7 @@ If match_confidence < 0.75, prefer "new" over a shaky match.`;
           `AI matched to existing item "${matched?.canonical_name}"`,
         candidates_considered: candidatesConsidered,
         components,
+        ...scopeInfo,
       };
     }
     // Model hallucinated an id — fall through to new
@@ -580,6 +720,7 @@ If match_confidence < 0.75, prefer "new" over a shaky match.`;
     reasoning: parsed.reasoning ?? "AI proposed a new canonical item",
     candidates_considered: candidatesConsidered,
     components,
+    ...scopeInfo,
   };
 }
 
@@ -605,6 +746,7 @@ type AiMatchResponse = {
     unit?: string;
   } | null;
   components?: unknown;
+  scope_info?: unknown;
 };
 
 function fallbackNewItem(input: MatchInput, reason: string): MatchResult {
@@ -625,6 +767,11 @@ function fallbackNewItem(input: MatchInput, reason: string): MatchResult {
     reasoning: `Fallback: ${reason}`,
     candidates_considered: [],
     components: [],
+    pricing_model: "unit",
+    scope_size_metric: null,
+    scope_size_value: null,
+    scope_size_confidence: null,
+    scope_size_source: null,
   };
 }
 

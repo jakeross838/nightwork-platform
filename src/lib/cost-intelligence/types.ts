@@ -79,6 +79,8 @@ export interface Item {
   canonical_unit: string;
   conversion_rules: Record<string, ConversionRule>;
   default_cost_code_id: string | null;
+  pricing_model: PricingModel;
+  scope_size_metric: string | null;
   first_seen_source: string | null;
   ai_confidence: number | null;
   human_verified: boolean;
@@ -202,6 +204,11 @@ export interface InvoiceExtractionLineRow {
   is_transaction_line: boolean;
   transaction_line_type: TransactionLineType | null;
   non_item_reason: string | null;
+  proposed_pricing_model: PricingModel | null;
+  proposed_scope_size_metric: string | null;
+  extracted_scope_size_value: number | null;
+  extracted_scope_size_confidence: number | null;
+  extracted_scope_size_source: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -246,6 +253,10 @@ export interface VendorItemPricingRow {
   human_verified_by: string | null;
   human_verified_at: string | null;
   auto_committed: boolean;
+  scope_size_value: number | null;
+  scope_size_source: ScopeSizeSource | null;
+  scope_size_confidence: number | null;
+  scope_size_notes: string | null;
   created_by: string | null;
   created_at: string;
   deleted_at: string | null;
@@ -269,6 +280,17 @@ export interface MatchResult {
    * single default_bundled component matching the line total.
    */
   components: ExtractedComponent[];
+  /**
+   * Pricing model detection. unit = discrete goods priced per unit; scope =
+   * installed/subcontract work compared by total / scope_size_value. When
+   * pricing_model === 'scope', scope_size_metric should be set; size_value
+   * is optional and only populated if the invoice itself names a size.
+   */
+  pricing_model: PricingModel;
+  scope_size_metric: string | null;
+  scope_size_value: number | null;
+  scope_size_confidence: number | null;
+  scope_size_source: string | null;
 }
 
 export type ComponentType =
@@ -285,7 +307,26 @@ export type ComponentType =
   | "waste_disposal"
   | "permit_fee"
   | "bundled"
+  | "labor_and_material"
   | "other";
+
+export type PricingModel = "unit" | "scope";
+
+export type ScopeSizeSource =
+  | "invoice_extraction"
+  | "manual"
+  | "job_characteristics"
+  | "daily_log"
+  | "plan_ai"
+  | "inferred";
+
+export interface ExtractedScopeInfo {
+  pricing_model: PricingModel;
+  scope_size_metric: string | null;
+  scope_size_value: number | null;
+  scope_size_confidence: number | null;
+  scope_size_source: string | null;
+}
 
 export type ComponentSource =
   | "invoice_explicit"
@@ -337,6 +378,7 @@ export const COMPONENT_TYPES: ComponentType[] = [
   "waste_disposal",
   "permit_fee",
   "bundled",
+  "labor_and_material",
   "other",
 ];
 

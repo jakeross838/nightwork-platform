@@ -23,6 +23,8 @@ type ItemDetail = {
   human_verified: boolean;
   created_at: string;
   default_cost_code: { id: string; code: string; description: string } | null;
+  pricing_model: "unit" | "scope";
+  scope_size_metric: string | null;
 };
 
 type AliasRow = {
@@ -54,6 +56,10 @@ type PricingRow = {
   created_via: string | null;
   human_verified: boolean;
   auto_committed: boolean;
+  scope_size_value: number | null;
+  scope_size_source: string | null;
+  scope_size_confidence: number | null;
+  scope_size_notes: string | null;
   vendors: { id: string; name: string } | null;
   jobs: { id: string; name: string } | null;
 };
@@ -108,6 +114,7 @@ export default function CostIntelligenceItemDetailPage() {
 
   const vendorBreakdown = useMemo(() => {
     if (!data) return [];
+    const isScope = data.item.pricing_model === "scope";
     type Breakdown = {
       vendor_id: string;
       vendor_name: string;
@@ -118,6 +125,12 @@ export default function CostIntelligenceItemDetailPage() {
       last_txn: string | null;
       avg_unit_cents: number;
       avg_canonical_unit_cents: number;
+      // Scope-specific
+      scope_total_cents: number;
+      scope_total_size: number;
+      scope_rows_with_size: number;
+      scope_rows_missing_size: number;
+      avg_per_metric_cents: number | null;
     };
     const map = new Map<string, Breakdown>();
     for (const p of data.pricing) {
@@ -134,6 +147,11 @@ export default function CostIntelligenceItemDetailPage() {
           last_txn: null,
           avg_unit_cents: 0,
           avg_canonical_unit_cents: 0,
+          scope_total_cents: 0,
+          scope_total_size: 0,
+          scope_rows_with_size: 0,
+          scope_rows_missing_size: 0,
+          avg_per_metric_cents: null,
         });
       }
       const b = map.get(vId)!;
@@ -145,6 +163,16 @@ export default function CostIntelligenceItemDetailPage() {
       b.total_canonical_qty += Number(p.quantity ?? 0) * (Number.isFinite(ratio) && ratio > 0 ? ratio : 1);
       void canonicalPrice;
       if (!b.last_txn || p.transaction_date > b.last_txn) b.last_txn = p.transaction_date;
+
+      if (isScope) {
+        if (p.scope_size_value != null && p.scope_size_value > 0) {
+          b.scope_total_cents += p.total_cents ?? 0;
+          b.scope_total_size += Number(p.scope_size_value);
+          b.scope_rows_with_size++;
+        } else {
+          b.scope_rows_missing_size++;
+        }
+      }
     }
     return Array.from(map.values())
       .map((b) => ({
@@ -157,6 +185,10 @@ export default function CostIntelligenceItemDetailPage() {
           b.total_canonical_qty > 0
             ? Math.round(b.total_cents / b.total_canonical_qty)
             : 0,
+        avg_per_metric_cents:
+          b.scope_total_size > 0
+            ? Math.round(b.scope_total_cents / b.scope_total_size)
+            : null,
       }))
       .sort((a, b) => b.total_cents - a.total_cents);
   }, [data]);
@@ -221,10 +253,16 @@ export default function CostIntelligenceItemDetailPage() {
               <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{item.description}</p>
             ) : null}
             <div className="mt-3 flex items-center gap-2 flex-wrap">
-              <NwBadge variant="neutral" size="sm">
-                canonical · {item.canonical_unit}
-              </NwBadge>
-              {item.unit !== item.canonical_unit && (
+              {item.pricing_model === "scope" ? (
+                <NwBadge variant="accent" size="sm">
+                  scope · {item.scope_size_metric ?? "size needed"}
+                </NwBadge>
+              ) : (
+                <NwBadge variant="neutral" size="sm">
+                  unit · {item.canonical_unit}
+                </NwBadge>
+              )}
+              {item.pricing_model === "unit" && item.unit !== item.canonical_unit && (
                 <NwBadge variant="neutral" size="sm">
                   legacy unit · {item.unit}
                 </NwBadge>
@@ -263,7 +301,9 @@ export default function CostIntelligenceItemDetailPage() {
                   <tr className="border-b border-[var(--border-default)]">
                     <th className="text-left px-4 py-2 font-medium">Vendor</th>
                     <th className="text-right px-4 py-2 font-medium">
-                      Avg / {item.canonical_unit}
+                      {item.pricing_model === "scope"
+                        ? `Avg / ${item.scope_size_metric ?? "size"}`
+                        : `Avg / ${item.canonical_unit}`}
                     </th>
                     <th className="text-right px-4 py-2 font-medium">Txns</th>
                     <th className="text-right px-4 py-2 font-medium">Total</th>
@@ -278,10 +318,18 @@ export default function CostIntelligenceItemDetailPage() {
                     >
                       <td className="px-4 py-2 text-[var(--text-primary)]">{b.vendor_name}</td>
                       <td className="px-4 py-2 text-right">
-                        <NwMoney
-                          cents={b.avg_canonical_unit_cents || b.avg_unit_cents}
-                          size="sm"
-                        />
+                        {item.pricing_model === "scope" ? (
+                          b.avg_per_metric_cents != null ? (
+                            <NwMoney cents={b.avg_per_metric_cents} size="sm" />
+                          ) : (
+                            <span className="text-[var(--nw-warn)] text-[11px]">size needed</span>
+                          )
+                        ) : (
+                          <NwMoney
+                            cents={b.avg_canonical_unit_cents || b.avg_unit_cents}
+                            size="sm"
+                          />
+                        )}
                       </td>
                       <td
                         className="px-4 py-2 text-right text-[var(--text-secondary)]"
@@ -290,7 +338,16 @@ export default function CostIntelligenceItemDetailPage() {
                           fontVariantNumeric: "tabular-nums",
                         }}
                       >
-                        {b.count}
+                        {item.pricing_model === "scope" ? (
+                          <>
+                            {b.scope_rows_with_size}/{b.count}
+                            {b.scope_rows_missing_size > 0 && (
+                              <span className="text-[var(--nw-warn)]"> ·!</span>
+                            )}
+                          </>
+                        ) : (
+                          b.count
+                        )}
                       </td>
                       <td className="px-4 py-2 text-right">
                         <NwMoney cents={b.total_cents} size="sm" />

@@ -9,6 +9,7 @@ import InvoicePdfPreview from "./invoice-pdf-preview";
 import LineContextDisplay from "./line-context-display";
 import CostComponentsEditor from "./cost-components-editor";
 import ClassificationForm from "./classification-form";
+import ScopeDetailsEditor from "./scope-details-editor";
 import type {
   ClassificationDraft,
   ComponentDraft,
@@ -55,6 +56,7 @@ function toComponentDraft(c: QueueComponent): ComponentDraft {
 function defaultClassificationFromLine(line: QueueLine): ClassificationDraft {
   const existingId = line.proposed_item?.id ?? line.proposed_item_id ?? null;
   const proposal = line.proposed_item_data;
+  const pricingModel = line.proposed_pricing_model ?? "unit";
   return {
     mode: existingId ? "existing" : "new",
     existing_item_id: existingId,
@@ -64,6 +66,19 @@ function defaultClassificationFromLine(line: QueueLine): ClassificationDraft {
     category: proposal?.category ?? "",
     subcategory: proposal?.subcategory ?? "",
     specs_json: JSON.stringify(proposal?.specs ?? {}, null, 2),
+    pricing_model: pricingModel,
+    scope_size_metric: line.proposed_scope_size_metric ?? "",
+    scope_size_value:
+      line.extracted_scope_size_value != null
+        ? String(line.extracted_scope_size_value)
+        : "",
+    scope_size_source:
+      line.extracted_scope_size_source === "invoice_text" ||
+      line.extracted_scope_size_source === "implied"
+        ? "invoice_extraction"
+        : line.extracted_scope_size_source ?? null,
+    scope_size_confidence: line.extracted_scope_size_confidence,
+    scope_allow_component_split: false,
   };
 }
 
@@ -181,6 +196,24 @@ export default function VerificationDetailPanel({
       }
     }
 
+    const scopeSize = Number.parseFloat(classification.scope_size_value);
+    const scopePayload =
+      classification.pricing_model === "scope"
+        ? {
+            pricing_model: "scope" as const,
+            scope_size_metric: classification.scope_size_metric.trim() || null,
+            scope_size_value: Number.isFinite(scopeSize) && scopeSize > 0 ? scopeSize : null,
+            scope_size_source:
+              Number.isFinite(scopeSize) && scopeSize > 0
+                ? classification.scope_size_source ?? "manual"
+                : null,
+            scope_size_confidence:
+              classification.scope_size_source === "invoice_extraction"
+                ? classification.scope_size_confidence
+                : null,
+          }
+        : null;
+
     setSaving(true);
     try {
       if (isGroup) {
@@ -209,6 +242,7 @@ export default function VerificationDetailPanel({
             unit: c.unit || null,
             unit_rate_cents: c.unit_rate_cents,
           })),
+          scope: scopePayload,
         };
         const res = await fetch(
           "/api/cost-intelligence/extraction-lines/bulk-approve-group",
@@ -227,7 +261,10 @@ export default function VerificationDetailPanel({
         );
         onApproved(json.approved_line_ids ?? lineIds);
       } else {
-        // Single-line path: replace components, then approve via /lines/:id
+        // Single-line path: persist scope fields, replace components, then approve.
+        if (scopePayload) {
+          await patchLineScope(primaryLine.id, scopePayload);
+        }
         await replaceSingleLineComponents(primaryLine.id, components);
 
         const body: Record<string, unknown> =
@@ -357,10 +394,26 @@ export default function VerificationDetailPanel({
 
         <LineContextDisplay line={primaryLine} />
 
+        {classification.pricing_model === "scope" && (
+          <ScopeDetailsEditor
+            draft={classification}
+            lineTotalCents={perLineTotal}
+            onChange={setClassification}
+            aiExtractedConfidence={primaryLine.extracted_scope_size_confidence}
+          />
+        )}
+
         <CostComponentsEditor
           components={components}
           lineTotalCents={perLineTotal}
           onChange={setComponents}
+          scopeMode={classification.pricing_model === "scope"}
+          allowScopeSplit={classification.scope_allow_component_split}
+          onToggleAllowScopeSplit={(next) =>
+            setClassification((prev) =>
+              prev ? { ...prev, scope_allow_component_split: next } : prev
+            )
+          }
         />
 
         <ClassificationForm draft={classification} onChange={setClassification} />
@@ -479,5 +532,25 @@ async function replaceSingleLineComponents(
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? `Components save failed: ${res.status}`);
+  }
+}
+
+interface ScopePayload {
+  pricing_model: "scope";
+  scope_size_metric: string | null;
+  scope_size_value: number | null;
+  scope_size_source: string | null;
+  scope_size_confidence: number | null;
+}
+
+async function patchLineScope(lineId: string, scope: ScopePayload): Promise<void> {
+  const res = await fetch(`/api/cost-intelligence/extraction-lines/${lineId}/scope`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(scope),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? `Scope save failed: ${res.status}`);
   }
 }

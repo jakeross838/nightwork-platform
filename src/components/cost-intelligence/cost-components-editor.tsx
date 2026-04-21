@@ -16,6 +16,7 @@ const COMPONENT_TYPES: ComponentType[] = [
   "fabrication",
   "installation",
   "labor",
+  "labor_and_material",
   "equipment_rental",
   "delivery",
   "fuel_surcharge",
@@ -32,6 +33,11 @@ interface Props {
   components: ComponentDraft[];
   lineTotalCents: number;
   onChange: (next: ComponentDraft[]) => void;
+  /** When true, renders the non-splittable scope-item display. */
+  scopeMode?: boolean;
+  /** Advanced override (scope-only) to allow a manual split. */
+  allowScopeSplit?: boolean;
+  onToggleAllowScopeSplit?: (next: boolean) => void;
 }
 
 function tempId(): string {
@@ -54,6 +60,9 @@ export default function CostComponentsEditor({
   components,
   lineTotalCents,
   onChange,
+  scopeMode = false,
+  allowScopeSplit = false,
+  onToggleAllowScopeSplit,
 }: Props) {
   const sum = useMemo(
     () => components.reduce((s, c) => s + c.amount_cents, 0),
@@ -62,6 +71,7 @@ export default function CostComponentsEditor({
   const diff = sum - lineTotalCents;
   const mismatch = Math.abs(diff) > 5;
   const singleComponent = components.length === 1;
+  const scopeLocked = scopeMode && !allowScopeSplit;
 
   const updateOne = (tempIdToUpdate: string, patch: Partial<ComponentDraft>) => {
     onChange(components.map((c) => (c.temp_id === tempIdToUpdate ? { ...c, ...patch } : c)));
@@ -236,16 +246,54 @@ export default function CostComponentsEditor({
         </p>
       )}
 
-      <div className="flex items-center gap-2 pt-1">
-        <NwButton variant="ghost" size="sm" onClick={addComponent}>
+      <div className="flex items-center gap-2 pt-1 flex-wrap">
+        <NwButton
+          variant="ghost"
+          size="sm"
+          onClick={addComponent}
+          disabled={scopeLocked}
+          title={
+            scopeLocked
+              ? "Scope work combines labor and material into one total and isn't typically split."
+              : undefined
+          }
+        >
           + Add component
         </NwButton>
         {singleComponent && (
-          <NwButton variant="ghost" size="sm" onClick={splitIntoComponents}>
+          <NwButton
+            variant="ghost"
+            size="sm"
+            onClick={splitIntoComponents}
+            disabled={scopeLocked}
+            title={
+              scopeLocked
+                ? "Scope work combines labor and material into one total and isn't typically split. Advanced users can override below."
+                : undefined
+            }
+          >
             Split into components
           </NwButton>
         )}
+        {scopeMode && onToggleAllowScopeSplit && (
+          <label className="ml-auto flex items-center gap-2 text-[11px] text-[var(--text-secondary)] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={allowScopeSplit}
+              onChange={(e) => onToggleAllowScopeSplit(e.target.checked)}
+              className="h-[14px] w-[14px]"
+            />
+            Advanced: allow component split
+          </label>
+        )}
       </div>
+
+      {scopeLocked && (
+        <p className="text-[11px] text-[var(--text-tertiary)] italic">
+          Scope work combines labor and material into one total and isn&rsquo;t typically split.
+          Toggle &ldquo;Advanced: allow component split&rdquo; if you need to override.
+        </p>
+      )}
     </section>
   );
 }

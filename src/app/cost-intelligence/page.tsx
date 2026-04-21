@@ -26,6 +26,7 @@ interface HubState {
   pendingVerification: number;
   pendingVerificationOldestDays: number | null;
   pendingConversions: number;
+  pendingScopeEnrichment: number;
   pendingZeroVendorItems: ItemRowWithAgg[];
   pendingUncategorizedItems: ItemRowWithAgg[];
   learnings: LearningEntry[];
@@ -59,7 +60,7 @@ export default function CostIntelligenceHubPage() {
       supabase
         .from("items")
         .select(
-          "id, canonical_name, item_type, category, subcategory, unit, canonical_unit, ai_confidence, human_verified, created_at"
+          "id, canonical_name, item_type, category, subcategory, unit, canonical_unit, ai_confidence, human_verified, created_at, pricing_model, scope_size_metric"
         )
         .is("deleted_at", null)
         .order("canonical_name"),
@@ -82,6 +83,25 @@ export default function CostIntelligenceHubPage() {
         .is("deleted_at", null),
     ]);
 
+    // Separate query: scope pricing rows missing scope_size_value (counts
+    // needed for the Scope Data badge in the header).
+    const { data: scopeItemIdsData } = await supabase
+      .from("items")
+      .select("id")
+      .eq("pricing_model", "scope")
+      .is("deleted_at", null);
+    const scopeItemIds = (scopeItemIdsData ?? []).map((r: { id: string }) => r.id);
+    let pendingScopeCount = 0;
+    if (scopeItemIds.length > 0) {
+      const { count } = await supabase
+        .from("vendor_item_pricing")
+        .select("id", { count: "exact", head: true })
+        .is("scope_size_value", null)
+        .is("deleted_at", null)
+        .in("item_id", scopeItemIds);
+      pendingScopeCount = count ?? 0;
+    }
+
     const baseItems = (itemRows ?? []) as Array<{
       id: string;
       canonical_name: string;
@@ -93,6 +113,8 @@ export default function CostIntelligenceHubPage() {
       ai_confidence: number | null;
       human_verified: boolean;
       created_at: string;
+      pricing_model: "unit" | "scope";
+      scope_size_metric: string | null;
     }>;
 
     type Agg = {
@@ -178,6 +200,7 @@ export default function CostIntelligenceHubPage() {
       pendingVerification,
       pendingVerificationOldestDays: oldestDays,
       pendingConversions: pendingConversionsCount ?? 0,
+      pendingScopeEnrichment: pendingScopeCount,
       pendingZeroVendorItems,
       pendingUncategorizedItems,
       learnings,
@@ -266,6 +289,25 @@ export default function CostIntelligenceHubPage() {
                   }}
                 >
                   {state.pendingConversions}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/cost-intelligence/scope-data"
+              className="inline-flex items-center gap-2 h-[36px] px-4 border border-[var(--border-strong)] text-[11px] uppercase tracking-[0.12em] text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]"
+              style={{ fontFamily: "var(--font-jetbrains-mono)" }}
+            >
+              Scope Data
+              {state && state.pendingScopeEnrichment > 10 && (
+                <span
+                  className="inline-flex items-center justify-center min-w-[20px] h-[18px] px-1 border text-[10px] font-bold"
+                  style={{
+                    color: "var(--nw-warn)",
+                    borderColor: "var(--nw-warn)",
+                    background: "var(--bg-subtle)",
+                  }}
+                >
+                  {state.pendingScopeEnrichment}
                 </span>
               )}
             </Link>

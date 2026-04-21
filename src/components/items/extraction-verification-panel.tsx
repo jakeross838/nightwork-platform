@@ -42,6 +42,7 @@ const COMPONENT_TYPE_LABELS: Record<ComponentType, string> = {
   waste_disposal: "Waste",
   permit_fee: "Permit",
   bundled: "Bundled",
+  labor_and_material: "Labor & material",
   other: "Other",
 };
 

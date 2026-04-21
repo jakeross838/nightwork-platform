@@ -141,6 +141,27 @@ export async function commitLineToSpine(
       );
     }
 
+    // Derive pricing_model for the new item: prefer AI's proposal captured
+    // on the extraction line, else fall back to the subcontract/service/
+    // labor heuristic.
+    const proposedPricingModel =
+      (extractionLine as unknown as { proposed_pricing_model?: string | null })
+        .proposed_pricing_model ?? null;
+    const derivedPricingModel =
+      proposedPricingModel === "scope"
+        ? "scope"
+        : proposedPricingModel === "unit"
+        ? "unit"
+        : proposal.item_type === "subcontract" ||
+          proposal.item_type === "service" ||
+          proposal.item_type === "labor"
+        ? "scope"
+        : "unit";
+
+    const proposedScopeMetric =
+      (extractionLine as unknown as { proposed_scope_size_metric?: string | null })
+        .proposed_scope_size_metric ?? null;
+
     const { data: newItem, error: itemErr } = await supabase
       .from("items")
       .insert({
@@ -153,6 +174,9 @@ export async function commitLineToSpine(
         unit: proposal.unit,
         canonical_unit: proposal.unit,
         conversion_rules: {},
+        pricing_model: derivedPricingModel,
+        scope_size_metric:
+          derivedPricingModel === "scope" ? proposedScopeMetric : null,
         first_seen_source: "invoice_extraction",
         ai_confidence: extractionLine.match_confidence,
         human_verified: opts.newStatus !== "auto_committed",
@@ -186,9 +210,13 @@ export async function commitLineToSpine(
   // 4b. Resolve unit conversion — observed unit on the invoice vs the
   //     item's canonical unit. Applied ratio stored on the pricing row so
   //     cost-intelligence queries can use canonical_* for comparison.
+  //     Also pulls pricing_model + scope_size_metric so the spine row can
+  //     carry scope observations forward.
   const { data: itemForConv } = await supabase
     .from("items")
-    .select("id, org_id, canonical_unit, conversion_rules, category, subcategory, canonical_name")
+    .select(
+      "id, org_id, canonical_unit, conversion_rules, category, subcategory, canonical_name, pricing_model, scope_size_metric"
+    )
     .eq("id", itemId)
     .maybeSingle();
 
@@ -229,6 +257,44 @@ export async function commitLineToSpine(
     (extractionLine as unknown as { line_is_taxable?: boolean | null }).line_is_taxable ?? null;
   const taxRate = (extraction as unknown as { invoice_tax_rate?: number | null }).invoice_tax_rate ?? null;
 
+  // Scope info: prefer AI-extracted values on the extraction_line when
+  // the item is a scope item. Falls through to NULL when the invoice
+  // didn't name a size — intelligence queries skip those rows.
+  const itemPricingModel =
+    (itemForConv as { pricing_model?: string } | null)?.pricing_model === "scope"
+      ? "scope"
+      : "unit";
+
+  const extractedScopeValue = (extractionLine as unknown as {
+    extracted_scope_size_value?: number | null;
+  }).extracted_scope_size_value ?? null;
+  const extractedScopeMetric = (extractionLine as unknown as {
+    proposed_scope_size_metric?: string | null;
+  }).proposed_scope_size_metric ?? null;
+  const extractedScopeConfidence = (extractionLine as unknown as {
+    extracted_scope_size_confidence?: number | null;
+  }).extracted_scope_size_confidence ?? null;
+
+  const scopeSizeValue = itemPricingModel === "scope" ? extractedScopeValue : null;
+  const scopeSizeSource =
+    itemPricingModel === "scope" && extractedScopeValue != null ? "invoice_extraction" : null;
+  const scopeSizeConfidence =
+    itemPricingModel === "scope" ? extractedScopeConfidence : null;
+
+  // If this is a newly-created item and the extraction line carried a
+  // scope_size_metric, stamp it onto the item row now so future queries
+  // pick it up.
+  if (itemForConv && itemPricingModel === "scope" && extractedScopeMetric) {
+    const currentMetric = (itemForConv as { scope_size_metric?: string | null })
+      .scope_size_metric ?? null;
+    if (!currentMetric) {
+      await supabase
+        .from("items")
+        .update({ scope_size_metric: extractedScopeMetric })
+        .eq("id", itemId);
+    }
+  }
+
   // 5. Insert vendor_item_pricing row
   const { data: vip, error: vipErr } = await supabase
     .from("vendor_item_pricing")
@@ -264,6 +330,9 @@ export async function commitLineToSpine(
       human_verified_by: opts.verifiedBy,
       human_verified_at: opts.verifiedBy ? new Date().toISOString() : null,
       auto_committed: isAutoCommit,
+      scope_size_value: scopeSizeValue,
+      scope_size_source: scopeSizeSource,
+      scope_size_confidence: scopeSizeConfidence,
       created_by: opts.verifiedBy,
     })
     .select("id")
@@ -302,7 +371,8 @@ export async function commitLineToSpine(
     extractionLineId,
     vip.id as string,
     totalCents,
-    extractionLine.proposed_item_data
+    extractionLine.proposed_item_data,
+    itemPricingModel
   );
 
   return {
@@ -318,7 +388,8 @@ async function propagateComponentsToPricing(
   extractionLineId: string,
   pricingId: string,
   lineTotalCents: number,
-  proposal: ProposedItemData | null
+  proposal: ProposedItemData | null,
+  pricingModel: "unit" | "scope" = "unit"
 ): Promise<void> {
   const { data: components } = await supabase
     .from("line_cost_components")
@@ -343,8 +414,34 @@ async function propagateComponentsToPricing(
 
   const rows = (components ?? []) as Row[];
 
+  // Scope items always commit as a single labor_and_material component with
+  // the full line total — subs don't split labor from material and we don't
+  // fabricate one. A PM with the "allow component split" advanced override
+  // on their extraction line will already have shaped the components in the
+  // extraction stage, which we then honour below.
+  const scopeFallback =
+    pricingModel === "scope" && rows.length <= 1
+      ? ([
+          {
+            org_id: orgId,
+            vendor_item_pricing_id: pricingId,
+            invoice_extraction_line_id: extractionLineId,
+            component_type: "labor_and_material",
+            amount_cents: lineTotalCents,
+            quantity: null as number | null,
+            unit: null as string | null,
+            unit_rate_cents: null as number | null,
+            source: "default_bundled",
+            ai_confidence: null as number | null,
+            notes: null as string | null,
+            display_order: 0,
+          },
+        ])
+      : null;
+
   const toInsert =
-    rows.length > 0
+    scopeFallback ??
+    (rows.length > 0
       ? rows.map((c) => ({
           org_id: orgId,
           vendor_item_pricing_id: pricingId,
@@ -364,7 +461,7 @@ async function propagateComponentsToPricing(
             org_id: orgId,
             vendor_item_pricing_id: pricingId,
             invoice_extraction_line_id: extractionLineId,
-            component_type: defaultComponentTypeFor(proposal),
+            component_type: defaultComponentTypeFor(proposal, pricingModel),
             amount_cents: lineTotalCents,
             quantity: null as number | null,
             unit: null as string | null,
@@ -374,7 +471,7 @@ async function propagateComponentsToPricing(
             notes: null as string | null,
             display_order: 0,
           },
-        ];
+        ]);
 
   const { error } = await supabase.from("line_cost_components").insert(toInsert);
   if (error) {
@@ -384,15 +481,19 @@ async function propagateComponentsToPricing(
   }
 }
 
-function defaultComponentTypeFor(proposal: ProposedItemData | null | undefined): string {
+function defaultComponentTypeFor(
+  proposal: ProposedItemData | null | undefined,
+  pricingModel: "unit" | "scope" = "unit"
+): string {
+  if (pricingModel === "scope") return "labor_and_material";
   switch (proposal?.item_type) {
     case "labor":
     case "service":
-      return "labor";
+      return "labor_and_material";
     case "equipment":
       return "equipment_rental";
     case "subcontract":
-      return "bundled";
+      return "labor_and_material";
     default:
       return "material";
   }

@@ -5,6 +5,7 @@ import type {
   ItemUnit,
   ComponentType,
   ComponentSource,
+  PricingModel,
 } from "@/lib/cost-intelligence/types";
 
 export type QueueTab =
@@ -59,6 +60,11 @@ export interface QueueLine {
   overhead_allocated_cents: number | null;
   raw_ocr_text: string | null;
   extraction_id: string;
+  proposed_pricing_model: PricingModel | null;
+  proposed_scope_size_metric: string | null;
+  extracted_scope_size_value: number | null;
+  extracted_scope_size_confidence: number | null;
+  extracted_scope_size_source: string | null;
   invoice: {
     id: string;
     invoice_number: string | null;
@@ -79,7 +85,26 @@ export interface ClassificationDraft {
   category: string;
   subcategory: string;
   specs_json: string;
+  pricing_model: PricingModel;
+  scope_size_metric: string;
+  scope_size_value: string;
+  scope_size_source: string | null;
+  scope_size_confidence: number | null;
+  scope_allow_component_split: boolean;
 }
+
+export const COMMON_SCOPE_METRICS = [
+  "roof_sf",
+  "heated_sf",
+  "total_sf",
+  "tile_sf",
+  "stucco_sf",
+  "drywall_sf",
+  "paint_sf",
+  "lf",
+  "each",
+  "job",
+];
 
 export interface ComponentDraft {
   temp_id: string;
@@ -107,6 +132,7 @@ export const COMPONENT_TYPE_LABELS: Record<ComponentType, string> = {
   waste_disposal: "Waste disposal",
   permit_fee: "Permit fee",
   bundled: "Bundled",
+  labor_and_material: "Labor & material",
   other: "Other",
 };
 

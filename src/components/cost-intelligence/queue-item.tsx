@@ -38,6 +38,7 @@ export default function QueueItem({
   if (selection.kind === "group" && group) {
     const firstLine = group.lines[0];
     const itemType = firstLine?.proposed_item_data?.item_type ?? "material";
+    const isScope = firstLine?.proposed_pricing_model === "scope";
     return (
       <button
         type="button"
@@ -67,24 +68,32 @@ export default function QueueItem({
               className="mt-1 text-[11px] text-[var(--text-secondary)] uppercase tracking-[0.12em]"
               style={{ fontFamily: "var(--font-jetbrains-mono)" }}
             >
-              {itemType} · {group.unit ?? "each"}
+              {itemType} ·{" "}
+              {isScope ? (
+                <span className="text-[var(--nw-stone-blue)]">scope</span>
+              ) : (
+                group.unit ?? "each"
+              )}
             </div>
             <div
               className="mt-1 text-[12px] text-[var(--text-primary)]"
               style={{ fontFamily: "var(--font-jetbrains-mono)", fontVariantNumeric: "tabular-nums" }}
             >
-              {group.unit_price_range &&
+              {!isScope && group.unit_price_range &&
               group.unit_price_range.min === group.unit_price_range.max ? (
                 <>
                   <NwMoney cents={group.unit_price_range.min} size="sm" /> each ·{" "}
                 </>
-              ) : group.unit_price_range ? (
+              ) : !isScope && group.unit_price_range ? (
                 <>
                   <NwMoney cents={group.unit_price_range.min} size="sm" /> –{" "}
                   <NwMoney cents={group.unit_price_range.max} size="sm" /> each ·{" "}
                 </>
               ) : null}
               <NwMoney cents={group.total_across_occurrences} size="sm" variant="emphasized" /> total
+              {isScope && (
+                <span className="text-[var(--nw-warn)]"> · scope size needed per line</span>
+              )}
             </div>
             <div className="mt-2">
               <NwButton variant="primary" size="sm" onClick={onSelect}>
@@ -100,6 +109,12 @@ export default function QueueItem({
   if (selection.kind === "single" && line) {
     const itemType = line.proposed_item_data?.item_type;
     const firstComponent = line.components[0];
+    const isScope = line.proposed_pricing_model === "scope";
+    const scopeValue = line.extracted_scope_size_value;
+    const scopeMetric = line.proposed_scope_size_metric;
+    const lineTotal = line.raw_total_cents ?? 0;
+    const perMetricCents =
+      isScope && scopeValue && scopeValue > 0 ? Math.round(lineTotal / scopeValue) : null;
 
     return (
       <div
@@ -130,8 +145,13 @@ export default function QueueItem({
               className="mt-1 text-[10px] uppercase tracking-[0.12em] text-[var(--text-tertiary)]"
               style={{ fontFamily: "var(--font-jetbrains-mono)" }}
             >
-              {itemType ?? "—"} · {line.raw_unit_text ?? "each"}
-              {firstComponent && firstComponent.component_type !== "material" && (
+              {itemType ?? "—"} ·{" "}
+              {isScope ? (
+                <span className="text-[var(--nw-stone-blue)]">scope</span>
+              ) : (
+                line.raw_unit_text ?? "each"
+              )}
+              {!isScope && firstComponent && firstComponent.component_type !== "material" && (
                 <> · {COMPONENT_TYPE_LABELS[firstComponent.component_type]}</>
               )}
             </div>
@@ -144,6 +164,18 @@ export default function QueueItem({
                 }}
               >
                 <NwMoney cents={line.raw_total_cents} size="sm" />
+                {isScope && perMetricCents != null && scopeMetric && (
+                  <span className="text-[var(--text-tertiary)]">
+                    {" "}
+                    ·{" "}
+                    <span className="text-[var(--text-secondary)]">
+                      <NwMoney cents={perMetricCents} size="sm" />/{scopeMetric.replace(/_/g, " ")}
+                    </span>
+                  </span>
+                )}
+                {isScope && perMetricCents == null && (
+                  <span className="text-[var(--nw-warn)]"> · scope size needed</span>
+                )}
               </div>
               {line.is_transaction_line && line.transaction_line_type && (
                 <NwBadge variant="neutral" size="sm">

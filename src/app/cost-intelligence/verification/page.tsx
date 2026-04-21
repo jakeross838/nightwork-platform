@@ -22,6 +22,7 @@ import {
 import type {
   ComponentSource,
   ComponentType,
+  PricingModel,
   ProposedItemData,
   TransactionLineType,
 } from "@/lib/cost-intelligence/types";
@@ -47,6 +48,11 @@ type LineQueryRow = {
   proposed_item_id: string | null;
   proposed_item_data: ProposedItemData | null;
   proposed_item: { id: string; canonical_name: string } | null;
+  proposed_pricing_model: PricingModel | null;
+  proposed_scope_size_metric: string | null;
+  extracted_scope_size_value: number | null;
+  extracted_scope_size_confidence: number | null;
+  extracted_scope_size_source: string | null;
   invoice_extractions: {
     id: string;
     raw_ocr_text: string | null;
@@ -92,7 +98,7 @@ function VerificationPageInner() {
     let linesQ = supabase
       .from("invoice_extraction_lines")
       .select(
-        "id, extraction_id, raw_description, raw_quantity, raw_unit_text, raw_unit_price_cents, raw_total_cents, match_tier, match_confidence, match_confidence_score, classification_confidence, match_reasoning, created_at, is_transaction_line, transaction_line_type, line_tax_cents, overhead_allocated_cents, proposed_item_id, proposed_item_data, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, raw_ocr_text, invoices!inner(id, invoice_number, invoice_date, vendor_id, original_file_url, vendors(name)))"
+        "id, extraction_id, raw_description, raw_quantity, raw_unit_text, raw_unit_price_cents, raw_total_cents, match_tier, match_confidence, match_confidence_score, classification_confidence, match_reasoning, created_at, is_transaction_line, transaction_line_type, line_tax_cents, overhead_allocated_cents, proposed_item_id, proposed_item_data, proposed_pricing_model, proposed_scope_size_metric, extracted_scope_size_value, extracted_scope_size_confidence, extracted_scope_size_source, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, raw_ocr_text, invoices!inner(id, invoice_number, invoice_date, vendor_id, original_file_url, vendors(name)))"
       )
       .eq("verification_status", "pending")
       .eq("is_allocated_overhead", false)
@@ -172,6 +178,11 @@ function VerificationPageInner() {
         proposed_item_id: r.proposed_item_id,
         proposed_item: r.proposed_item,
         proposed_item_data: r.proposed_item_data,
+        proposed_pricing_model: r.proposed_pricing_model,
+        proposed_scope_size_metric: r.proposed_scope_size_metric,
+        extracted_scope_size_value: r.extracted_scope_size_value,
+        extracted_scope_size_confidence: r.extracted_scope_size_confidence,
+        extracted_scope_size_source: r.extracted_scope_size_source,
         line_tax_cents: r.line_tax_cents,
         overhead_allocated_cents: r.overhead_allocated_cents,
         raw_ocr_text: r.invoice_extractions?.raw_ocr_text ?? null,
