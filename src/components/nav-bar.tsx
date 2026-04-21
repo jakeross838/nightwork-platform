@@ -11,6 +11,10 @@ import TrialBanner from "@/components/trial-banner";
 import NotificationBell from "@/components/notification-bell";
 import FeedbackTrigger from "@/components/feedback-trigger";
 import { useTheme } from "@/components/theme-provider";
+import NavDropdown, {
+  MobileNavSection,
+  type NavDropdownItem,
+} from "@/components/nav/nav-dropdown";
 
 function NavThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -24,12 +28,10 @@ function NavThemeToggle() {
       className="inline-flex items-center justify-center w-8 h-8 border border-[rgba(247,245,236,0.15)] text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC] hover:border-[rgba(247,245,236,0.35)] transition-colors"
     >
       {theme === "light" ? (
-        // Moon — clicking switches to dark
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       ) : (
-        // Sun — clicking switches to light
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="4" />
           <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
@@ -47,16 +49,13 @@ type Profile = {
   role: UserRole;
 };
 
-type NavItemKey =
-  | "dashboard"
-  | "financial"
-  | "operations"
-  | "admin";
+type NavItemKey = "dashboard" | "financial" | "operations" | "cost_intelligence" | "admin";
 
 const ACCESS: Record<NavItemKey, UserRole[]> = {
   dashboard: ["owner", "admin", "pm", "accounting"],
   financial: ["owner", "admin", "pm", "accounting"],
   operations: ["owner", "admin", "pm"],
+  cost_intelligence: ["owner", "admin", "pm", "accounting"],
   admin: ["owner", "admin"],
 };
 
@@ -90,81 +89,87 @@ function firstNameOf(fullName: string) {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
-function NavLink({
-  href,
-  label,
-  count,
-  active,
-  mobile,
-  onClick,
-}: {
-  href: string;
-  label: string;
-  count?: number;
-  active: boolean;
-  mobile?: boolean;
-  onClick?: () => void;
-}) {
-  if (mobile) {
-    return (
-      <Link
-        href={href}
-        onClick={onClick}
-        className={`py-3 px-4 w-full text-[13px] font-medium font-sans transition-colors ${
-          active ? "text-[#F7F5EC]" : "text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]"
-        }`}
-      >
-        {label}
-      </Link>
-    );
+function buildFinancialItems(): NavDropdownItem[] {
+  return [
+    { href: "/invoices", label: "Invoices" },
+    { href: "/invoices/queue", label: "Queue" },
+    { href: "/invoices/qa", label: "QA" },
+    { href: "/payments", label: "Payments" },
+    { href: "/draws", label: "Draws" },
+    { href: "/aging", label: "Aging" },
+    { href: "/lien-releases", label: "Liens" },
+    { href: "/change-orders", label: "Change Orders" },
+    { href: "/purchase-orders", label: "Purchase Orders" },
+  ];
+}
+
+function buildOperationsItems(): NavDropdownItem[] {
+  return [
+    { href: "#", label: "Schedule", disabled: true, soon: true },
+    { href: "#", label: "Daily Logs", disabled: true, soon: true },
+    { href: "#", label: "Selections", disabled: true, soon: true },
+  ];
+}
+
+function buildCostIntelItems(pendingVerification: number, pendingConversions: number): NavDropdownItem[] {
+  return [
+    { href: "/cost-intelligence", label: "Overview" },
+    { href: "/cost-intelligence/items", label: "Items" },
+    {
+      href: "/cost-intelligence/verification",
+      label: "Verification Queue",
+      count: pendingVerification,
+    },
+    { href: "/cost-intelligence/lookup", label: "Cost Lookup" },
+    {
+      href: "/cost-intelligence/conversions",
+      label: "Unit Conversions",
+      count: pendingConversions,
+    },
+  ];
+}
+
+function buildAdminItems(isPlatformAdmin: boolean): NavDropdownItem[] {
+  const items: NavDropdownItem[] = [
+    { href: "/settings", label: "Settings" },
+    { href: "/settings/team", label: "Team" },
+    { href: "/settings/integrations", label: "Integrations" },
+    { href: "/settings/billing", label: "Billing" },
+  ];
+  if (isPlatformAdmin) {
+    items.push({ href: "/admin/platform", label: "Platform Admin" });
   }
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={`flex items-center gap-1.5 h-full px-[14px] text-[13px] font-medium font-sans transition-colors border-b-2 -mb-px ${
-        active
-          ? "text-[#F7F5EC] border-b-nw-stone-blue"
-          : "text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC] border-transparent"
-      }`}
-    >
-      {label}
-      {count != null && count > 0 && (
-        <span
-          className="flex items-center justify-center min-w-[18px] h-[18px] px-1 border text-[10px] font-bold bg-transparent"
-          style={{
-            fontFamily: "var(--font-mono)",
-            color: "#F7F5EC",
-            borderColor: "rgba(247,245,236,0.25)",
-          }}
-        >
-          {count}
-        </span>
-      )}
-    </Link>
-  );
+  return items;
 }
 
 export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => void } = {}) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(0);
+  const [pendingConversions, setPendingConversions] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      // Full name comes from profiles; canonical role comes from org_members.
-      const [{ data: profileRow }, { data: membership }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name").eq("id", user.id).single(),
-        supabase
-          .from("org_members")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("is_active", true)
-          .maybeSingle(),
-      ]);
+      const [{ data: profileRow }, { data: membership }, { data: adminRow }] =
+        await Promise.all([
+          supabase.from("profiles").select("id, full_name").eq("id", user.id).single(),
+          supabase
+            .from("org_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("is_active", true)
+            .maybeSingle(),
+          supabase
+            .from("platform_admins")
+            .select("user_id")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+        ]);
       if (profileRow && membership?.role) {
         setProfile({
           id: profileRow.id as string,
@@ -172,9 +177,34 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           role: membership.role as UserRole,
         });
       }
+      setIsPlatformAdmin(!!adminRow);
     }
     loadProfile();
   }, []);
+
+  // Fetch pending counts (verification + conversions). Best-effort —
+  // silent failure keeps the nav rendering for users missing either
+  // table/permission.
+  useEffect(() => {
+    if (!profile) return;
+    (async () => {
+      const [{ count: verifCount }, { count: convCount }] = await Promise.all([
+        supabase
+          .from("invoice_extraction_lines")
+          .select("id", { count: "exact", head: true })
+          .eq("verification_status", "pending")
+          .eq("is_allocated_overhead", false)
+          .is("deleted_at", null),
+        supabase
+          .from("unit_conversion_suggestions")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending")
+          .is("deleted_at", null),
+      ]);
+      setPendingVerification(verifCount ?? 0);
+      setPendingConversions(convCount ?? 0);
+    })();
+  }, [profile, pathname]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -194,7 +224,14 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
   const isFinancialActive =
     pathname.startsWith("/financial") ||
     pathname.startsWith("/invoices") ||
-    pathname.startsWith("/draws");
+    pathname.startsWith("/draws") ||
+    pathname.startsWith("/payments") ||
+    pathname.startsWith("/aging") ||
+    pathname.startsWith("/lien-releases") ||
+    pathname.startsWith("/change-orders") ||
+    pathname.startsWith("/purchase-orders");
+  const isCostIntelActive =
+    pathname.startsWith("/cost-intelligence") || pathname.startsWith("/items");
   const isAdminActive =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/settings") ||
@@ -205,11 +242,17 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
     dashboard: can(role, "dashboard"),
     financial: can(role, "financial"),
     operations: can(role, "operations"),
+    cost_intelligence: can(role, "cost_intelligence"),
     admin: can(role, "admin"),
   };
   const branding = useOrgBranding();
   const brandName = branding?.name ?? PUBLIC_APP_NAME;
   const logoUrl = branding?.logo_url ?? null;
+
+  const financialItems = buildFinancialItems();
+  const operationsItems = buildOperationsItems();
+  const costIntelItems = buildCostIntelItems(pendingVerification, pendingConversions);
+  const adminItems = buildAdminItems(isPlatformAdmin);
 
   return (
     <>
@@ -219,9 +262,6 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
     >
       <div className="max-w-[1600px] mx-auto px-8 h-[54px] flex items-center justify-between gap-[22px]">
         <Link href="/" className="flex items-center gap-4 group shrink-0">
-          {/* Nightwork wordmark — PRIMARY anchor. Cream on slate-deep nav.
-              Plain <img> avoids next/image rasterization artifacts on the
-              wordmark's fine underbeam gradient at nav scale. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/nightwork-wordmark.svg"
@@ -230,15 +270,10 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
           />
           {logoUrl && (
             <>
-              {/* Thin vertical divider — platform hosting tenant, not a
-                  partnership (hence no × symbol). Desktop only; mobile shows
-                  just the wordmark. */}
               <span
                 aria-hidden="true"
                 className="hidden md:block w-px h-6 bg-[rgba(247,245,236,0.18)]"
               />
-              {/* Tenant's uploaded logo — SECONDARY. Scaled down so Nightwork
-                  carries ~60% of the lockup's visual mass. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoUrl}
@@ -252,27 +287,43 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center h-full">
           {show.dashboard && (
-            <NavLink href="/dashboard" label="Dashboard" active={isDashboardActive} />
+            <Link
+              href="/dashboard"
+              className={`flex items-center gap-1.5 h-full px-[14px] text-[13px] font-medium font-sans transition-colors border-b-2 -mb-px ${
+                isDashboardActive
+                  ? "text-[#F7F5EC] border-b-nw-stone-blue"
+                  : "text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC] border-transparent"
+              }`}
+            >
+              Dashboard
+            </Link>
           )}
           {show.financial && (
-            <NavLink href="/financial" label="Financial" active={isFinancialActive} />
+            <NavDropdown
+              label="Financial"
+              items={financialItems}
+              active={isFinancialActive}
+              activeHref={financialItems.find((i) => pathname === i.href)?.href}
+            />
           )}
           {show.operations && (
-            <span
-              className="flex items-center gap-1.5 h-full px-[14px] text-[13px] font-medium font-sans cursor-default select-none text-[rgba(247,245,236,0.25)]"
-              title="Coming soon"
-            >
-              Operations
-              <span
-                className="px-[5px] py-[1px] text-[9px] tracking-[0.12em] uppercase border text-[rgba(247,245,236,0.25)] border-[rgba(247,245,236,0.15)]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                Soon
-              </span>
-            </span>
+            <NavDropdown label="Operations" items={operationsItems} active={false} />
+          )}
+          {show.cost_intelligence && (
+            <NavDropdown
+              label="Cost Intelligence"
+              items={costIntelItems}
+              active={isCostIntelActive}
+              activeHref={costIntelItems.find((i) => pathname === i.href)?.href}
+            />
           )}
           {show.admin && (
-            <NavLink href="/admin" label="Admin" active={isAdminActive} />
+            <NavDropdown
+              label="Admin"
+              items={adminItems}
+              active={isAdminActive}
+              activeHref={adminItems.find((i) => pathname === i.href)?.href}
+            />
           )}
         </nav>
 
@@ -328,7 +379,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <nav className="md:hidden bg-nw-slate-deeper border-b border-[rgba(247,245,236,0.08)] px-4 pb-3 pt-1 flex flex-col gap-1">
+        <nav className="md:hidden bg-nw-slate-deeper border-b border-[rgba(247,245,236,0.08)] px-2 pb-3 pt-1 flex flex-col gap-0">
           {profile && (
             <div className="flex items-center justify-between py-2 px-4 border-b border-[rgba(247,245,236,0.08)] mb-1">
               <div className="flex items-center gap-[12px]">
@@ -339,20 +390,52 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
               </div>
             </div>
           )}
-          {show.dashboard && <NavLink href="/dashboard" label="Dashboard" active={isDashboardActive} mobile onClick={closeMobile} />}
-          {show.financial && <NavLink href="/financial" label="Financial" active={isFinancialActive} mobile onClick={closeMobile} />}
-          {show.operations && (
-            <span className="flex items-center gap-2 py-3 px-4 text-[13px] font-medium font-sans text-[rgba(247,245,236,0.25)]">
-              Operations
-              <span
-                className="px-[5px] py-[1px] text-[9px] tracking-[0.12em] uppercase border border-[rgba(247,245,236,0.15)] text-[rgba(247,245,236,0.25)]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                Soon
-              </span>
-            </span>
+          {show.dashboard && (
+            <Link
+              href="/dashboard"
+              onClick={closeMobile}
+              className={`py-3 px-4 w-full text-[13px] font-medium font-sans transition-colors ${
+                isDashboardActive ? "text-[#F7F5EC]" : "text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]"
+              }`}
+            >
+              Dashboard
+            </Link>
           )}
-          {show.admin && <NavLink href="/admin" label="Admin" active={isAdminActive} mobile onClick={closeMobile} />}
+          {show.financial && (
+            <MobileNavSection
+              label="Financial"
+              items={financialItems}
+              onItemClick={closeMobile}
+              activeHref={financialItems.find((i) => pathname === i.href)?.href}
+              defaultOpen={isFinancialActive}
+            />
+          )}
+          {show.operations && (
+            <MobileNavSection
+              label="Operations"
+              items={operationsItems}
+              defaultOpen={false}
+              onItemClick={closeMobile}
+            />
+          )}
+          {show.cost_intelligence && (
+            <MobileNavSection
+              label="Cost Intelligence"
+              items={costIntelItems}
+              onItemClick={closeMobile}
+              activeHref={costIntelItems.find((i) => pathname === i.href)?.href}
+              defaultOpen={isCostIntelActive}
+            />
+          )}
+          {show.admin && (
+            <MobileNavSection
+              label="Admin"
+              items={adminItems}
+              onItemClick={closeMobile}
+              activeHref={adminItems.find((i) => pathname === i.href)?.href}
+              defaultOpen={isAdminActive}
+            />
+          )}
           <FeedbackTrigger className="w-full text-left py-3 px-4 text-[13px] font-sans transition-colors hover:underline underline-offset-4 text-[rgba(247,245,236,0.65)] hover:text-[#F7F5EC]">
             Give feedback
           </FeedbackTrigger>
