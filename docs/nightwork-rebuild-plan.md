@@ -3098,32 +3098,142 @@ Also write `00066_co_type_expansion.down.sql` per R.16. Reverses the function-bo
 
 ### Phase 2.4 — Cost codes hierarchy + starter templates
 
+**Plan-doc amendment history:**
+
+- Pre-flight (2026-04-22): six amendments landed after pre-flight findings. See `qa-reports/preflight-branch2-phase2.4.md`.
+  - **A** — Hierarchy trigger + function in `app_private` to enforce Part 2 §1.3's "up to 3 tiers" depth cap and prevent parent-chain cycles. Plan's raw `parent_id` adjacency-list column alone is unsafe without this enforcement.
+  - **B** — `cost_code_templates` RLS + audit-column posture adopted from `unit_conversion_templates` (00054) precedent. R.23 accepted divergence from CLAUDE.md per-row audit rule (no `org_id`, no `created_by`, no `deleted_at`) documented in the migration header. 2-policy RLS: `authenticated` SELECT + `platform_admin` ALL.
+  - **C** — `UNIQUE (name)` + `ON CONFLICT (name) DO NOTHING` makes the seed idempotent so re-applying the migration doesn't dupe rows. Migration header notes that Phase 7.5 owns the data population (real JSONB bodies) + the template-route cutover.
+  - **D** — Migration header clarifies the two-layer `is_allowance` relationship (cost_codes default vs. budget_lines instance override). Tracked under GH #10 for the Branch 4 UI affordance question.
+  - **E** — Paired `00068_cost_codes_hierarchy.down.sql` per R.16.
+  - **F** — R.15 test file `__tests__/cost-codes-hierarchy.test.ts`, including two pre-flight-added cases: (1) a live-auth RLS probe on `cost_code_templates` using an authenticated non-platform-admin JWT (mirrors the Phase 2.2 DELETE-block verification in `qa-reports/qa-branch2-phase2.2.md` §6), and (2) a `has_function_privilege('authenticated', 'app_private.validate_cost_code_hierarchy()', 'EXECUTE')` probe catching the GH #9 class of bug (app_private functions lacking authenticated EXECUTE).
+- Related issue: GH #11 tracks deprecation of the `TEMPLATE_ORG_ID` read-bypass in the `cost_codes` RLS policy, deferred to Phase 7.5. Phase 2.4 explicitly does NOT modify `src/app/api/cost-codes/template/route.ts` or the existing `cost_codes` RLS; the new `cost_code_templates` table lands empty of real codes and the legacy route keeps reading Ross Built's live rows until Phase 7.5 cuts it over.
+
 Migration `00068_cost_codes_hierarchy.sql`:
 ```sql
-ALTER TABLE cost_codes
-  ADD COLUMN parent_id UUID REFERENCES cost_codes(id),
+-- ============================================================
+-- Naming note (Amendment D, GH #10): cost_codes.is_allowance
+-- (added below) is the *template-level* flag — "does this cost
+-- code default to being treated as an allowance?". The existing
+-- budget_lines.is_allowance (migration 00014) is the
+-- *instance-level* flag — "is this specific budget line tracked
+-- as an allowance?". The budget_line value takes precedence at
+-- the job level; the cost_code value is the default the
+-- budget-line picker pre-populates with. Current live data:
+-- 0 budget_lines.is_allowance=true rows on dev.
+--
+-- Naming note 2: cost_code_templates is a SYSTEM-level catalog
+-- (no org_id). Precedent: unit_conversion_templates (migration
+-- 00054). R.23 accepted divergence from CLAUDE.md's per-row
+-- audit rule — only id, created_at, updated_at. is_system
+-- column is declarative; RLS is the authoritative writer gate.
+--
+-- Cutover note (Amendment C, GH #11): this migration creates
+-- cost_code_templates but does NOT populate `codes` with real
+-- data, and does NOT modify src/app/api/cost-codes/template/
+-- route.ts (still reads Ross Built's live cost_codes via
+-- TEMPLATE_ORG_ID). The full cutover — populate codes JSONB,
+-- rewrite the template route to read from cost_code_templates,
+-- drop the TEMPLATE_ORG_ID carve-out in the cost_codes RLS
+-- policy — is Phase 7.5's scope.
+-- ============================================================
+
+-- (a) New columns on public.cost_codes
+ALTER TABLE public.cost_codes
+  ADD COLUMN parent_id UUID REFERENCES public.cost_codes(id),
   ADD COLUMN is_allowance BOOLEAN NOT NULL DEFAULT FALSE,
   ADD COLUMN default_allowance_amount BIGINT;
 
--- Starter template storage
-CREATE TABLE cost_code_templates (
+-- (b) Hierarchy validation (Amendment A).
+-- Walks parent_id up to 3 levels; raises on cycles or depth > 3.
+-- Lives in app_private (co_cache_trigger placement precedent) with
+-- explicit EXECUTE grant to authenticated (mirrors 00067's pattern;
+-- GH #9 class of bug).
+CREATE OR REPLACE FUNCTION app_private.validate_cost_code_hierarchy()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $$
+DECLARE
+  _depth int := 1;
+  _cur uuid := NEW.parent_id;
+BEGIN
+  WHILE _cur IS NOT NULL LOOP
+    IF _cur = NEW.id THEN
+      RAISE EXCEPTION 'cost_codes hierarchy cycle: % → … → %', NEW.id, _cur;
+    END IF;
+    _depth := _depth + 1;
+    IF _depth > 3 THEN
+      RAISE EXCEPTION 'cost_codes hierarchy exceeds 3 tiers (parent chain depth %)', _depth;
+    END IF;
+    SELECT parent_id INTO _cur FROM public.cost_codes WHERE id = _cur;
+  END LOOP;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_cost_codes_hierarchy
+BEFORE INSERT OR UPDATE OF parent_id ON public.cost_codes
+FOR EACH ROW EXECUTE FUNCTION app_private.validate_cost_code_hierarchy();
+
+GRANT EXECUTE ON FUNCTION app_private.validate_cost_code_hierarchy()
+  TO authenticated;
+
+-- (c) Starter template storage (Amendment B).
+CREATE TABLE public.cost_code_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
-  is_system BOOLEAN DEFAULT FALSE,
+  is_system BOOLEAN NOT NULL DEFAULT FALSE,
   codes JSONB NOT NULL, -- nested structure of {code, name, children}
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (name)
 );
 
--- Seed with 4 system templates
-INSERT INTO cost_code_templates (name, description, is_system, codes) VALUES
-  ('Custom Home Builder (Simplified)', 'A 25-code list for custom builders', TRUE, '{...}'),
-  ('Remodeler (Simplified)', 'A 20-code list for renovation', TRUE, '{...}'),
-  ('CSI MasterFormat (Full)', 'All 50 divisions, ~200 codes', TRUE, '{...}'),
-  ('Empty — build your own', 'Start fresh', TRUE, '{}');
+CREATE TRIGGER trg_cost_code_templates_updated_at
+BEFORE UPDATE ON public.cost_code_templates
+FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+ALTER TABLE public.cost_code_templates ENABLE ROW LEVEL SECURITY;
+
+-- R.23 precedent: unit_conversion_templates (00054). 2 policies —
+-- any authenticated user reads; only platform admins write.
+CREATE POLICY cct_read ON public.cost_code_templates
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY cct_platform_admin_write ON public.cost_code_templates
+  FOR ALL USING (app_private.is_platform_admin())
+  WITH CHECK (app_private.is_platform_admin());
+
+-- (d) Idempotent seed (Amendment C). Real JSONB bodies land in
+-- Phase 7.5 / a separate data script.
+INSERT INTO public.cost_code_templates (name, description, is_system, codes) VALUES
+  ('Custom Home Builder (Simplified)', 'A 25-code list for custom builders', TRUE, '{}'::jsonb),
+  ('Remodeler (Simplified)',           'A 20-code list for renovation',     TRUE, '{}'::jsonb),
+  ('CSI MasterFormat (Full)',          'All 50 divisions, ~200 codes',      TRUE, '{}'::jsonb),
+  ('Empty — build your own',           'Start fresh',                       TRUE, '{}'::jsonb)
+ON CONFLICT (name) DO NOTHING;
 ```
 
-JSONB seed data for starter templates is separate script.
+Also write `00068_cost_codes_hierarchy.down.sql` per R.16 (Amendment E). Reverses in strict reverse-dependency order: drops the 2 template-table policies, disables RLS, drops the updated_at trigger, drops `cost_code_templates`, drops the hierarchy trigger + function, then drops the 3 new columns from `cost_codes` (reverse of ADD order).
+
+**Code + type updates:** none. All 5 `src/app/api/cost-codes/*` write paths are pass-through (omit the new columns → defaults apply). The legacy `src/app/api/cost-codes/template/route.ts` stays untouched per the Phase 7.5 cutover scope above.
+
+**Test (R.15 test-first):** write `__tests__/cost-codes-hierarchy.test.ts` covering:
+
+- Migration `00068_cost_codes_hierarchy.sql` + `.down.sql` exist.
+- `cost_codes.parent_id` present, nullable, FK to `cost_codes(id)`.
+- `cost_codes.is_allowance` present, NOT NULL, default `false`.
+- `cost_codes.default_allowance_amount` present, BIGINT, nullable.
+- `cost_code_templates` table exists with all 7 columns, `UNIQUE (name)`, `updated_at` trigger, RLS enabled, exactly 2 policies (`cct_read` SELECT and `cct_platform_admin_write` ALL).
+- 4 seeded template rows present by name; re-seeding under `ON CONFLICT (name) DO NOTHING` is a no-op (idempotency regression).
+- **Cycle probe:** INSERT rows A and B; UPDATE A.parent_id=B; UPDATE B.parent_id=A → expect exception from the trigger.
+- **Depth probe:** INSERT a 4-deep parent chain → expect exception on the 4th.
+- **Existing-row preservation:** 238 pre-migration rows remain, all with `parent_id IS NULL` and `is_allowance = false`.
+- Static: `src/app/api/cost-codes/template/route.ts` still references `TEMPLATE_ORG_ID = '00000000-0000-0000-0000-000000000001'` unchanged (regression guard that the Phase 7.5 cutover hasn't accidentally leaked in).
+- **Live-auth RLS probe on `cost_code_templates` (Amendment F.1):** using the Supabase client with an authenticated non-platform-admin org-member JWT (mirror Phase 2.2 `qa-branch2-phase2.2.md` §6 DELETE-block verification), verify (a) SELECT returns the 4 seeded rows (cct_read works), (b) INSERT attempts fail with `insufficient_privilege` / RLS violation (non-platform-admin cannot write).
+- **GRANT verification probe (Amendment F.2):** `SELECT has_function_privilege('authenticated', 'app_private.validate_cost_code_hierarchy()', 'EXECUTE')` returns `true`. Catches the class of bug GH #9 tracks — app_private functions without authenticated EXECUTE grants silently break UI writes that fire triggers.
+
+**R.23 precedent statement:** Phase 2.4 adopts `unit_conversion_templates` (migration 00054) as the precedent for system-level template tables — 2-policy RLS (authenticated read + platform-admin write), no `org_id`, minimal audit columns (id, created_at, updated_at). No new tenant-table convention introduced. Adding columns to existing `public.cost_codes` inherits its 5-policy RLS posture unchanged. The new `app_private.validate_cost_code_hierarchy()` function follows the 00067 explicit-authenticated-GRANT pattern.
 
 **Commit:** `feat(cost-codes): add hierarchy + starter templates`
 
