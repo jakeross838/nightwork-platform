@@ -1945,11 +1945,16 @@ approval_chains
   conditions JSONB, stages JSONB (array of stage defs),
   created_at, created_by, deleted_at
 
-approval_actions (audit log)
-  id, entity_type, entity_id,
-  stage_order, action (approve | reject | skip | delegate),
-  actor_user_id, actor_role,
-  comment, acted_at
+approval_actions — DEPRECATED per Phase 2.5 pre-flight
+  Amendment F-ii (2026-04-22). Approval events are captured
+  by the existing `status_history` JSONB append on each
+  workflow entity (invoices / change_orders / draws / proposals
+  / purchase_orders / selections) plus `public.activity_log`
+  (polymorphic entity_type/entity_id, RLS-scoped). A third
+  audit surface adds footprint without answering a query not
+  already answerable from those two. The `approval_actions`
+  table is NOT created by migration 00069. See
+  `qa-reports/preflight-branch2-phase2.5.md` §5 Amendment F.
 ```
 
 ### Notifications
@@ -3239,47 +3244,247 @@ Also write `00068_cost_codes_hierarchy.down.sql` per R.16 (Amendment E). Reverse
 
 ### Phase 2.5 — Approval chains
 
+**Plan-doc amendment history:**
+
+- Pre-flight (2026-04-22): eight amendments landed after pre-flight findings. See `qa-reports/preflight-branch2-phase2.5.md`.
+  - **F-ii (scope decision)** — `approval_actions` table NOT created. Audit events are already captured by `status_history` JSONB on each workflow entity + `public.activity_log` (polymorphic entity_type/entity_id, RLS-scoped). A third audit surface adds footprint without answering a query not already answerable from those two. Plan Part 2 §1.12 approval_actions block edited to DEPRECATED note in the same commit.
+  - **A** — Full audit-column set on `approval_chains`: adds `updated_at NOT NULL DEFAULT now()` + `trg_approval_chains_updated_at` to align with CLAUDE.md §Architecture Rules + Part 2 §2.4 rule #5.
+  - **B** — RLS adopts 00065 `proposals` 3-policy pattern (read / insert / update; no DELETE — soft-delete via `deleted_at`). **R.23 divergence:** write role-set narrowed from proposals' `(owner, admin, pm, accounting)` to `(owner, admin)` only. Rationale: `approval_chains` is tenant config, not workflow data — PMs should not edit who approves what. Divergence is documented in the migration header.
+  - **C** — Both partial unique indexes include `AND deleted_at IS NULL` in their predicates so soft-deleted rows don't block new defaults or re-use of the `(org_id, workflow_type, name)` triple. Second partial unique `approval_chains_unique_name_per_workflow` added to back the seed's `ON CONFLICT` clause.
+  - **D** — Seed trigger `public.create_default_approval_chains()` mirrors the `create_default_workflow_settings()` precedent from migration 00032 (public schema, `SECURITY DEFINER`, pinned search_path, `ON CONFLICT DO NOTHING`). Explicit `GRANT EXECUTE … TO authenticated` per the 00067 pattern. Default `stages` JSONB is **workflow-type-aware** via a small helper `public.default_stages_for_workflow_type(text)` so both the trigger and the one-time backfill stay DRY:
+    - `invoice_pm` → `[{order:1, required_roles:['pm'], all_required:false}]` (PM approves invoices)
+    - `invoice_qa` → `[{order:1, required_roles:['accounting'], all_required:false}]` (accounting does QA review)
+    - `co` / `draw` / `po` / `proposal` → `[{order:1, required_roles:['owner','admin'], all_required:false}]`
+    These Ross-Built-derived heuristics are tracked in **GH #12** for onboarding-wizard override work in Branch 6/7.
+  - **G** — Paired `00069_approval_chains.down.sql` per R.16.
+  - **H** — R.15 test file `__tests__/approval-chains.test.ts`, including: (H.1) live-auth RLS probe on `approval_chains` using an authenticated non-admin org-member JWT — mirrors Phase 2.2 `qa-branch2-phase2.2.md` §6 DELETE-block verification + Phase 2.4 Amendment F.1 (verifies `pm`-role INSERT fails with `insufficient_privilege` while `admin`-role INSERT succeeds); (H.2) GRANT-verification probes — `has_function_privilege('authenticated', 'public.create_default_approval_chains()', 'EXECUTE')` and same for `public.default_stages_for_workflow_type(text)` — Phase 2.4 F.2 pattern extended to `public` schema; (H.3) default-stages verification — query each backfilled chain's `stages->0->>'required_roles'` and assert the JSON-text value matches the workflow_type-specific default from D (proves the CASE logic produced the right defaults, not just "some default" landed).
+- Related issue: **GH #12** tracks the onboarding-wizard override work for default approval chains. Ross Built's role distribution (PM approves invoices, accounting does QA, owner/admin for everything else) is hardcoded in the seed function; remodelers and other org types will need UI affordance to customize during onboarding.
+
 Migration `00069_approval_chains.sql`:
 ```sql
-CREATE TABLE approval_chains (
+-- ============================================================
+-- Phase 2.5 — Approval chains (migration 00069).
+--
+-- F-ii scope decision (pre-flight): approval_actions table NOT
+-- created. Audit events already flow through status_history
+-- JSONB on each workflow entity + public.activity_log.
+--
+-- B (R.23 divergence): RLS adopts 00065 proposals 3-policy
+-- pattern (read / insert / update; no DELETE). Write role-set
+-- narrowed to (owner, admin) — approval_chains is tenant config,
+-- PMs should not edit who approves what.
+--
+-- D (seed trigger): create_default_approval_chains() mirrors
+-- create_default_workflow_settings() (00032) precedent —
+-- public schema, SECURITY DEFINER, pinned search_path, ON
+-- CONFLICT DO NOTHING. Default stages are workflow-type-aware
+-- via helper default_stages_for_workflow_type(text) which both
+-- the trigger and the backfill call. Ross-Built-derived
+-- heuristics tracked in GH #12 for onboarding-wizard override.
+-- ============================================================
+
+-- (a) Helper: workflow-type-aware default stages.
+-- DRY'd so the trigger and the backfill share one source of
+-- truth. IMMUTABLE is safe here — the function is pure input →
+-- output over the CHECK-enum values.
+CREATE OR REPLACE FUNCTION public.default_stages_for_workflow_type(_wt text)
+RETURNS jsonb
+LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  RETURN CASE _wt
+    WHEN 'invoice_pm' THEN
+      jsonb_build_array(jsonb_build_object(
+        'order', 1,
+        'required_roles', jsonb_build_array('pm'),
+        'required_users', '[]'::jsonb,
+        'all_required', false
+      ))
+    WHEN 'invoice_qa' THEN
+      jsonb_build_array(jsonb_build_object(
+        'order', 1,
+        'required_roles', jsonb_build_array('accounting'),
+        'required_users', '[]'::jsonb,
+        'all_required', false
+      ))
+    ELSE
+      jsonb_build_array(jsonb_build_object(
+        'order', 1,
+        'required_roles', jsonb_build_array('owner','admin'),
+        'required_users', '[]'::jsonb,
+        'all_required', false
+      ))
+  END;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.default_stages_for_workflow_type(text)
+  TO authenticated;
+
+-- (b) approval_chains — tenant config table (Amendment A).
+CREATE TABLE public.approval_chains (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL REFERENCES organizations(id),
-  workflow_type TEXT NOT NULL CHECK (workflow_type IN ('invoice_pm','invoice_qa','co','draw','po','proposal')),
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  workflow_type TEXT NOT NULL CHECK (
+    workflow_type IN ('invoice_pm','invoice_qa','co','draw','po','proposal')
+  ),
   name TEXT NOT NULL,
   is_default BOOLEAN NOT NULL DEFAULT FALSE,
-  conditions JSONB DEFAULT '{}'::jsonb,
+  conditions JSONB NOT NULL DEFAULT '{}'::jsonb,
   stages JSONB NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by UUID REFERENCES auth.users(id),
   deleted_at TIMESTAMPTZ
 );
 
--- Only one default chain per (org, workflow_type); non-default chains
--- unconstrained. A plain UNIQUE across (org_id, workflow_type, is_default)
--- would wrongly allow only one is_default=false row per pair. Flag F from
--- Branch 2 pre-context.
+CREATE TRIGGER trg_approval_chains_updated_at
+BEFORE UPDATE ON public.approval_chains
+FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+-- (c) Partial unique indexes (Amendment C).
+-- Only one *live* default chain per (org, workflow_type);
+-- soft-deleted rows don't occupy the slot. The second index
+-- backs the seed's ON CONFLICT (org_id, workflow_type, name)
+-- clause and is similarly soft-delete-safe.
 CREATE UNIQUE INDEX approval_chains_one_default_per_workflow
-  ON approval_chains (org_id, workflow_type)
-  WHERE is_default = true;
+  ON public.approval_chains (org_id, workflow_type)
+  WHERE is_default = true AND deleted_at IS NULL;
 
-CREATE TABLE approval_actions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  entity_type TEXT NOT NULL,
-  entity_id UUID NOT NULL,
-  stage_order INT NOT NULL,
-  action TEXT NOT NULL CHECK (action IN ('approve','reject','skip','delegate')),
-  actor_user_id UUID REFERENCES auth.users(id),
-  actor_role TEXT,
-  comment TEXT,
-  acted_at TIMESTAMPTZ DEFAULT now()
-);
+CREATE UNIQUE INDEX approval_chains_unique_name_per_workflow
+  ON public.approval_chains (org_id, workflow_type, name)
+  WHERE deleted_at IS NULL;
 
-CREATE INDEX idx_approval_actions_entity ON approval_actions(entity_type, entity_id);
+-- (d) RLS — 00065 proposals precedent with role-set narrowing
+-- to (owner, admin). Amendment B.
+ALTER TABLE public.approval_chains ENABLE ROW LEVEL SECURITY;
 
--- Seed default chains per org (will be populated by a trigger on org creation + backfill)
+CREATE POLICY approval_chains_org_read
+  ON public.approval_chains
+  FOR SELECT
+  USING (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+    )
+    OR app_private.is_platform_admin()
+  );
+
+CREATE POLICY approval_chains_org_insert
+  ON public.approval_chains
+  FOR INSERT
+  WITH CHECK (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+        AND role IN ('owner','admin')
+    )
+  );
+
+CREATE POLICY approval_chains_org_update
+  ON public.approval_chains
+  FOR UPDATE
+  USING (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+        AND role IN ('owner','admin')
+    )
+  );
+-- No DELETE policy — RLS blocks hard DELETE; soft-delete via
+-- deleted_at (cost_intelligence_spine / proposals precedent).
+
+-- (e) Seed trigger — fires on new org INSERT. Amendment D.
+CREATE OR REPLACE FUNCTION public.create_default_approval_chains()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _wt text;
+  _workflow_types text[] := ARRAY[
+    'invoice_pm','invoice_qa','co','draw','po','proposal'
+  ];
+BEGIN
+  FOREACH _wt IN ARRAY _workflow_types LOOP
+    INSERT INTO public.approval_chains (
+      org_id, workflow_type, name, is_default, stages
+    ) VALUES (
+      NEW.id,
+      _wt,
+      'Default ' || _wt || ' approval',
+      true,
+      public.default_stages_for_workflow_type(_wt)
+    )
+    ON CONFLICT (org_id, workflow_type, name) DO NOTHING;
+  END LOOP;
+  RETURN NEW;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_default_approval_chains()
+  TO authenticated;
+
+CREATE TRIGGER trg_organizations_create_default_approval_chains
+AFTER INSERT ON public.organizations
+FOR EACH ROW EXECUTE FUNCTION public.create_default_approval_chains();
+
+-- (f) One-time backfill for live orgs (3 × 6 = 18 rows on dev).
+-- Idempotent via same ON CONFLICT predicate as the trigger.
+INSERT INTO public.approval_chains (
+  org_id, workflow_type, name, is_default, stages
+)
+SELECT
+  o.id,
+  wt,
+  'Default ' || wt || ' approval',
+  true,
+  public.default_stages_for_workflow_type(wt)
+FROM public.organizations o
+CROSS JOIN unnest(ARRAY['invoice_pm','invoice_qa','co','draw','po','proposal']) AS wt
+WHERE o.deleted_at IS NULL
+ON CONFLICT (org_id, workflow_type, name) DO NOTHING;
+
+COMMENT ON TABLE public.approval_chains IS
+'Per-org configurable approval chains for 6 workflow dimensions (invoice_pm, invoice_qa, co, draw, po, proposal). RLS adopts 00065 proposals 3-policy pattern under R.23 with an intentional divergence — write role-set narrowed to (owner, admin) because approval_chains is tenant config, not workflow data. Default chains seeded on org creation via trg_organizations_create_default_approval_chains with workflow-type-aware defaults from default_stages_for_workflow_type(). Ross-Built-derived defaults tracked in GH #12 for onboarding-wizard override work. approval_actions table NOT created (F-ii scope decision) — audit flows through status_history JSONB + public.activity_log.';
+
+COMMENT ON FUNCTION public.default_stages_for_workflow_type(text) IS
+'Returns the seed-time default stages JSONB for a given approval_chains.workflow_type. Ross-Built-derived heuristics: invoice_pm → pm; invoice_qa → accounting; co/draw/po/proposal → owner/admin. Called by create_default_approval_chains() and the one-time backfill; both share this source of truth. See GH #12 for onboarding-wizard override work.';
+
+COMMENT ON FUNCTION public.create_default_approval_chains() IS
+'AFTER INSERT trigger on public.organizations that seeds 6 default approval_chains rows per new org. Mirrors create_default_workflow_settings (migration 00032) precedent — SECURITY DEFINER, pinned search_path, ON CONFLICT DO NOTHING. Explicit GRANT EXECUTE TO authenticated per migration 00067 pattern to defend against the GH #9 class of latent authenticated-schema permission gaps.';
 ```
 
-**Commit:** `feat(approvals): add approval_chains and approval_actions tables`
+Also write `00069_approval_chains.down.sql` per R.16 (Amendment G). Reverses in strict reverse-dependency order: drops the org-creation trigger + `create_default_approval_chains()` function; drops the 3 RLS policies, disables RLS, drops the `updated_at` trigger; drops both partial unique indexes; drops `public.approval_chains`; drops `public.default_stages_for_workflow_type()`. The one-time backfill rows are reversed implicitly by the table DROP.
+
+**Code + type updates:** none. §2 blast-radius grep (pre-flight §2) confirmed 0 src/ references to any new identifier — Branch 7 introduces write paths. No TS-union narrowing against the `workflow_type` or `action` CHECK enums yet; when Branch 7 adds consumers, apply the Phase 2.1 / 2.3 precedent (runtime validation against a file-private constant, don't narrow TS to the CHECK enum).
+
+**Test (R.15 test-first):** write `__tests__/approval-chains.test.ts` covering:
+
+- Migration `00069_approval_chains.sql` + `.down.sql` exist.
+- `public.approval_chains` has all 12 columns with correct types/nullability; `updated_at NOT NULL DEFAULT now()`; `created_by` FK to `auth.users(id)`; `org_id` FK to `organizations(id)`.
+- `trg_approval_chains_updated_at` BEFORE UPDATE trigger exists.
+- Both partial unique indexes exist with the documented predicates (including `AND deleted_at IS NULL`); `approval_chains_one_default_per_workflow` is used to verify that two `is_default = true` chains for the same `(org_id, workflow_type)` raise a unique violation, while a soft-deleted default frees the slot.
+- `workflow_type` CHECK rejects `'invalid'`; accepts all 6 enum values verbatim.
+- RLS enabled; exactly 3 policies (`approval_chains_org_read`, `approval_chains_org_insert`, `approval_chains_org_update`); no DELETE policy.
+- Seed function `public.create_default_approval_chains` exists with SECURITY DEFINER + `search_path = public, pg_temp`; `trg_organizations_create_default_approval_chains` AFTER INSERT trigger registered.
+- Helper function `public.default_stages_for_workflow_type(text)` exists, IMMUTABLE.
+- **Backfill correctness:** post-migration, every live org has exactly 6 default approval_chains rows (one per workflow_type), all with `is_default = true`. Live org count × 6 = total default rows.
+- **Seed idempotency (Dry-Run negative probe):** re-running the backfill yields 0 row deltas (ON CONFLICT DO NOTHING).
+- **H.1 live-auth RLS probe (Phase 2.4 Amendment F.1 mirror):** with a `pm`-role authenticated JWT, SELECT returns only the user's org; INSERT fails with `42501 insufficient_privilege`. With an `admin`-role JWT, INSERT succeeds. Validates the R.23 divergence (role-set narrowing to `owner`/`admin` on writes).
+- **H.2 GRANT-verification probes (Phase 2.4 Amendment F.2 pattern extended to `public` schema):**
+  - `SELECT has_function_privilege('authenticated', 'public.create_default_approval_chains()', 'EXECUTE')` → `true`
+  - `SELECT has_function_privilege('authenticated', 'public.default_stages_for_workflow_type(text)', 'EXECUTE')` → `true`
+- **H.3 default-stages verification:** query each backfilled chain's `stages->0->>'required_roles'` (JSON text value). Expected:
+  - `workflow_type = 'invoice_pm'` → `'["pm"]'`
+  - `workflow_type = 'invoice_qa'` → `'["accounting"]'`
+  - `workflow_type IN ('co','draw','po','proposal')` → `'["owner","admin"]'`
+  Proves the CASE logic in `default_stages_for_workflow_type(text)` produced the right defaults during backfill, not just that "some default" landed.
+
+**R.23 precedent statement:** Phase 2.5 adopts `proposals` (migration 00065) as the tenant-table precedent — 3-policy RLS (org_read / org_insert / org_update, no DELETE, soft-delete via `deleted_at`). **Intentional divergence:** write role-set narrowed from proposals' `(owner, admin, pm, accounting)` to `(owner, admin)` — approval_chains is tenant config, not workflow data, so PMs and accounting users should not edit approval policy. Seed trigger placement (`public` schema, not `app_private`) follows `create_default_workflow_settings` (migration 00032) — seed functions live in `public`; validator/helper functions (e.g., `app_private.validate_cost_code_hierarchy` from Phase 2.4) live in `app_private`. Amendment F.2 GRANT-verification pattern extended to `public` schema for H.2.
+
+**Commit:** `feat(approvals): add approval_chains + seed-on-org-creation trigger`
 
 ### Phase 2.6 — Job milestones + retainage config
 
