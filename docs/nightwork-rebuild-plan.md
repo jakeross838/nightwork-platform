@@ -1261,7 +1261,7 @@ proposal:
   vendor_id
   title                   ("Fish Pool Package")
   received_date
-  status                  (received | under_review | accepted | rejected | superseded | converted_to_po)
+  status                  (received | under_review | accepted | rejected | superseded | converted_to_po | converted_to_co)
   amount                  (total proposed)
   valid_through           (expiration date from vendor)
   
@@ -2817,18 +2817,23 @@ Also write `00064_job_phase_contract_type.down.sql` per R.16 (restore the legacy
 
 ### Phase 2.2 — Proposals tables (new first-class)
 
-Migration `00065_proposals.sql`:
+**Plan-doc amendment history:**
+- Pre-flight amendment (2026-04-22): added `proposals.updated_at` per the universal architecture rule (CLAUDE.md "every record gets updated_at"); the initial spec omitted it. `updated_at` bumped on UPDATE via the existing project-wide `public.update_updated_at()` function (defined in `00001_initial_schema.sql`; same function invoices, jobs, COs, POs use).
+- Pre-flight amendment (2026-04-22): added 5 audit/tenant columns to `proposal_line_items` (`org_id NOT NULL`, `created_at`, `updated_at`, `created_by`, `deleted_at`) to match the dominant line-item convention on this codebase (the pattern used by `draw_line_items` from Phase 1.4; `invoice_line_items` has `updated_at` but not `created_by`; `po_line_items` and `change_order_lines` have neither — retrofit of those two tracked in GH issue for Branch 8).
+- Pre-flight amendment (2026-04-22): added explicit index set (6 indexes on `proposals`, 2 on `proposal_line_items`). The initial spec listed no indexes. `(org_id, status)`, `(org_id, job_id)`, `(org_id, vendor_id)` use the RLS-prefix-first convention per `jobs` and `invoices`. Reverse-lookup / version-chain indexes are partial (`WHERE … IS NOT NULL`) since most rows will be NULL. Soft-delete filter helper deferred until query patterns warrant.
+
+Migration `00065_proposals.sql` (use `public.` schema qualification per G.9):
 ```sql
-CREATE TABLE proposals (
+CREATE TABLE public.proposals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL REFERENCES organizations(id),
-  job_id UUID NOT NULL REFERENCES jobs(id),
-  vendor_id UUID NOT NULL REFERENCES vendors(id),
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  job_id UUID NOT NULL REFERENCES public.jobs(id),
+  vendor_id UUID NOT NULL REFERENCES public.vendors(id),
   proposal_number TEXT NOT NULL,
   title TEXT NOT NULL,
   received_date DATE,
   valid_through DATE,
-  status TEXT NOT NULL DEFAULT 'received' 
+  status TEXT NOT NULL DEFAULT 'received'
     CHECK (status IN ('received','under_review','accepted','rejected','superseded','converted_to_po','converted_to_co')),
   amount BIGINT,
   scope_summary TEXT,
@@ -2836,36 +2841,71 @@ CREATE TABLE proposals (
   exclusions TEXT,
   terms TEXT,
   plan_version_referenced TEXT,
-  converted_po_id UUID REFERENCES purchase_orders(id),
-  converted_co_id UUID REFERENCES change_orders(id),
-  superseded_by_proposal_id UUID REFERENCES proposals(id),
-  source_document_id UUID,
+  converted_po_id UUID REFERENCES public.purchase_orders(id),
+  converted_co_id UUID REFERENCES public.change_orders(id),
+  superseded_by_proposal_id UUID REFERENCES public.proposals(id),
+  source_document_id UUID,  -- FK deferred: document_extractions table not yet built (see §0.6 R.9)
   notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by UUID REFERENCES auth.users(id),
-  status_history JSONB DEFAULT '[]'::jsonb,
+  status_history JSONB NOT NULL DEFAULT '[]'::jsonb,
   deleted_at TIMESTAMPTZ,
   UNIQUE (job_id, proposal_number)
 );
 
-CREATE TABLE proposal_line_items (
+CREATE TABLE public.proposal_line_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  proposal_id UUID NOT NULL REFERENCES proposals(id) ON DELETE CASCADE,
-  cost_code_id UUID REFERENCES cost_codes(id),
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  proposal_id UUID NOT NULL REFERENCES public.proposals(id) ON DELETE CASCADE,
+  cost_code_id UUID REFERENCES public.cost_codes(id),
   description TEXT NOT NULL,
   quantity NUMERIC,
   unit TEXT,
   unit_price BIGINT,
   amount BIGINT NOT NULL,
   scope_detail TEXT,
-  sort_order INT DEFAULT 0
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id),
+  deleted_at TIMESTAMPTZ
 );
 
+-- updated_at triggers — reuse the project-wide update_updated_at() function
+-- (defined in 00001_initial_schema.sql; used by jobs, invoices, POs, COs, draws, etc.)
+CREATE TRIGGER trg_proposals_updated_at
+  BEFORE UPDATE ON public.proposals
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER trg_proposal_line_items_updated_at
+  BEFORE UPDATE ON public.proposal_line_items
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+-- Indexes (6 on proposals, 2 on proposal_line_items). UNIQUE (job_id, proposal_number)
+-- auto-creates its backing index; no separate index needed.
+CREATE INDEX idx_proposals_org_status ON public.proposals (org_id, status);
+CREATE INDEX idx_proposals_org_job ON public.proposals (org_id, job_id);
+CREATE INDEX idx_proposals_org_vendor ON public.proposals (org_id, vendor_id);
+CREATE INDEX idx_proposals_superseded_by ON public.proposals (superseded_by_proposal_id)
+  WHERE superseded_by_proposal_id IS NOT NULL;
+CREATE INDEX idx_proposals_converted_po ON public.proposals (converted_po_id)
+  WHERE converted_po_id IS NOT NULL;
+CREATE INDEX idx_proposals_converted_co ON public.proposals (converted_co_id)
+  WHERE converted_co_id IS NOT NULL;
+
+CREATE INDEX idx_proposal_line_items_proposal ON public.proposal_line_items (proposal_id);
+CREATE INDEX idx_proposal_line_items_cost_code ON public.proposal_line_items (cost_code_id);
+
 -- RLS policies matching other tenant tables
-ALTER TABLE proposals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE proposal_line_items ENABLE ROW LEVEL SECURITY;
--- ... policies follow same pattern as invoices
+ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.proposal_line_items ENABLE ROW LEVEL SECURITY;
+-- ... policies follow same pattern as invoices (SELECT/INSERT/UPDATE/DELETE scoped by org_id)
 ```
+
+Also write `00065_proposals.down.sql` per R.16 (drops triggers, indexes, tables in reverse-dependency order; idempotent).
+
+**R.7 status_history note:** `status_history` appends are the responsibility of Branch 3 write routes. This migration creates the column; application code enforces the contract. No trigger enforces the append — the write-path API owns it, consistent with the pattern on `invoices`, `change_orders`, etc.
 
 **Commit:** `feat(proposals): add proposals tables as first-class entity`
 
