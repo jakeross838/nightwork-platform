@@ -1878,6 +1878,54 @@ job_milestones (for milestone mode)
   target_date, completed_date, status
 ```
 
+### Draw adjustments
+
+Structured first-class entity for tracking every non-line-item mutation to a draw: corrections, credits (goodwill / defect / error), withholds, customer direct-pays, and conditional holds. Surfaced by the 2026-04-14 Markgraf substantial-completion email thread, which showed 9+ distinct events on a single draw that had no clean entity to track. Branch 2 Phase 2.5 adds the schema; Branch 3 writers populate from the existing draws/new wizard (which currently stashes ad-hoc override reasons in `draws.wizard_draft` JSONB); Branch 4 dogfood on Ross Built data validates the taxonomy.
+
+```
+draw_adjustments
+  id, org_id, draw_id, draw_line_item_id (nullable — NULL = contract-sum
+    or PCCO-scoped),
+  adjustment_type CHECK IN (
+    'correction',
+    'credit_goodwill','credit_defect','credit_error',
+    'withhold',
+    'customer_direct_pay',
+    'conditional'
+  ),
+  adjustment_status CHECK IN (
+    'proposed','approved','applied_to_draw','resolved','voided'
+  ),
+  amount_cents BIGINT NOT NULL (signed; negative reduces amount owed by
+    owner; positive increases; 0 allowed for placeholder-only rows
+    pre-decision per C.3 — e.g., Line 19101 clarification or
+    trapezoidal-shade discussion),
+  gp_impact_cents BIGINT NULLABLE (stored at approval time when a human
+    categorizes defect vs pass-through; positive = GP hit on RB),
+  reason TEXT NOT NULL,
+  affected_vendor_id (FK vendors, nullable),
+  affected_invoice_id (FK invoices, nullable),
+  affected_pcco_number TEXT (nullable — "PCCO-86" etc; bridge column
+    documenting CO-numbering tech debt. Tracked in GH #13; backfill to
+    proper FK lands when Branch 3 resolves internal Buildertrend CO vs
+    external AIA PCCO reconciliation),
+  source_document_id UUID (bare — FK wire-up deferred to
+    document_extractions / Branch 3, Phase 2.2 precedent),
+  status_history JSONB DEFAULT '[]',
+  created_at, updated_at, created_by, deleted_at
+
+draw_adjustment_line_items (join table for rare N:N allocations)
+  id, org_id, adjustment_id (FK, ON DELETE CASCADE),
+  draw_line_item_id (FK), allocation_cents BIGINT NOT NULL,
+  created_at, updated_at, created_by, deleted_at
+```
+
+**G702/G703 rendering note (D2):** `draw_adjustments` render in a dedicated "Adjustments & Credits" section on the draw doc, NOT silently applied to `draw_line_items.this_period`. Final current-payment-due math = line-item total minus adjustments section. Preserves AIA auditability.
+
+**Draw soft-delete invariant (C.2):** when `draws.deleted_at` is set via application code, all associated `draw_adjustments` rows MUST also be soft-deleted in the same transaction. Enforced by the draws-soft-delete RPC (Branch 3). Not enforced at DB layer because FK cascades don't trigger on UPDATE.
+
+**RLS (C.1):** proposals/00065 3-policy pattern under R.23, with a surgical predicate narrowing on the read policy to preserve information parity with the `draws` / `draw_line_items` PM-on-own-jobs visibility rule. Role set for writes: `(owner, admin, pm, accounting)` — PMs propose adjustments they catch in the field or during wizard builds; accounting reviews and approves.
+
 ### Lien releases
 
 ```
@@ -1945,16 +1993,21 @@ approval_chains
   conditions JSONB, stages JSONB (array of stage defs),
   created_at, created_by, deleted_at
 
-approval_actions — DEPRECATED per Phase 2.5 pre-flight
-  Amendment F-ii (2026-04-22). Approval events are captured
-  by the existing `status_history` JSONB append on each
-  workflow entity (invoices / change_orders / draws / proposals
-  / purchase_orders / selections) plus `public.activity_log`
+approval_actions — DEPRECATED per the approval_chains
+  pre-flight Amendment F-ii (2026-04-22; pre-flight frozen
+  in git history at commit f296e0a; the approval_chains
+  phase itself is now Phase 2.6 / migration 00070 after the
+  Markgraf-scenario pivot renumbered 2.5-2.9 → 2.6-2.10).
+  Approval events are captured by the existing
+  `status_history` JSONB append on each workflow entity
+  (invoices / change_orders / draws / proposals /
+  purchase_orders / selections) plus `public.activity_log`
   (polymorphic entity_type/entity_id, RLS-scoped). A third
-  audit surface adds footprint without answering a query not
-  already answerable from those two. The `approval_actions`
-  table is NOT created by migration 00069. See
-  `qa-reports/preflight-branch2-phase2.5.md` §5 Amendment F.
+  audit surface adds footprint without answering a query
+  not already answerable from those two. The
+  `approval_actions` table is NOT created by migration
+  00070 (was slated for 00069 before the Markgraf pivot
+  inserted draw_adjustments at that slot).
 ```
 
 ### Notifications
@@ -3107,6 +3160,8 @@ Also write `00066_co_type_expansion.down.sql` per R.16. Reverses the function-bo
 
 > **Mid-branch renumber (2026-04-22):** Phase 2.3's R.19 live-workflow test surfaced a latent 00042-era bug — `authenticated` role lacked USAGE on the `app_private` schema, blocking the `co_cache_trigger` from firing on any UI-driven CO INSERT. Fixed in migration `00067_co_cache_trigger_authenticated_grants.sql` (commit `1a24e64`). Every Phase 2.4–2.9 migration below shifts by +1 (was 00067–00072, now 00068–00073). Full audit of `app_private` grants deferred to GH #9.
 
+> **Mid-branch renumber (2026-04-22, second):** the 2026-04-14 Markgraf substantial-completion email surfaced 9+ distinct adjustment events on one draw with no clean entity to track (see `qa-reports/preflight-branch2-phase2.5.md`). Phase 2.5 was reassigned from approval_chains to draw_adjustments; approval_chains shifted to Phase 2.6; all subsequent Branch 2 phases shifted by +1 (current state: Phase 2.5 = draw_adjustments / 00069; Phase 2.6 = approval_chains / 00070; Phase 2.7 = job milestones + retainage / 00071; Phase 2.8 = pricing history / 00072; Phase 2.9 = client portal / 00073; Phase 2.10 = V2.0 hooks / 00074). The prior Phase 2.5 approval_chains pre-flight is frozen in git history at commit `f296e0a`. GH #13 tracks the CO numbering reconciliation surfaced by the same email thread.
+
 ### Phase 2.4 — Cost codes hierarchy + starter templates
 
 **Plan-doc amendment history:**
@@ -3248,11 +3303,370 @@ Also write `00068_cost_codes_hierarchy.down.sql` per R.16 (Amendment E). Reverse
 
 **Commit:** `feat(cost-codes): add hierarchy + starter templates`
 
-### Phase 2.5 — Approval chains
+### Phase 2.5 — Draw adjustments
 
 **Plan-doc amendment history:**
 
-- Pre-flight (2026-04-22): eight amendments landed after pre-flight findings. See `qa-reports/preflight-branch2-phase2.5.md`.
+- Pre-flight (2026-04-22): Phase 2.5 scope reassigned from approval_chains to draw_adjustments after the 2026-04-14 Markgraf substantial-completion email surfaced 9+ distinct adjustment events on one draw with no clean entity to track. Approval chains work shifts to Phase 2.6 (migration `00070`); all subsequent Branch 2 phases shift +1 (2.6→2.7, 2.7→2.8, 2.8→2.9, 2.9→2.10). See `qa-reports/preflight-branch2-phase2.5.md` + parallel mid-branch-renumber note in Phase 2.3's closing paragraph above. Same mid-branch-renumber pattern as Phase 2.3's 00067 grant-fix renumber.
+- Design decisions (locked at kickoff, see pre-flight §5):
+  - **D1 Hybrid shape** — `draw_adjustments.draw_line_item_id` nullable FK for the common 1:1 case; optional `draw_adjustment_line_items` join table for rare N:N cases.
+  - **D2 Adjustments alongside** — render in a dedicated "Adjustments & Credits" section on the draw doc; don't silently modify `draw_line_items.this_period`. Preserves AIA G702/G703 auditability.
+  - **D3 GP impact stored** — `gp_impact_cents` set at approval time by a human categorizer; not computed (defect-vs-goodwill is judgment).
+  - **D4 Source document** — bare UUID per Phase 2.2 precedent (`document_extractions` table doesn't exist yet; FK wire-up deferred to Branch 3 Phase 3.1 rename).
+- Pre-flight open-question decisions (C.1–C.5):
+  - **C.1 RLS shape:** proposals/00065 3-policy structure under R.23, with a surgical predicate narrowing on the read policy to preserve information parity with `draws` / `draw_line_items`' existing PM-on-own-jobs visibility rule. Without this narrowing, PMs excluded from a job could SELECT adjustments on that job's draws — an information leak relative to the draws table itself. Documented in migration header.
+  - **C.2 Draw soft-delete cascade:** application-layer invariant (draws-soft-delete RPC, Branch 3). Not enforced at DB layer because FK cascades don't trigger on UPDATE. Documented in migration header + Part 2 §1.8 narrative (Draw adjustments block).
+  - **C.3 amount_cents:** NOT NULL; placeholder-only rows (e.g., Line 19101 clarification / trapezoidal-shade discussion from Markgraf email) use `amount_cents = 0` with reason "amount TBD".
+  - **C.4 adjustment_type:** flat 7-value enum (no `credit_subtype` column). "All credits" query = `WHERE adjustment_type LIKE 'credit_%'`.
+  - **C.5 Join table:** ship per D1 even with zero Markgraf usage — the shape must be available when Branch 3/4 dogfood surfaces the first N:N case.
+- Related issue: **GH #13** tracks CO numbering reconciliation (Buildertrend internal CO number vs AIA PCCO number surfaced by the Markgraf email). Phase 2.5's `affected_pcco_number TEXT` is the bridge column documenting this gap until Branch 3 resolves.
+
+Migration `00069_draw_adjustments.sql`:
+```sql
+-- ============================================================
+-- Phase 2.5 — Draw adjustments (migration 00069).
+--
+-- Scope pivot (2026-04-22): Phase 2.5 reassigned from approval_chains
+-- to draw_adjustments after the Markgraf substantial-completion email
+-- surfaced 9+ distinct adjustment events on one draw with no clean
+-- entity to track. Approval chains work moved to Phase 2.6 /
+-- migration 00070. Every subsequent Branch 2 phase shifted +1.
+--
+-- C.1 RLS: draw_adjustments adopts the proposals/00065 3-policy
+-- structure (R.23) with a surgical predicate narrowing on the read
+-- policy to preserve information parity with draws/draw_line_items'
+-- existing PM-on-own-jobs visibility rule. Without this narrowing,
+-- PMs excluded from a job could SELECT adjustments on that job's
+-- draws — an information leak relative to the draws table itself.
+--
+-- C.2 Draw soft-delete invariant: when draws.deleted_at is set via
+-- application code, all associated draw_adjustments rows MUST also
+-- be soft-deleted in the same transaction. Enforced by the
+-- draws-soft-delete RPC (Branch 3). Not enforced at DB layer because
+-- FK cascades don't trigger on UPDATE.
+--
+-- C.4 adjustment_type is a flat 7-value enum. Credit subtypes
+-- (goodwill/defect/error) are first-class enum values, not a separate
+-- column. "All credits" analytics = WHERE adjustment_type LIKE
+-- 'credit_%'.
+--
+-- C.5 draw_adjustment_line_items join table ships even though the
+-- Markgraf scenario has 0 N:N cases — shape must be available when
+-- Branch 3/4 dogfood surfaces the first.
+--
+-- Related: GH #13 tracks CO numbering reconciliation. Phase 2.5's
+-- affected_pcco_number TEXT column is the bridge documenting the
+-- Buildertrend-internal-CO vs AIA-PCCO-number gap (e.g., DB Welding
+-- invoice #0064.ADD.26 cites CO51 internal but the AIA PCCO log
+-- shows PCCO-88 for the same work).
+-- ============================================================
+
+-- (a) draw_adjustments — draw-level adjustments, one per adjustment
+-- event (correction / credit_* / withhold / customer_direct_pay /
+-- conditional). 1:1 FK to draw_line_items for the common case;
+-- nullable for contract-sum-level or PCCO-scoped events.
+CREATE TABLE public.draw_adjustments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  draw_id UUID NOT NULL REFERENCES public.draws(id),
+  -- NO ACTION on draw_id (matches all 5 existing FKs pointing to
+  -- draws). Hard-delete of a draw is already RLS-blocked via
+  -- draws_delete_strict. Soft-delete cascade to adjustments is the
+  -- C.2 application-layer invariant in the draws-soft-delete RPC.
+  draw_line_item_id UUID REFERENCES public.draw_line_items(id),
+
+  adjustment_type TEXT NOT NULL CHECK (adjustment_type IN (
+    'correction',
+    'credit_goodwill',
+    'credit_defect',
+    'credit_error',
+    'withhold',
+    'customer_direct_pay',
+    'conditional'
+  )),
+
+  adjustment_status TEXT NOT NULL DEFAULT 'proposed'
+    CHECK (adjustment_status IN (
+      'proposed',
+      'approved',
+      'applied_to_draw',
+      'resolved',
+      'voided'
+    )),
+
+  -- cents, signed. Negative = reduces amount owed by owner;
+  -- positive = increases (e.g., upward correction). 0 allowed for
+  -- placeholder-only rows (C.3) with reason documenting the TBD
+  -- status — e.g., Line 19101 clarification, trap-shade discussion
+  -- pre-decision.
+  amount_cents BIGINT NOT NULL,
+
+  -- Stored at approval time by a human categorizer (D3).
+  -- Positive = GP hit on RB (defect, goodwill); negative = GP boost
+  -- (rare: billing error caught that would have been RB's loss).
+  -- NULL until categorized. Not derivable — defect-vs-goodwill is
+  -- judgment.
+  gp_impact_cents BIGINT,
+
+  reason TEXT NOT NULL,
+
+  -- Soft references — each captures a dimension the email thread
+  -- actually discusses. All nullable.
+  affected_vendor_id UUID REFERENCES public.vendors(id),
+  affected_invoice_id UUID REFERENCES public.invoices(id),
+  affected_pcco_number TEXT,  -- Bridge column for "PCCO-86" etc.
+                              -- See GH #13.
+
+  -- Phase 2.2 precedent: bare UUID until document_extractions lands
+  -- in Branch 3 Phase 3.1. FK wire-up deferred.
+  source_document_id UUID,
+
+  -- Audit trail
+  status_history JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id),
+  deleted_at TIMESTAMPTZ
+);
+
+CREATE TRIGGER trg_draw_adjustments_updated_at
+BEFORE UPDATE ON public.draw_adjustments
+FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+-- (b) draw_adjustment_line_items — join table for rare N:N (C.5).
+-- Markgraf scenario has 0 rows here; ship the shape anyway for
+-- Branch 3/4 dogfood readiness.
+CREATE TABLE public.draw_adjustment_line_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  adjustment_id UUID NOT NULL REFERENCES public.draw_adjustments(id)
+    ON DELETE CASCADE,
+  draw_line_item_id UUID NOT NULL REFERENCES public.draw_line_items(id),
+  allocation_cents BIGINT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id),
+  deleted_at TIMESTAMPTZ
+);
+
+CREATE TRIGGER trg_draw_adjustment_line_items_updated_at
+BEFORE UPDATE ON public.draw_adjustment_line_items
+FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+-- (c) Indexes — all partial with deleted_at IS NULL (consistent with
+-- Phase 2.4 Amendment C and the 35+ existing partial-index precedents
+-- across the schema).
+CREATE INDEX idx_draw_adjustments_draw
+  ON public.draw_adjustments (org_id, draw_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_draw_adjustments_status
+  ON public.draw_adjustments (org_id, adjustment_status)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_draw_adjustments_line_item
+  ON public.draw_adjustments (draw_line_item_id)
+  WHERE draw_line_item_id IS NOT NULL AND deleted_at IS NULL;
+
+CREATE INDEX idx_draw_adjustments_vendor
+  ON public.draw_adjustments (affected_vendor_id)
+  WHERE affected_vendor_id IS NOT NULL AND deleted_at IS NULL;
+
+CREATE INDEX idx_draw_adjustments_invoice
+  ON public.draw_adjustments (affected_invoice_id)
+  WHERE affected_invoice_id IS NOT NULL AND deleted_at IS NULL;
+
+CREATE INDEX idx_dali_adjustment
+  ON public.draw_adjustment_line_items (adjustment_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_dali_draw_line_item
+  ON public.draw_adjustment_line_items (draw_line_item_id)
+  WHERE deleted_at IS NULL;
+
+-- (d) RLS — C.1 decision: proposals/00065 3-policy structure with
+-- surgical PM-on-own-jobs narrowing on the read policy.
+ALTER TABLE public.draw_adjustments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY draw_adjustments_org_read
+  ON public.draw_adjustments
+  FOR SELECT
+  USING (
+    (
+      org_id IN (
+        SELECT org_id FROM public.org_members
+        WHERE user_id = auth.uid() AND is_active = true
+      )
+      AND (
+        app_private.user_role() IN ('owner','admin','accounting')
+        OR (
+          app_private.user_role() = 'pm'
+          AND EXISTS (
+            SELECT 1
+            FROM public.draws d
+            JOIN public.jobs j ON j.id = d.job_id
+            WHERE d.id = draw_adjustments.draw_id
+              AND j.pm_id = auth.uid()
+          )
+        )
+      )
+    )
+    OR app_private.is_platform_admin()
+  );
+
+CREATE POLICY draw_adjustments_org_insert
+  ON public.draw_adjustments
+  FOR INSERT
+  WITH CHECK (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+        AND role IN ('owner','admin','pm','accounting')
+    )
+  );
+
+CREATE POLICY draw_adjustments_org_update
+  ON public.draw_adjustments
+  FOR UPDATE
+  USING (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+        AND role IN ('owner','admin','pm','accounting')
+    )
+  );
+-- No DELETE policy — RLS blocks hard DELETE; soft-delete via
+-- deleted_at (cost_intelligence_spine / proposals precedent).
+
+-- Join-table RLS mirrors the parent-table shape (3 policies, no
+-- DELETE) with its own PM-on-own-jobs narrowing via the
+-- adjustment_id → draw_adjustments → draws → jobs chain.
+ALTER TABLE public.draw_adjustment_line_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY draw_adjustment_line_items_org_read
+  ON public.draw_adjustment_line_items
+  FOR SELECT
+  USING (
+    (
+      org_id IN (
+        SELECT org_id FROM public.org_members
+        WHERE user_id = auth.uid() AND is_active = true
+      )
+      AND (
+        app_private.user_role() IN ('owner','admin','accounting')
+        OR (
+          app_private.user_role() = 'pm'
+          AND EXISTS (
+            SELECT 1
+            FROM public.draw_adjustments da
+            JOIN public.draws d ON d.id = da.draw_id
+            JOIN public.jobs j   ON j.id = d.job_id
+            WHERE da.id = draw_adjustment_line_items.adjustment_id
+              AND j.pm_id = auth.uid()
+          )
+        )
+      )
+    )
+    OR app_private.is_platform_admin()
+  );
+
+CREATE POLICY draw_adjustment_line_items_org_insert
+  ON public.draw_adjustment_line_items
+  FOR INSERT
+  WITH CHECK (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+        AND role IN ('owner','admin','pm','accounting')
+    )
+  );
+
+CREATE POLICY draw_adjustment_line_items_org_update
+  ON public.draw_adjustment_line_items
+  FOR UPDATE
+  USING (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+        AND role IN ('owner','admin','pm','accounting')
+    )
+  );
+
+COMMENT ON TABLE public.draw_adjustments IS
+'Draw-level adjustments: corrections, credits (goodwill/defect/error), withholds, customer direct-pays, conditional holds. Renders in a dedicated "Adjustments & Credits" section on the draw doc (D2) — NOT silently applied to draw_line_items.this_period. RLS adopts proposals/00065 3-policy pattern (R.23) with a surgical PM-on-own-jobs narrowing on the read policy to preserve information parity with the draws table. Draw soft-delete invariant (C.2) enforced at application layer (draws-soft-delete RPC, Branch 3).';
+
+COMMENT ON COLUMN public.draw_adjustments.adjustment_type IS
+'Flat 7-value enum (C.4 decision). Credit subtypes are first-class enum values, not a separate column. "All credits" query pattern: WHERE adjustment_type LIKE ''credit_%''. Name-collision note: the enum value ''conditional'' refers to an adjustment where the owner refuses payment pending a specific condition — distinct from lien_releases.release_type ''conditional_progress''/''conditional_final'' which are lien-waiver document types.';
+
+COMMENT ON COLUMN public.draw_adjustments.affected_pcco_number IS
+'Bridge column for PCCO references (e.g., "PCCO-86"). TEXT not FK because internal Buildertrend CO numbers and external AIA PCCO numbers are unreconciled (e.g., Markgraf email: DB Welding invoice #0064.ADD.26 cites CO51 internal but AIA PCCO log shows PCCO-88 for the same work). Reconciliation scope tracked in GH #13; backfill to proper FK when Branch 3 resolves.';
+
+COMMENT ON COLUMN public.draw_adjustments.source_document_id IS
+'Bare UUID pending document_extractions table creation. FK wire-up deferred to Branch 3 Phase 3.1 rename. Phase 2.2 precedent (proposals.source_document_id).';
+```
+
+Also write `00069_draw_adjustments.down.sql` per R.16. Reverses in strict reverse-dependency order: drops 6 RLS policies (3 per table), disables RLS on both tables, drops both `updated_at` triggers, drops 7 indexes, drops `public.draw_adjustment_line_items` (whose FK to parent uses ON DELETE CASCADE, but the explicit DROP is cleaner), drops `public.draw_adjustments`. No backfill rows to reverse — Phase 2.5 creates empty tables; Branch 3/4 populates.
+
+**Code + type updates:** none. Pre-flight §2 blast-radius grep confirmed 0 src/ references to any new identifier — Branch 3/4 introduces write paths. No TS-union narrowing against the `adjustment_type` or `adjustment_status` CHECK enums yet; when Branch 3/4 adds consumers, apply the Phase 2.1 / 2.3 precedent (runtime validation against a file-private constant, don't narrow TS to the CHECK enum).
+
+**Test (R.15 test-first):** write `__tests__/draw-adjustments.test.ts` covering:
+
+- Migration `00069_draw_adjustments.sql` + `.down.sql` exist.
+- `public.draw_adjustments` has all 16 columns with correct types/nullability; `updated_at NOT NULL DEFAULT now()`; `org_id` FK to organizations; `draw_id` FK to draws NO ACTION; `draw_line_item_id` nullable FK to draw_line_items; `status_history` JSONB DEFAULT `'[]'`.
+- `public.draw_adjustment_line_items` has all 9 columns; `adjustment_id` FK ON DELETE CASCADE; `draw_line_item_id` FK.
+- Both `updated_at` triggers registered.
+- 7 indexes exist with the documented partial predicates (`deleted_at IS NULL` on every one; plus `IS NOT NULL` guards on the sparse nullable-FK indexes).
+- `adjustment_type` CHECK rejects `'invalid'`; accepts all 7 enum values verbatim.
+- `adjustment_status` CHECK rejects `'invalid'`; accepts all 5 enum values verbatim.
+- Default `adjustment_status` is `'proposed'`.
+- RLS enabled on both tables; exactly 3 policies per table (read / insert / update; no DELETE).
+- **C.1 live-auth RLS probe (Phase 2.4 Amendment F.1 + Phase 2.6 approval_chains H.1 mirror).** Three scenarios against the PM-on-own-jobs narrowing:
+  - `pm` on assigned job: INSERT succeeds; SELECT returns the row.
+  - `pm` on unassigned job: SELECT returns 0 rows (predicate narrowing works); INSERT still succeeds (write policy intentionally does NOT narrow — mirrors draws write-policy behavior; PMs can record adjustments they observe, then accounting reviews).
+  - `accounting` on any job in the org: SELECT returns all org rows.
+- Status workflow: valid transitions (proposed → approved → applied_to_draw → resolved; proposed → voided; approved → voided) succeed via UPDATE. Invalid transitions are application-layer concerns (not enforced at DB).
+- Soft-delete: updating `deleted_at` leaves the row in place; partial indexes no longer match post-soft-delete.
+- **C.3 placeholder probe:** `amount_cents = 0` INSERT succeeds with reason "amount TBD" (proves placeholder-only rows can land).
+
+**Status workflow** (documented explicitly):
+
+```
+   ┌─────────────┐
+   │  proposed   │ (new row; PM or accounting creates)
+   └─────┬───────┘
+         │
+    ┌────┴────┐
+    │         │
+    ▼         ▼
+┌────────┐  ┌──────────┐
+│approved│  │  voided  │ (abandoned pre-approval)
+└────┬───┘  └──────────┘
+     │
+     ├──────────────┐
+     ▼              ▼
+┌──────────────┐ ┌──────────┐
+│applied_to_   │ │  voided  │ (retracted post-approval,
+│   draw       │ │          │  pre-apply)
+└──────┬───────┘ └──────────┘
+       │
+       ▼
+┌──────────┐
+│ resolved │ (draw closed; adjustment finalized)
+└──────────┘
+```
+
+Terminal states: `resolved` and `voided`. No re-entry from terminal states (matches proposals/draws lifecycle patterns).
+
+**R.23 precedent statement:** Phase 2.5 adopts `proposals` (migration 00065) as the tenant-table precedent — 3-policy RLS (org_read / org_insert / org_update, no DELETE, soft-delete via `deleted_at`). **Intentional surgical narrowing:** the read policy adds a PM-on-own-jobs predicate (matching the existing `pm read draws on own jobs` policy on the draws table) to preserve information parity — if a PM can't see the draw, they shouldn't see its adjustments. This is a predicate-level narrowing within the proposals shape, not a policy-count or structure divergence. Both tables (parent + join) enable RLS and ship the same 3-policy structure. Join-table read policy narrows via a longer join chain (adjustment_id → draw_adjustments → draws → jobs) that reaches the same `j.pm_id = auth.uid()` condition.
+
+**Commit:** `feat(adjustments): add draw_adjustments + join table`
+
+### Phase 2.6 — Approval chains
+
+**Plan-doc amendment history:**
+
+- Pre-flight (2026-04-22): eight amendments landed after pre-flight findings. See the approval_chains pre-flight frozen in git history at commit `f296e0a` (`qa-reports/preflight-branch2-phase2.5.md` on main at that SHA; the filename was reused by the Phase 2.5 draw_adjustments pre-flight after the Markgraf-scenario pivot that renumbered approval_chains from Phase 2.5 to Phase 2.6).
   - **F-ii (scope decision)** — `approval_actions` table NOT created. Audit events are already captured by `status_history` JSONB on each workflow entity + `public.activity_log` (polymorphic entity_type/entity_id, RLS-scoped). A third audit surface adds footprint without answering a query not already answerable from those two. Plan Part 2 §1.12 approval_actions block edited to DEPRECATED note in the same commit.
   - **A** — Full audit-column set on `approval_chains`: adds `updated_at NOT NULL DEFAULT now()` + `trg_approval_chains_updated_at` to align with CLAUDE.md §Architecture Rules + Part 2 §2.4 rule #5.
   - **B** — RLS adopts 00065 `proposals` 3-policy pattern (read / insert / update; no DELETE — soft-delete via `deleted_at`). **R.23 divergence:** write role-set narrowed from proposals' `(owner, admin, pm, accounting)` to `(owner, admin)` only. Rationale: `approval_chains` is tenant config, not workflow data — PMs should not edit who approves what. Divergence is documented in the migration header.
@@ -3262,14 +3676,14 @@ Also write `00068_cost_codes_hierarchy.down.sql` per R.16 (Amendment E). Reverse
     - `invoice_qa` → `[{order:1, required_roles:['accounting'], all_required:false}]` (accounting does QA review)
     - `co` / `draw` / `po` / `proposal` → `[{order:1, required_roles:['owner','admin'], all_required:false}]`
     These Ross-Built-derived heuristics are tracked in **GH #12** for onboarding-wizard override work in Branch 6/7.
-  - **G** — Paired `00069_approval_chains.down.sql` per R.16.
+  - **G** — Paired `00070_approval_chains.down.sql` per R.16.
   - **H** — R.15 test file `__tests__/approval-chains.test.ts`, including: (H.1) live-auth RLS probe on `approval_chains` using an authenticated non-admin org-member JWT — mirrors Phase 2.2 `qa-branch2-phase2.2.md` §6 DELETE-block verification + Phase 2.4 Amendment F.1 (verifies `pm`-role INSERT fails with `insufficient_privilege` while `admin`-role INSERT succeeds); (H.2) GRANT-verification probes — `has_function_privilege('authenticated', 'public.create_default_approval_chains()', 'EXECUTE')` and same for `public.default_stages_for_workflow_type(text)` — Phase 2.4 F.2 pattern extended to `public` schema; (H.3) default-stages verification — query each backfilled chain's `stages->0->>'required_roles'` and assert the JSON-text value matches the workflow_type-specific default from D (proves the CASE logic produced the right defaults, not just "some default" landed).
 - Related issue: **GH #12** tracks the onboarding-wizard override work for default approval chains. Ross Built's role distribution (PM approves invoices, accounting does QA, owner/admin for everything else) is hardcoded in the seed function; remodelers and other org types will need UI affordance to customize during onboarding.
 
-Migration `00069_approval_chains.sql`:
+Migration `00070_approval_chains.sql`:
 ```sql
 -- ============================================================
--- Phase 2.5 — Approval chains (migration 00069).
+-- Phase 2.6 — Approval chains (migration 00070).
 --
 -- F-ii scope decision (pre-flight): approval_actions table NOT
 -- created. Audit events already flow through status_history
@@ -3462,13 +3876,13 @@ COMMENT ON FUNCTION public.create_default_approval_chains() IS
 'AFTER INSERT trigger on public.organizations that seeds 6 default approval_chains rows per new org. Mirrors create_default_workflow_settings (migration 00032) precedent — SECURITY DEFINER, pinned search_path, ON CONFLICT DO NOTHING. Explicit GRANT EXECUTE TO authenticated per migration 00067 pattern to defend against the GH #9 class of latent authenticated-schema permission gaps.';
 ```
 
-Also write `00069_approval_chains.down.sql` per R.16 (Amendment G). Reverses in strict reverse-dependency order: drops the org-creation trigger + `create_default_approval_chains()` function; drops the 3 RLS policies, disables RLS, drops the `updated_at` trigger; drops both partial unique indexes; drops `public.approval_chains`; drops `public.default_stages_for_workflow_type()`. The one-time backfill rows are reversed implicitly by the table DROP.
+Also write `00070_approval_chains.down.sql` per R.16 (Amendment G). Reverses in strict reverse-dependency order: drops the org-creation trigger + `create_default_approval_chains()` function; drops the 3 RLS policies, disables RLS, drops the `updated_at` trigger; drops both partial unique indexes; drops `public.approval_chains`; drops `public.default_stages_for_workflow_type()`. The one-time backfill rows are reversed implicitly by the table DROP.
 
 **Code + type updates:** none. §2 blast-radius grep (pre-flight §2) confirmed 0 src/ references to any new identifier — Branch 7 introduces write paths. No TS-union narrowing against the `workflow_type` or `action` CHECK enums yet; when Branch 7 adds consumers, apply the Phase 2.1 / 2.3 precedent (runtime validation against a file-private constant, don't narrow TS to the CHECK enum).
 
 **Test (R.15 test-first):** write `__tests__/approval-chains.test.ts` covering:
 
-- Migration `00069_approval_chains.sql` + `.down.sql` exist.
+- Migration `00070_approval_chains.sql` + `.down.sql` exist.
 - `public.approval_chains` has all 12 columns with correct types/nullability; `updated_at NOT NULL DEFAULT now()`; `created_by` FK to `auth.users(id)`; `org_id` FK to `organizations(id)`.
 - `trg_approval_chains_updated_at` BEFORE UPDATE trigger exists.
 - Both partial unique indexes exist with the documented predicates (including `AND deleted_at IS NULL`); `approval_chains_one_default_per_workflow` is used to verify that two `is_default = true` chains for the same `(org_id, workflow_type)` raise a unique violation, while a soft-deleted default frees the slot.
@@ -3488,13 +3902,13 @@ Also write `00069_approval_chains.down.sql` per R.16 (Amendment G). Reverses in 
   - `workflow_type IN ('co','draw','po','proposal')` → `'["owner","admin"]'`
   Proves the CASE logic in `default_stages_for_workflow_type(text)` produced the right defaults during backfill, not just that "some default" landed.
 
-**R.23 precedent statement:** Phase 2.5 adopts `proposals` (migration 00065) as the tenant-table precedent — 3-policy RLS (org_read / org_insert / org_update, no DELETE, soft-delete via `deleted_at`). **Intentional divergence:** write role-set narrowed from proposals' `(owner, admin, pm, accounting)` to `(owner, admin)` — approval_chains is tenant config, not workflow data, so PMs and accounting users should not edit approval policy. Seed trigger placement (`public` schema, not `app_private`) follows `create_default_workflow_settings` (migration 00032) — seed functions live in `public`; validator/helper functions (e.g., `app_private.validate_cost_code_hierarchy` from Phase 2.4) live in `app_private`. Amendment F.2 GRANT-verification pattern extended to `public` schema for H.2.
+**R.23 precedent statement:** Phase 2.6 adopts `proposals` (migration 00065) as the tenant-table precedent — 3-policy RLS (org_read / org_insert / org_update, no DELETE, soft-delete via `deleted_at`). **Intentional divergence:** write role-set narrowed from proposals' `(owner, admin, pm, accounting)` to `(owner, admin)` — approval_chains is tenant config, not workflow data, so PMs and accounting users should not edit approval policy. Seed trigger placement (`public` schema, not `app_private`) follows `create_default_workflow_settings` (migration 00032) — seed functions live in `public`; validator/helper functions (e.g., `app_private.validate_cost_code_hierarchy` from Phase 2.4) live in `app_private`. Amendment F.2 GRANT-verification pattern extended to `public` schema for H.2.
 
 **Commit:** `feat(approvals): add approval_chains + seed-on-org-creation trigger`
 
-### Phase 2.6 — Job milestones + retainage config
+### Phase 2.7 — Job milestones + retainage config
 
-Migration `00070_milestones_retainage.sql`:
+Migration `00071_milestones_retainage.sql`:
 ```sql
 CREATE TABLE job_milestones (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3524,9 +3938,9 @@ ALTER TABLE draws
 
 **Commit:** `feat(draws): add milestone and tm mode fields; job milestones table`
 
-### Phase 2.7 — Pricing history table
+### Phase 2.8 — Pricing history table
 
-Migration `00071_pricing_history.sql`:
+Migration `00072_pricing_history.sql`:
 ```sql
 CREATE TABLE pricing_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3564,9 +3978,9 @@ Then add triggers that populate `pricing_history` on:
 
 **Commit:** `feat(pricing): add pricing_history table with triggers`
 
-### Phase 2.8 — Client portal access
+### Phase 2.9 — Client portal access
 
-Migration `00072_client_portal.sql`:
+Migration `00073_client_portal.sql`:
 ```sql
 CREATE TABLE client_portal_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3598,9 +4012,9 @@ CREATE TABLE client_portal_messages (
 
 **Commit:** `feat(client-portal): add tables for client access and messages`
 
-### Phase 2.9 — V2.0 schema hooks (empty tables)
+### Phase 2.10 — V2.0 schema hooks (empty tables)
 
-Migration `00073_v2_hooks.sql`:
+Migration `00074_v2_hooks.sql`:
 ```sql
 -- Create empty tables for v2.0 features to lock in naming
 CREATE TABLE daily_logs ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() /* full schema in v2.0 */ );
@@ -3632,7 +4046,7 @@ This isn't strictly necessary but locks in naming so v2.0 doesn't rename things.
 **Branch 2 Exit Gate** (see G.2 universal checklist; phase-specific additions):
 
 ```
-[ ] All 10 migrations (00064 through 00073, with 00067 as the mid-branch grant fix from Phase 2.3's R.19 test) applied on dev, committed to git
+[ ] All 11 migrations (00064 through 00074, with 00067 as the mid-branch grant fix and 00069 as the mid-Branch-2 draw_adjustments insertion from the Markgraf-scenario pivot) applied on dev, committed to git
 [ ] Schema validator subagent confirms full alignment with Part 2 data model
 [ ] No migrations apply changes via MCP that aren't in git files
 [ ] `jobs.phase` and `jobs.contract_type` defaults don't break existing workflows
@@ -4126,7 +4540,7 @@ Support `pricing_mode=budgetary`. Placeholder amount, finalizes when proposal re
 
 Triggers populate `pricing_history`. UI surfaces on budget page, invoice approval card, vendor detail, cost code detail. Free-text search.
 
-**Rebuild-vs-patch call:** EXTEND (schema from Branch 2 Phase 2.7; triggers + UI added now).
+**Rebuild-vs-patch call:** EXTEND (schema from Branch 2 Phase 2.8; triggers + UI added now).
 
 **Phase 6.6 Exit Gate:**
 
