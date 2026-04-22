@@ -117,6 +117,9 @@ export async function POST() {
     (inserted ?? []).forEach((c) => existingCodeMap.set(c.code, c.id));
   }
 
+  // no user session: dev-only sample-data generator. Caller may be
+  // authenticated, but the rows are synthetic seed data attributed to the
+  // system, not the operator. NULL created_by is intentional here.
   const budgetInserts = SAMPLE_BUDGET_LINES.map((bl) => ({
     org_id: orgId,
     job_id: jobId,

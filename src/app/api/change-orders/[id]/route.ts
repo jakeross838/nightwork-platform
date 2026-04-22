@@ -272,6 +272,7 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
               original_estimate: 0,
               revised_estimate: 0,
               previous_applications_baseline: 0,
+              created_by: user.id,
             })
             .select("id")
             .single();

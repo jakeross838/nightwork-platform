@@ -31,6 +31,9 @@ export const POST = withApiError(async () => {
   }
 
   const supabase = createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: template, error: tplErr } = await supabase
     .from("cost_codes")
@@ -55,6 +58,7 @@ export const POST = withApiError(async () => {
       category: c.category,
       sort_order: c.sort_order,
       is_change_order: c.is_change_order,
+      created_by: user?.id ?? null,
     }));
 
   if (rows.length === 0) {

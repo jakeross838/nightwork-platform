@@ -35,6 +35,14 @@ DELETE FROM public.lien_releases
 DELETE FROM public.draws
  WHERE id IN (SELECT id FROM _phase14_test_draws);
 
+-- 4b. Synthetic test change orders (title-prefixed + scoped to test jobs).
+--     The draw_line_items delete above already detached them from the
+--     draws; this removes the CO rows themselves. Added after the initial
+--     Phase 1.4 teardown discovered Test 3's CO fixture wasn't covered.
+DELETE FROM public.change_orders
+ WHERE title LIKE 'ZZZ_PHASE_1_4_TEST%'
+    OR job_id IN (SELECT id FROM _phase14_test_jobs);
+
 -- 5. Budget lines scoped to test jobs.
 DELETE FROM public.budget_lines
  WHERE job_id IN (SELECT id FROM _phase14_test_jobs);
@@ -52,12 +60,14 @@ DO $$
 DECLARE
   _jobs int;
   _cc int;
+  _cos int;
   _bl int;
   _draws int;
   _dli int;
 BEGIN
   SELECT count(*) INTO _jobs  FROM public.jobs        WHERE name LIKE 'ZZZ_PHASE_1_4_TEST_%';
   SELECT count(*) INTO _cc    FROM public.cost_codes  WHERE code LIKE 'ZZZ_PHASE_1_4_TEST_%';
+  SELECT count(*) INTO _cos   FROM public.change_orders WHERE title LIKE 'ZZZ_PHASE_1_4_TEST%';
   SELECT count(*) INTO _bl    FROM public.budget_lines bl
                               JOIN public.jobs j ON j.id = bl.job_id
                              WHERE j.name LIKE 'ZZZ_PHASE_1_4_TEST_%';
@@ -71,6 +81,7 @@ BEGIN
 
   IF _jobs  > 0 THEN RAISE EXCEPTION 'Phase 1.4 test jobs remain: %', _jobs; END IF;
   IF _cc    > 0 THEN RAISE EXCEPTION 'Phase 1.4 test cost_codes remain: %', _cc; END IF;
+  IF _cos   > 0 THEN RAISE EXCEPTION 'Phase 1.4 test change_orders remain: %', _cos; END IF;
   IF _bl    > 0 THEN RAISE EXCEPTION 'Phase 1.4 test budget_lines remain: %', _bl; END IF;
   IF _draws > 0 THEN RAISE EXCEPTION 'Phase 1.4 test draws remain: %', _draws; END IF;
   IF _dli   > 0 THEN RAISE EXCEPTION 'Phase 1.4 test draw_line_items remain: %', _dli; END IF;

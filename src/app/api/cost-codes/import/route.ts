@@ -16,6 +16,9 @@ type ImportRow = {
 export const POST = withApiError(async (request: NextRequest) => {
   const membership = await requireRole(ADMIN_OR_OWNER);
   const supabase = createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const body = (await request.json()) as { codes?: ImportRow[] };
 
   if (!Array.isArray(body.codes) || body.codes.length === 0) {
@@ -60,6 +63,7 @@ export const POST = withApiError(async (request: NextRequest) => {
         category: row.category ?? null,
         sort_order: row.sort_order ?? 0,
         is_change_order: row.is_change_order ?? false,
+        created_by: user?.id ?? null,
       });
       if (error) throw new ApiError(`Insert ${code}: ${error.message}`, 500);
       inserts++;

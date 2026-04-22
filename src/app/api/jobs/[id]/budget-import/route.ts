@@ -221,7 +221,7 @@ export const POST = withApiError(async (
 
     if (isPayAppWorkbook(workbook)) {
       // ── Pay-app path: G702/G703/PCCO workbook ──
-      return handlePayAppImport(workbook, jobId, supabase);
+      return handlePayAppImport(workbook, jobId, supabase, user.id);
     }
 
     // ── Simple budget sheet path (column A = code, column B = amount) ──
@@ -311,6 +311,7 @@ export const POST = withApiError(async (
     original_estimate: number;
     revised_estimate: number;
     org_id: string;
+    created_by: string;
   }[] = [];
 
   const imported: ImportResult["imported"] = [];
@@ -333,6 +334,7 @@ export const POST = withApiError(async (
       original_estimate: row.amountCents,
       revised_estimate: row.amountCents,
       org_id: orgId,
+      created_by: user.id,
     });
     imported.push({
       cost_code: row.code,
@@ -394,6 +396,7 @@ async function handlePayAppImport(
   workbook: ExcelJS.Workbook,
   jobId: string,
   supabase: SupabaseClient,
+  actorUserId: string,
 ) {
   const payApp: PayAppParseResult = parsePayApp(workbook);
   const { g702, g703Lines, pccoLog, previousCoCompletedAmount, warnings } = payApp;
@@ -455,6 +458,7 @@ async function handlePayAppImport(
       revised_estimate: line.scheduledValue,
       previous_applications_baseline: line.previousApplications,
       org_id: orgId,
+      created_by: actorUserId,
     };
 
     if (existing?.id) {
