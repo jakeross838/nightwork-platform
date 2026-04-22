@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
+import { requireRole, ADMIN_OR_OWNER } from "@/lib/org/require";
 import { recalcBudgetLine, recalcPO } from "@/lib/recalc";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { canVoidPO, formatBlockers } from "@/lib/deletion-guards";
@@ -84,8 +85,10 @@ interface PatchBody {
 }
 
 export const PATCH = withApiError(async (request: NextRequest, { params }: { params: { id: string } }) => {
-  const membership = await getCurrentMembership();
-  if (!membership) throw new ApiError("Not authenticated", 401);
+  // Defense-in-depth: RLS alone is a backstop. Phase 1.2 closed a gap where
+  // a PM could PATCH a PO header (flip status, edit amount) because the only
+  // enforcement was RLS — which shifted over migrations. Gate explicit here.
+  const membership = await requireRole(ADMIN_OR_OWNER);
   const ctx = await getClientForRequest();
   if (!ctx.ok) throw new ApiError(`Impersonation rejected: ${ctx.reason}`, 401);
   const supabase = ctx.client;

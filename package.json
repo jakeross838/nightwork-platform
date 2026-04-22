@@ -14,7 +14,7 @@
     "rename-invoice-files": "npx tsx scripts/rename-invoice-files.ts",
     "migrate-org-storage": "npx tsx scripts/migrate-org-scoped-storage.ts",
     "reprocess-co-detection": "npx tsx scripts/reprocess-co-detection.ts",
-    "test": "npx tsx __tests__/status-enum-alignment.test.ts"
+    "test": "npx tsx __tests__/_runner.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
