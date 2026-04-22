@@ -122,6 +122,10 @@ Before running any project script (npm scripts, shell scripts, Makefile targets,
 
 Live manual tests (R.19) must use purpose-built synthetic draws/jobs/invoices/POs created at phase kickoff and torn down at phase end. Real Ross Built job data (Fish Residence, Markgraf, Dewberry, etc.) must not be used as test fixtures, even on dev. Using real-data rows as test subjects pollutes dogfooding and corrupts the audit trail for those jobs. Each phase that requires live manual tests creates fixtures under a recognizable naming convention (e.g., job name prefix 'ZZZ_PHASE_1_3_TEST') and deletes them before exit gate. Phase 1.3 violated this rule and required post-hoc cleanup.
 
+## R.22 Teardown script sequencing
+
+R.21's teardown script must reflect every fixture actually created during the phase. If live tests seed additional entities beyond the original fixture plan (e.g., child rows, linked records, ad-hoc SQL seeds), the teardown script must be updated to include them BEFORE the teardown is executed, not after. The authoring order is: finalize fixtures → write and commit teardown → execute tests → execute teardown. Phase 1.4 shipped with post-hoc teardown edits because the script was written before Test 3's CO fixture was finalized; this is the last phase this is acceptable.
+
 ---
 
 # PART G — EXIT GATES, QA REPORTS, SUBAGENTS, REBUILD TREE
