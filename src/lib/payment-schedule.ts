@@ -1,5 +1,5 @@
 /**
- * Payment schedule automation — Phase 8.
+ * Utility functions for invoice payment scheduling.
  *
  * Org-level payment cadence drives each invoice's scheduled_payment_date.
  * The schedule types live on `organizations.payment_schedule_type`:
@@ -11,6 +11,20 @@
  * Weekend/holiday rule: if the computed payment date lands on Sat/Sun, slide
  * to the next Monday. (We don't maintain a federal-holiday calendar yet; the
  * org can manually adjust if a holiday affects a pay cycle.)
+ *
+ * ─── Phase 1.3 narrowing ───────────────────────────────────────────────
+ * Previously this module also exported `autoScheduleDrawPayments` — the
+ * function that bulk-scheduled every invoice in a newly-approved draw. As
+ * part of the atomic-cascade rebuild, that logic moved into the
+ * `draw_approve_rpc` Postgres function (see migration 00061). This module
+ * is now utility-only and serves `src/app/api/invoices/[id]/payment/route.ts`
+ * and `src/app/api/invoices/payments/bulk/route.ts`.
+ *
+ * The date-math here is duplicated in PL/pgSQL as
+ * `public._compute_scheduled_payment_date` (migration 00061). Any change to
+ * the schedule semantics must be reflected in BOTH implementations until a
+ * later branch consolidates them — tracked as a Branch 8/9 cleanup
+ * candidate (see Phase 1.3 QA report for the GH issue reference).
  */
 
 import { createServiceRoleClient } from "@/lib/supabase/service";
@@ -32,6 +46,8 @@ export async function getOrgPaymentSchedule(
 /**
  * Given a received_date and a schedule type, compute when the invoice should
  * be paid. Returns null for 'custom' (manual) or when received_date is null.
+ *
+ * Mirrored in migration 00061 as `_compute_scheduled_payment_date`.
  */
 export function scheduledPaymentDate(
   received_date: string | null,
@@ -50,76 +66,29 @@ export function scheduledPaymentDate(
     if (day <= 5) {
       target = new Date(Date.UTC(year, month, 15));
     } else if (day <= 20) {
-      // Last day of this month (UTC day 0 of next month).
       target = new Date(Date.UTC(year, month + 1, 0));
     } else {
-      // After the 20th — rolls to next month 15.
       target = new Date(Date.UTC(year, month + 1, 15));
     }
   } else if (schedule === "15_30") {
     if (day <= 15) {
-      target = new Date(Date.UTC(year, month + 1, 0)); // end of this month
+      target = new Date(Date.UTC(year, month + 1, 0));
     } else {
       target = new Date(Date.UTC(year, month + 1, 15));
     }
   } else {
-    // monthly: pay at the end of the NEXT month.
     target = new Date(Date.UTC(year, month + 2, 0));
   }
 
-  // Bump off weekends.
   const dow = target.getUTCDay();
-  if (dow === 6) target.setUTCDate(target.getUTCDate() + 2); // Sat → Mon
-  else if (dow === 0) target.setUTCDate(target.getUTCDate() + 1); // Sun → Mon
+  if (dow === 6) target.setUTCDate(target.getUTCDate() + 2);
+  else if (dow === 0) target.setUTCDate(target.getUTCDate() + 1);
 
   return `${target.getUTCFullYear()}-${String(target.getUTCMonth() + 1).padStart(2, "0")}-${String(target.getUTCDate()).padStart(2, "0")}`;
 }
 
 function parseDate(s: string): Date | null {
-  // Treat plain YYYY-MM-DD as UTC midnight to avoid local-TZ drift.
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
   if (!m) return null;
   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-}
-
-/**
- * Set scheduled_payment_date on every invoice in a draw that doesn't already
- * have one (status 'unpaid' with a null scheduled_payment_date). Used when
- * the draw is approved.
- */
-export async function autoScheduleDrawPayments(args: {
-  draw_id: string;
-  org_id: string;
-}): Promise<number> {
-  const supabase = createServiceRoleClient();
-  const schedule = await getOrgPaymentSchedule(args.org_id);
-  const { data: invs } = await supabase
-    .from("invoices")
-    .select("id, received_date, payment_status, scheduled_payment_date")
-    .eq("draw_id", args.draw_id)
-    .is("deleted_at", null);
-  if (!invs || invs.length === 0) return 0;
-
-  let updated = 0;
-  for (const inv of invs) {
-    const row = inv as {
-      id: string;
-      received_date: string | null;
-      payment_status: string;
-      scheduled_payment_date: string | null;
-    };
-    if (row.payment_status === "paid") continue;
-    if (row.scheduled_payment_date) continue;
-    const date = scheduledPaymentDate(row.received_date, schedule);
-    if (!date) continue;
-    await supabase
-      .from("invoices")
-      .update({
-        scheduled_payment_date: date,
-        payment_status: row.payment_status === "unpaid" ? "scheduled" : row.payment_status,
-      })
-      .eq("id", row.id);
-    updated++;
-  }
-  return updated;
 }

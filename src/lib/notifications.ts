@@ -341,3 +341,143 @@ export async function notifyUser(
     );
   }
 }
+
+// ───── Phase 1.3: post-RPC email dispatch ─────────────────────────────
+//
+// The draw-cascade RPCs (draw_submit_rpc / draw_approve_rpc) insert
+// in-app notification rows inside the transaction. After the RPC commits,
+// the route needs to send the matching emails — without inserting duplicate
+// in-app rows.
+//
+// `dispatchEmailToOrgRoles` / `dispatchEmailToUser` are email-only
+// counterparts to `notifyRole` / `notifyUser`. They resolve recipient
+// profiles + opt-in state and call Resend, but skip the
+// `logInAppNotification` call (the RPC did that).
+
+async function sendEmailOnly(args: {
+  to_email: string | null;
+  user_id: string;
+  org_id: string;
+  subject: string;
+  body: string;
+  html_body?: string;
+  action_url?: string;
+}): Promise<void> {
+  const { to_email, user_id, org_id, subject, body, html_body, action_url } = args;
+  if (!to_email) return;
+
+  const optedIn = await userHasEmailEnabled(user_id, org_id);
+  if (!optedIn) return;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.NOTIFICATION_FROM_EMAIL ?? "notifications@nightwork.build";
+
+  if (!apiKey || apiKey === "re_placeholder" || apiKey.length < 10) {
+    if (process.env.NODE_ENV !== "production") {
+      console.info(
+        `[notifications] RESEND_API_KEY not configured — would have sent "${subject}" to ${to_email}`
+      );
+    }
+    return;
+  }
+
+  try {
+    const res = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `Nightwork <${fromEmail}>`,
+        to: [to_email],
+        subject,
+        html: html_body ?? defaultHtmlBody(subject, body, action_url),
+        text: body,
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.warn(
+        `[notifications] Resend failed: ${res.status} ${res.statusText} — ${text.slice(0, 200)}`
+      );
+    }
+  } catch (err) {
+    console.warn(
+      `[notifications] Resend network error: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
+
+/**
+ * Email-only dispatch to every active member of `org_id` whose role is in
+ * `roles`. Used by routes after an atomic RPC has already inserted the
+ * in-app notification rows.
+ */
+export async function dispatchEmailToOrgRoles(
+  org_id: string,
+  roles: Array<"admin" | "owner" | "pm" | "accounting">,
+  payload: { subject: string; body: string; action_url?: string; html_body?: string }
+): Promise<void> {
+  const svc = tryCreateServiceRoleClient();
+  if (!svc) return;
+  try {
+    const { data: members } = await svc
+      .from("org_members")
+      .select("user_id")
+      .eq("org_id", org_id)
+      .eq("is_active", true)
+      .in("role", roles);
+    if (!members || members.length === 0) return;
+
+    const { data: profiles } = await svc
+      .from("profiles")
+      .select("id, email")
+      .in("id", members.map((m) => m.user_id as string));
+
+    await Promise.all(
+      (profiles ?? []).map((p) =>
+        sendEmailOnly({
+          ...payload,
+          user_id: p.id as string,
+          to_email: (p.email as string | null) ?? null,
+          org_id,
+        })
+      )
+    );
+  } catch (err) {
+    console.warn(
+      `[notifications] dispatchEmailToOrgRoles error: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
+
+/**
+ * Email-only dispatch to a single user. Counterpart to `notifyUser` for
+ * post-RPC flows.
+ */
+export async function dispatchEmailToUser(
+  user_id: string,
+  org_id: string,
+  payload: { subject: string; body: string; action_url?: string; html_body?: string }
+): Promise<void> {
+  const svc = tryCreateServiceRoleClient();
+  if (!svc) return;
+  try {
+    const { data: profile } = await svc
+      .from("profiles")
+      .select("id, email")
+      .eq("id", user_id)
+      .maybeSingle();
+    await sendEmailOnly({
+      ...payload,
+      user_id,
+      to_email: (profile?.email as string | null) ?? null,
+      org_id,
+    });
+  } catch (err) {
+    console.warn(
+      `[notifications] dispatchEmailToUser error: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
