@@ -1,4 +1,4 @@
-# CLAUDE.md — Ross Command Center
+# CLAUDE.md — Nightwork
 
 ## Dev Environment Rules
 
@@ -20,17 +20,17 @@ Jake works across multiple PCs. If you don't pull first, you'll be working on st
 Screenshots are captured via Chrome MCP and returned inline in the conversation. They are not persisted to disk. Jake reviews inline screenshots directly in chat.
 
 ## Project Identity Guard
-**This project is Ross-Built-Command (Ross Command Center / Nightwork).**
-- GitHub repo: github.com/jakeross838/Ross-Built-Command
-- Repo directory name must end in `Ross-Built-Command` (local checkout path varies per PC and contributor).
+**This project is nightwork-platform (Nightwork).**
+- GitHub repo: github.com/jakeross838/nightwork-platform
+- Repo directory name must end in `nightwork-platform` (local checkout path varies per PC and contributor).
 - If CLAUDE.md mentions "RossOS", "cms_rebuild", "136 tables", "10,000+ companies", or "Phase 4 modules 20-28" — STOP. You are in the wrong project.
-- If pwd does not show Ross-Built-Command — STOP. Navigate to the correct directory.
+- If pwd does not show nightwork-platform — STOP. Navigate to the correct directory.
 - Never modify files outside of this project directory.
 - When referencing project files or folders, use repo-relative paths (e.g. `./screenshots/`, `./docs/`, `./test-invoices/`) — never absolute `C:\Users\...` paths.
 
 ## What This Is
 
-Ross Command Center is the internal operations platform for **Ross Built Custom Homes**, a luxury coastal custom home builder based in Bradenton and Anna Maria Island, Florida. Founded 2006. ~14 simultaneous projects in the $1.5M–$10M+ range. Cost-plus (open book) builder — clients see every invoice and exactly where their money went.
+Nightwork is the internal operations platform for **Ross Built Custom Homes**, a luxury coastal custom home builder based in Bradenton and Anna Maria Island, Florida. Founded 2006. ~14 simultaneous projects in the $1.5M–$10M+ range. Cost-plus (open book) builder — clients see every invoice and exactly where their money went.
 
 This platform replaces a paper-and-spreadsheet workflow with a unified system where data enters once and flows everywhere. The financial module (invoices, budgets, draws) is Phase 1. The platform will eventually expand to scheduling, daily logs, client portal, and more — so every architectural decision must support that.
 

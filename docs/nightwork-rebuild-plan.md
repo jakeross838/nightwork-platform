@@ -74,7 +74,7 @@ All PATCH requests on mutable entities include `expected_updated_at`. The API re
 
 ## R.11 Screenshots are inline, not disk-saved
 
-Screenshots are captured via Chrome MCP and returned inline in the conversation. They are not persisted to disk. Do not attempt to save to `C:\Users\Jake\Ross-Built-Command\screenshots\` or any other path — this protocol was removed because Chrome MCP doesn't support it.
+Screenshots are captured via Chrome MCP and returned inline in the conversation. They are not persisted to disk. Do not attempt to save to `C:\Users\Jake\nightwork-platform\screenshots\` or any other path — this protocol was removed because Chrome MCP doesn't support it.
 
 ## R.12 Single QA file per phase
 
@@ -611,7 +611,7 @@ The GitHub CLI (`gh`) is installed and authenticated on the Windows dev machine 
 For tech-debt issues discovered during phase execution:
 
 1. Write issue body to `qa-reports/gh-issue-body-phase{N}.{M}.md` during the phase commit.
-2. After Jake reviews and approves, create via `gh issue create --repo jakeross838/Ross-Built-Command --title '...' --body-file <stripped-body-file>`.
+2. After Jake reviews and approves, create via `gh issue create --repo jakeross838/nightwork-platform --title '...' --body-file <stripped-body-file>`.
 3. Strip H1 title + meta notes (typically first 4 lines) from the body file before passing as `--body-file`.
 4. Wire the resulting issue number into source comments, tests, and QA reports in a follow-up commit.
 

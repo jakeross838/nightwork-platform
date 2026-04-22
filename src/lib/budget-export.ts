@@ -95,7 +95,7 @@ const VARIANCE_CONDITIONAL_FORMULA = (cellRef: string) => ({
 
 export async function buildBudgetWorkbook(input: BudgetExportInput): Promise<Blob> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Ross Command Center";
+  wb.creator = "Nightwork";
   wb.created = new Date();
 
   // ---------- Sheet 1: Budget Summary ----------

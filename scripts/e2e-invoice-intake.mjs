@@ -14,7 +14,7 @@ const PASSWORD = 'RossBuilt2026!';
 const { dewberry_job_id: JOB_ID } = JSON.parse(readFileSync('e2e-state.json', 'utf8'));
 const OUT = path.resolve('screenshots');
 
-const INVOICE_DIR = 'C:/Users/Jake/Ross-Built-Command/test-invoices';
+const INVOICE_DIR = 'C:/Users/Jake/nightwork-platform/test-invoices';
 const PDFs = readdirSync(INVOICE_DIR)
   .filter((n) => /^dewberry-invoice-page-\d+\.pdf$/.test(n))
   .sort()

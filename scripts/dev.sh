@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ross Command Center — dev server launcher.
+# Nightwork — dev server launcher.
 # Usage: bash scripts/dev.sh
 #
 # Refuses to start if port 3000 is already in use. A previous version of this

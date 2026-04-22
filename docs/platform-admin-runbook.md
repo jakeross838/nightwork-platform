@@ -192,7 +192,7 @@ ask why.
 
 If you can't fix it via the UI or a targeted SQL tweak, the root cause
 is probably at the schema or workflow level. File a ticket against the
-`Ross-Built-Command` repo (or ping Jake directly) and attach:
+`nightwork-platform` repo (or ping Jake directly) and attach:
 
 - Screenshot of the UI state.
 - Copy of the relevant audit log rows.

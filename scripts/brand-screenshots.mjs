@@ -81,7 +81,7 @@ console.log('→ Favicon tab mock');
   .note{color:#a88c5f;margin-top:22px;padding-top:14px;border-top:1px solid #3a3d42;font-size:12px;line-height:1.7}
 </style></head><body>
 <h1>Favicon — Nightwork tab mock + asset pack</h1>
-<div class="sub">As browsers see Ross Command Center once the Metadata API declares the new icons.</div>
+<div class="sub">As browsers see Nightwork once the Metadata API declares the new icons.</div>
 
 <div class="browser">
   <div class="tabs">

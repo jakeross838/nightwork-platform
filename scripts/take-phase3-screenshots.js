@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { chromium } = require("playwright");
 
-const OUT_DIR = process.env.OUT_DIR || "C:/Users/jaker/Ross-Built-Command/screenshots";
+const OUT_DIR = process.env.OUT_DIR || "C:/Users/jaker/nightwork-platform/screenshots";
 const BASE = process.env.BASE || "http://localhost:3003";
 
 async function shot(page, file, opts = {}) {

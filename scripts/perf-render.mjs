@@ -40,7 +40,7 @@ function makeHtml(title, log, color, extraNote) {
   .note{color:#a88c5f;margin-top:20px;padding-top:14px;border-top:1px solid #3a3d42;font-size:12px;font-family:system-ui;line-height:1.7}
 </style></head><body>
 <h1>${title}</h1>
-<div class="sub">Ross Command Center · production build · 2-request sample · PERF_LOG=1</div>
+<div class="sub">Nightwork · production build · 2-request sample · PERF_LOG=1</div>
 <pre id="out"></pre>
 <div class="note">${extraNote}</div>
 <script>

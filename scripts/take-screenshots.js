@@ -1,4 +1,4 @@
-// Playwright screenshot script for Ross Command Center.
+// Playwright screenshot script for Nightwork.
 // Logs in as jake@rossbuilt.com and captures 13 full-page screenshots
 // to the path specified as OUT_DIR (defaults to C:/Users/jaker/Screenshots).
 const fs = require("fs");

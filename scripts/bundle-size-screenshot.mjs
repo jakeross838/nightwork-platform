@@ -17,7 +17,7 @@ const bundleHtml = `<!doctype html>
   .note{color:#a88c5f;margin-top:24px;padding-top:16px;border-top:1px solid #3a3d42;font-size:12px;line-height:1.7}
 </style></head><body>
 <h1>npm run build — bundle sizes after perf fix</h1>
-<div class="sub">Ross Command Center · production build · First Load JS per route</div>
+<div class="sub">Nightwork · production build · First Load JS per route</div>
 <pre id="out"></pre>
 <div class="note">
 <strong>Key change:</strong> /jobs/[id]/budget was 442 kB, now 186 kB (−256 kB, −58%)<br>

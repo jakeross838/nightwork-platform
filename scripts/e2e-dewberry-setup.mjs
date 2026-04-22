@@ -10,7 +10,7 @@ import { writeFileSync } from 'node:fs';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-const FILE = 'C:/Users/Jake/Ross-Built-Command/test-invoices/Dewberry-681_KRD-Pay_App_9_Jan-Feb_26.xlsx';
+const FILE = 'C:/Users/Jake/nightwork-platform/test-invoices/Dewberry-681_KRD-Pay_App_9_Jan-Feb_26.xlsx';
 const ORG_ID = '00000000-0000-0000-0000-000000000001';
 const BOB_ID = 'a0000000-0000-0000-0000-000000000004';
 const JAKE_ID = 'a0000000-0000-0000-0000-000000000001';

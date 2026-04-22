@@ -55,6 +55,6 @@ gh issue create \
   --body-file qa-reports/gh-issue-body-phase1.3.md
 ```
 
-Or paste the body above into the web UI at `https://github.com/jakeross838/Ross-Built-Command/issues/new`.
+Or paste the body above into the web UI at `https://github.com/jakeross838/nightwork-platform/issues/new`.
 
 Once the issue number exists, the stub references in the migration comment (`supabase/migrations/00061_transactional_draw_rpcs.sql`) and in Phase 1.3's QA report (`qa-reports/qa-branch1-phase1.3.md`) should be updated to `#N` in a small follow-up commit.

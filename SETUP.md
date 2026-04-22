@@ -1,4 +1,4 @@
-# Ross Command Center — Setup Guide
+# Nightwork — Setup Guide
 
 Get this project running on a new machine in ~5 minutes.
 
@@ -11,8 +11,8 @@ Get this project running on a new machine in ~5 minutes.
 ## 1. Clone and Install
 
 ```bash
-git clone https://github.com/jakeross838/Ross-Built-Command.git
-cd Ross-Built-Command
+git clone https://github.com/jakeross838/nightwork-platform.git
+cd nightwork-platform
 npm install
 ```
 
@@ -77,7 +77,7 @@ The Supabase database (project `egxkffodxcefwpqmwrur`) already has:
 Start Claude Code in the project directory:
 
 ```bash
-cd Ross-Built-Command
+cd nightwork-platform
 claude
 ```
 

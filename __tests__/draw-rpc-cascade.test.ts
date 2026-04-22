@@ -74,7 +74,7 @@ test("migration 00061 references GH issue #1 for duplicated date math", () => {
     "RPC source must contain an explicit `#1` reference to the consolidation issue"
   );
   assert.ok(
-    /github\.com\/jakeross838\/Ross-Built-Command\/issues\/1/.test(src),
+    /github\.com\/jakeross838\/[\w-]+\/issues\/1/.test(src),
     "RPC source must link the issue URL directly"
   );
 });

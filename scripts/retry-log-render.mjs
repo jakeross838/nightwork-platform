@@ -35,7 +35,7 @@ const html = `<!doctype html>
   .note{color:#a88c5f;margin-top:24px;padding-top:14px;border-top:1px solid #3a3d42;font-size:12px;font-family:system-ui;line-height:1.7}
 </style></head><body>
 <h1>Bulk import retry logic — proof log</h1>
-<div class="sub">Ross Command Center · Phase 10 · simulated parse failure</div>
+<div class="sub">Nightwork · Phase 10 · simulated parse failure</div>
 <pre id="out"></pre>
 <div class="note">
 <strong>What this proves:</strong><br>

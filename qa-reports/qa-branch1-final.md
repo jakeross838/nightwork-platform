@@ -230,9 +230,9 @@ $ npm run build
 
 | Issue | Title | Target |
 |---|---|---|
-| [#1](https://github.com/jakeross838/Ross-Built-Command/issues/1) | Date-math duplication between TS `scheduledPaymentDate` and PL/pgSQL `_compute_scheduled_payment_date` | Branch 8 or Branch 9 |
-| [#2](https://github.com/jakeross838/Ross-Built-Command/issues/2) | Surface `lien_releases.waived_at` in UI read paths | Branch 4 |
-| [#3](https://github.com/jakeross838/Ross-Built-Command/issues/3) | Bulk lien-release actions overwrite `received_at`/`waived_at` on repeated calls | Branch 5 or standalone patch |
+| [#1](https://github.com/jakeross838/nightwork-platform/issues/1) | Date-math duplication between TS `scheduledPaymentDate` and PL/pgSQL `_compute_scheduled_payment_date` | Branch 8 or Branch 9 |
+| [#2](https://github.com/jakeross838/nightwork-platform/issues/2) | Surface `lien_releases.waived_at` in UI read paths | Branch 4 |
+| [#3](https://github.com/jakeross838/nightwork-platform/issues/3) | Bulk lien-release actions overwrite `received_at`/`waived_at` on repeated calls | Branch 5 or standalone patch |
 
 ---
 

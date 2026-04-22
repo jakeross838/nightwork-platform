@@ -310,7 +310,7 @@ async function applyCoDetection(supabase: SupabaseClient, inv: InvoiceRow): Prom
 }
 
 async function main() {
-  console.log("── Ross Command Center: CO Detection + Line Item Reprocess ──\n");
+  console.log("── Nightwork: CO Detection + Line Item Reprocess ──\n");
 
   const supabase = await signInAsAdmin();
   const invoices = await loadAllInvoices(supabase);

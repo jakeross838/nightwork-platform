@@ -10,7 +10,7 @@ const BASE = 'http://localhost:3000';
 const EMAIL = 'jake@rossbuilt.com';
 const PASSWORD = 'RossBuilt2026!';
 const OUT = path.resolve('screenshots');
-const DELIVERABLES = 'C:/Users/Jake/Ross-Built-Command/test-invoices';
+const DELIVERABLES = 'C:/Users/Jake/nightwork-platform/test-invoices';
 
 const sb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,

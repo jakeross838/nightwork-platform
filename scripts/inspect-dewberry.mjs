@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 
-const PATH = 'C:/Users/Jake/Ross-Built-Command/test-invoices/Dewberry-681_KRD-Pay_App_9_Jan-Feb_26.xlsx';
+const PATH = 'C:/Users/Jake/nightwork-platform/test-invoices/Dewberry-681_KRD-Pay_App_9_Jan-Feb_26.xlsx';
 
 const wb = new ExcelJS.Workbook();
 await wb.xlsx.readFile(PATH);

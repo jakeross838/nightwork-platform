@@ -22,7 +22,7 @@ Design system for **Nightwork** — construction financial software for custom h
   - `Slate Immersive Build.html` — data-dense internal app shell
 
 ## Source repo
-`github.com/jakeross838/Ross-Built-Command` @ `main`
+`github.com/jakeross838/nightwork-platform` @ `main`
 
 ---
 

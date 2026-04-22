@@ -56,7 +56,7 @@ async function main(): Promise<void> {
   const supa = createServerClient(SUPABASE_URL, SUPABASE_ANON, {
     cookies: {
       getAll() {
-        return [...cookieJar.entries()].map(([name, value]) => ({ name, value }));
+        return Array.from(cookieJar.entries()).map(([name, value]) => ({ name, value }));
       },
       setAll(toSet) {
         for (const { name, value } of toSet) cookieJar.set(name, value);
@@ -75,7 +75,7 @@ async function main(): Promise<void> {
   console.log(`OK sign-in as ${EMAIL} (uid=${authData.user?.id})`);
   console.log(`    cookie jar holds ${cookieJar.size} cookie(s)`);
 
-  const cookieHeader = [...cookieJar.entries()]
+  const cookieHeader = Array.from(cookieJar.entries())
     .map(([n, v]) => `${n}=${v}`)
     .join("; ");
 
