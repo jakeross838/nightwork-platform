@@ -36,6 +36,21 @@ interface CoLine {
   amount_dollars: string;
 }
 
+type CoType =
+  | "owner_requested"
+  | "designer_architect"
+  | "allowance_overage"
+  | "site_condition"
+  | "internal";
+
+const CO_TYPE_OPTIONS: { value: CoType; label: string }[] = [
+  { value: "owner_requested", label: "Owner Request (affects contract)" },
+  { value: "designer_architect", label: "Designer / Architect (affects contract)" },
+  { value: "allowance_overage", label: "Allowance Overage (affects contract)" },
+  { value: "site_condition", label: "Site Condition (affects contract)" },
+  { value: "internal", label: "Internal (budget-only)" },
+];
+
 export default function NewChangeOrderPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const search = useSearchParams();
@@ -48,7 +63,7 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
 
   const [title, setTitle] = useState(prefillDescription);
   const [description, setDescription] = useState("");
-  const [coType, setCoType] = useState<"owner" | "internal">("owner");
+  const [coType, setCoType] = useState<CoType>("owner_requested");
   const [amount, setAmount] = useState(prefillAmount ?? "");
   const [rateOption, setRateOption] = useState<"default" | "18" | "0" | "custom">("default");
   const [customRate, setCustomRate] = useState("20");
@@ -240,10 +255,13 @@ export default function NewChangeOrderPage({ params }: { params: { id: string } 
               <select
                 className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
                 value={coType}
-                onChange={(e) => setCoType(e.target.value as "owner" | "internal")}
+                onChange={(e) => setCoType(e.target.value as CoType)}
               >
-                <option value="owner">Owner (affects contract)</option>
-                <option value="internal">Internal (budget-only)</option>
+                {CO_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

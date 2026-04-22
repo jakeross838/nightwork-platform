@@ -7,13 +7,26 @@ import { logActivity } from "@/lib/activity-log";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
+// Mirrors the CONTRACT_TYPES precedent at src/app/api/jobs/route.ts:16.
+// The CHECK constraint is the source of truth; narrowing the TS type
+// to the same 5 values would duplicate the constraint in two places
+// that drift, so the body type stays as `string` with runtime
+// validation against this allow-list.
+const CO_TYPES = [
+  "owner_requested",
+  "designer_architect",
+  "allowance_overage",
+  "site_condition",
+  "internal",
+] as const;
+
 interface CreateCoBody {
   title?: string;
   description?: string;
   amount?: number; // cents — base amount before GC fee
   gc_fee_rate?: number;
   estimated_days_added?: number | null;
-  co_type?: "owner" | "internal";
+  co_type?: string;
   source_invoice_id?: string | null;
   submit_for_approval?: boolean;
   lines?: Array<{
@@ -62,7 +75,10 @@ export const POST = withApiError(async (request: NextRequest, { params }: { para
   const title = (body.title ?? body.description ?? "").trim();
   if (!title) throw new ApiError("Title is required", 400);
 
-  const coType = body.co_type ?? "owner";
+  const coType = body.co_type ?? "owner_requested";
+  if (!CO_TYPES.includes(coType as (typeof CO_TYPES)[number])) {
+    throw new ApiError("Invalid co_type", 400);
+  }
   // WI-H-2: reject negatives explicitly. Contract reductions use a separate
   // workflow (not yet implemented).
   if ((body.amount ?? 0) < 0) {

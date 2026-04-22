@@ -210,7 +210,7 @@ export async function recalcJobContract(jobId: string): Promise<{
     .from("change_orders")
     .select("amount")
     .eq("job_id", jobId)
-    .eq("co_type", "owner")
+    .neq("co_type", "internal")
     .in("status", CO_APPROVED_STATUSES)
     .is("deleted_at", null);
   const approved_cos_total = (cos ?? []).reduce((s, co) => s + ((co as { amount: number }).amount ?? 0), 0);

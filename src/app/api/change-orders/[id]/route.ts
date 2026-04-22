@@ -14,6 +14,18 @@ import {
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
+// Mirrors the CONTRACT_TYPES precedent at src/app/api/jobs/route.ts:16.
+// CHECK constraint is the source of truth; the body type stays `string`
+// with runtime validation to avoid duplicating the value set in two
+// places that can drift.
+const CO_TYPES = [
+  "owner_requested",
+  "designer_architect",
+  "allowance_overage",
+  "site_condition",
+  "internal",
+] as const;
+
 export const GET = withApiError(async (_req: NextRequest, { params }: { params: { id: string } }) => {
   const supabase = createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -52,7 +64,7 @@ interface PatchBody {
   amount?: number;
   gc_fee_rate?: number;
   estimated_days_added?: number | null;
-  co_type?: "owner" | "internal";
+  co_type?: string;
   status?: "draft" | "pending" | "approved" | "denied" | "void";
   denied_reason?: string;
   note?: string;
@@ -121,7 +133,12 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     patch.total_with_fee = amount + feeAmount;
   }
   if (body.estimated_days_added !== undefined) patch.estimated_days_added = body.estimated_days_added;
-  if (body.co_type !== undefined) patch.co_type = body.co_type;
+  if (body.co_type !== undefined) {
+    if (!CO_TYPES.includes(body.co_type as (typeof CO_TYPES)[number])) {
+      throw new ApiError("Invalid co_type", 400);
+    }
+    patch.co_type = body.co_type;
+  }
 
   // Status transitions
   if (body.status && body.status !== co.status) {

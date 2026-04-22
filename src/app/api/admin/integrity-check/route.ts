@@ -212,7 +212,7 @@ export const GET = withApiError(async (_request: NextRequest) => {
       .from("change_orders")
       .select("amount")
       .eq("job_id", j.id)
-      .eq("co_type", "owner")
+      .neq("co_type", "internal")
       .in("status", CO_APPROVED_STATUSES)
       .is("deleted_at", null);
     const calc = (cos ?? []).reduce((s, co) => s + ((co as { amount: number }).amount ?? 0), 0);

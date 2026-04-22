@@ -104,7 +104,7 @@ export async function GET(
         .is("deleted_at", null);
       const netChangeOrders =
         (changeOrders ?? [])
-          .filter((co) => (co as { co_type?: string }).co_type === "owner")
+          .filter((co) => (co as { co_type?: string }).co_type !== "internal")
           .reduce(
             (s, co) =>
               s +

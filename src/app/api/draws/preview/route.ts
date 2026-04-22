@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       .is("deleted_at", null);
     const netChangeOrders =
       (changeOrders ?? [])
-        .filter((co) => (co as { co_type?: string }).co_type === "owner")
+        .filter((co) => (co as { co_type?: string }).co_type !== "internal")
         .reduce(
           (s, co) =>
             s +
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
 
     // Surface PCCO numbers for the change-order section of the preview.
     const coLines = (changeOrders ?? [])
-      .filter((co) => (co as { co_type?: string }).co_type === "owner")
+      .filter((co) => (co as { co_type?: string }).co_type !== "internal")
       .map((co) => ({
         pcco_number: (co as { pcco_number?: number }).pcco_number ?? null,
         description: (co as { description?: string }).description ?? "",
