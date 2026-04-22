@@ -153,7 +153,7 @@ This is how we verify "done" means "done." Every phase follows this structure.
                                ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ 3. CLAUDE CODE GENERATES QA REPORT                              │
-│    Single file: /mnt/user-data/outputs/qa-branch{N}-phase{M}.md │
+│    Single file: ./qa-reports/qa-branch{N}-phase{M}.md           │
 │    Format per G.3                                               │
 │    Includes every checklist item from the phase exit gate (G.2) │
 │    Marks each: ✅ PASS  ❌ FAIL  ⚠️ SKIP (with reason)           │
@@ -235,9 +235,16 @@ STANDING RULES (from Part R)
   ☐ source_document_id on all drag-createable entities (R.9)
   ☐ Optimistic locking on all PATCH routes (R.10)
   ☐ Screenshots inline, not disk-saved (R.11)
-  ☐ Single QA file produced (R.12)
+  ☐ Single QA file produced in ./qa-reports/ (R.12)
   ☐ CLAUDE.md read at start of session (R.13)
   ☐ No placeholder content added (R.14)
+  ☐ Test-first when a fix closes a bug (R.15)
+  ☐ Migration files are the source of truth — no direct-MCP schema writes (R.16)
+  ☐ Blast-radius grep run at kickoff; spec file lists reconciled (R.18)
+  ☐ Manual tests executed live against running dev server (R.19)
+  ☐ Project scripts read before invocation (R.20)
+  ☐ Synthetic test fixtures only; no production-shaped data (R.21)
+  ☐ Teardown script finalized and committed before tests run (R.22)
 
 GIT HYGIENE
   ☐ Commits are atomic and pass tests individually (R.17)
@@ -272,7 +279,7 @@ Phase specs in Part 5 will include their specific checks.
 
 ## G.3 QA report format
 
-Every phase produces **one** file at `/mnt/user-data/outputs/qa-branch{N}-phase{M}.md`. Structure:
+Every phase produces **one** file at `./qa-reports/qa-branch{N}-phase{M}.md` (repo-relative, per R.12). Structure:
 
 ```markdown
 # QA Report — Branch {N} Phase {M}: {Phase Name}
@@ -1957,7 +1964,7 @@ daily_logs (v2.0)
 schedule_items (v2.0)
 time_entries (v2.0)
 selections (v1.5)
-plans (v1.5)
+blueprint_plans (v1.5)
 takeoff_extractions (v1.5)
 overhead_pools (v2.0)
 overhead_allocations (v2.0)
@@ -2803,9 +2810,20 @@ ALTER TABLE proposal_line_items ENABLE ROW LEVEL SECURITY;
 
 Migration `00065_co_type_expansion.sql`:
 ```sql
+-- Order matters: constraint must be dropped before data migration;
+-- new constraint added last. Sequencing bug caught during Branch 2
+-- pre-context (flag E).
+
+-- (a) Drop old CHECK so in-flight 'owner' rows can be rewritten
 ALTER TABLE change_orders
-  DROP CONSTRAINT change_orders_co_type_check,
-  ADD CONSTRAINT change_orders_co_type_check 
+  DROP CONSTRAINT change_orders_co_type_check;
+
+-- (b) Migrate data: 'owner' → 'owner_requested'; 'internal' stays
+UPDATE change_orders SET co_type = 'owner_requested' WHERE co_type = 'owner';
+
+-- (c) Install new CHECK over the fully migrated data set
+ALTER TABLE change_orders
+  ADD CONSTRAINT change_orders_co_type_check
     CHECK (co_type IN ('owner_requested','designer_architect','allowance_overage','site_condition','internal'));
 
 ALTER TABLE change_orders
@@ -2813,9 +2831,6 @@ ALTER TABLE change_orders
     CHECK (pricing_mode IN ('hard_priced','budgetary','allowance_split')),
   ADD COLUMN source_proposal_id UUID REFERENCES proposals(id),
   ADD COLUMN reason TEXT;
-
--- Migrate 'owner' → 'owner_requested', 'internal' stays
-UPDATE change_orders SET co_type = 'owner_requested' WHERE co_type = 'owner';
 ```
 
 Also add `created_po_id` to `change_order_lines`:
@@ -2871,9 +2886,16 @@ CREATE TABLE approval_chains (
   stages JSONB NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   created_by UUID REFERENCES auth.users(id),
-  deleted_at TIMESTAMPTZ,
-  UNIQUE (org_id, workflow_type, is_default) DEFERRABLE -- only one default per workflow
+  deleted_at TIMESTAMPTZ
 );
+
+-- Only one default chain per (org, workflow_type); non-default chains
+-- unconstrained. A plain UNIQUE across (org_id, workflow_type, is_default)
+-- would wrongly allow only one is_default=false row per pair. Flag F from
+-- Branch 2 pre-context.
+CREATE UNIQUE INDEX approval_chains_one_default_per_workflow
+  ON approval_chains (org_id, workflow_type)
+  WHERE is_default = true;
 
 CREATE TABLE approval_actions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3009,7 +3031,10 @@ CREATE TABLE daily_logs ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() /* full 
 CREATE TABLE schedule_items ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
 CREATE TABLE time_entries ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
 CREATE TABLE selections ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
-CREATE TABLE plans ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
+-- Renamed from 'plans' (flag G, Branch 2 pre-context): avoids collision
+-- with Nightwork's subscription-plan terminology (Free/Starter/Pro/
+-- Enterprise) and is more semantically precise for blueprint/drawing data.
+CREATE TABLE blueprint_plans ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
 CREATE TABLE takeoff_extractions ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
 CREATE TABLE overhead_pools ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
 CREATE TABLE overhead_allocations ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
@@ -4190,7 +4215,7 @@ Excluded from v1.0 with explicit reason:
 
 ## 6.5 Rebuild Decision Tree (quick reference)
 
-This is the same flow as SR.3, in compact form for Claude Code to scan mid-session:
+This is the same flow as G.1, in compact form for Claude Code to scan mid-session:
 
 ```
 Encountering existing code that needs modification?
@@ -4214,7 +4239,7 @@ Patching creates compounding tech debt.
 
 ## 6.6 QA Report File Template (empty file to fill)
 
-The QA report template is defined in SR.6. For reference, Claude Code can copy this starter when generating a QA report:
+The QA report template is defined in G.3. For reference, Claude Code can copy this starter when generating a QA report:
 
 ```markdown
 # QA Report — Branch X Phase Y
@@ -4240,11 +4265,11 @@ The QA report template is defined in SR.6. For reference, Claude Code can copy t
 ## 15. Ready to advance? YES/NO
 ```
 
-File location: `/mnt/user-data/outputs/qa-report-branch-X-phase-Y.md`
+File location: `./qa-reports/qa-branch{N}-phase{M}.md` (repo-relative, per R.12)
 
 ## 6.7 Subagent deployment quick reference
 
-Per SR.7, subagents are deployed tactically. Quick map:
+Per G.4, subagents are deployed tactically. Quick map:
 
 | Subagent | When deployed | What it does |
 |---|---|---|
