@@ -284,3 +284,100 @@ Plan amendments shipped separately in commit `c6b468d`.
 | Post-apply live re-probe | 90104565 | ✅ invariant preserved |
 
 The $901,045.65 cached contract adjustment across the 2 affected Ross Built jobs is intact. No silent zeroing occurred; the predicate switch from `co_type = 'owner'` to `co_type <> 'internal'` is semantically equivalent over the current dataset (every live approved CO is owner-typed; zero are internal), and the new predicate is also correct forward-looking under the 5-value set.
+
+---
+
+## 11. Live workflow addendum (R.19 closure)
+
+**Status:** R.19 gap from §9 #1 closed. Full HTTP round-trip exercised end-to-end against the running dev server, with synthetic fixtures created pre-test + torn down post-test, and the Ross Built invariant re-verified afterward.
+
+### 11.1 Fixture seed (via Supabase MCP `execute_sql`)
+
+| Fixture | ID | Prefix (R.21) |
+|---|---|---|
+| Job `ZZZ_PHASE_2_3_LIVE_TEST_JOB` (Ross Built org, 1M contract, cost_plus_open_book) | `cb34477d-a5d8-45ff-bc9a-cc3888b2d03e` | `ZZZ_PHASE_2_3_LIVE_TEST_` |
+| Vendor `ZZZ_PHASE_2_3_LIVE_TEST_VENDOR` | `27842469-ec02-434c-ac79-da44d12fc9ec` | same |
+
+Pre-test live-job SUM(`approved_cos_total`) = **90104565** (baseline unchanged).
+
+### 11.2 Teardown script (pre-test commit per R.22)
+
+`scripts/one-off/phase2.3-live-test-teardown.sql` committed at `16bebcb` before the workflow ran. Hard-deletes by ZZZ_ prefix + FK-discovered children; ends with an invariant-verification block that `RAISE EXCEPTION`s if post-teardown SUM ≠ 90104565 cents.
+
+### 11.3 Pre-existing blocker surfaced: `app_private` authenticated grants missing
+
+**First UI POST returned 500:** `permission denied for schema app_private`.
+
+Root cause (not a Phase 2.3 bug — pre-existing 00042-era gap): `app_private.co_cache_trigger` (not SECURITY DEFINER) fires on every `change_orders` mutation and `PERFORM`s `app_private.refresh_approved_cos_total`. 00042 only granted `USAGE ON SCHEMA app_private` + `EXECUTE ON ALL FUNCTIONS` to `service_role` — not to `authenticated`. Any Next.js API route using `@supabase/ssr`'s cookie-authenticated `createServerClient()` executes the INSERT as `authenticated`, which then fails the trigger's schema-USAGE check.
+
+Why it was dormant until now: the 73 live owner COs pre-dating 00042 (Apr 16–18, 00042 applied 2026-04-18 14:05) never tripped the trigger; subsequent DB seeds / admin ops went through `service_role` paths. No authenticated-role UI CO INSERT had been exercised between 00042 landing and this live test.
+
+**Fix shipped as migration `00067_co_cache_trigger_authenticated_grants.sql` (+ `.down.sql`):**
+
+```sql
+GRANT USAGE ON SCHEMA app_private TO authenticated;
+GRANT EXECUTE ON FUNCTION app_private.co_cache_trigger()          TO authenticated;
+GRANT EXECUTE ON FUNCTION app_private.refresh_approved_cos_total(uuid) TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA app_private GRANT EXECUTE ON FUNCTIONS TO authenticated;
+```
+
+Minimal-scope — does NOT blanket-grant all `app_private` functions to authenticated; only the two the CO trigger chain needs. No change to `co_cache_trigger`'s SECURITY DEFINER flag (the inner helper is already SECURITY DEFINER). The ALTER DEFAULT PRIVILEGES clause keeps future app_private functions accessible to the Next.js JS client without another migration.
+
+Applied to dev via `apply_migration`. Shipped as a separate `fix(db):` commit scoped to this bug — not folded into Phase 2.3's atomic feat commit because it repairs a 00042-era regression, not Phase 2.3 work.
+
+### 11.4 HTTP round-trip (post-00067)
+
+| Step | Method | Endpoint | Status |
+|---|---|---|---|
+| Navigate to dashboard (auth confirmed) | GET | `/dashboard` | 200 |
+| Open new-CO form for test job | GET | `/jobs/cb34477d…/change-orders/new` | 200 |
+| UI verification: picker shows all 5 co_type options; default selected is `owner_requested` | — | — | ✅ |
+| Submit new CO: title `ZZZ_PHASE_2_3_TEST_CO`, co_type `designer_architect`, amount 50000 cents ($500), GC fee 0% | POST | `/api/jobs/cb34477d…/change-orders` | **200** ✅ |
+| Approve CO (admin/owner action) | PATCH | `/api/change-orders/cdcdcf8d-cbb7-4361-bf56-72a0ad90cee4` | **200** ✅ |
+
+### 11.5 Post-workflow DB verification
+
+Via Supabase MCP `execute_sql`:
+
+| Check | Expected | Observed |
+|---|---|---|
+| Test CO row `co_type` | `designer_architect` | `designer_architect` ✅ |
+| Test CO row `status` | `approved` | `approved` ✅ |
+| Test CO row `amount` / `total_with_fee` | 50000 / 50000 | 50000 / 50000 ✅ |
+| Test CO row `pricing_mode` (default) | `hard_priced` | `hard_priced` ✅ |
+| Test job `approved_cos_total` (cache trigger result) | 50000 | **50000** ✅ |
+| Test job `current_contract_amount` | 100050000 | 100050000 ✅ |
+| Global SUM(`approved_cos_total`) across live jobs | **90154565** (Ross Built 90104565 + test 50000) | **90154565** ✅ |
+
+This is the strongest possible confirmation that Amendment B's new predicate (`co_type <> 'internal'`) fired correctly through the real co_cache_trigger → refresh_approved_cos_total chain, against a **net-new non-`owner_requested` value** (`designer_architect`), via the **full HTTP round-trip** from browser → Next.js API → PostgREST → authenticated role → trigger → function → table write.
+
+### 11.6 Teardown execution + invariant restoration
+
+Ran the committed teardown script body via `execute_sql` inside `BEGIN/COMMIT`.
+
+| Check | Expected | Observed |
+|---|---|---|
+| Test jobs remaining | 0 | 0 ✅ |
+| Test vendors remaining | 0 | 0 ✅ |
+| Test change orders remaining | 0 | 0 ✅ |
+| Live-job SUM(`approved_cos_total`) post-teardown | **90104565** (baseline) | **90104565** ✅ |
+
+The teardown `DO` block's `RAISE EXCEPTION` guards did not fire. The in-script `RAISE NOTICE 'Phase 2.3 teardown verified — invariant restored to % cents.'` executed cleanly. Ross Built invariant fully restored to baseline.
+
+### 11.7 Updated invariant check
+
+Adding the live-test checkpoints to §10's table:
+
+| Checkpoint | SUM cents | Status |
+|---|---|---|
+| Pre-live-test seed (post-migration baseline re-verified) | 90104565 | ✅ |
+| Post-UI-approval (test CO `designer_architect` 50000 cents added) | 90154565 | ✅ cache trigger fired under new predicate |
+| Post-teardown (test CO deleted, co_cache_trigger recompute to 0 on test job) | 90104565 | ✅ invariant restored |
+
+### 11.8 R.19 compliance statement (updated)
+
+Section 2's R.19 cell is upgraded to **✅ PASS — live HTTP round-trip executed, test CO created and approved via UI, cache trigger confirmed under new predicate with a net-new co_type value, all fixtures torn down clean, Ross Built 90104565-cents invariant restored.** Block cleared.
+
+### 11.9 Additional flagged discovery
+
+**[NEW] GH #9 candidate: `app_private` authenticated grants latent bug.** Fixed in migration 00067 and documented above. Was not a Phase 2.3 regression — 00042's grant clause only covered `service_role`. Recommend opening a GitHub issue noting: (1) this fix landed in 00067; (2) any future function added to `app_private` that's called from a non-SECURITY-DEFINER trigger on an RLS-authenticated table must be reachable by the authenticated role; the ALTER DEFAULT PRIVILEGES clause in 00067 handles the common case.
