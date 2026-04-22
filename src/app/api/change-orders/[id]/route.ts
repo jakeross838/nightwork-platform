@@ -53,7 +53,7 @@ interface PatchBody {
   gc_fee_rate?: number;
   estimated_days_added?: number | null;
   co_type?: "owner" | "internal";
-  status?: "draft" | "pending" | "approved" | "denied" | "void" | "executed";
+  status?: "draft" | "pending" | "approved" | "denied" | "void";
   denied_reason?: string;
   note?: string;
   expected_updated_at?: string;
@@ -89,8 +89,8 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     .single();
   if (fetchErr || !co) throw new ApiError("Change order not found", 404);
 
-  // Once approved/executed, no edits except void.
-  if (["approved", "executed"].includes(co.status) && body.status !== "void") {
+  // Once approved, no edits except void.
+  if (co.status === "approved" && body.status !== "void") {
     throw new ApiError("Approved change orders cannot be edited — void first", 422);
   }
 
@@ -131,7 +131,7 @@ export const PATCH = withApiError(async (request: NextRequest, { params }: { par
     }
 
     // Void guard: block if draws were submitted after the CO was approved.
-    if (body.status === "void" && ["approved", "executed"].includes(co.status)) {
+    if (body.status === "void" && co.status === "approved") {
       const guard = await canVoidCO(params.id);
       if (!guard.allowed) {
         await logActivity({

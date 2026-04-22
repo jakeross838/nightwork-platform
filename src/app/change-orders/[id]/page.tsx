@@ -41,9 +41,7 @@ interface CoLine {
 const STATUS_STYLES: Record<string, string> = {
   draft: "text-[color:var(--text-secondary)] border-[rgba(59,88,100,0.28)]",
   pending: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
-  pending_approval: "text-[color:var(--nw-warn)] border-[rgba(201,138,59,0.35)]",
   approved: "text-[color:var(--nw-success)] border-[rgba(74,138,111,0.35)]",
-  executed: "text-[color:var(--nw-stone-blue)] border-[rgba(91,134,153,0.35)]",
   denied: "text-[color:var(--nw-danger)] border-[rgba(176,85,78,0.35)]",
   void: "text-[color:var(--nw-danger)] border-[rgba(176,85,78,0.35)] line-through",
 };
@@ -51,9 +49,7 @@ const STATUS_STYLES: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
   pending: "Pending Approval",
-  pending_approval: "Pending Approval",
   approved: "Approved",
-  executed: "Executed",
   denied: "Denied",
   void: "Void",
 };
@@ -260,7 +256,7 @@ export default function ChangeOrderDetailPage() {
               )}
             </div>
 
-            {co.jobs && (co.status === "approved" || co.status === "executed") && (
+            {co.jobs && co.status === "approved" && (
               <div className="border nw-panel p-5">
                 <h3 className="text-sm font-medium text-[color:var(--text-primary)] mb-3 uppercase tracking-wider">Contract Impact</h3>
                 <dl className="grid grid-cols-3 gap-4 text-sm">
@@ -294,7 +290,7 @@ export default function ChangeOrderDetailPage() {
                     Submit for Approval
                   </button>
                 )}
-                {(co.status === "pending" || co.status === "pending_approval") && canApprove && (
+                {co.status === "pending" && canApprove && (
                   <>
                     <button
                       disabled={busy}
@@ -316,7 +312,7 @@ export default function ChangeOrderDetailPage() {
                     </button>
                   </>
                 )}
-                {co.status !== "void" && !["draft", "pending", "pending_approval"].includes(co.status) && canApprove && (
+                {co.status !== "void" && !["draft", "pending"].includes(co.status) && canApprove && (
                   <button
                     disabled={busy}
                     onClick={() => {
@@ -329,7 +325,7 @@ export default function ChangeOrderDetailPage() {
                     Void
                   </button>
                 )}
-                {(co.status === "draft" || co.status === "pending" || co.status === "pending_approval") && (
+                {(co.status === "draft" || co.status === "pending") && (
                   <button
                     disabled={busy}
                     onClick={() => {

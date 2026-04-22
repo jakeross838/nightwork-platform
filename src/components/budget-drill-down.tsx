@@ -56,7 +56,7 @@ const INVOICE_COUNTING_STATUSES = [
   "in_draw",
   "paid",
 ];
-const CO_APPROVED_STATUSES = ["approved", "executed"];
+const CO_APPROVED_STATUSES = ["approved"];
 const PREVIEW_MAX = 120;
 
 /**

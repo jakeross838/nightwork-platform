@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       .select("total_with_fee, amount, co_type, status, pcco_number, description")
       .eq("job_id", job_id)
       .eq("org_id", orgId)
-      .in("status", ["approved", "executed"])
+      .eq("status", "approved")
       .is("deleted_at", null);
     const netChangeOrders =
       (changeOrders ?? [])

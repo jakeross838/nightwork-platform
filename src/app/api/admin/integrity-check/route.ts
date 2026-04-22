@@ -41,7 +41,7 @@ const INVOICE_COUNTING_STATUSES = [
   "paid",
 ];
 const PO_OPEN_STATUSES = ["issued", "partially_invoiced", "fully_invoiced"];
-const CO_APPROVED_STATUSES = ["approved", "executed"];
+const CO_APPROVED_STATUSES = ["approved"];
 
 export const GET = withApiError(async (_request: NextRequest) => {
   const membership = await getCurrentMembership();

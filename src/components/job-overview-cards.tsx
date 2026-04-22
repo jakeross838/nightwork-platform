@@ -122,7 +122,7 @@ export default function JobOverviewCards({
           .from("change_orders")
           .select("id")
           .eq("job_id", jobId)
-          .in("status", ["draft", "pending_approval"])
+          .in("status", ["draft", "pending"])
           .is("deleted_at", null),
         // Pending lien releases.
         supabase

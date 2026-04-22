@@ -33,7 +33,7 @@ const INVOICE_ACTIVE_STATUSES = [
   "in_draw",
   "paid",
 ];
-const CO_ACTIVE = ["draft", "pending", "pending_approval", "approved", "executed"];
+const CO_ACTIVE = ["draft", "pending", "approved"];
 const DRAW_ACTIVE = ["draft", "pm_review", "approved", "submitted", "paid"];
 
 /** Budget line cannot be deleted if any PO, invoice, or CO references it. */

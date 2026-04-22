@@ -497,7 +497,7 @@ async function handlePayAppImport(
       gc_fee_amount: co.gcFeeAmount,
       total_with_fee: co.addition + co.gcFeeAmount,
       estimated_days_added: co.estimatedDaysAdded,
-      status: "executed",
+      status: "approved",
       draw_number: co.appNumber,
       org_id: orgId,
       status_history: JSON.stringify([
@@ -505,7 +505,7 @@ async function handlePayAppImport(
           who: "pay-app-import",
           when: new Date().toISOString(),
           old_status: null,
-          new_status: "executed",
+          new_status: "approved",
           note: `Imported from pay app #${g702.applicationNumber}`,
         },
       ]),

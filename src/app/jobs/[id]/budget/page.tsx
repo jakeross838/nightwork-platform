@@ -172,7 +172,7 @@ export default function JobBudgetPage({ params }: { params: { id: string } }) {
         .from("change_order_lines")
         .select("budget_line_id, amount, change_orders!inner(job_id, status)")
         .eq("change_orders.job_id", params.id)
-        .in("change_orders.status", ["approved", "executed"])
+        .eq("change_orders.status", "approved")
         .is("deleted_at", null),
       supabase
         .from("invoice_line_items")

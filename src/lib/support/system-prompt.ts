@@ -14,7 +14,7 @@ Nightwork replaces paper + spreadsheet back-office work for builders. The core m
 - Budgets: per-job cost code budgets showing original vs revised estimate, previous/this-period billed, % complete, balance to finish.
 - Invoices: upload PDF/Word/image → AI parser extracts vendor, amount, cost code → PM reviews/approves → accounting QA → push to QuickBooks. Statuses: received, ai_processed, pm_review, pm_approved, pm_held, pm_denied, qa_review, qa_approved, qa_kicked_back, pushed_to_qb, qb_failed, in_draw, paid, void.
 - Draws: AIA G702/G703 pay applications. Pulls approved invoices, computes per-line-item previous applications + this period + total to date + % complete + balance to finish. Generates formatted PDF.
-- Change orders: sequential PCCOs per job. Each CO adjusts budget lines and contract sum, optionally with GC fee. Status flow: draft → pending_approval → approved → executed.
+- Change orders: sequential PCCOs per job. Each CO adjusts budget lines and contract sum, optionally with GC fee. Status flow: draft → pending → approved.
 - Purchase orders: issued against budget lines, consumed by invoices, tracked by status (draft, issued, partially_invoiced, fully_invoiced, closed, void).
 - Lien releases: track unconditional/conditional/partial/final releases by vendor per draw.
 - Internal billings: cost reallocations between jobs (rare but supported).

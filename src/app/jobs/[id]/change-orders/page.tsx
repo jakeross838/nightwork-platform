@@ -42,8 +42,7 @@ interface ChangeOrder {
 
 function coBadgeVariant(status: string): BadgeVariant {
   if (status === "approved") return "success";
-  if (status === "executed") return "info";
-  if (status === "pending" || status === "pending_approval") return "warning";
+  if (status === "pending") return "warning";
   if (status === "denied" || status === "void") return "danger";
   return "neutral";
 }
@@ -51,9 +50,7 @@ function coBadgeVariant(status: string): BadgeVariant {
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
   pending: "Pending",
-  pending_approval: "Pending",
   approved: "Approved",
-  executed: "Executed",
   denied: "Denied",
   void: "Void",
 };
@@ -119,11 +116,11 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
   }
 
   const totals = useMemo(() => {
-    const approved = cos.filter((co) => ["approved", "executed"].includes(co.status));
+    const approved = cos.filter((co) => co.status === "approved");
     return {
       approvedCount: approved.length,
       approvedSum: approved.reduce((s, co) => s + co.amount, 0),
-      pending: cos.filter((co) => ["draft", "pending", "pending_approval"].includes(co.status)).length,
+      pending: cos.filter((co) => ["draft", "pending"].includes(co.status)).length,
     };
   }, [cos]);
 
@@ -314,7 +311,7 @@ function CoActions({
   canApprove: boolean;
   onStatus: (status: string, opts?: { note?: string; denied_reason?: string }) => void;
 }) {
-  if (["approved", "executed", "denied", "void"].includes(co.status)) {
+  if (["approved", "denied", "void"].includes(co.status)) {
     if (co.status === "approved" && canApprove) {
       return (
         <NwButton
@@ -341,7 +338,7 @@ function CoActions({
           Submit
         </NwButton>
       )}
-      {(co.status === "pending" || co.status === "pending_approval") && canApprove && (
+      {co.status === "pending" && canApprove && (
         <>
           <NwButton variant="primary" size="sm" disabled={busy} loading={busy} onClick={() => onStatus("approved")}>
             Approve

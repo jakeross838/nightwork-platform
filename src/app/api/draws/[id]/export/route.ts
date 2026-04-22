@@ -146,7 +146,7 @@ export async function GET(
  .select("*")
  .eq("job_id", draw.job_id)
  .eq("org_id", orgId)
- .eq("status", "executed")
+ .eq("status", "approved")
  .is("deleted_at", null)
  .order("pcco_number", { ascending: true });
 

@@ -12,8 +12,8 @@
  *     count.
  *   - PO issued → ('issued','partially_invoiced','fully_invoiced').
  *     ('draft','void','closed') do NOT count as commitments.
- *   - CO approved → ('approved','executed'). ('draft','pending',
- *     'pending_approval','denied','void') do NOT count.
+ *   - CO approved → ('approved'). ('draft','pending','denied','void') do
+ *     NOT count.
  *
  * The recalc functions are intentionally idempotent — running them twice
  * leaves the same result. They use a service-role client so they can run
@@ -37,7 +37,7 @@ const INVOICE_COUNTING_STATUSES = [
 ];
 
 const PO_OPEN_STATUSES = ["issued", "partially_invoiced", "fully_invoiced"];
-const CO_APPROVED_STATUSES = ["approved", "executed"];
+const CO_APPROVED_STATUSES = ["approved"];
 
 /**
  * Recompute committed / invoiced / co_adjustments / revised_estimate for one

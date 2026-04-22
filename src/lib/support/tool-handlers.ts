@@ -231,7 +231,7 @@ async function buildJobResult(
   }>;
 
   const approvedCosTotal = cos
-    .filter((c) => c.status === "approved" || c.status === "executed")
+    .filter((c) => c.status === "approved")
     .reduce((sum, c) => sum + (c.total_with_fee ?? 0), 0);
 
   const PAID_OR_IN_DRAW = new Set([

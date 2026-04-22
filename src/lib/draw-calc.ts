@@ -417,7 +417,7 @@ export async function netChangeOrdersForJob(jobId: string): Promise<number> {
     .from("change_orders")
     .select("total_with_fee, amount, gc_fee_amount")
     .eq("job_id", jobId)
-    .in("status", ["approved", "executed"])
+    .eq("status", "approved")
     .eq("co_type", "owner")
     .is("deleted_at", null);
   const nightworkSum = (cos ?? []).reduce((s, co) => {

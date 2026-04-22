@@ -47,7 +47,7 @@ export const GET = withApiError(async (
     )
     .eq("job_id", draw.job_id)
     .eq("org_id", membership.org_id)
-    .in("status", ["approved", "executed"])
+    .eq("status", "approved")
     .is("deleted_at", null)
     .is("draw_number", null)
     .order("pcco_number", { ascending: true });

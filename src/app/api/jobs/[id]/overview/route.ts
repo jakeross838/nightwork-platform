@@ -85,7 +85,7 @@ export const GET = withApiError(async (
         .eq("job_id", jobId).eq("org_id", orgId).eq("status", "draft").is("deleted_at", null)),
     timed("job-overview", "change_orders.pending", false,
       supabase.from("change_orders").select("id", { count: "exact", head: true })
-        .eq("job_id", jobId).eq("org_id", orgId).in("status", ["draft", "pending_approval"]).is("deleted_at", null)),
+        .eq("job_id", jobId).eq("org_id", orgId).in("status", ["draft", "pending"]).is("deleted_at", null)),
     timed("job-overview", "lien_releases.pending", false,
       supabase.from("lien_releases").select("id", { count: "exact", head: true })
         .eq("job_id", jobId).eq("org_id", orgId).eq("status", "pending").is("deleted_at", null)),
