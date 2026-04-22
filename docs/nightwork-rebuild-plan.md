@@ -2917,36 +2917,180 @@ Also write `00065_proposals.down.sql` per R.16 (drops triggers, indexes, tables 
 
 ### Phase 2.3 — CO type expansion
 
+**Plan-doc amendment history:**
+- Pre-context (Branch 2): established flag-E sequencing (drop CHECK → UPDATE data → add new CHECK). Commit `661e895`.
+- Pre-flight (2026-04-22): five amendments landed after pre-flight findings. See `qa-reports/preflight-branch2-phase2.3.md`.
+  - **A** — Drop + re-set the `co_type` column default around the data migration. The pre-flight default `'owner'` becomes invalid against the new CHECK; any INSERT relying on the default would violate the constraint.
+  - **B** — Rewrite `app_private.refresh_approved_cos_total` predicate from `co_type = 'owner'` to `co_type <> 'internal'` (matches the value-semantics table below: 4 of 5 new types raise contract; only `internal` does not). Add a one-time cache backfill + a verification probe that aborts if the post-backfill SUM diverges from the pre-flight-captured $901,045.65 cached total.
+  - **C** — Scope expansion: 7 application-layer sites that hardcode `co_type === 'owner'` with contract-raising semantics, plus 2 TS unions, 1 API default, 1 form state. Same precedent as Phase 2.1 (commit `046a164`). UI display label/badge maps deferred to Branch 4 (GH #7).
+  - **D** — R.15 test coverage, including a semantic-equivalence regression test that asserts pre-migration SUM(approved_cos_total) equals post-migration SUM.
+  - **E** — Paired `00066_co_type_expansion.down.sql` per R.16.
+
 Migration `00066_co_type_expansion.sql`:
 ```sql
 -- Order matters: constraint must be dropped before data migration;
 -- new constraint added last. Sequencing bug caught during Branch 2
 -- pre-context (flag E).
+--
+-- Naming note: this migration introduces change_orders.pricing_mode
+-- (hard_priced/budgetary/allowance_split) which is distinct from
+-- the existing items.pricing_model / invoice_extraction_lines.
+-- proposed_pricing_model (unit/scope) introduced in 00057.
+-- Different tables, different semantics, similar names.
+-- Tracked for possible future rename in GH #8.
 
 -- (a) Drop old CHECK so in-flight 'owner' rows can be rewritten
-ALTER TABLE change_orders
+ALTER TABLE public.change_orders
   DROP CONSTRAINT change_orders_co_type_check;
 
+-- (a.1) Drop the stale default. The current default 'owner' is about to
+-- become an invalid value against the new CHECK. Dropping it here prevents
+-- any concurrent transaction from using it between (a) and (c).
+ALTER TABLE public.change_orders
+  ALTER COLUMN co_type DROP DEFAULT;
+
 -- (b) Migrate data: 'owner' → 'owner_requested'; 'internal' stays
-UPDATE change_orders SET co_type = 'owner_requested' WHERE co_type = 'owner';
+UPDATE public.change_orders
+  SET co_type = 'owner_requested'
+  WHERE co_type = 'owner';
+
+-- (b.1) Restore a sensible default under the new value set.
+-- 'owner_requested' preserves the semantic intent of the old default
+-- (owner-initiated CO is the common case).
+ALTER TABLE public.change_orders
+  ALTER COLUMN co_type SET DEFAULT 'owner_requested';
 
 -- (c) Install new CHECK over the fully migrated data set
-ALTER TABLE change_orders
+ALTER TABLE public.change_orders
   ADD CONSTRAINT change_orders_co_type_check
-    CHECK (co_type IN ('owner_requested','designer_architect','allowance_overage','site_condition','internal'));
+    CHECK (co_type IN ('owner_requested','designer_architect',
+      'allowance_overage','site_condition','internal'));
 
-ALTER TABLE change_orders
+-- (d) Add the new columns on change_orders
+ALTER TABLE public.change_orders
   ADD COLUMN pricing_mode TEXT NOT NULL DEFAULT 'hard_priced'
     CHECK (pricing_mode IN ('hard_priced','budgetary','allowance_split')),
-  ADD COLUMN source_proposal_id UUID REFERENCES proposals(id),
+  ADD COLUMN source_proposal_id UUID REFERENCES public.proposals(id),
   ADD COLUMN reason TEXT;
+
+-- (e) Add created_po_id on change_order_lines
+ALTER TABLE public.change_order_lines
+  ADD COLUMN created_po_id UUID REFERENCES public.purchase_orders(id);
+
+-- ============================================================
+-- 00066-B: Update contract-raising predicate in the CO cache trigger.
+-- ============================================================
+-- Before this phase, the filter `co_type = 'owner'` isolated contract-
+-- raising COs from 'internal' budget reallocations. Under the expanded
+-- value set, 4 of 5 types raise contract; only 'internal' does not
+-- (plan doc §1066–1072). Switch to the complement.
+--
+-- Without this, the 73 rows just migrated from 'owner' to 'owner_requested'
+-- stop matching the filter. On the next mutation of any CO on their 2
+-- affected jobs, co_cache_trigger sets approved_cos_total = 0, silently
+-- zeroing $901,045.65 of cached contract adjustment.
+CREATE OR REPLACE FUNCTION app_private.refresh_approved_cos_total(target_job_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  co_total bigint;
+BEGIN
+  SELECT COALESCE(SUM(
+    COALESCE(total_with_fee, COALESCE(amount, 0) + COALESCE(gc_fee_amount, 0))
+  ), 0)
+  INTO co_total
+  FROM public.change_orders
+  WHERE job_id = target_job_id
+    AND co_type <> 'internal'
+    AND status IN ('approved', 'executed')
+    AND deleted_at IS NULL;
+
+  UPDATE public.jobs
+  SET approved_cos_total = co_total,
+      current_contract_amount = COALESCE(original_contract_amount, 0) + co_total
+  WHERE id = target_job_id;
+END;
+$$;
+
+COMMENT ON FUNCTION app_private.refresh_approved_cos_total IS
+'Recomputes jobs.approved_cos_total and current_contract_amount for a given job based on current change_orders state. Filter co_type <> ''internal'' excludes internal budget reallocations (which do not raise the contract) while including all 4 contract-raising types. Updated in 00066 from co_type = ''owner''.';
+
+-- One-time backfill: re-run against every live job so approved_cos_total
+-- reflects the new predicate immediately, not waiting on the next mutation.
+-- Mirrors the 00042 post-install backfill pattern.
+DO $$
+DECLARE j RECORD;
+BEGIN
+  FOR j IN SELECT id FROM public.jobs WHERE deleted_at IS NULL LOOP
+    PERFORM app_private.refresh_approved_cos_total(j.id);
+  END LOOP;
+END $$;
+
+-- ============================================================
+-- 00066-B.1: Verification probe.
+-- ============================================================
+-- If the cache backfill produces a different total than the pre-migration
+-- cached sum, something is wrong with the predicate change and the
+-- migration aborts. The $901,045.65 figure is captured from Phase 2.3
+-- pre-flight S7 — do not change it without re-running the pre-flight
+-- sum query.
+DO $$
+DECLARE
+  pre_migration_total_cents bigint := 90104565; -- $901,045.65,
+    -- captured from S7 during pre-flight
+  post_migration_total_cents bigint;
+BEGIN
+  SELECT COALESCE(SUM(approved_cos_total), 0)
+  INTO post_migration_total_cents
+  FROM public.jobs
+  WHERE deleted_at IS NULL;
+
+  IF post_migration_total_cents <> pre_migration_total_cents THEN
+    RAISE EXCEPTION
+      'Cache drift detected: pre-migration approved_cos_total sum was % cents, post-migration backfill produced % cents. Migration aborting to prevent silent cache corruption.',
+      pre_migration_total_cents, post_migration_total_cents;
+  END IF;
+
+  RAISE NOTICE
+    'Cache verification: pre = post = % cents. Migration safe.',
+    post_migration_total_cents;
+END $$;
 ```
 
-Also add `created_po_id` to `change_order_lines`:
-```sql
-ALTER TABLE change_order_lines
-  ADD COLUMN created_po_id UUID REFERENCES purchase_orders(id);
-```
+Also write `00066_co_type_expansion.down.sql` per R.16. Reverses the function-body predicate back to `co_type = 'owner'`, drops the 4 added columns (reverse order), reverse-maps `'owner_requested'` → `'owner'`, restores the legacy 2-value CHECK + default `'owner'`, re-runs the cache backfill. Mirrors Phase 2.1 down.sql's loud-fail posture: if post-migration rows use `designer_architect` / `allowance_overage` / `site_condition`, the restored CHECK violates and the rollback intentionally aborts (no silent data loss).
+
+**Code + type updates (in scope for Phase 2.3 — Grep/Rename Validator subagent applies):**
+
+*Filter updates* (`.eq("co_type", "owner")` → `.neq("co_type", "internal")`; `co.co_type === "owner"` → `co.co_type !== "internal"`):
+- `src/lib/recalc.ts:213`
+- `src/lib/draw-calc.ts:421`
+- `src/app/api/draws/preview/route.ts:75, 201` (2 occurrences)
+- `src/app/api/draws/[id]/compare/route.ts:107`
+- `src/app/api/admin/integrity-check/route.ts:215`
+
+*API default + TS widening:*
+- `src/app/api/jobs/[id]/change-orders/route.ts:16` — TS union `"owner" | "internal"` → `string`, with runtime validation against a file-private `CO_TYPES` constant (same pattern as Phase 2.1's `CONTRACT_TYPES`). The CHECK constraint is the source of truth; TS narrowing to the same 5 values would duplicate the constraint in two places that drift.
+- `src/app/api/jobs/[id]/change-orders/route.ts:65` — `body.co_type ?? "owner"` → `body.co_type ?? "owner_requested"`.
+- `src/app/api/change-orders/[id]/route.ts:55` — TS union `"owner" | "internal"` → `string`, same pattern.
+
+*Form state widening:*
+- `src/app/jobs/[id]/change-orders/new/page.tsx:51` — `useState<"owner" | "internal">("owner")` → widen to 5-value union; form picker exposes all 5 values.
+
+**Test (R.15 test-first):** write `__tests__/co-type-expansion.test.ts` covering:
+- Migration 00066 file exists and applies idempotently.
+- New CHECK enforces the 5-value set (4 negative probes, one per non-value).
+- All 4 new columns on `change_orders` + `change_order_lines.created_po_id` exist with expected types, defaults, FKs.
+- Data migration completeness: zero rows with `co_type = 'owner'` post-apply; 73 live + 15 soft-deleted rows with `co_type = 'owner_requested'`.
+- `app_private.refresh_approved_cos_total` function body contains `co_type <> 'internal'` (not `= 'owner'`).
+- Default regression: INSERT without specifying `co_type` lands `'owner_requested'` and passes the new CHECK.
+- **Semantic-equivalence regression:** pre-migration SUM(`approved_cos_total`) across live jobs equals post-migration SUM. Captured figure: 90104565 cents ($901,045.65). Proves the filter change (`co_type = 'owner'` → `co_type <> 'internal'`) produces semantically identical results for the current data set.
+
+**UI display labels deferred to Branch 4 (tracked in GH #7).** Post-migration, all 4 new non-`internal` CO types render via the `co_type === "owner"` fallback branch as "Internal (budget only)" label or "Internal" badge because the old code path defaulted any non-`'owner'` value to internal. Label-map target files: `src/app/change-orders/[id]/page.tsx` (line 170), `src/app/jobs/[id]/change-orders/page.tsx` (line 260). Target map: `owner_requested='Owner Request'`, `designer_architect='Designer/Architect'`, `allowance_overage='Allowance Overage'`, `site_condition='Site Condition'`, `internal='Internal (budget only)'`.
+
+**R.23 precedent statement:** Phase 2.3 introduces no new RLS policies or table conventions. Adding columns to `change_orders` / `change_order_lines` inherits row-level posture from existing policies (5 on change_orders, 7 on change_order_lines — verified pre-flight S6). Modification of `app_private.refresh_approved_cos_total` is a behavioral correction matching the plan's own value-semantics table (§1066–1072) in the same transaction, not a precedent-setting change.
 
 **Commit:** `feat(co): expand CO types and add pricing_mode, source_proposal_id`
 
