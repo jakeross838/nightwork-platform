@@ -1,7 +1,7 @@
 # QA Report — Branch 1 Phase 1.2: PO Role Check
 
 **Generated:** 2026-04-22
-**Claude Code session:** starting commit `0319fe1` → phase commit (populated at commit)
+**Claude Code session:** starting commit `0319fe1` → phase commit `87218b0`
 **Overall status:** ✅ COMPLETE
 
 ---
@@ -101,7 +101,7 @@
 
 | SHA | Message | Files touched |
 |---|---|---|
-| (pending) | fix(po): add owner/admin role check to PO PATCH endpoint | 5 files (1 modified route, 2 new test artifacts, 1 modified `package.json`, 1 modified `__tests__/_runner.ts`) |
+| `87218b0` | fix(po): add owner/admin role check to PO PATCH endpoint | 5 files: `src/app/api/purchase-orders/[id]/route.ts`, `__tests__/_runner.ts` (new), `__tests__/po-patch-role-check.test.ts` (new), `package.json`, `qa-reports/qa-branch1-phase1.2.md` (new) |
 
 ---
 
