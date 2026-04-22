@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
       updates.received_at = new Date().toISOString();
     } else if (body.action === "waive") {
       updates.status = "waived";
+      updates.waived_at = new Date().toISOString();
     } else {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }

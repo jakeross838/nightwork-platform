@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
  * PATCH /api/lien-releases/:id
  * Edit release type, amount, status, through_date, document_url, notes.
  * Flipping status to 'received' stamps received_at.
+ * Flipping status to 'waived' stamps waived_at.
  */
 export async function PATCH(
   request: NextRequest,
@@ -66,6 +67,9 @@ export async function PATCH(
     }
     if (body.status === "received" && existing.status !== "received") {
       updates.received_at = new Date().toISOString();
+    }
+    if (body.status === "waived" && existing.status !== "waived") {
+      updates.waived_at = new Date().toISOString();
     }
 
     const expectedUpdatedAt = (body.expected_updated_at as string | undefined) || null;
