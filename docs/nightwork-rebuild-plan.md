@@ -134,6 +134,12 @@ Live manual tests (R.19) must use purpose-built synthetic draws/jobs/invoices/PO
 
 R.21's teardown script must reflect every fixture actually created during the phase. If live tests seed additional entities beyond the original fixture plan (e.g., child rows, linked records, ad-hoc SQL seeds), the teardown script must be updated to include them BEFORE the teardown is executed, not after. The authoring order is: finalize fixtures → write and commit teardown → execute tests → execute teardown. Phase 1.4 shipped with post-hoc teardown edits because the script was written before Test 3's CO fixture was finalized; this is the last phase this is acceptable.
 
+## R.23 Codebase-precedent check for RLS and table conventions
+
+Before writing a new migration that adds RLS policies, triggers, or new table conventions, Schema Validator subagent must identify the most recent tenant-table migration of the same shape and report its pattern BEFORE any new SQL is written. Don't invent policy structures — adopt the existing pattern and flag any intentional divergence for explicit approval. Phase 2.2 caught this: initial spec called for 4 RLS policies (SELECT/INSERT/UPDATE/DELETE) but cost_intelligence_spine (00052) precedent is 3 policies (no explicit DELETE, relying on RLS-blocks-by-default). Pre-push amendment stripped the DELETE policies to match.
+
+Added 2026-04-22 after Phase 2.2 pre-push RLS correction.
+
 ---
 
 # PART G — EXIT GATES, QA REPORTS, SUBAGENTS, REBUILD TREE
