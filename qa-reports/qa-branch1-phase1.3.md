@@ -1,7 +1,7 @@
 # QA Report — Branch 1 Phase 1.3: Transactional Cascade Wrapping
 
 **Generated:** 2026-04-22
-**Claude Code session:** starting commit `bbe83f5` → phase commit (populated at commit)
+**Claude Code session:** starting commit `bbe83f5` → phase commit `78b57e6`
 **Overall status:** ✅ COMPLETE (with one R.1 violation flagged for Jake's review)
 
 ---
@@ -130,7 +130,7 @@ Same shape for `approve` (RPC: status + payment schedule + creator notification;
 
 | SHA | Message | Files touched |
 |---|---|---|
-| (pending) | fix(draws): atomic RPC transactions for submit/approve/void | migration 00061 (new), action route (rebuild), notifications.ts (patch), payment-schedule.ts (narrow), lien-releases.ts (DELETED), __tests__/draw-rpc-cascade.test.ts (new), qa-reports/qa-branch1-phase1.3.md (new) |
+| `78b57e6` | fix(draws): atomic RPC transactions for submit/approve/void | 7 files: migration 00061 (new), action route (rebuild), notifications.ts (patch), payment-schedule.ts (narrow), lien-releases.ts (DELETED), `__tests__/draw-rpc-cascade.test.ts` (new), `qa-reports/qa-branch1-phase1.3.md` (new) |
 
 Diff summary: **+451 insertions / −450 deletions** across 4 src files (pre-migration pass); migration + test + QA file add ~1,000 lines of new artifacts.
 
