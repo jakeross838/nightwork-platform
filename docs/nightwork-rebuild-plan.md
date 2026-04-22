@@ -3094,9 +3094,11 @@ Also write `00066_co_type_expansion.down.sql` per R.16. Reverses the function-bo
 
 **Commit:** `feat(co): expand CO types and add pricing_mode, source_proposal_id`
 
+> **Mid-branch renumber (2026-04-22):** Phase 2.3's R.19 live-workflow test surfaced a latent 00042-era bug — `authenticated` role lacked USAGE on the `app_private` schema, blocking the `co_cache_trigger` from firing on any UI-driven CO INSERT. Fixed in migration `00067_co_cache_trigger_authenticated_grants.sql` (commit `1a24e64`). Every Phase 2.4–2.9 migration below shifts by +1 (was 00067–00072, now 00068–00073). Full audit of `app_private` grants deferred to GH #9.
+
 ### Phase 2.4 — Cost codes hierarchy + starter templates
 
-Migration `00067_cost_codes_hierarchy.sql`:
+Migration `00068_cost_codes_hierarchy.sql`:
 ```sql
 ALTER TABLE cost_codes
   ADD COLUMN parent_id UUID REFERENCES cost_codes(id),
@@ -3127,7 +3129,7 @@ JSONB seed data for starter templates is separate script.
 
 ### Phase 2.5 — Approval chains
 
-Migration `00068_approval_chains.sql`:
+Migration `00069_approval_chains.sql`:
 ```sql
 CREATE TABLE approval_chains (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3171,7 +3173,7 @@ CREATE INDEX idx_approval_actions_entity ON approval_actions(entity_type, entity
 
 ### Phase 2.6 — Job milestones + retainage config
 
-Migration `00069_milestones_retainage.sql`:
+Migration `00070_milestones_retainage.sql`:
 ```sql
 CREATE TABLE job_milestones (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3203,7 +3205,7 @@ ALTER TABLE draws
 
 ### Phase 2.7 — Pricing history table
 
-Migration `00070_pricing_history.sql`:
+Migration `00071_pricing_history.sql`:
 ```sql
 CREATE TABLE pricing_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3243,7 +3245,7 @@ Then add triggers that populate `pricing_history` on:
 
 ### Phase 2.8 — Client portal access
 
-Migration `00071_client_portal.sql`:
+Migration `00072_client_portal.sql`:
 ```sql
 CREATE TABLE client_portal_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3277,7 +3279,7 @@ CREATE TABLE client_portal_messages (
 
 ### Phase 2.9 — V2.0 schema hooks (empty tables)
 
-Migration `00072_v2_hooks.sql`:
+Migration `00073_v2_hooks.sql`:
 ```sql
 -- Create empty tables for v2.0 features to lock in naming
 CREATE TABLE daily_logs ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() /* full schema in v2.0 */ );
@@ -3309,7 +3311,7 @@ This isn't strictly necessary but locks in naming so v2.0 doesn't rename things.
 **Branch 2 Exit Gate** (see G.2 universal checklist; phase-specific additions):
 
 ```
-[ ] All 9 migrations (00064–00072) applied on dev, committed to git
+[ ] All 10 migrations (00064 through 00073, with 00067 as the mid-branch grant fix from Phase 2.3's R.19 test) applied on dev, committed to git
 [ ] Schema validator subagent confirms full alignment with Part 2 data model
 [ ] No migrations apply changes via MCP that aren't in git files
 [ ] `jobs.phase` and `jobs.contract_type` defaults don't break existing workflows
