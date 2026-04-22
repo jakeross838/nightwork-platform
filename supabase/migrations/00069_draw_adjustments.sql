@@ -43,6 +43,20 @@
 -- adjustments they catch in the field or during wizard builds;
 -- accounting reviews and approves. Mirrors the existing draws
 -- write-policy role set.
+--
+-- RUNTIME NOTE (discovered during Phase 2.5 execution
+-- live-auth RLS probes, 2026-04-22): PostgreSQL's FK integrity
+-- check respects RLS on the referenced draws table. Because
+-- draws' 'pm read draws on own jobs' policy narrows PM
+-- visibility by pm_id, the FK check on draw_adjustments.draw_id
+-- fails during INSERT when a PM references a draw they cannot
+-- see. This is stricter than the write policy itself declares —
+-- emergent defense-in-depth from combining existing draws RLS
+-- with the new FK. Real behavior: PMs can only INSERT
+-- adjustments against draws on their own jobs. Branch 3/4
+-- writers should route cross-job adjustment observations
+-- through accounting/admin. See qa-reports/qa-branch2-phase2.5.md
+-- §5 for the live-auth probe results that surfaced this.
 -- ------------------------------------------------------------
 --
 -- C.2 Draw soft-delete invariant (application-layer):
@@ -348,7 +362,7 @@ CREATE POLICY draw_adjustment_line_items_org_update
 -- (g) COMMENTs — table + key columns
 -- ------------------------------------------------------------
 COMMENT ON TABLE public.draw_adjustments IS
-'Draw-level adjustments: corrections, credits (goodwill/defect/error), withholds, customer direct-pays, conditional holds. Renders in a dedicated "Adjustments & Credits" section on the draw doc (D2) — NOT silently applied to draw_line_items.this_period (preserves AIA G702/G703 auditability). RLS adopts proposals/00065 3-policy pattern (R.23) with a surgical PM-on-own-jobs narrowing on the read policy to preserve information parity with the draws table. Draw soft-delete invariant (C.2): when draws.deleted_at is set via application code, all associated draw_adjustments rows MUST also be soft-deleted in the same transaction — enforced by the draws-soft-delete RPC (Branch 3 writer), NOT at the DB layer. Scope pivot from approval_chains at kickoff (2026-04-22; see qa-reports/preflight-branch2-phase2.5.md, commit 053f647).';
+'Draw-level adjustments: corrections, credits (goodwill/defect/error), withholds, customer direct-pays, conditional holds. Renders in a dedicated "Adjustments & Credits" section on the draw doc (D2) — NOT silently applied to draw_line_items.this_period (preserves AIA G702/G703 auditability). RLS adopts proposals/00065 3-policy pattern (R.23) with a surgical PM-on-own-jobs narrowing on the read policy to preserve information parity with the draws table. Draw soft-delete invariant (C.2): when draws.deleted_at is set via application code, all associated draw_adjustments rows MUST also be soft-deleted in the same transaction — enforced by the draws-soft-delete RPC (Branch 3 writer), NOT at the DB layer. Scope pivot from approval_chains at kickoff (2026-04-22; see qa-reports/preflight-branch2-phase2.5.md, commit 053f647). Runtime note (2026-04-22): PostgreSQL''s FK integrity check respects RLS on the referenced draws table. Because draws'' pm-on-own-jobs read policy narrows PM visibility, the FK check on draw_adjustments.draw_id fails during INSERT when a PM references a draw they cannot see — emergent defense-in-depth stricter than the write policy itself declares. Real behavior: PMs can only INSERT adjustments against draws on their own jobs. Branch 3/4 writers should route cross-job adjustment observations through accounting/admin. See qa-reports/qa-branch2-phase2.5.md §5 for the live-auth probe results that surfaced this; GH #14 tracks the Branch 3/4 UX implications.';
 
 COMMENT ON COLUMN public.draw_adjustments.adjustment_type IS
 'Flat 7-value enum (C.4 decision): correction, credit_goodwill, credit_defect, credit_error, withhold, customer_direct_pay, conditional. Credit subtypes are first-class enum values, not a separate column. "All credits" query pattern: WHERE adjustment_type LIKE ''credit_%''. Name-collision note: ''conditional'' refers to an adjustment where the owner refuses payment pending a specific condition — SEMANTICALLY DISTINCT from lien_releases.release_type values ''conditional_progress''/''conditional_final'' which are lien-waiver document types. Different tables, different CHECK enums, no DB-level collision — UI layer should use table-scoped label helpers.';
