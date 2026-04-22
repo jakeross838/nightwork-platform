@@ -2468,6 +2468,8 @@ After Branch 9: production deploy → dogfood 2–4 weeks → v1.5 begins (plan 
 
 ## BRANCH 1 — Data Integrity Foundation
 
+**Status:** ✅ COMPLETE — 2026-04-22. See qa-reports/qa-branch1-final.md for rollup details.
+
 **Purpose:** Fix the bugs that silently corrupt data or lose writes. Before dogfood, before new features.
 
 **Duration estimate:** 1–2 Claude Code sessions
