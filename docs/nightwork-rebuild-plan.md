@@ -2709,7 +2709,7 @@ Before advancing to Branch 2, Claude Code runs a **Branch 1 rollup QA**:
 [ ] Git log is clean (5 commits, one per phase)
 [ ] No out-of-scope work leaked into Branch 1
 [ ] docs/workflow-audit.md updated: mark findings #1, #2, #3, #4, #5, #13, #17 as CLOSED
-[ ] Branch rollup QA report generated: /mnt/user-data/outputs/qa-report-branch-1-final.md
+[ ] Branch rollup QA report generated: ./qa-reports/qa-branch1-final.md
 [ ] Jake has signed off
 ```
 
