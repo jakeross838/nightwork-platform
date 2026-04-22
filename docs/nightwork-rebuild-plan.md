@@ -114,6 +114,14 @@ Added 2026-04-22 after Phase 1.1 revealed an 18-file blast radius against a 5-fi
 
 Manual tests listed in a phase's exit gate must be executed live against a running dev server with real HTTP requests and real auth sessions. "Static equivalence by contract inspection" is not a substitute — the logic may be airtight but the wiring, middleware order, and runtime auth flow must be exercised end-to-end. If live execution is genuinely impractical for a phase, flag to Jake at kickoff and get explicit permission before treating the test as passed. Phase 1.2 shipped with static validation as precedent-setter; this was accepted but must not become standard.
 
+**R.19 (continued) — Static-validation carve-out conditions.** Static validation is acceptable only when BOTH:
+
+(a) The runtime code path touched is a single function call with no middleware, auth flow, or service-orchestration implications.
+
+(b) Migration Dry-Run negative probes or equivalent exercise the full stack at the database layer.
+
+Claude Code must cite both conditions explicitly in the QA report when invoking this carve-out. Phases that touch new routes, new middleware, new auth flows, or cross-service orchestration must execute live regardless. Phase 1.2 and Phase 2.1 applied this carve-out; Phase 2.1 added the DB-probe condition as a load-bearing half of the equivalence. Added 2026-04-22 after Phase 2.1.
+
 ## R.20 Read project scripts before invoking
 
 Before running any project script (npm scripts, shell scripts, Makefile targets, package.json scripts, etc.), read the script contents. Scripts can contain kill commands, destructive operations, or environment mutations that violate R.1, R.5, or R.6. Blind invocation of `npm run <script>` without first inspecting what it actually executes is a standing rule violation. Phase 1.3 shipped with a taskkill incident caused by this gap (scripts/dev.sh contained taskkill; `npm run dev` invoked it blindly).
@@ -623,6 +631,12 @@ For tech-debt issues discovered during phase execution:
 4. Wire the resulting issue number into source comments, tests, and QA reports in a follow-up commit.
 
 Added 2026-04-22 after Phase 1.3 installed + authenticated `gh` to eliminate the browser-paste cycle for tracked tech debt.
+
+## G.9 Migration SQL conventions
+
+All table references in migrations must be qualified with the `public.` schema prefix. Rationale: protects against `search_path` mutations (a role or session with a different `search_path` can silently resolve `jobs` to a non-public table and corrupt schema state). Applies to all migrations from Phase 2.2 forward. Branch 1 migrations (00060–00063) are historical source-of-truth per R.16 and must not be retroactively modified. Phase 2.1's `00064_job_phase_contract_type.sql` already adopted this convention during execution.
+
+Added 2026-04-22 after Phase 2.1 standardized on `public.` qualification.
 
 ---
 
