@@ -8,21 +8,13 @@
 
 ---
 
-## §1 Executive summary
-
-**Verdict: EXECUTE-AS-IS.** The Phase 2.6 spec at `docs/nightwork-rebuild-plan.md:3665–3907` is the post-amendment, post-renumber version of the original approval_chains plan. All 8 amendments + the F-ii scope decision landed in commit `317961d` and were preserved through the Markgraf-pivot renumber in `73eaba8`. The Part 3 §3.7 runtime-flow sync from F-ii landed separately in `d11523a`. No new collisions surfaced. No new design questions need Jake's input. R.19 static-validation carve-out is expected to apply at execution time (schema-only phase, zero runtime code touched — Branch 7 introduces write paths).
-
-**Top flags (1):**
-
-1. **GH #12 issue body wording is stale post-pivot.** Body still reads "Phase 2.5 migration 00069 seeds default approval_chains per org…" — the seeding now lands in Phase 2.6 / migration 00070. Cosmetic; does not block execution. Recommendation: update issue body to reference Phase 2.6 / 00070 either before or after the Phase 2.6 commit lands. No other GH-tracked items affected (GH #1–#14 audited, only #12 has approval_chains language).
-
 **Scope is intentionally lighter than Phase 2.5's pre-flight at `053f647`:** that report was a fresh planning surface (D1–D4 design decisions + 5 open questions + RLS precedent tension + Markgraf walkthrough) because draw_adjustments was being scoped from scratch under time pressure. This report is a re-verification + delta check against an already-amended spec — most of the reasoning was done in the original f296e0a pre-flight and the eight amendments derived from it.
 
 ---
 
-## §2 Migration number + filename verification
+## §1 Migration number + filename verification
 
-### §2.1 Slot availability
+### §1.1 Slot availability
 
 `ls supabase/migrations/ | tail` confirms:
 
@@ -35,7 +27,7 @@
 
 Phase 2.6 spec consistently targets `00070`. No leftover `00069` references in the spec body (verified by `grep -n "00069\|Phase 2\.5" docs/nightwork-rebuild-plan.md` — every `00069` hit lands inside Phase 2.5 / draw_adjustments scope or in the documented amendment-history paragraphs, never in Phase 2.6 SQL or test text).
 
-### §2.2 In-spec filename references
+### §1.2 In-spec filename references
 
 Five filename references inside the Phase 2.6 spec body (lines 3665–3907):
 
@@ -47,7 +39,7 @@ Five filename references inside the Phase 2.6 spec body (lines 3665–3907):
 | 3885 | ``Migration `00070_approval_chains.sql` + `.down.sql` exist.`` | ✅ |
 | 3907 | ``Commit:` `feat(approvals): add approval_chains + seed-on-org-creation trigger`` | ✅ (verb tense correct) |
 
-### §2.3 "Phase 2.5" references inside Phase 2.6 spec body
+### §1.3 "Phase 2.5" references inside Phase 2.6 spec body
 
 Every `Phase 2.5` token at lines 3665–3907 lands inside one of the documented amendment-history / precedent-citation paragraphs:
 
@@ -59,17 +51,17 @@ Every `Phase 2.5` token at lines 3665–3907 lands inside one of the documented 
 
 No edits required.
 
-### §2.4 Plan exit-gate update
+### §1.4 Plan exit-gate update
 
 `docs/nightwork-rebuild-plan.md:4049` reads "All 11 migrations (00064 through 00074, with 00067 as the mid-branch grant fix and 00069 as the mid-Branch-2 draw_adjustments insertion from the Markgraf-scenario pivot)". Phase 2.6 lands as 00070 inside that range. No exit-gate edit required for Phase 2.6 itself.
 
 ---
 
-## §3 Precedent re-check (R.23)
+## §2 Precedent re-check (R.23)
 
 For each precedent the spec cites, verify the precedent table still exists at the cited shape and no later migration overrode it.
 
-### §3.1 — 00065 `proposals` 3-policy RLS shape
+### §2.1 — 00065 `proposals` 3-policy RLS shape
 
 `supabase/migrations/00065_proposals.sql` lines 156–185:
 
@@ -89,7 +81,7 @@ CREATE POLICY proposals_org_update     ON public.proposals FOR UPDATE  …  AND 
 
 Verified: no later migration replaced or modified the proposals RLS shape (`grep "POLICY proposals_org_" supabase/migrations/0007*.sql` returns no hits).
 
-### §3.2 — 00032 `create_default_workflow_settings` seed-trigger shape
+### §2.2 — 00032 `create_default_workflow_settings` seed-trigger shape
 
 `supabase/migrations/00032_phase8e_org_workflow_settings.sql` lines 101–115:
 
@@ -109,7 +101,7 @@ Pattern confirmed: `public` schema, `SECURITY DEFINER`, pinned `search_path = pu
 
 Phase 2.6 spec (lines 3819–3851) mirrors this verbatim for `create_default_approval_chains()` + `trg_organizations_create_default_approval_chains`. Confirmed.
 
-### §3.3 — 00067 `GRANT EXECUTE … TO authenticated` pattern
+### §2.3 — 00067 `GRANT EXECUTE … TO authenticated` pattern
 
 `supabase/migrations/00067_co_cache_trigger_authenticated_grants.sql` (entire file) establishes the explicit grant pattern: `GRANT EXECUTE ON FUNCTION app_private.X() TO authenticated;` per function, plus `ALTER DEFAULT PRIVILEGES IN SCHEMA app_private GRANT EXECUTE ON FUNCTIONS TO authenticated`.
 
@@ -120,7 +112,7 @@ Phase 2.6 spec applies the per-function grant to **both** new functions:
 
 Confirmed. Note: Phase 2.6 functions live in `public` schema, so the `ALTER DEFAULT PRIVILEGES` clause from 00067 (scoped to `app_private`) is not relevant. Per-function grants are sufficient.
 
-### §3.4 — 00068 `has_function_privilege` test pattern (Phase 2.4 Amendment F.1/F.2)
+### §2.4 — 00068 `has_function_privilege` test pattern (Phase 2.4 Amendment F.1/F.2)
 
 `supabase/migrations/00068_cost_codes_hierarchy.sql` lines 65–93 contain the precedent: `app_private.validate_cost_code_hierarchy()` defined SECURITY DEFINER + paired with explicit `GRANT EXECUTE … TO authenticated`. Phase 2.4 R.15 test added the `has_function_privilege('authenticated', …, 'EXECUTE')` probe — verified live in `qa-reports/qa-branch2-phase2.4.md` §F.2 (line 119, line 168, line 263).
 
@@ -133,11 +125,11 @@ Confirmed. Cross-schema extension is mechanical — `has_function_privilege` is 
 
 ---
 
-## §4 R.18 blast-radius grep
+## §3 R.18 blast-radius grep
 
 Greps across `src/`, `supabase/migrations/`, `__tests__/`, `docs/` for every new identifier introduced by Phase 2.6.
 
-### §4.1 Identifier summary
+### §3.1 Identifier summary
 
 | Identifier | src/ | supabase/migrations/ | __tests__/ | docs/ | Verdict |
 |---|---|---|---|---|---|
@@ -152,7 +144,7 @@ Greps across `src/`, `supabase/migrations/`, `__tests__/`, `docs/` for every new
 | `'invoice_pm'` / `"invoice_pm"` | 0 | 0 | 0 | plan only | Clean net-new. |
 | `'invoice_qa'` / `"invoice_qa"` | 0 | 0 | 0 | plan only | Clean net-new. |
 
-### §4.2 `__tests__/draw-adjustments.test.ts` reference detail
+### §3.2 `__tests__/draw-adjustments.test.ts` reference detail
 
 Two narrative-only references, no consumption:
 
@@ -170,7 +162,7 @@ Two narrative-only references, no consumption:
 
 The assertion at line 53 reads `00069_draw_adjustments.sql` and verifies the table COMMENT cites the pivot — it does not interact with any Phase 2.6 identifier. No test edit required when 00070 lands; the assertion remains true.
 
-### §4.3 Classification (mirrors original f296e0a §2.3)
+### §3.3 Classification (mirrors original f296e0a §2.3)
 
 - **Type A (PASSTHROUGH):** none — both new tables have zero existing consumers.
 - **Type B (WRITE PATHS — verify on Dry-Run):** none in Phase 2.6 scope.
@@ -181,7 +173,7 @@ Verdict: clean net-new, identical posture to the original pre-flight.
 
 ---
 
-## §5 GH #12 applicability
+## §4 GH #12 applicability
 
 `gh issue view 12`:
 
@@ -195,11 +187,11 @@ Body (full):
 
 > Phase 2.5 migration 00069 seeds default approval_chains per org with workflow-type-aware defaults (invoice_pm → pm role, invoice_qa → accounting role, others → owner/admin). These defaults match Ross Built's current workflow (PM approves invoices, accounting does QA review, admin approves COs/draws/POs/proposals). Other Nightwork customers (especially remodelers, per the $30M ARR positioning) will have different role distributions and may want different defaults. When the onboarding wizard UI lands in Branch 6/7, include a 'customize approval workflows' step that overrides the defaults based on org-specific questions (e.g., 'who approves invoices at your company?'). Until then, new orgs get Ross-Built-derived defaults which may need manual correction. Related: GH #10 (is_allowance two-layer semantics — similar pattern where defaults need UI affordances).
 
-### §5.1 Tracker still applicable
+### §4.1 Tracker still applicable
 
 The spec's `default_stages_for_workflow_type(text)` helper hardcodes the Ross-Built-derived defaults (invoice_pm → pm; invoice_qa → accounting; co/draw/po/proposal → owner/admin). These ship as seed values in migration 00070's helper function and are referenced from both the on-INSERT trigger and the one-time backfill. The onboarding-wizard work the issue tracks (Branch 6/7 — surface a "customize approval workflows" step) remains the right escape hatch and lands as expected. **Tracker fully applicable as the spec lands.**
 
-### §5.2 Body wording is stale post-pivot
+### §4.2 Body wording is stale post-pivot
 
 The body opens with "Phase 2.5 migration 00069 seeds default approval_chains per org…" — that wording reflects the pre-Markgraf-pivot numbering. After commit `73eaba8` the seed lands in **Phase 2.6, migration 00070**.
 
@@ -211,11 +203,11 @@ Not a blocker. No other GH-tracked items reference approval_chains numbering —
 
 ---
 
-## §6 New concerns since `f296e0a`
+## §5 New concerns since `f296e0a`
 
 The original kickoff prompt asked specifically about read-policy parity vs Phase 2.5 draw_adjustments. Plus a sweep for any other new flags that landed since f296e0a.
 
-### §6.1 Read-policy parity vs Phase 2.5 draw_adjustments
+### §5.1 Read-policy parity vs Phase 2.5 draw_adjustments
 
 **Phase 2.5 draw_adjustments read policy** (`supabase/migrations/00069_draw_adjustments.sql:257–282`):
 
@@ -249,7 +241,7 @@ CREATE POLICY approval_chains_org_read
 
 No PM narrowing.
 
-### §6.2 Justification — why no narrowing on approval_chains
+### §5.2 Justification — why no narrowing on approval_chains
 
 The Phase 2.5 narrowing was driven by two pressures, neither of which apply here:
 
@@ -267,7 +259,7 @@ The spec's intentional R.23 divergence is on the **write** policy (narrowed to o
 
 **Verdict: justified. No change requested.** This was not flagged in the original f296e0a pre-flight either — the read policy adopted from proposals (which similarly has org-wide read) was unchanged through the eight amendments.
 
-### §6.3 Plan-doc commits since f296e0a — anything new affecting Phase 2.6?
+### §5.3 Plan-doc commits since f296e0a — anything new affecting Phase 2.6?
 
 `git log --oneline f296e0a..HEAD -- docs/nightwork-rebuild-plan.md`:
 
@@ -278,7 +270,7 @@ The spec's intentional R.23 divergence is on the **write** policy (narrowed to o
 
 No new amendments to the Phase 2.6 spec body since `317961d`. No new design surface to evaluate.
 
-### §6.4 Other open-issue dependencies
+### §5.4 Other open-issue dependencies
 
 Cross-checked GH #1–#14 for anything that touches approval_chains scope:
 
@@ -290,7 +282,7 @@ Cross-checked GH #1–#14 for anything that touches approval_chains scope:
 
 ---
 
-## §7 Verdict
+## §6 Verdict
 
 **EXECUTE-AS-IS.**
 
@@ -298,10 +290,10 @@ Reasoning:
 - 8 amendments + F-ii scope decision already landed in `317961d` and were preserved through the Markgraf-pivot renumber `73eaba8`.
 - Part 3 §3.7 runtime-flow sync per F-ii landed in `d11523a`.
 - §1 confirmed migration number 00070 is the next free slot; spec internal references all use 00070.
-- §3 confirmed all four cited precedents (00065 / 00032 / 00067 / 00068) still hold at the cited shape.
-- §4 confirmed clean net-new posture across `src/` / migrations / tests / docs — same as the original f296e0a finding.
-- §5 confirmed GH #12 still applicable (body wording stale, cosmetic).
-- §6 confirmed no new design questions or RLS concerns since f296e0a.
+- §2 confirmed all four cited precedents (00065 / 00032 / 00067 / 00068) still hold at the cited shape.
+- §3 confirmed clean net-new posture across `src/` / migrations / tests / docs — same as the original f296e0a finding.
+- §4 confirmed GH #12 still applicable (body wording stale, cosmetic).
+- §5 confirmed no new design questions or RLS concerns since f296e0a.
 
 **R.19 carve-out applies at execution time.** Phase 2.6 is schema-only — zero runtime code touched. Both static-validation conditions are met (the only application code that will reference approval_chains lands in Branch 7). Live manual tests are not required for this phase.
 
