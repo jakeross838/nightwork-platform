@@ -2552,14 +2552,26 @@ Notifications queued within transaction, dispatched after commit.
 - `src/lib/payment-schedule.ts` (REBUILD — move logic into SQL function)
 - `src/lib/notifications.ts` (PATCH — add queue + dispatch functions)
 
+**R.5 blast-radius check (required pre-work):** grep the entire `src/` tree for every import of `@/lib/lien-releases` and `@/lib/payment-schedule`. If any caller outside the draw submit/approve path exists, STOP and flag to Jake before touching either library. The rebuild scope assumes these libraries are draw-cascade-only; violating that assumption expands the phase.
+
 **Rebuild-vs-patch call:** REBUILD the action route and cascade libraries. Current code has non-transactional cascades — structural fix required. Creates compounding risk if we patch around it.
 
-**Manual tests:**
+**Manual tests 1–4 + Invariant check 5:**
+
+Tests 1–4 are scenarios to execute live against a running dev server (R.19). Check 5 is a post-condition SQL query verified at steady state after tests 1–4 complete — not a separate scenario.
+
 1. Normal draw submit → all side effects apply (invoices → in_draw, lien releases created, notifications sent)
 2. Set env `FORCE_LIEN_GEN_FAIL=1` → submit draw → expect: draw remains `draft`, invoices remain `qa_approved`, no releases, no notifications
 3. Normal approve → all side effects apply
 4. Force approve failure → draw remains `submitted`
-5. `SELECT * FROM draws WHERE status = 'submitted' AND id NOT IN (SELECT draw_id FROM lien_releases)` → zero rows
+
+**Invariant check 5 (post-condition, run after tests 1–4 at steady state):**
+```sql
+SELECT * FROM draws
+ WHERE status = 'submitted'
+   AND id NOT IN (SELECT draw_id FROM lien_releases);
+```
+Expected: zero rows.
 
 **Out of scope:**
 - Refactoring invoice approval cascades (deferred to a future hardening pass)
@@ -2570,14 +2582,29 @@ Notifications queued within transaction, dispatched after commit.
 Phase 1.3 is the hardest phase in Branch 1. Gate is strict:
 
 ```
-[ ] RPC functions created and tested in isolation
-[ ] All cascades now run in transactions
-[ ] Forced-failure tests all PASS (rollback verified)
-[ ] No orphaned rows in any forced-failure scenario
-[ ] Test runner subagent: all 5 manual tests PASS
-[ ] Normal-path regression: draw submit → approve → lock → paid still works end-to-end
-[ ] Rebuild decisions documented in QA report section 6
-[ ] Old non-transactional code paths fully removed (no dead branches)
+[ ] R.5 blast-radius check complete (no non-draw callers of cascade libraries,
+    OR scope expansion flagged and approved)
+[ ] RPC functions created and unit-tested via direct Supabase MCP calls (not
+    through the route) — each RPC called with valid + invalid inputs, rollback
+    verified on invalid
+[ ] Failure-injection hooks explicitly scoped as test-only branches, guarded
+    by env var, documented in the RPC source comments and the QA report
+[ ] All cascades now run in Postgres transactions (single RPC call per
+    cascade, no sequential client-side orchestration)
+[ ] Manual tests 1–4 executed LIVE against running dev server with real HTTP
+    requests per R.19 — tests 2 and 4 use the scoped failure-injection hooks above
+[ ] Invariant check 5: SELECT orphaned-rows query returns zero rows at steady
+    state after manual tests 1–4
+[ ] No orphaned rows in any forced-failure scenario (verified via direct SQL
+    inspection after each failure test)
+[ ] Normal-path regression: draw submit → approve → lock → paid works
+    end-to-end, executed LIVE
+[ ] Rebuild decisions documented in QA report with explicit before/after
+    architecture diff
+[ ] Old non-transactional code paths fully removed (no dead branches, grep
+    confirms zero references to removed functions)
+[ ] Failure-injection hooks do NOT ship enabled — env var defaults to off,
+    route behavior unchanged in production
 [ ] QA report generated
 ```
 
