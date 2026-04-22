@@ -114,6 +114,14 @@ Added 2026-04-22 after Phase 1.1 revealed an 18-file blast radius against a 5-fi
 
 Manual tests listed in a phase's exit gate must be executed live against a running dev server with real HTTP requests and real auth sessions. "Static equivalence by contract inspection" is not a substitute — the logic may be airtight but the wiring, middleware order, and runtime auth flow must be exercised end-to-end. If live execution is genuinely impractical for a phase, flag to Jake at kickoff and get explicit permission before treating the test as passed. Phase 1.2 shipped with static validation as precedent-setter; this was accepted but must not become standard.
 
+## R.20 Read project scripts before invoking
+
+Before running any project script (npm scripts, shell scripts, Makefile targets, package.json scripts, etc.), read the script contents. Scripts can contain kill commands, destructive operations, or environment mutations that violate R.1, R.5, or R.6. Blind invocation of `npm run <script>` without first inspecting what it actually executes is a standing rule violation. Phase 1.3 shipped with a taskkill incident caused by this gap (scripts/dev.sh contained taskkill; `npm run dev` invoked it blindly).
+
+## R.21 Synthetic test fixtures, never production-shaped data
+
+Live manual tests (R.19) must use purpose-built synthetic draws/jobs/invoices/POs created at phase kickoff and torn down at phase end. Real Ross Built job data (Fish Residence, Markgraf, Dewberry, etc.) must not be used as test fixtures, even on dev. Using real-data rows as test subjects pollutes dogfooding and corrupts the audit trail for those jobs. Each phase that requires live manual tests creates fixtures under a recognizable naming convention (e.g., job name prefix 'ZZZ_PHASE_1_3_TEST') and deletes them before exit gate. Phase 1.3 violated this rule and required post-hoc cleanup.
+
 ---
 
 # PART G — EXIT GATES, QA REPORTS, SUBAGENTS, REBUILD TREE
