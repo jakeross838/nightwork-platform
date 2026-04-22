@@ -173,6 +173,70 @@ test("failure-injection: dev-only x-force-fail header is gated by NODE_ENV", () 
   );
 });
 
+test("failure-injection: x-force-fail read is STRUCTURALLY inside the NODE_ENV production gate", () => {
+  // Stronger than the previous static check (which only confirms both
+  // strings coexist). Proves the header read is lexically wrapped in an
+  // `if (process.env.NODE_ENV !== 'production') { … }` block, AND there
+  // is no x-force-fail read outside such a block — in actual code paths,
+  // ignoring comments.
+  //
+  // Phase 1.3 prompt-34 item 6: a full runtime test (NODE_ENV=production
+  // simulated end-to-end) isn't feasible in this harness — Next.js bakes
+  // NODE_ENV at build time and our test runner is static. This AST/regex
+  // approximation is the fallback allowed by the prompt. It works on the
+  // current code shape (flat inner `if` inside readForceFail with no
+  // nested braces) and will fail loudly if anyone adds an out-of-gate
+  // header read in executable code.
+  const rawSrc = readFileSync(ACTION_ROUTE, "utf8");
+
+  // Strip comments so documentation mentions of 'x-force-fail' don't trip
+  // the gate test. Multi-line /* … */ first (JSDoc), then // line comments.
+  const src = rawSrc
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/[^\n]*/g, "");
+
+  // Sanity: the header reference must still exist in executable code.
+  assert.ok(
+    /x-force-fail/i.test(src),
+    "after stripping comments, route must still reference x-force-fail in code"
+  );
+
+  // Positive: there exists a NODE_ENV-gated block that contains x-force-fail.
+  const guardedPattern =
+    /NODE_ENV\s*!==\s*["']production["']\s*\)\s*\{[^{}]*?x-force-fail[^{}]*?\}/;
+  assert.ok(
+    guardedPattern.test(src),
+    "x-force-fail read must appear inside `if (NODE_ENV !== 'production') { … }`"
+  );
+
+  // Negative: strip every NODE_ENV-gated block and assert no x-force-fail
+  // remains in the residue. If the header is ever read outside a gate,
+  // this trips.
+  const withoutGatedBlocks = src.replace(
+    /if\s*\(\s*process\.env\.NODE_ENV\s*!==\s*["']production["']\s*\)\s*\{[^{}]*?\}/g,
+    ""
+  );
+  assert.ok(
+    !/x-force-fail/i.test(withoutGatedBlocks),
+    "x-force-fail must NOT appear outside a NODE_ENV !== 'production' block (in executable code)"
+  );
+
+  // Belt + suspenders: count occurrences in executable code. Each
+  // x-force-fail must be paired with exactly one gated block containing
+  // it. If anyone adds a second header read via a different mechanism,
+  // the counts diverge and this fails.
+  const headerHits = (src.match(/x-force-fail/gi) ?? []).length;
+  const gatedHitsAll = Array.from(
+    src.matchAll(
+      /NODE_ENV\s*!==\s*["']production["']\s*\)\s*\{[^{}]*?x-force-fail[^{}]*?\}/g
+    )
+  ).length;
+  assert.ok(
+    headerHits > 0 && headerHits === gatedHitsAll,
+    `x-force-fail occurrences (${headerHits}) must equal gated-block occurrences (${gatedHitsAll})`
+  );
+});
+
 let failed = 0;
 for (const c of cases) {
   try {
