@@ -1,7 +1,7 @@
 # QA Report — Branch 1 Phase 1.4: Missing `created_by` Columns
 
 **Generated:** 2026-04-22
-**Claude Code session:** starting commit `07ab98b` → phase commit (populated at commit)
+**Claude Code session:** starting commit `07ab98b` → teardown commit `0843425` → phase commit `dc5ab64`
 **Overall status:** ✅ COMPLETE
 
 ---
@@ -71,7 +71,7 @@ Original plan spec: 3 routes. Real blast radius: 11 insert sites across 9 files.
 | SHA | Message |
 |---|---|
 | `0843425` | scripts: Phase 1.4 fixture teardown (R.21) — committed before test execution |
-| (pending) | fix(schema): add created_by to cost_codes, budget_lines, draw_line_items |
+| `dc5ab64` | fix(schema): add created_by to cost_codes, budget_lines, draw_line_items |
 
 Diff summary: migration + test (new), 6 src files edited, teardown script (new, committed standalone earlier).
 
