@@ -313,6 +313,28 @@ Current schema state: dump of relevant `\d+` output or equivalent.
 
 **Required in every phase QA report.** Not optional.
 
+**Encoding:** Screenshots MUST be embedded as base64 data URIs directly in the markdown:
+
+```markdown
+![caption](data:image/png;base64,<BASE64_DATA>)
+```
+
+Do NOT save screenshots to disk and link via relative path. The QA file must be fully self-contained — a single `.md` that renders all images inline when opened in VS Code preview, GitHub, or any markdown viewer.
+
+**File size ceiling: 35MB per QA file — hard cap.**
+
+To stay under the cap:
+
+1. **Capture resolution:** 1280×800 for desktop, 375×667 for mobile. Do NOT capture at 2x/retina or 4K.
+2. **PNG optimization:** Run captured PNGs through lossless compression (e.g. `pngquant --quality=80-95` or equivalent) before base64 encoding. Target ~100–200KB per screenshot.
+3. **Budget check:** Before writing the QA file, sum the byte size of all encoded screenshots. If projected file size exceeds 30MB, stop and report — do not write an oversized file. Options at that point: (a) reduce breakpoint/role matrix to critical combinations only with justification, (b) split the phase into sub-phases, or (c) use JPEG at 85% quality for non-text-heavy screens. Jake decides.
+4. **Git hygiene:** `.gitattributes` at repo root prevents git from attempting to diff base64 blobs and hides them from GitHub language stats:
+
+   ```
+   qa-reports/*.md -diff -merge
+   qa-reports/*.md linguist-generated=true
+   ```
+
 For any phase that touches the frontend, capture inline Chrome MCP screenshots of every affected page × every role × every breakpoint (desktop + 375px mobile), including loading, empty, and error states where applicable. Example:
 
 ### Page: `/invoices` as `owner` on desktop
