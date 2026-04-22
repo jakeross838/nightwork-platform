@@ -201,7 +201,7 @@ export default function OnboardWizard({
         address: job.address || null,
         client_name: job.client_name || null,
         original_contract_amount: amountCents,
-        contract_type: "cost_plus",
+        contract_type: "cost_plus_aia",
       }),
     });
   }

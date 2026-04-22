@@ -28,6 +28,26 @@ interface PmUser {
   full_name: string;
 }
 
+// Phase 2.1 expanded both unions. UI display-label maps are deferred to
+// Branch 4 (GH issue #4); unknown values currently render as raw strings.
+type ContractType =
+  | "cost_plus_aia"
+  | "cost_plus_open_book"
+  | "fixed_price"
+  | "gmp"
+  | "time_and_materials"
+  | "unit_price";
+type JobPhase =
+  | "lead"
+  | "estimating"
+  | "contracted"
+  | "pre_construction"
+  | "in_progress"
+  | "substantially_complete"
+  | "closed"
+  | "warranty"
+  | "archived";
+
 interface Job {
   id: string;
   name: string;
@@ -35,7 +55,8 @@ interface Job {
   client_name: string | null;
   client_email: string | null;
   client_phone: string | null;
-  contract_type: "cost_plus" | "fixed";
+  contract_type: ContractType;
+  phase: JobPhase;
   original_contract_amount: number;
   current_contract_amount: number;
   approved_cos_total: number | null;
@@ -282,7 +303,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
             <p className="text-sm mt-1 flex items-center gap-2 flex-wrap" style={{ color: "var(--text-secondary)" }}>
               <span>{job.address ?? "No address"}</span>
               <span>·</span>
-              <span>{job.contract_type === "cost_plus" ? "Cost Plus" : "Fixed Price"}</span>
+              <span>{job.contract_type}</span>
               <NwBadge variant={jobStatusVariant(job.status)} size="sm">{job.status}</NwBadge>
             </p>
           </div>
@@ -313,7 +334,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 <Detail label="Client Email" value={job.client_email} />
                 <Detail label="Client Phone" value={job.client_phone} />
                 <Detail label="Contract Date" value={formatDate(job.contract_date)} />
-                <Detail label="Contract Type" value={job.contract_type === "cost_plus" ? "Cost Plus" : "Fixed Price"} />
+                <Detail label="Contract Type" value={job.contract_type} />
                 <Detail label="Deposit %" value={`${job.deposit_percentage.toFixed(1)}%`} />
                 <Detail label="GC Fee %" value={`${job.gc_fee_percentage.toFixed(1)}%`} />
                 <Detail
@@ -354,9 +375,13 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 <input type="date" className="input" value={form.contract_date ?? ""} onChange={(e) => setForm({ ...form, contract_date: e.target.value || null })} />
               </EditField>
               <EditField label="Contract Type">
-                <select className="input" value={form.contract_type ?? "cost_plus"} onChange={(e) => setForm({ ...form, contract_type: e.target.value as Job["contract_type"] })}>
-                  <option value="cost_plus">Cost Plus</option>
-                  <option value="fixed">Fixed</option>
+                <select className="input" value={form.contract_type ?? "cost_plus_aia"} onChange={(e) => setForm({ ...form, contract_type: e.target.value as Job["contract_type"] })}>
+                  <option value="cost_plus_aia">cost_plus_aia</option>
+                  <option value="cost_plus_open_book">cost_plus_open_book</option>
+                  <option value="fixed_price">fixed_price</option>
+                  <option value="gmp">gmp</option>
+                  <option value="time_and_materials">time_and_materials</option>
+                  <option value="unit_price">unit_price</option>
                 </select>
               </EditField>
               <EditField label="Status">

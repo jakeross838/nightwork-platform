@@ -9,13 +9,41 @@ import { logActivity } from "@/lib/activity-log";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
+// Next.js App Router restricts exports in route.ts to HTTP handlers and a
+// small set of metadata constants. These enum allow-lists stay
+// file-private; if another module ever needs them they'll move to
+// src/lib/types/jobs.ts.
+const CONTRACT_TYPES = [
+  "cost_plus_aia",
+  "cost_plus_open_book",
+  "fixed_price",
+  "gmp",
+  "time_and_materials",
+  "unit_price",
+] as const;
+type ContractType = (typeof CONTRACT_TYPES)[number];
+
+const JOB_PHASES = [
+  "lead",
+  "estimating",
+  "contracted",
+  "pre_construction",
+  "in_progress",
+  "substantially_complete",
+  "closed",
+  "warranty",
+  "archived",
+] as const;
+type JobPhase = (typeof JOB_PHASES)[number];
+
 type JobBody = {
   name?: string;
   address?: string | null;
   client_name?: string | null;
   client_email?: string | null;
   client_phone?: string | null;
-  contract_type?: "cost_plus" | "fixed";
+  contract_type?: ContractType;
+  phase?: JobPhase;
   original_contract_amount?: number; // cents
   deposit_percentage?: number;       // 0..100 (whole percent, e.g. 10 = 10%)
   gc_fee_percentage?: number;        // 0..100 (whole percent)
@@ -48,8 +76,11 @@ export const POST = withApiError(async (request: NextRequest) => {
   if (!body.name || !body.name.trim()) {
     throw new ApiError("Job name is required", 400);
   }
-  if (body.contract_type && !["cost_plus", "fixed"].includes(body.contract_type)) {
+  if (body.contract_type && !CONTRACT_TYPES.includes(body.contract_type)) {
     throw new ApiError("Invalid contract_type", 400);
+  }
+  if (body.phase && !JOB_PHASES.includes(body.phase)) {
+    throw new ApiError("Invalid phase", 400);
   }
   if (body.status && !["active", "complete", "warranty", "cancelled"].includes(body.status)) {
     throw new ApiError("Invalid status", 400);
@@ -95,7 +126,8 @@ export const POST = withApiError(async (request: NextRequest) => {
       client_name: body.client_name ?? null,
       client_email: body.client_email ?? null,
       client_phone: body.client_phone ?? null,
-      contract_type: body.contract_type ?? "cost_plus",
+      contract_type: body.contract_type ?? "cost_plus_aia",
+      ...(body.phase ? { phase: body.phase } : {}),
       original_contract_amount: original,
       current_contract_amount: original, // start equal; COs adjust later
       deposit_percentage: body.deposit_percentage ?? 10,
@@ -150,7 +182,18 @@ export const PATCH = withApiError(async (request: NextRequest) => {
   if (body.client_name !== undefined) patch.client_name = body.client_name;
   if (body.client_email !== undefined) patch.client_email = body.client_email;
   if (body.client_phone !== undefined) patch.client_phone = body.client_phone;
-  if (body.contract_type !== undefined) patch.contract_type = body.contract_type;
+  if (body.contract_type !== undefined) {
+    if (!CONTRACT_TYPES.includes(body.contract_type)) {
+      throw new ApiError("Invalid contract_type", 400);
+    }
+    patch.contract_type = body.contract_type;
+  }
+  if (body.phase !== undefined) {
+    if (!JOB_PHASES.includes(body.phase)) {
+      throw new ApiError("Invalid phase", 400);
+    }
+    patch.phase = body.phase;
+  }
   if (body.original_contract_amount !== undefined) patch.original_contract_amount = body.original_contract_amount;
   if (body.deposit_percentage !== undefined) patch.deposit_percentage = body.deposit_percentage;
   if (body.gc_fee_percentage !== undefined) patch.gc_fee_percentage = body.gc_fee_percentage;

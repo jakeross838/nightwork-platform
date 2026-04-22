@@ -66,7 +66,7 @@ export async function POST() {
       address: "123 Demo St",
       client_name: "Sample Client",
       client_email: "sample@example.com",
-      contract_type: "cost_plus",
+      contract_type: "cost_plus_aia",
       original_contract_amount: 50000000,
       current_contract_amount: 50000000,
       status: "active",

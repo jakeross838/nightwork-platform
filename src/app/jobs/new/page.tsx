@@ -23,7 +23,16 @@ export default function NewJobPage() {
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [contractType, setContractType] = useState<"cost_plus" | "fixed">("cost_plus");
+  // Phase 2.1 expanded the value set. UI display-label map is deferred to
+  // Branch 4 (GH issue #4); raw strings render as fallback until then.
+  const [contractType, setContractType] = useState<
+    | "cost_plus_aia"
+    | "cost_plus_open_book"
+    | "fixed_price"
+    | "gmp"
+    | "time_and_materials"
+    | "unit_price"
+  >("cost_plus_aia");
   const [originalContract, setOriginalContract] = useState("");
   const [depositPct, setDepositPct] = useState("10");
   const [gcFeePct, setGcFeePct] = useState("20");
@@ -159,11 +168,15 @@ export default function NewJobPage() {
             <Field label="Contract Type">
               <select
                 value={contractType}
-                onChange={(e) => setContractType(e.target.value as "cost_plus" | "fixed")}
+                onChange={(e) => setContractType(e.target.value as typeof contractType)}
                 className="input"
               >
-                <option value="cost_plus">Cost Plus (Open Book)</option>
-                <option value="fixed">Fixed Price</option>
+                <option value="cost_plus_aia">cost_plus_aia</option>
+                <option value="cost_plus_open_book">cost_plus_open_book</option>
+                <option value="fixed_price">fixed_price</option>
+                <option value="gmp">gmp</option>
+                <option value="time_and_materials">time_and_materials</option>
+                <option value="unit_price">unit_price</option>
               </select>
             </Field>
             <Field label="Status">
