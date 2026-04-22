@@ -63,14 +63,19 @@ test("migration 00061 declares _force_fail on each RPC", () => {
   );
 });
 
-test("migration 00061 references the GH tech-debt issue for duplicated date math", () => {
+test("migration 00061 references GH issue #1 for duplicated date math", () => {
   const src = readFileSync(MIGRATION, "utf8");
-  // Issue # is populated post-creation; assert the reference pattern is present
-  // (e.g., "Tracked in GH issue #N" or similar). Soft check — accept either
-  // a #N reference or the explicit "branch 8" / "branch 9" cleanup phrase.
+  // Tightened post-Phase-1.3 (prompt 39) now that the issue exists. Earlier
+  // soft check accepted "Branch 8/9 cleanup candidate" wording; we now
+  // require the explicit #1 reference so a future edit can't accidentally
+  // strip the issue number back to the stub form.
   assert.ok(
-    /github.*issue|gh\s+issue|issue\s+#\d+|branch\s+[89]/i.test(src),
-    "RPC source must reference the payment-scheduling consolidation issue"
+    /#1\b/.test(src),
+    "RPC source must contain an explicit `#1` reference to the consolidation issue"
+  );
+  assert.ok(
+    /github\.com\/jakeross838\/Ross-Built-Command\/issues\/1/.test(src),
+    "RPC source must link the issue URL directly"
   );
 });
 

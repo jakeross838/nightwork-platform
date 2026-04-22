@@ -600,6 +600,19 @@ Each branch has a final exit criterion beyond the sum of its phases. A branch is
 
 Before v1.0 production deploy, a final safety net runs across all branches. This is a dedicated branch, not a phase within another branch. Specified in Part 5 as Branch 9.
 
+## G.8 gh CLI tooling
+
+The GitHub CLI (`gh`) is installed and authenticated on the Windows dev machine at `C:\Program Files\GitHub CLI\gh.exe`. Claude Code can create issues, PRs, labels, and comments programmatically via `gh issue create`, `gh pr create`, etc., without browser paste cycles. Use the full path if bash PATH does not resolve `gh` directly.
+
+For tech-debt issues discovered during phase execution:
+
+1. Write issue body to `qa-reports/gh-issue-body-phase{N}.{M}.md` during the phase commit.
+2. After Jake reviews and approves, create via `gh issue create --repo jakeross838/Ross-Built-Command --title '...' --body-file <stripped-body-file>`.
+3. Strip H1 title + meta notes (typically first 4 lines) from the body file before passing as `--body-file`.
+4. Wire the resulting issue number into source comments, tests, and QA reports in a follow-up commit.
+
+Added 2026-04-22 after Phase 1.3 installed + authenticated `gh` to eliminate the browser-paste cycle for tracked tech debt.
+
 ---
 
 ## 0.1 What Nightwork is

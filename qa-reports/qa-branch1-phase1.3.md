@@ -41,7 +41,7 @@ At kickoff I grepped `src/` for every import of `@/lib/lien-releases` and `@/lib
 
 Reported the violation to Jake. He chose **option (a) — narrow rebuild:** remove only `autoScheduleDrawPayments` from the TS lib (move its logic into the RPC as PL/pgSQL), keep the shared utility functions, leave invoice callers untouched.
 
-**Tech debt accepted:** ~25 lines of date-math duplicated between `src/lib/payment-schedule.ts::scheduledPaymentDate` (TS) and `public._compute_scheduled_payment_date` (PL/pgSQL). Any semantics change must update both. Tracked for Branch 8/9 consolidation — see "Flagged for Jake" item 1 for the GH issue creation status.
+**Tech debt accepted:** ~25 lines of date-math duplicated between `src/lib/payment-schedule.ts::scheduledPaymentDate` (TS) and `public._compute_scheduled_payment_date` (PL/pgSQL). Any semantics change must update both. GitHub issue #1 created — github.com/jakeross838/Ross-Built-Command/issues/1 — as a Branch 8 or Branch 9 cleanup candidate.
 
 ---
 
@@ -385,7 +385,7 @@ Post-migration verified all 3 RPCs exist with `prosecdef=true` (SECURITY DEFINER
    - Their `status_history` JSONB shows transitions tagged with "Phase 1.3 test …" notes.
    - If these were real Jake-in-progress draws, flag for manual restore. If they were scratch, fine to leave.
 
-3. **GitHub issue not created.** `gh` CLI isn't installed on this system. The migration's source comment and the RPC function `COMMENT ON FUNCTION` directives reference the consolidation issue via "see qa-reports/qa-branch1-phase1.3.md for GH issue reference" and "Branch 8/9 cleanup candidate" — both satisfy the regression-fence test without needing a hard-coded issue number. **To create the issue, run at your terminal:**
+3. **GitHub issue #1 created — github.com/jakeross838/Ross-Built-Command/issues/1.** Initially the `gh` CLI wasn't installed, so the migration shipped with a "Branch 8/9 cleanup candidate" stub reference that satisfied the regression fence without a hardcoded issue number. After Phase 1.3 pushed to origin, `gh` was installed + authenticated (prompt 37), the issue was created (prompt 38), and the stubs were tightened to explicit `#1` references (this follow-up). Historical CLI invocation for reference:
    ```
    gh issue create --title "Consolidate payment scheduling: invoice routes still compute schedule client-side; draw RPC duplicates ~25 lines of date math in PL/pgSQL. Candidate for Branch 8 or Branch 9." --body-file qa-reports/gh-issue-body-phase1.3.md
    ```

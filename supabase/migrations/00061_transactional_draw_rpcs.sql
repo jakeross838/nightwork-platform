@@ -30,9 +30,10 @@
 --     (getOrgPaymentSchedule, scheduledPaymentDate) for invoice routes.
 --     Only autoScheduleDrawPayments moved into draw_approve_rpc as PL/pgSQL.
 --   - Date-math is duplicated (~25 lines) between TS and the helper below.
---     Tracked as a Branch 8/9 cleanup candidate — see the GH issue linked in
---     qa-reports/qa-branch1-phase1.3.md. When consolidated, invoice routes
---     will also call _compute_scheduled_payment_date via RPC or a shared SQL
+--     Tracked in GitHub issue #1 —
+--     github.com/jakeross838/Ross-Built-Command/issues/1 — as a Branch 8 or
+--     Branch 9 cleanup candidate. When consolidated, invoice routes will
+--     also call _compute_scheduled_payment_date via RPC or a shared SQL
 --     helper.
 --
 -- SECURITY DEFINER: these RPCs need to write across invoices, lien_releases,
@@ -96,8 +97,7 @@ END $$;
 
 COMMENT ON FUNCTION public._compute_scheduled_payment_date IS
   'Internal helper — mirrors src/lib/payment-schedule.ts::scheduledPaymentDate. '
-  'Duplicated logic tracked as Branch 8/9 cleanup candidate. See '
-  'qa-reports/qa-branch1-phase1.3.md for GH issue reference.';
+  'Tracked in GitHub issue #1. Candidate for Branch 8 or Branch 9.';
 
 -- ── draw_submit_rpc ─────────────────────────────────────────────────────
 -- Atomic: updates draw status, flips in-period qa_approved invoices to
