@@ -22,6 +22,10 @@
 --                                   clears it to NULL — note in paper
 --                                   trail, leave null)
 --
+--   ACKNOWLEDGMENT: wizard_draft for Fish draw b0277ee7 is not restored —
+--   original state unrecoverable. If any mid-wizard form state existed
+--   pre-test, it is permanently lost. Acknowledged by Jake, 2026-04-22.
+--
 --   Fish Residence lien_releases for draw #1
 --     existed pre-test: 0   → hard DELETE all 18 test-created rows
 --
@@ -89,7 +93,12 @@ UPDATE public.invoices
    AND payment_status = 'scheduled'
    AND deleted_at IS NULL;
 
--- Revert the draw itself.
+-- Revert the draw itself. Filter keeps ONLY the creation entry (old_status
+-- IS NULL) — stricter than note-prefix matching so any post-creation
+-- entry (including a non-Phase-1.3 one that might have slipped in) is
+-- stripped. Probes 1/2 confirmed both draws had only test-originated
+-- transitions past their creation entry, so this is equivalent to a note
+-- filter for Phase 1.3 — but it's more robust against unknown entries.
 UPDATE public.draws
    SET status = 'draft',
        submitted_at = NULL,
@@ -99,7 +108,7 @@ UPDATE public.draws
        status_history = (
          SELECT COALESCE(jsonb_agg(entry), '[]'::jsonb)
            FROM jsonb_array_elements(status_history) AS entry
-          WHERE (entry->>'note') NOT LIKE 'Phase 1.3%'
+          WHERE (entry->>'old_status') IS NULL
        )
  WHERE id = 'b0277ee7-a172-4cec-b15f-37f204b2e38e';
 
@@ -111,7 +120,7 @@ UPDATE public.draws
        status_history = (
          SELECT COALESCE(jsonb_agg(entry), '[]'::jsonb)
            FROM jsonb_array_elements(status_history) AS entry
-          WHERE (entry->>'note') NOT LIKE 'Phase 1.3%'
+          WHERE (entry->>'old_status') IS NULL
        )
  WHERE id = '13087857-a5fb-4a93-8312-45642ea7c395';
 
