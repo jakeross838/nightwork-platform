@@ -110,6 +110,14 @@ Exit gate grep/rename checks (e.g., "zero remaining references to 'X'") are the 
 
 Added 2026-04-22 after Phase 1.1 revealed an 18-file blast radius against a 5-file spec list.
 
+## R.19 Manual tests in exit gates execute live, not statically
+
+Manual tests listed in a phase's exit gate must be executed live against a running dev server with real HTTP requests and real auth sessions, unless the phase spec explicitly permits static validation. "Static equivalence by contract inspection" — e.g., reading a helper's source to argue a call site behaves correctly — is **not** a substitute for invoking the endpoint with a real auth session and asserting the actual HTTP response.
+
+If live execution is impractical for a given phase (no test harness yet, prohibitively expensive setup, environmental constraints), flag to Jake before treating the test as passed. Do not silently fall back to static validation.
+
+Added 2026-04-22 after Phase 1.2 relied on static equivalence for three live-auth manual tests. That phase's logic was tight enough that the static argument held, but the pattern is not safe for phases with broader surface area or subtle interactions.
+
 ---
 
 # PART G — EXIT GATES, QA REPORTS, SUBAGENTS, REBUILD TREE
@@ -3846,6 +3854,8 @@ Update `docs/workflow-audit.md` to reflect v1.0 state.
 - **Schema validator subagent** — full data model audit vs Part 2
 - **Security audit subagent** — RLS check, endpoint permission check, impersonation check
 - **Rebuild scanner subagent** — final scan for any remaining "placeholder", TODO, FIXME comments
+
+**Interim infrastructure to replace before Branch 9 completes:** `__tests__/_runner.ts` was introduced in Phase 1.2 (commit `87218b0`) as a minimal discovery + subprocess runner so multiple per-phase test files could coexist without a framework. It is interim infrastructure — Branch 9 **MUST** replace it with a real test framework. Vitest is preferred (zero-config TypeScript support, native Node APIs, plays well with tsx, and `node:assert` calls in current tests are vitest-compatible as-is); jest is an acceptable alternative but heavier. When replacing: preserve the single-file-per-phase test structure that the regression fences depend on, keep the subprocess-isolation property so one file's failure doesn't halt siblings, and migrate each existing `*.test.ts` to the framework's assertion style. The `DEP0190` warning from the current runner's `spawnSync({ shell: true })` will go away naturally once the framework takes over.
 
 ### Phase 9.1 — Full regression sweep
 
