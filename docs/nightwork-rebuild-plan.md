@@ -2708,7 +2708,7 @@ Before advancing to Branch 2, Claude Code runs a **Branch 1 rollup QA**:
 [ ] Branch 1 regression suite passes (draw submit → approve → lock → paid, no silent failures)
 [ ] Git log is clean (5 commits, one per phase)
 [ ] No out-of-scope work leaked into Branch 1
-[ ] docs/workflow-audit.md updated: mark findings #1, #2, #3, #4, #5, #13, #17 as CLOSED
+[ ] docs/workflow-audit.md updated: mark findings #1, #2, #3, #4, #5, #6 as CLOSED. Finding #13 remains OPEN (deferred to Branch 4). Prior reference to finding #17 was plan drift — no such finding exists in Part 4 (numbering tops at #13).
 [ ] Branch rollup QA report generated: ./qa-reports/qa-branch1-final.md
 [ ] Jake has signed off
 ```
