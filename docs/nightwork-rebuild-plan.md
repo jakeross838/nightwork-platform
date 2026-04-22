@@ -2736,25 +2736,74 @@ Add the schema needed to hit v1.0 target state. Migrations only; UI changes foll
 
 ### Phase 2.1 — Job phase & contract type
 
-Migration `00063_job_phase_contract_type.sql`:
-```sql
-ALTER TABLE jobs 
-  ADD COLUMN phase TEXT NOT NULL DEFAULT 'in_progress' 
-    CHECK (phase IN ('lead','estimating','contracted','pre_construction','in_progress','substantially_complete','closed','warranty','archived')),
-  ADD COLUMN contract_type TEXT NOT NULL DEFAULT 'cost_plus_aia' 
-    CHECK (contract_type IN ('cost_plus_aia','cost_plus_open_book','fixed_price','gmp','time_and_materials','unit_price'));
+**Plan-doc amendment history:**
+- Renumbered from 00063 → 00064 during Branch 2 pre-flight (Phase 1.5 already shipped as 00063).
+- Migration rewritten during Branch 2 pre-flight: `jobs.contract_type` already existed from `00001_initial_schema.sql` with a legacy two-value CHECK (`'cost_plus','fixed'`) and live data, so the original `ADD COLUMN` would have failed. Corrected sequence follows the Phase 2.3 flag-E pattern (drop CHECK → migrate data → set new default → add new CHECK).
+- Scope expanded to cover API + TS-type updates that the enum expansion forces. UI display labels remain deferred to Branch 4 (raw strings render as fallback until then).
 
+Migration `00064_job_phase_contract_type.sql`:
+```sql
+-- Adds jobs.phase (new column) and expands jobs.contract_type
+-- value set. contract_type sequencing follows Phase 2.3's flag-E
+-- pattern: drop CHECK → migrate data → set new default → add
+-- new CHECK.
+
+-- Step 1: Add new phase column (clean additive)
+ALTER TABLE jobs
+  ADD COLUMN phase TEXT NOT NULL DEFAULT 'in_progress'
+    CHECK (phase IN ('lead','estimating','contracted',
+      'pre_construction','in_progress','substantially_complete',
+      'closed','warranty','archived'));
+
+-- Step 2: Drop old contract_type CHECK constraint
+-- (verify exact constraint name via information_schema before
+-- applying)
+ALTER TABLE jobs DROP CONSTRAINT jobs_contract_type_check;
+
+-- Step 3: Migrate legacy data to new value set
+UPDATE jobs SET contract_type = 'cost_plus_aia'
+  WHERE contract_type = 'cost_plus';
+UPDATE jobs SET contract_type = 'fixed_price'
+  WHERE contract_type = 'fixed';
+
+-- Step 4: Update default for new rows
+ALTER TABLE jobs ALTER COLUMN contract_type DROP DEFAULT;
+ALTER TABLE jobs ALTER COLUMN contract_type SET DEFAULT 'cost_plus_aia';
+
+-- Step 5: Add new CHECK with expanded value set
+ALTER TABLE jobs ADD CONSTRAINT jobs_contract_type_check
+  CHECK (contract_type IN ('cost_plus_aia','cost_plus_open_book',
+    'fixed_price','gmp','time_and_materials','unit_price'));
+
+-- Step 6: Indexes
 CREATE INDEX idx_jobs_phase ON jobs(org_id, phase);
 CREATE INDEX idx_jobs_contract_type ON jobs(org_id, contract_type);
 ```
 
-Existing jobs default to `in_progress` + `cost_plus_aia`. Migration doesn't break anything.
+Also write `00064_job_phase_contract_type.down.sql` per R.16 (restore the legacy two-value `contract_type` CHECK + DEFAULT `'cost_plus'`, reverse-map data, drop `phase` column + its index).
 
-**Commit:** `feat(jobs): add phase and contract_type columns`
+**Code + type updates (in scope for Phase 2.1 — Grep/Rename Validator subagent applies):**
+- `src/app/api/jobs/route.ts` — expand `contract_type` validator from `["cost_plus","fixed"]` to the 6 new values; add a `phase` validator with the 9 new values.
+- `src/app/jobs/[id]/page.tsx` — widen the `contract_type` TS union to all 6 values; add `phase` field to the Job type.
+- `src/app/jobs/new/page.tsx` — widen `contract_type` TS union to all 6 values; add `phase` field.
+- `src/app/onboard/OnboardWizard.tsx` — update default `contract_type` from `"cost_plus"` to `"cost_plus_aia"`.
+- `src/app/api/sample-data/route.ts` — update any legacy `contract_type` seed strings (`"cost_plus"` → `"cost_plus_aia"`, `"fixed"` → `"fixed_price"`).
+- `src/app/jobs/page.tsx` — verify `contract_type` reads still work; expand union types if needed.
+- `src/app/api/jobs/health/route.ts` — verify reads still work.
+
+**Test (R.15 test-first):** write `__tests__/job-phase-contract-type.test.ts` covering:
+- Migration 00064 file exists and contains the expected CHECK constraints for both columns.
+- API validator accepts all 6 new `contract_type` values and all 9 `phase` values.
+- API validator rejects legacy-only `contract_type` strings `"cost_plus"` and `"fixed"` with a clear error (regression guard confirming the migration worked).
+- TS types union correctly (static assertion via fixture).
+
+**UI display labels deferred to Branch 4.** Unknown values currently render as raw strings. Tracked in a GH issue opened at Phase 2.1 pre-flight. Label-map target files: `src/app/jobs/[id]/page.tsx`, `src/app/jobs/new/page.tsx`, `src/app/jobs/page.tsx`.
+
+**Commit:** `feat(jobs): add phase column and expand contract_type value set`
 
 ### Phase 2.2 — Proposals tables (new first-class)
 
-Migration `00064_proposals.sql`:
+Migration `00065_proposals.sql`:
 ```sql
 CREATE TABLE proposals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2808,7 +2857,7 @@ ALTER TABLE proposal_line_items ENABLE ROW LEVEL SECURITY;
 
 ### Phase 2.3 — CO type expansion
 
-Migration `00065_co_type_expansion.sql`:
+Migration `00066_co_type_expansion.sql`:
 ```sql
 -- Order matters: constraint must be dropped before data migration;
 -- new constraint added last. Sequencing bug caught during Branch 2
@@ -2843,7 +2892,7 @@ ALTER TABLE change_order_lines
 
 ### Phase 2.4 — Cost codes hierarchy + starter templates
 
-Migration `00066_cost_codes_hierarchy.sql`:
+Migration `00067_cost_codes_hierarchy.sql`:
 ```sql
 ALTER TABLE cost_codes
   ADD COLUMN parent_id UUID REFERENCES cost_codes(id),
@@ -2874,7 +2923,7 @@ JSONB seed data for starter templates is separate script.
 
 ### Phase 2.5 — Approval chains
 
-Migration `00067_approval_chains.sql`:
+Migration `00068_approval_chains.sql`:
 ```sql
 CREATE TABLE approval_chains (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2918,7 +2967,7 @@ CREATE INDEX idx_approval_actions_entity ON approval_actions(entity_type, entity
 
 ### Phase 2.6 — Job milestones + retainage config
 
-Migration `00068_milestones_retainage.sql`:
+Migration `00069_milestones_retainage.sql`:
 ```sql
 CREATE TABLE job_milestones (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2950,7 +2999,7 @@ ALTER TABLE draws
 
 ### Phase 2.7 — Pricing history table
 
-Migration `00069_pricing_history.sql`:
+Migration `00070_pricing_history.sql`:
 ```sql
 CREATE TABLE pricing_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2990,7 +3039,7 @@ Then add triggers that populate `pricing_history` on:
 
 ### Phase 2.8 — Client portal access
 
-Migration `00070_client_portal.sql`:
+Migration `00071_client_portal.sql`:
 ```sql
 CREATE TABLE client_portal_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3024,7 +3073,7 @@ CREATE TABLE client_portal_messages (
 
 ### Phase 2.9 — V2.0 schema hooks (empty tables)
 
-Migration `00071_v2_hooks.sql`:
+Migration `00072_v2_hooks.sql`:
 ```sql
 -- Create empty tables for v2.0 features to lock in naming
 CREATE TABLE daily_logs ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() /* full schema in v2.0 */ );
@@ -3056,7 +3105,7 @@ This isn't strictly necessary but locks in naming so v2.0 doesn't rename things.
 **Branch 2 Exit Gate** (see G.2 universal checklist; phase-specific additions):
 
 ```
-[ ] All 9 migrations (00063–00071) applied on dev, committed to git
+[ ] All 9 migrations (00064–00072) applied on dev, committed to git
 [ ] Schema validator subagent confirms full alignment with Part 2 data model
 [ ] No migrations apply changes via MCP that aren't in git files
 [ ] `jobs.phase` and `jobs.contract_type` defaults don't break existing workflows
