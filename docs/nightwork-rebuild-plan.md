@@ -2398,7 +2398,13 @@ For each stage in order:
   │
   ▼
 On stage advancement:
-  • Write approval_actions row
+  • Append to target entity's status_history JSONB (e.g.,
+    invoices.status_history) with {from, to, actor_user_id,
+    at, reason?, comment?} per R.7
+  • Insert row into public.activity_log with entity_type,
+    entity_id, action ('approve'/'reject'/'skip'/'delegate'),
+    org_id, user_id, and details JSONB capturing
+    stage_order + actor_role + comment
   • Notify next stage approvers
   │
   ▼
