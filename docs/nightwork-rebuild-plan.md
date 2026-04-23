@@ -2033,22 +2033,25 @@ org_usage_daily (aggregated for dashboards)
   active_users, jobs_active
 ```
 
-### V2.0 schema hooks (stubs present in v1.0)
+### V1.5 / V2.0 naming registry
 
-These tables are created empty in v1.0 to lock in naming. Populated in v2.0.
+Originally drafted as "stubs present in v1.0" intended to be pre-created via Phase 2.10 migration `00075_v2_hooks.sql`. Phase 2.10 pre-flight (`qa-reports/preflight-branch2-phase2.10.md`, 2026-04-23) surfaced (a) a hard collision — `selections` already exists as a fully-built table from migration `00052_cost_intelligence_spine` (28 cols, RLS + 3 policies) and is NOT a v1.5 stub, and (b) architectural-rule violations on the empty-stub approach (no `org_id`, no audit cols, no RLS — incompatible with CLAUDE.md "every record" rules). User selected reframe to **documentation-only naming registry** (Option 2). No migration ships; slot `00075` reserved-unused. Below is the registry — names locked, intended schemas sketched. Each table is **TO BE CREATED** in its target phase, not pre-created.
 
-```
-daily_logs (v2.0)
-schedule_items (v2.0)
-time_entries (v2.0)
-selections (v1.5)
-blueprint_plans (v1.5)
-takeoff_extractions (v1.5)
-overhead_pools (v2.0)
-overhead_allocations (v2.0)
-client_portal_access (v1.0)
-client_portal_messages (v1.0)
-```
+**Promoted out of registry (already real tables, not stubs):**
+
+- `client_portal_access` — shipped in `00074_client_portal.sql` (Phase 2.9, v1.0).
+- `client_portal_messages` — shipped in `00074_client_portal.sql` (Phase 2.9, v1.0).
+- `selections` — shipped in `00052_cost_intelligence_spine.sql` (v1.0). Originally listed here as v1.5; the (v1.5) annotation was a plan-doc drift and is removed in this amendment (Phase 2.10 Amendment A).
+
+**Registry — TO BE CREATED in target phase:**
+
+- **`daily_logs`** (v2.0) — per-job daily field report. Intended cols: `org_id`, `job_id`, `log_date`, `pm_id`, `weather`, `notes`, `photos JSONB`, `submitted_at`. Plus standard audit set (`created_at`/`updated_at`/`created_by`/`deleted_at`) and 3-policy RLS per Branch 2 precedent.
+- **`schedule_items`** (v2.0) — job-level Gantt-ish task. Intended cols: `org_id`, `job_id`, `parent_id` (self-FK for hierarchy), `title`, `start_date`, `end_date`, `duration_days`, `depends_on_ids UUID[]`, `critical_path BOOL`. Plus standard audit set + RLS.
+- **`time_entries`** (v2.0) — labor tracking. Intended cols: `org_id`, `job_id`, `user_id`, `entry_date`, `hours NUMERIC`, `cost_code_id`, `billable BOOL`, `notes`. Plus standard audit set + RLS.
+- **`blueprint_plans`** (v1.5) — plan documents. Renamed from `plans` per pre-context flag G to avoid subscription-plan namespace collision (Free/Starter/Pro/Enterprise). Intended cols: `org_id`, `job_id`, `name`, `file_url`, `sheet_number`, `version`, `superseded_by UUID` self-FK. Plus standard audit set + RLS.
+- **`takeoff_extractions`** (v1.5) — AI-parsed takeoff quantities from plans. Intended cols: `org_id`, `job_id`, `blueprint_plan_id`, `item_name`, `quantity NUMERIC`, `unit`, `confidence NUMERIC` (0-1 range matching Phase 2.8 `match_confidence` convention), `extracted_at`. Plus standard audit set + RLS.
+- **`overhead_pools`** (v2.0) — org-level overhead cost aggregation. Intended cols: `org_id`, `pool_name`, `fiscal_period`, `total_cents BIGINT` (cents per R.8). Plus standard audit set + RLS.
+- **`overhead_allocations`** (v2.0) — per-job allocation from a pool. Intended cols: `org_id`, `pool_id`, `job_id`, `allocation_percent NUMERIC(5,2)`, `allocated_cents BIGINT` (cents per R.8). Plus standard audit set + RLS.
 
 ## 2.3 Enum inventory (all in one place)
 
@@ -5502,29 +5505,20 @@ window expires_at extension, XOR from_type CHECK).
 
 **Commit:** `feat(client-portal): add client_portal_access + client_portal_messages with hashed tokens, 3 SECURITY DEFINER RPCs (first anon-grant), and sliding-window expires_at`
 
-### Phase 2.10 — V2.0 schema hooks (empty tables)
+### Phase 2.10 — V2.0 schema hooks (reframed: documentation-only)
 
-Migration `00075_v2_hooks.sql`:
-```sql
--- Create empty tables for v2.0 features to lock in naming
-CREATE TABLE daily_logs ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() /* full schema in v2.0 */ );
-CREATE TABLE schedule_items ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
-CREATE TABLE time_entries ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
-CREATE TABLE selections ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
--- Renamed from 'plans' (flag G, Branch 2 pre-context): avoids collision
--- with Nightwork's subscription-plan terminology (Free/Starter/Pro/
--- Enterprise) and is more semantically precise for blueprint/drawing data.
-CREATE TABLE blueprint_plans ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
-CREATE TABLE takeoff_extractions ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
-CREATE TABLE overhead_pools ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
-CREATE TABLE overhead_allocations ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );
+**Reframe history (2026-04-23):** original spec drafted migration `00075_v2_hooks.sql` to pre-create 8 empty stub tables (`CREATE TABLE foo ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() );`) to lock in naming for v1.5/v2.0 features. Pre-flight (`qa-reports/preflight-branch2-phase2.10.md`) surfaced two blocker classes:
 
--- Add all the columns now as nullable, they'll be used in v2.0
-```
+1. **Hard collision** — `selections` is NOT a stub; it shipped as a fully-built table from migration `00052_cost_intelligence_spine.sql` (28 cols, RLS + 3 policies). Bare `CREATE TABLE selections (...)` would fail with `42P07 relation already exists`. Plan Part 2 §2.2 listing `selections (v1.5)` was a plan-doc drift; the table is v1.0 and already shipped.
+2. **Architectural-rule violations on empty stubs** — no `org_id`, no audit cols, no RLS, no down.sql, no test file. Violated CLAUDE.md "every record" rules + R.15 + R.16. Adopting deny-all RLS would require establishing a new R.23 precedent ("stub table with no business rows yet") that no prior Branch 2 phase set.
 
-This isn't strictly necessary but locks in naming so v2.0 doesn't rename things.
+User selected **Option 2 (documentation-only reframe)**. Phase 2.10 ships **no migration**. Naming registry documented in Part 2 §2.2 with intended schema shapes (Amendments A + I). Migration slot `00075` is **reserved-unused**. Phase 3.1 picks up at `00076`.
 
-**Commit:** `feat(schema): add v2.0 table stubs for naming consistency`
+**Phase 2.10 exit criteria:** v1.5/v2.0 table naming registry documented in Part 2 §2.2 with intended schema shapes for future builds. `selections` removed from registry (already real). `client_portal_access` / `client_portal_messages` annotated as promoted-to-real in Phase 2.9.
+
+**Commits:**
+- `docs(qa): Phase 2.10 pre-flight findings — Option 2 reframe decision (selections collision + architectural-rule concerns)`
+- `docs(plan): Phase 2.10 reframe to documentation-only — v1.5/v2.0 naming registry in Part 2 §2.2 + Branch 2 Final Exit Gate update + drop stale selections listing`
 
 ### Branch 2 final verification
 
@@ -5536,7 +5530,7 @@ This isn't strictly necessary but locks in naming so v2.0 doesn't rename things.
 **Branch 2 Exit Gate** (see G.2 universal checklist; phase-specific additions):
 
 ```
-[ ] All 12 migrations (00064 through 00075, with 3 mid-branch insertions: 00067 grant fix, 00069 draw_adjustments Markgraf pivot, and 00072 job_milestones PM write narrowing) applied on dev, committed to git
+[ ] All 11 migrations (00064 through 00074, with 3 mid-branch insertions: 00067 grant fix, 00069 draw_adjustments Markgraf pivot, and 00072 job_milestones PM write narrowing) applied on dev, committed to git. Slot 00075 reserved-unused per Phase 2.10 reframe to documentation-only (`qa-reports/preflight-branch2-phase2.10.md`); Phase 3.1 picks up at 00076.
 [ ] Schema validator subagent confirms full alignment with Part 2 data model
 [ ] No migrations apply changes via MCP that aren't in git files
 [ ] `jobs.phase` and `jobs.contract_type` defaults don't break existing workflows
@@ -5544,7 +5538,7 @@ This isn't strictly necessary but locks in naming so v2.0 doesn't rename things.
 [ ] Approval chains table exists; default chains seeded per org
 [ ] Pricing history triggers ready to fire (but nothing to fire against until Branch 3 commits flow through)
 [ ] Client portal tables exist and are empty
-[ ] V2.0 hook tables exist (empty, ready for future use)
+[ ] V2.0 hook tables documented as naming registry in Part 2 §2.2 (no migration shipped; reframed from pre-creation to documentation-only per Phase 2.10 pre-flight `qa-reports/preflight-branch2-phase2.10.md` — avoids architectural-rule violations on empty stubs and `selections` collision with 00052)
 [ ] Branch rollup QA report generated
 ```
 
