@@ -3912,35 +3912,256 @@ Also write `00070_approval_chains.down.sql` per R.16 (Amendment G). Reverses in 
 
 ### Phase 2.7 — Job milestones + retainage config
 
+**Plan-doc amendment history:**
+
+- Pre-flight (2026-04-23): twelve amendments (A–L) plus one follow-up (M) landed after pre-flight findings at `qa-reports/preflight-branch2-phase2.7.md` (commit `0b548ff`). The bare SQL that preceded this rewrite (30 lines, no audit columns / RLS / CHECKs / down.sql / test file) was replaced wholesale.
+  - **A** — Full audit-column set on `job_milestones`: `org_id NOT NULL` + `created_at`/`updated_at`/`created_by`/`deleted_at` + `status_history JSONB NOT NULL DEFAULT '[]'` + `trg_job_milestones_updated_at` trigger using shared `public.update_updated_at()`. Aligns with CLAUDE.md §Architecture Rules + R.7 + R.14.
+  - **B** — RLS on `job_milestones` adopts the 00065 `proposals` 3-policy precedent (read / insert / update; no DELETE, soft-delete via `deleted_at`) **plus** the 00069 `draw_adjustments` PM-on-own-jobs read-policy narrowing. Rationale: `job_milestones` is job-scoped workflow data, not tenant-wide config; PM visibility should match the `draws` / `draw_adjustments` "PM read on own jobs" information-parity rule, otherwise PMs excluded from a job could `SELECT` milestones on that job — an information leak relative to `public.draws`. **Runtime note (Phase 2.5 discovery preserved for Branch 3/4 writers):** PostgreSQL's FK-integrity check respects RLS on referenced tables, so a PM INSERTing a `job_milestones` row whose `job_id` references a job the PM cannot see will have the FK check fail — emergent defense-in-depth stricter than the write policy itself declares. Branch 3/4 writers should route cross-job milestone observations through accounting/admin, same pattern as `draw_adjustments`.
+  - **C** — Partial unique index `(org_id, job_id, sort_order) WHERE deleted_at IS NULL` — soft-delete-safe uniqueness, matches the 00070 `approval_chains` precedent. Plus three partial indexes: `idx_job_milestones_org_job (org_id, job_id) WHERE deleted_at IS NULL`; `idx_job_milestones_status (org_id, status) WHERE deleted_at IS NULL`; `idx_job_milestones_target_date (org_id, target_date) WHERE target_date IS NOT NULL AND deleted_at IS NULL` for calendar queries.
+  - **D** — CHECK ranges + `NUMERIC(5,2)` on the two new `jobs` retainage columns — `chk_jobs_retainage_threshold_percent` and `chk_jobs_retainage_dropoff_percent`, both `>= 0 AND <= 100`, match the `chk_jobs_retainage_percent` / `chk_jobs_deposit_percentage` / `chk_jobs_gc_fee_percentage` explicit-name convention family. Both columns `NUMERIC(5,2) NOT NULL DEFAULT 50.00` and `NOT NULL DEFAULT 5.00` respectively — industry-standard AIA values, tracked for per-org customization in **GH #15**.
+  - **E** — **GH #5 resolution (Option A)** — drop `jobs_retainage_percent_check` (auto-named duplicate from 00030's inline `ADD COLUMN … CHECK`), keep `chk_jobs_retainage_percent` (explicit name from the `chk_jobs_*` hygiene convention). Predicates are byte-identical; zero code references to either constraint name (§1 of pre-flight). Closes GH #5 with this migration.
+  - **F** — `milestone_completions JSONB NOT NULL DEFAULT '[]'::jsonb` — matches the `status_history` / proposals / draw_adjustments JSONB-array precedent (NOT NULL + empty-array default, never null).
+  - **G** — Cross-column invariant `draw_mode` ↔ `milestone_completions` / `tm_*` enforced at the **application layer** (Branch 3/4 draw writer), NOT as a DB CHECK constraint. Rationale: a 5-column conditional CHECK is maintenance-hostile and the Branch 3 writer is the single source of truth for draw creation. Documented in migration header + `COMMENT ON COLUMN draws.draw_mode`.
+  - **H** — `public.` schema qualification throughout (R.21). Full `COMMENT ON` coverage: table + key columns on `job_milestones`; `draws.draw_mode` (invariant context); `draws.milestone_completions` (expected JSONB shape + Branch 3/4 writer contract); `draws.tm_labor_hours` (hours-not-money carve-out — **"hours are not money; NUMERIC is correct per CLAUDE.md R.8 cents rule"**); `jobs.retainage_threshold_percent` + `retainage_dropoff_percent` (AIA industry defaults + GH #15 onboarding override reference).
+  - **I** — Paired `00071_milestones_retainage.down.sql` per R.16. Reverse-dependency drop order. Includes a **commented-out block** with the SQL to re-add `jobs_retainage_percent_check` if GH #5 rollback is ever desired — undo path documented without executing, so a future rollback author doesn't have to reconstruct it.
+  - **J** — R.15 test file `__tests__/milestones-retainage.test.ts` — static-regex assertions matching the `approval-chains.test.ts` / `draw-adjustments.test.ts` precedent: file existence, header citations (R.23 precedent, GH #5 Option A rationale, PM-read narrowing, Phase 2.5 FK-through-RLS discovery), column presence, CHECK enum values (4-value `status` + 3-value `draw_mode`), partial-index definitions with correct predicates, exactly-3-policy regression fence, no-DELETE policy guard, paired COMMENTs (incl. hours-not-money carve-out), down.sql reverse-order asserts. Dynamic live-auth RLS probes + GH #5 constraint-drop verification fire during the Migration Dry-Run per R.19 and are recorded in `qa-reports/qa-branch2-phase2.7.md`.
+  - **K** — **Amendment F.2 GRANT-verification is NOT APPLICABLE to Phase 2.7.** No new `SECURITY DEFINER` functions in scope (no seed triggers like 00070, no helper functions). Documented explicitly here + in migration header so absence is recognized as intentional rather than oversight.
+  - **L** — Branch 3/4 writer-contract notes in migration header: (a) milestone soft-delete cascade (when `jobs.deleted_at` is set via application code, all associated `job_milestones` rows MUST be soft-deleted in the same transaction — mirrors the 00069 `draw_adjustments` invariant, enforced by the jobs-soft-delete application path, NOT at the DB layer because FK cascades don't fire on UPDATE); (b) expected `milestone_completions` JSONB shape (array of `{milestone_id: uuid, completed_percent: number, notes?: text}`); (c) `draws.draw_mode` vs. `jobs.contract_type` relationship — structurally independent (a `contract_type='cost_plus_aia'` job could in theory issue a `draw_mode='tm'` draw for a specific scope; consistency is application-layer).
+  - **M** — **GH #15 opened** — tracks onboarding treatment of retainage threshold/dropoff defaults (parallel to GH #12 for approval_chains default stages). AIA industry defaults ship in 00071; onboarding wizard UI (Branch 6/7) will surface per-org customization.
+- **Ross-Built-vs-other-orgs context:** Ross Built uses AIA G702/G703 cost-plus draws exclusively; `draws.draw_mode='milestone'` and `draw_mode='tm'` are **not Ross Built patterns** today (T&M scope lands as line items on AIA draws). Phase 2.7 ships these as **pure v2.0 schema infrastructure** for fixed-price builders and remodelers. Similarly, Ross Built's cost-plus jobs run `retainage_percent = 0.00` (2 of 15 active jobs) or a flat 10% with no dropoff (13 of 15) — `retainage_threshold_percent` and `retainage_dropoff_percent` are **dead code for Ross Built's current use**, live only when Ross Built onboards a fixed-price job (supported via `jobs.contract_type='fixed_price'`) or when other builders use the platform. Neither condition requires backfill of existing jobs — all 15 pick up the AIA industry defaults on `ADD COLUMN` and may override when relevant.
+- Related issues: **GH #5** (jobs retainage CHECK duplicate — closed by Amendment E); **GH #12** (onboarding-wizard override for approval_chains defaults); **GH #15** (onboarding-wizard override for retainage threshold/dropoff defaults).
+
 Migration `00071_milestones_retainage.sql`:
 ```sql
-CREATE TABLE job_milestones (
+-- ============================================================
+-- Phase 2.7 — Job milestones + retainage config (migration 00071).
+--
+-- Adds public.job_milestones (workflow entity — PMs mark complete,
+-- accounting bills into draws); extends public.jobs with two new
+-- retainage-policy columns (threshold + dropoff); extends
+-- public.draws with draw_mode + milestone_completions + T&M
+-- columns (all forward-looking for non-AIA org types).
+--
+-- Amendment E (GH #5 resolution, Option A): drop the auto-named
+-- duplicate CHECK jobs_retainage_percent_check. Keep the explicit
+-- chk_jobs_retainage_percent. Predicates are byte-identical.
+--
+-- Amendment B (R.23): job_milestones adopts 00065 proposals
+-- 3-policy shape + 00069 draw_adjustments PM-on-own-jobs read
+-- narrowing. Workflow data, not tenant config. Runtime note from
+-- Phase 2.5: FK-through-RLS means PMs cannot INSERT milestones
+-- for jobs they can't see — stricter than the write policy
+-- declares, emergent defense-in-depth. Route cross-job
+-- observations through accounting/admin per Branch 3/4.
+--
+-- Amendment G (cross-column invariant): draw_mode ↔
+-- milestone_completions / tm_* mutual exclusivity is
+-- application-layer (Branch 3/4 writer responsibility), NOT a
+-- DB CHECK. 5-column conditional CHECKs are maintenance-hostile.
+--
+-- Amendment K (F.2 N/A): no new SECURITY DEFINER functions in
+-- scope. No GRANT EXECUTE clauses needed.
+--
+-- Amendment L writer contract: when jobs.deleted_at is set
+-- via application code, all associated job_milestones rows
+-- MUST be soft-deleted in the same txn (mirrors 00069
+-- draw_adjustments invariant). DB layer does not enforce —
+-- FK cascades don't fire on UPDATE.
+--
+-- Ross-Built context: draw_mode='milestone'/'tm' + retainage
+-- threshold/dropoff are v2.0 infrastructure for fixed-price
+-- builders and remodelers. Ross Built runs cost-plus AIA
+-- exclusively today. GH #15 tracks onboarding-wizard override
+-- for retainage defaults.
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- (a) job_milestones — workflow entity. Amendment A: full
+-- audit-column set.
+-- ------------------------------------------------------------
+CREATE TABLE public.job_milestones (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  job_id UUID NOT NULL REFERENCES jobs(id),
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  job_id UUID NOT NULL REFERENCES public.jobs(id),
   sort_order INT NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
   amount_cents BIGINT NOT NULL,
   target_date DATE,
   completed_date DATE,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','complete','billed'))
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (
+    status IN ('pending','in_progress','complete','billed')
+  ),
+  status_history JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id),
+  deleted_at TIMESTAMPTZ
 );
 
-ALTER TABLE jobs
-  ADD COLUMN retainage_threshold_percent NUMERIC DEFAULT 50,
-  ADD COLUMN retainage_dropoff_percent NUMERIC DEFAULT 5; -- drops from 10% to 5% at 50% complete
+CREATE TRIGGER trg_job_milestones_updated_at
+  BEFORE UPDATE ON public.job_milestones
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at();
 
-ALTER TABLE draws
-  ADD COLUMN draw_mode TEXT NOT NULL DEFAULT 'aia' 
-    CHECK (draw_mode IN ('aia','milestone','tm')),
-  ADD COLUMN milestone_completions JSONB DEFAULT '[]'::jsonb,
+-- ------------------------------------------------------------
+-- (b) Indexes — Amendment C. All partial on deleted_at IS NULL.
+-- ------------------------------------------------------------
+CREATE UNIQUE INDEX job_milestones_unique_sort_per_job
+  ON public.job_milestones (org_id, job_id, sort_order)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_job_milestones_org_job
+  ON public.job_milestones (org_id, job_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_job_milestones_status
+  ON public.job_milestones (org_id, status)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_job_milestones_target_date
+  ON public.job_milestones (org_id, target_date)
+  WHERE target_date IS NOT NULL AND deleted_at IS NULL;
+
+-- ------------------------------------------------------------
+-- (c) RLS — Amendment B. 00065 proposals 3-policy + 00069
+-- draw_adjustments PM-on-own-jobs read narrowing.
+-- ------------------------------------------------------------
+ALTER TABLE public.job_milestones ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY job_milestones_org_read
+  ON public.job_milestones
+  FOR SELECT
+  USING (
+    (
+      org_id IN (
+        SELECT org_id FROM public.org_members
+        WHERE user_id = auth.uid() AND is_active = true
+      )
+      AND (
+        app_private.user_role() IN ('owner','admin','accounting')
+        OR (
+          app_private.user_role() = 'pm'
+          AND EXISTS (
+            SELECT 1
+            FROM public.jobs j
+            WHERE j.id = job_milestones.job_id
+              AND j.pm_id = auth.uid()
+          )
+        )
+      )
+    )
+    OR app_private.is_platform_admin()
+  );
+
+CREATE POLICY job_milestones_org_insert
+  ON public.job_milestones
+  FOR INSERT
+  WITH CHECK (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+        AND role IN ('owner','admin','pm','accounting')
+    )
+  );
+
+CREATE POLICY job_milestones_org_update
+  ON public.job_milestones
+  FOR UPDATE
+  USING (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+        AND role IN ('owner','admin','pm','accounting')
+    )
+  );
+-- No DELETE policy — RLS blocks hard DELETE; soft-delete via
+-- deleted_at (cost_intelligence_spine / proposals /
+-- draw_adjustments / approval_chains precedents).
+
+-- ------------------------------------------------------------
+-- (d) jobs ALTER — Amendment D (new CHECK ranges +
+-- NUMERIC(5,2)) + Amendment E (GH #5 Option A resolution).
+-- ------------------------------------------------------------
+ALTER TABLE public.jobs
+  DROP CONSTRAINT IF EXISTS jobs_retainage_percent_check;
+-- chk_jobs_retainage_percent survives (explicit-name,
+-- chk_jobs_* hygiene convention). See GH #5.
+
+ALTER TABLE public.jobs
+  ADD COLUMN retainage_threshold_percent NUMERIC(5,2) NOT NULL DEFAULT 50.00
+    CONSTRAINT chk_jobs_retainage_threshold_percent
+      CHECK (retainage_threshold_percent >= 0 AND retainage_threshold_percent <= 100),
+  ADD COLUMN retainage_dropoff_percent NUMERIC(5,2) NOT NULL DEFAULT 5.00
+    CONSTRAINT chk_jobs_retainage_dropoff_percent
+      CHECK (retainage_dropoff_percent >= 0 AND retainage_dropoff_percent <= 100);
+
+-- ------------------------------------------------------------
+-- (e) draws ALTER — Amendment F (milestone_completions
+-- NOT NULL) + tm_* T&M columns + draw_mode.
+-- ------------------------------------------------------------
+ALTER TABLE public.draws
+  ADD COLUMN draw_mode TEXT NOT NULL DEFAULT 'aia'
+    CONSTRAINT chk_draws_draw_mode
+      CHECK (draw_mode IN ('aia','milestone','tm')),
+  ADD COLUMN milestone_completions JSONB NOT NULL DEFAULT '[]'::jsonb,
   ADD COLUMN tm_labor_hours NUMERIC,
   ADD COLUMN tm_material_cost BIGINT,
   ADD COLUMN tm_sub_cost BIGINT,
   ADD COLUMN tm_markup_amount BIGINT;
+
+-- ------------------------------------------------------------
+-- (f) COMMENTs — Amendment H.
+-- ------------------------------------------------------------
+COMMENT ON TABLE public.job_milestones IS
+'Job-scoped workflow milestones (PMs mark complete; accounting bills against them into draws). 4-value lifecycle: pending → in_progress → complete → billed (terminal). RLS adopts 00065 proposals 3-policy pattern (R.23) + 00069 draw_adjustments PM-on-own-jobs read narrowing — job_milestones is job-scoped workflow data, so PM visibility mirrors the draws / draw_adjustments information-parity rule. Soft-delete cascade from jobs.deleted_at is application-layer (Branch 3/4 jobs-soft-delete path) since FK cascades don''t fire on UPDATE. Milestone-mode draws are not a Ross Built pattern (AIA cost-plus exclusively) — this table is forward-looking infrastructure for fixed-price builders and remodelers.';
+
+COMMENT ON COLUMN public.job_milestones.sort_order IS
+'Unique per (org_id, job_id) via partial index job_milestones_unique_sort_per_job (WHERE deleted_at IS NULL). Soft-deleting a row frees its slot for a replacement.';
+
+COMMENT ON COLUMN public.draws.draw_mode IS
+'Presentation/billing mode for this draw: aia (default — AIA G702/G703), milestone (fixed-price / milestone billing), tm (time-and-materials). Cross-column invariant (Amendment G, application-layer — Branch 3/4 draw writer): milestone_completions is populated only when draw_mode=''milestone''; tm_labor_hours / tm_material_cost / tm_sub_cost / tm_markup_amount only when draw_mode=''tm''. NOT enforced as a DB CHECK — 5-column conditional CHECKs are maintenance-hostile and the Branch 3 writer is the single source of truth for draw creation. Note: draw_mode is structurally independent from jobs.contract_type — a contract_type=''cost_plus_aia'' job could in theory issue a draw_mode=''tm'' draw for a specific scope; consistency is application-layer.';
+
+COMMENT ON COLUMN public.draws.milestone_completions IS
+'Array of milestone completion records when draw_mode=''milestone''. Expected shape (Branch 3/4 writer contract): [{milestone_id: uuid, completed_percent: number (0-100), notes?: text}]. NOT NULL with DEFAULT ''[]''::jsonb (matches status_history / proposals / draw_adjustments JSONB-array precedent — never null).';
+
+COMMENT ON COLUMN public.draws.tm_labor_hours IS
+'Hours of labor for draw_mode=''tm'' draws. NUMERIC, not BIGINT — hours are not money; NUMERIC is correct per CLAUDE.md R.8 cents rule. The cents rule applies to monetary amounts (tm_material_cost, tm_sub_cost, tm_markup_amount are BIGINT cents).';
+
+COMMENT ON COLUMN public.jobs.retainage_threshold_percent IS
+'Percent-complete threshold at which retainage drops from retainage_percent to retainage_dropoff_percent. AIA industry default 50.00 (retainage drops from 10% to 5% at 50% complete). Ross Built runs cost-plus AIA with retainage_percent = 0 or 10% flat — this column is dead code for Ross Built''s current jobs; live when Ross Built onboards a fixed-price job (contract_type=''fixed_price'') or when other builders use the platform. GH #15 tracks onboarding-wizard override for per-org customization.';
+
+COMMENT ON COLUMN public.jobs.retainage_dropoff_percent IS
+'Reduced retainage percent applied once job completion reaches retainage_threshold_percent. AIA industry default 5.00. See COMMENT on retainage_threshold_percent for Ross-Built-vs-other-orgs context and GH #15.';
 ```
 
-**Commit:** `feat(draws): add milestone and tm mode fields; job milestones table`
+Also write `00071_milestones_retainage.down.sql` per R.16 (Amendment I). Reverses in strict reverse-dependency order: drops the draws new columns (including `chk_draws_draw_mode`); drops the jobs new columns (including their CHECK constraints); **includes a commented-out block with the SQL to re-add `jobs_retainage_percent_check` if GH #5 rollback is ever desired** — undo path documented without executing; drops the 3 RLS policies + DISABLE RLS; drops the `updated_at` trigger; drops the 4 indexes; drops `public.job_milestones`. The table DROP implicitly discards any rows accrued post-migration.
+
+**Code + type updates:** none. Pre-flight §3 R.18 grep confirmed 0 `src/` / `__tests__/` / `supabase/migrations/` references to any of the 9 new identifiers (`job_milestones`, `milestone_completions`, `draw_mode`, `tm_labor_hours`, `tm_material_cost`, `tm_sub_cost`, `tm_markup_amount`, `retainage_threshold_percent`, `retainage_dropoff_percent`). Branch 3/4 introduces writers. The 4-value `status` CHECK enum and 3-value `draw_mode` CHECK enum follow the Phase 2.1 / 2.3 precedent — runtime validation against a file-private constant in Branch 3/4 code, not TS-union narrowing against the CHECK.
+
+**Test (R.15 test-first):** write `__tests__/milestones-retainage.test.ts` (Amendment J) covering:
+
+- Migrations `00071_milestones_retainage.sql` + `.down.sql` exist.
+- Header citations: Amendment B R.23 precedent (proposals + draw_adjustments), Amendment E GH #5 Option A rationale, Amendment G cross-column-invariant-is-application-layer note, Amendment K F.2 N/A note, Amendment L writer-contract section (soft-delete cascade + milestone_completions shape + draw_mode vs contract_type), Ross-Built context.
+- `public.job_milestones` has all 16 columns per Amendment A (incl. `org_id` NOT NULL FK, `status_history` JSONB NOT NULL DEFAULT '[]', full audit-column set); `trg_job_milestones_updated_at` trigger registered using shared `public.update_updated_at()`.
+- 4-value `status` CHECK enum accepts `pending` / `in_progress` / `complete` / `billed`; rejects other values.
+- Partial unique index `job_milestones_unique_sort_per_job (org_id, job_id, sort_order) WHERE deleted_at IS NULL` + 3 partial indexes per Amendment C with correct predicates (including `AND deleted_at IS NULL` on all).
+- RLS enabled; exactly 3 policies (`job_milestones_org_read`, `job_milestones_org_insert`, `job_milestones_org_update`); no DELETE policy.
+- Read-policy body includes the PM-on-own-jobs `EXISTS (… FROM public.jobs j WHERE j.id = job_milestones.job_id AND j.pm_id = auth.uid())` narrowing gated on `user_role() = 'pm'`; non-PM roles (`owner`/`admin`/`accounting`) take the unnarrowed path + `is_platform_admin()` bypass.
+- Write policies gate on `role IN ('owner','admin','pm','accounting')` (full 4-role workflow-data set, not the approval_chains 2-role narrowing).
+- `ALTER TABLE public.jobs DROP CONSTRAINT IF EXISTS jobs_retainage_percent_check` (GH #5 Option A).
+- `jobs.retainage_threshold_percent` / `retainage_dropoff_percent` are `NUMERIC(5,2) NOT NULL DEFAULT 50.00` / `5.00`, with explicit-name `chk_jobs_retainage_threshold_percent` / `chk_jobs_retainage_dropoff_percent` CHECKs for 0–100 range.
+- `draws.draw_mode TEXT NOT NULL DEFAULT 'aia'` with 3-value `chk_draws_draw_mode` CHECK enum; `draws.milestone_completions JSONB NOT NULL DEFAULT '[]'::jsonb` (Amendment F regression fence); `tm_labor_hours NUMERIC` (Amendment H hours-not-money carve-out verified in COMMENT); `tm_material_cost` / `tm_sub_cost` / `tm_markup_amount` BIGINT.
+- `COMMENT ON TABLE public.job_milestones` cites proposals / 00065 / R.23 precedent + PM-read narrowing.
+- `COMMENT ON COLUMN public.draws.tm_labor_hours` cites CLAUDE.md R.8 explicitly (hours-not-money carve-out).
+- `COMMENT ON COLUMN public.jobs.retainage_threshold_percent` cites GH #15.
+- Down migration drops in reverse-dependency order, includes the commented-out GH #5 rollback block (Amendment I), preserves comment-commented structure (test regex checks for the presence of the re-add block as comment text, not live SQL).
+
+Dynamic live-auth RLS probes + constraint-drop verification + milestone_completions NOT NULL defense-in-depth fire during the Migration Dry-Run per R.19 and are recorded in `qa-reports/qa-branch2-phase2.7.md`.
+
+**R.23 precedent statement:** Phase 2.7 adopts **00065 `proposals`** (3-policy RLS: org_read / org_insert / org_update; no DELETE; soft-delete via `deleted_at`) with a **00069 `draw_adjustments` extension** — surgical PM-on-own-jobs narrowing on the read policy via `EXISTS` traversal of `public.jobs.pm_id = auth.uid()`. `job_milestones` is job-scoped workflow data, not tenant config (00070 approval_chains' narrowed role-set does not apply). Write role-set `(owner, admin, pm, accounting)` matches proposals verbatim — PMs need to mark their assigned jobs' milestones as in_progress/complete; accounting marks them billed when pulling into a draw. `public.jobs` and `public.draws` column ALTERs inherit each parent table's existing RLS posture (jobs: owner/admin writes only, enforced by the pre-existing `admin owner write jobs` ALL policy; draws: owner/admin/accounting writes, enforced by the pre-existing `admin owner accounting write draws` ALL policy). No new parent-table policies are added. Amendment F.2 GRANT-verification is **not applicable** (Amendment K) — no new SECURITY DEFINER functions in scope.
+
+**Commit:** `feat(milestones): add job_milestones + retainage threshold/dropoff + draw_mode/tm columns; resolve GH #5`
 
 ### Phase 2.8 — Pricing history table
 
