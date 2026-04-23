@@ -3837,7 +3837,11 @@ BEGIN
       true,
       public.default_stages_for_workflow_type(_wt)
     )
-    ON CONFLICT (org_id, workflow_type, name) DO NOTHING;
+    -- ON CONFLICT predicate must match the partial unique index
+    -- approval_chains_unique_name_per_workflow (WHERE deleted_at
+    -- IS NULL). Without the WHERE clause, Postgres raises 42P10.
+    -- See qa-reports/qa-branch2-phase2.6.md §8.1.
+    ON CONFLICT (org_id, workflow_type, name) WHERE deleted_at IS NULL DO NOTHING;
   END LOOP;
   RETURN NEW;
 END;
@@ -3864,7 +3868,7 @@ SELECT
 FROM public.organizations o
 CROSS JOIN unnest(ARRAY['invoice_pm','invoice_qa','co','draw','po','proposal']) AS wt
 WHERE o.deleted_at IS NULL
-ON CONFLICT (org_id, workflow_type, name) DO NOTHING;
+ON CONFLICT (org_id, workflow_type, name) WHERE deleted_at IS NULL DO NOTHING;
 
 COMMENT ON TABLE public.approval_chains IS
 'Per-org configurable approval chains for 6 workflow dimensions (invoice_pm, invoice_qa, co, draw, po, proposal). RLS adopts 00065 proposals 3-policy pattern under R.23 with an intentional divergence — write role-set narrowed to (owner, admin) because approval_chains is tenant config, not workflow data. Default chains seeded on org creation via trg_organizations_create_default_approval_chains with workflow-type-aware defaults from default_stages_for_workflow_type(). Ross-Built-derived defaults tracked in GH #12 for onboarding-wizard override work. approval_actions table NOT created (F-ii scope decision) — audit flows through status_history JSONB + public.activity_log.';
