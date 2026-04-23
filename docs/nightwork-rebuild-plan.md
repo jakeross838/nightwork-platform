@@ -4641,37 +4641,838 @@ Dynamic live-auth RLS probes + GRANT-verification probes (`has_function_privileg
 
 ### Phase 2.9 — Client portal access
 
+**Plan-doc amendment history:**
+
+- Pre-flight (2026-04-23): fifteen amendments (A–O) plus one
+  follow-up (P) landed after pre-flight findings at
+  `qa-reports/preflight-branch2-phase2.9.md` (commit `9fb9544`).
+  The 27-line bare SQL that preceded this rewrite was replaced
+  wholesale. Ten scope decisions (§7.3 of the pre-flight)
+  resolved; the two most consequential:
+  - **Scope decision #4 (token storage) — HASHED, not plaintext.**
+    Pushback on the org_invites precedent. Threat model differs:
+    org_invites are single-use 14-day consumption credentials;
+    client_portal_access tokens are long-lived persistent read-
+    access credentials. Amendment D rewrites accordingly.
+  - **Scope decision #6 (expires_at) — 90-day sliding window
+    with auto-extend on access.** RPCs update `expires_at = now()
+    + interval '90 days'` on successful token validation.
+    Revocation (`revoked_at`) is immediate and independent.
+
+- **A** — `public.` schema qualification on every DDL statement
+  across both tables (R.21).
+
+- **B** — Full audit-column set on `public.client_portal_access`:
+  `created_at NOT NULL DEFAULT now()`, `updated_at NOT NULL
+  DEFAULT now()` + `trg_client_portal_access_updated_at` using
+  `public.update_updated_at()`, `created_by UUID REFERENCES
+  auth.users(id)` nullable, `invited_at NOT NULL DEFAULT now()`
+  (aligns with org_invites convention). **No `deleted_at`** —
+  `revoked_at` is the semantic equivalent for this table.
+  Write role-set narrowing to owner/admin/pm (accounting
+  excluded per Scope decision #2 — accounting doesn't interact
+  with clients; that's a PM/owner relationship function).
+
+- **C** — Full audit-column set on `public.client_portal_messages`:
+  `created_at NOT NULL DEFAULT now()`, `created_by UUID
+  REFERENCES auth.users(id)` nullable (builder-side INSERTs
+  capture `auth.uid()`; client-side INSERTs via RPC capture
+  NULL — the from_client_email carries attribution). **No
+  `updated_at`** (append-only; `read_at` flip is the only
+  legitimate mutation and happens via narrow paths — Amendment
+  I UPDATE policy + Amendment J anon RPC). **No `deleted_at`**
+  (append-only historical record like pricing_history / activity_log;
+  platform-admin service-role DELETE is the correction path per
+  Scope decision #7).
+
+- **D** — **TOKEN HARDENING — hashed long-lived tokens.** Column
+  `access_token_hash TEXT NOT NULL` stores the SHA-256 hex digest
+  of the plaintext token, never the plaintext itself. 64-char
+  length CHECK (`char_length = 64`) rejects both short strings
+  and accidental plaintext storage (plaintext from
+  `gen_random_bytes(32)` is 64 chars of hex but has a different
+  distribution; SHA-256 output is always exactly 64-char hex).
+  Partial unique `UNIQUE (access_token_hash) WHERE revoked_at
+  IS NULL` so historical tokens are preserved but only active
+  tokens enforce uniqueness. **No DEFAULT** on the hash column —
+  it is populated exclusively by the `create_client_portal_invite`
+  RPC (Amendment J) which generates plaintext, hashes it, INSERTs
+  the hash, and returns the plaintext once to the caller. The
+  plaintext **never** appears in any DB row, query log, or audit
+  table. Threat-model rationale: long-lived persistent read-access
+  credentials in a construction platform that carries financial
+  data for $10M+ homes are a different security bar from org_invites'
+  14-day single-use onboarding tokens. This is a Branch 2
+  security-bar raise, not an org_invites clone.
+
+- **E** — Partial unique dedup on access: `UNIQUE (org_id, job_id,
+  email) WHERE revoked_at IS NULL`. Prevents double-invite to the
+  same client × same job while preserving historical revoked rows.
+
+- **F** — `from_type` XOR CHECK on `client_portal_messages`:
+  enforces at DB level that builder messages carry `from_user_id`
+  (and never `from_client_email`), and client messages carry
+  `from_client_email` (and never `from_user_id`).
+
+- **G** — FK declaration on `client_portal_messages.from_user_id`:
+  `REFERENCES auth.users(id) ON DELETE SET NULL`. If a builder's
+  user account is deleted, historical messages survive with NULL
+  authorship (display "[deleted user]" in UI).
+
+- **H** — **RLS 3-policy + PM-on-own-jobs narrowing on
+  `client_portal_access`.** Composed from job_milestones (Phase 2.7
+  post-fix) + approval_chains (Phase 2.6 role narrowing).
+  * `client_portal_access_org_read` — any active org member reads
+    their org's portal access records (PMs narrow via EXISTS on
+    `public.jobs.pm_id = auth.uid()` when `user_role() = 'pm'`);
+    owner/admin/accounting read unrestricted; platform-admin
+    bypass.
+  * `client_portal_access_org_insert` — `role IN ('owner','admin',
+    'pm')` + PM-on-own-jobs.
+  * `client_portal_access_org_update` — same role-set + narrowing.
+  * **No DELETE policy** (soft-delete via `revoked_at`).
+
+- **I** — **RLS 3-policy + PM-on-own-jobs narrowing on
+  `client_portal_messages`.** Different role-set from Amendment H
+  writes — accounting IS included for messages because clients
+  may send billing questions accounting should respond to.
+  * `client_portal_messages_org_read` — PM-narrowed reads.
+  * `client_portal_messages_org_insert` — `role IN ('owner','admin',
+    'pm','accounting')` + PM-on-own-jobs + WITH CHECK enforcing
+    `from_type = 'builder'` (client-side INSERTs go through
+    Amendment J RPC).
+  * `client_portal_messages_read_at_flip` — narrow UPDATE policy
+    for builder-side `read_at` flips on client messages only.
+    USING: PM-on-own-jobs EXISTS + `from_type = 'client'` +
+    `read_at IS NULL`. WITH CHECK: asserts only `read_at` changed.
+  * **No DELETE policy** (append-only).
+
+- **J** — **3 SECURITY DEFINER RPCs** (Amendment F.2 GRANT pattern,
+  **first anon-grant in Branch 2** alongside the familiar
+  authenticated-grant pattern from 00032 / 00067 / 00070 / 00073):
+  * `public.create_client_portal_invite(p_org_id UUID, p_job_id
+    UUID, p_email TEXT, p_name TEXT, p_visibility_config JSONB,
+    p_expires_at TIMESTAMPTZ)` → `TABLE(portal_access_id UUID,
+    plaintext_token TEXT)`. Generates plaintext via
+    `encode(gen_random_bytes(32), 'hex')` (64-char hex — longer
+    than org_invites' 48-char, defense-in-depth on long-lived
+    tokens). Computes hash via
+    `encode(digest(plaintext, 'sha256'), 'hex')`. INSERTs with
+    `access_token_hash = <hash>`. Returns the plaintext ONCE.
+    `GRANT EXECUTE TO authenticated`.
+  * `public.submit_client_portal_message(p_token TEXT, p_message
+    TEXT)` → `TABLE(message_id UUID)`. Hashes the input token
+    via same algorithm, looks up the active portal_access row
+    (`revoked_at IS NULL AND expires_at > now()`), INSERTs a
+    message with `from_type = 'client'`, updates
+    `last_accessed_at = now()`, extends `expires_at = now() +
+    interval '90 days'` (sliding window per Scope decision #6).
+    `GRANT EXECUTE TO anon`.
+  * `public.mark_client_portal_message_read(p_token TEXT,
+    p_message_id UUID)` → `VOID`. Hashes the token, validates
+    the message belongs to the same portal_access row's
+    (org_id, job_id) and has `from_type = 'builder'`, flips
+    `read_at = now()` where `read_at IS NULL`. Updates
+    `last_accessed_at` + extends `expires_at`. `GRANT EXECUTE
+    TO anon`.
+
+  All 3 functions: `SECURITY DEFINER` + pinned
+  `search_path = public, pg_temp`. Token validation inside each
+  function body (hash comparison, revocation check, expiry
+  check) is the defense for the anon grant — invalid / revoked /
+  expired tokens produce silent no-op (no exception leaked) to
+  prevent timing-oracle enumeration.
+
+- **K** — 5 indexes total:
+  * `idx_client_portal_access_token_hash (access_token_hash)
+    WHERE revoked_at IS NULL` — hot-path RPC token lookup.
+  * `idx_client_portal_access_org_job (org_id, job_id) WHERE
+    revoked_at IS NULL` — list active portal invites per job.
+  * `idx_client_portal_access_email (email) WHERE revoked_at IS
+    NULL` — find active invites by client email.
+  * `idx_client_portal_messages_timeline (org_id, job_id,
+    created_at DESC)` — chronological message timeline.
+  * `idx_client_portal_messages_unread (org_id, job_id) WHERE
+    read_at IS NULL` — unread message counts.
+
+- **L** — Paired `00074_client_portal.down.sql` per R.16. Reverse
+  dependency order: drop 3 RPCs (submit_, mark_, create_) →
+  drop `trg_client_portal_access_updated_at` trigger → drop RLS
+  policies (6 total: 3 per table) → DISABLE RLS × 2 → drop 5
+  indexes → drop 2 tables.
+
+- **M** — R.15 test file `__tests__/client-portal.test.ts`.
+  Regression fences explicitly assert:
+  * Column name is `access_token_hash` (NOT `access_token`) —
+    Amendment D guard.
+  * 64-char length CHECK present on `access_token_hash`.
+  * `create_client_portal_invite` RPC exists + `has_function_privilege
+    ('authenticated', …, 'EXECUTE') = true`.
+  * `submit_client_portal_message` + `mark_client_portal_message_read`
+    RPCs exist + `has_function_privilege('anon', …, 'EXECUTE') = true`
+    for each.
+  * Token hashing logic present in RPC bodies (grep `pg_proc.prosrc`
+    for `digest` and `sha256`).
+  * XOR CHECK on `client_portal_messages` (builder XOR client from_type).
+  * Platform-admin bypass policy on both tables.
+  * 3-policy count on both tables; no DELETE policies.
+  * PM-on-own-jobs EXISTS subquery in read + write policies on
+    both tables.
+  * `from_user_id` FK with `ON DELETE SET NULL`.
+  * `expires_at` default is `now() + interval '90 days'`.
+  * Partial unique on `(org_id, job_id, email) WHERE revoked_at
+    IS NULL` (Amendment E).
+  * Partial unique on `access_token_hash WHERE revoked_at IS NULL`
+    (Amendment D).
+  * Sliding-window expires_at extension: grep each RPC body for
+    `expires_at = now() + interval '90 days'` update clause.
+  * `visibility_config` CHECK expression present (Amendment N)
+    OR fallback-to-comment documented in header if Dry-Run
+    performance regression forces the fallback.
+
+- **N** — **`visibility_config` enforcement: BOTH comment + CHECK
+  expression** (Scope decision #9).
+  * COMMENT ON COLUMN documents the 7 expected keys:
+    `show_invoices`, `show_budget`, `show_schedule`,
+    `show_change_orders`, `show_draws`, `show_lien_releases`,
+    `show_daily_logs`. All bool.
+  * CHECK expression validates at write time that
+    `visibility_config` is NULL or a JSONB object whose keys
+    are all in the known set AND whose values are all booleans.
+    Predicate:
+    ```
+    CHECK (
+      visibility_config IS NULL OR (
+        jsonb_typeof(visibility_config) = 'object'
+        AND NOT EXISTS (
+          SELECT 1 FROM jsonb_object_keys(visibility_config) AS key
+          WHERE key NOT IN ('show_invoices','show_budget',
+                            'show_schedule','show_change_orders',
+                            'show_draws','show_lien_releases',
+                            'show_daily_logs')
+          OR jsonb_typeof(visibility_config->key) != 'boolean'
+        )
+      )
+    )
+    ```
+  * **Performance fallback.** If the CHECK expression produces
+    unacceptable INSERT-latency regression during Migration
+    Dry-Run (measure 100-row INSERT batch with + without CHECK),
+    fall back to COMMENT-only and document the fallback in the
+    migration header + an R.15 regression fence asserting the
+    COMMENT-only path. Report the measurement in execution-phase
+    QA §3 or §4.
+
+- **O** — **Header documentation — wholesale rewrite.** Migration
+  header cites:
+  * **No R.23 divergence.** Both tables compose from existing
+    precedents: job_milestones Phase 2.7 PM-on-own-jobs narrowing +
+    approval_chains Phase 2.6 role-set narrowing + Amendment F.2
+    SECURITY DEFINER pattern extended to anon grant. The novel
+    mixed-auth surface (authenticated builder + anon client-via-
+    token) resolves via composition: RLS covers the builder side;
+    SECURITY DEFINER RPCs cover the anon side. Neither surface
+    introduces a new R.23 category.
+  * **Token-hashing threat model** (Amendment D) — why this diverges
+    from the org_invites precedent despite near-identical schema
+    shape. Long-lived persistent read-access credentials for $10M+
+    construction data require a higher security bar than single-use
+    14-day onboarding tokens.
+  * **First anon-grant in Branch 2** — Amendment J SECURITY DEFINER
+    RPCs extend the Amendment F.2 GRANT pattern (lineage:
+    00032 → 00067 → 00070 → 00073, all `authenticated`). Defense
+    for the anon grant is the token-validation inside the RPC body
+    (hash comparison + revoked_at + expires_at checks); invalid
+    input produces silent no-op to defeat timing oracles.
+  * **Sliding-window expires_at** (Scope decision #6) — 90-day
+    default with auto-extend on successful RPC token validation.
+    Revocation (`revoked_at`) is immediate and independent.
+  * **Append-only messages** (Scope decision #7) — no
+    `retracted_at`, no UPDATE policy beyond `read_at` flips.
+    Platform-admin service-role DELETE is the correction path
+    for accidental-send scenarios (parallel to pricing_history).
+  * **Service-role API for portal reads** (Scope decision #1) —
+    portal clients are `anon` with no `auth.uid()`. Portal UI
+    reads go through a dedicated service-role Next.js API route
+    that validates the token hash → derives org_id/job_id →
+    pre-filters data by `visibility_config`. **No RLS policy is
+    required for anon reads** — the service-role API bypasses
+    RLS entirely. Bounded attack surface.
+  * **Amendment N CHECK-expression decision** + performance-
+    fallback clause.
+  * **Branch 3/4 writer-contracts** — 5 write paths:
+    1. Invite creation via `create_client_portal_invite` RPC
+       (authenticated; returns plaintext once).
+    2. Builder messages via ordinary INSERT with RLS.
+    3. Client messages via `submit_client_portal_message` RPC
+       (anon).
+    4. Builder-marks-client-message-read via RLS UPDATE policy.
+    5. Client-marks-builder-message-read via
+       `mark_client_portal_message_read` RPC (anon).
+    6. Portal read API via service-role validation of token
+       hash (outside the migration scope — Branch 3/4 API route).
+  * **Forward-only apply** — no backfill (Scope decision #5).
+  * **Related issues:** GH #17 (Branch 3/4 client-portal security
+    review checklist — Amendment P).
+
+- **P** — **GH #17 opened** — tracks Branch 3/4 pre-launch
+  security review: rate limiting on anon RPCs, CSRF protection
+  on portal read API, plaintext-token transmission security,
+  log scrubbing, revocation flow audit. Parallel pattern to
+  GH #12 (approval_chains onboarding), GH #15 (retainage
+  onboarding), GH #16 (pricing_history signal quality).
+
+**Ross-Built-vs-other-orgs context.** 15 live Ross Built jobs;
+zero pre-existing client-portal records. Forward-only apply. Ross
+Built's current client communication happens by email; portal is
+net-new capability for Branch 3/4. Cost-plus (open-book) builder
+sharing model means clients should see invoices + budget + draws
+by default — Ross Built will likely set `visibility_config = {"show_invoices": true, "show_budget": true, "show_draws": true}` for most invites. Other orgs with fixed-price contracts will prefer narrower defaults.
+
+**Related issues:** GH #9 (latent authenticated-role permission
+gaps — Amendment J GRANT pattern defends both authenticated and
+anon classes); GH #17 (Branch 3/4 client-portal security review
+checklist).
+
 Migration `00074_client_portal.sql`:
 ```sql
-CREATE TABLE client_portal_access (
+-- ============================================================
+-- Phase 2.9 — Client portal access (migration 00074).
+--
+-- Adds public.client_portal_access and public.client_portal_messages
+-- tables + 3 SECURITY DEFINER RPCs (create_invite / submit_message
+-- / mark_read) enabling time-boxed, revocable, hashed-token-based
+-- client access to per-job portal pages. Backs Branch 3/4 client-
+-- portal UI.
+--
+-- Amendments A-O + P landed at plan-amendment commit <filled at
+-- commit time>. Pre-flight findings at qa-reports/preflight-branch2-
+-- phase2.9.md (commit 9fb9544).
+--
+-- NO R.23 DIVERGENCE. Both tables compose from existing Branch 2
+-- precedents: job_milestones Phase 2.7 PM-on-own-jobs narrowing +
+-- approval_chains Phase 2.6 role-set narrowing + Amendment F.2
+-- SECURITY DEFINER pattern extended to anon grant. The mixed-auth
+-- surface (authenticated builder + anon client-via-token) resolves
+-- via composition: RLS covers builder writes; SECURITY DEFINER
+-- RPCs cover anon client writes; service-role API covers portal
+-- reads.
+--
+-- TOKEN HARDENING (Amendment D): access_token_hash stores the
+-- SHA-256 hex digest of a server-generated 64-char hex plaintext
+-- token. The plaintext is returned ONCE by create_client_portal_invite
+-- and never stored in any DB row / query log / audit table. Threat
+-- model: long-lived persistent read-access credentials for $10M+
+-- construction data require a higher security bar than org_invites'
+-- 14-day single-use onboarding tokens.
+--
+-- FIRST ANON-GRANT IN BRANCH 2 (Amendment J): submit_message +
+-- mark_read RPCs are granted to anon. Defense is the token-
+-- validation (hash compare + revoked_at + expires_at) inside each
+-- SECURITY DEFINER body — invalid/revoked/expired tokens produce
+-- silent no-op to defeat timing oracles. Lineage of the Amendment
+-- F.2 GRANT pattern: 00032 → 00067 → 00070 → 00073 (all
+-- authenticated) → 00074 (first anon).
+--
+-- SLIDING-WINDOW expires_at (Scope decision #6): default 90 days;
+-- each successful RPC token validation auto-extends to now() +
+-- interval '90 days'. revoked_at is immediate + independent.
+--
+-- APPEND-ONLY MESSAGES (Scope decision #7): no retracted_at, no
+-- UPDATE policy beyond read_at flips. Platform-admin service-role
+-- DELETE is the correction path.
+--
+-- SERVICE-ROLE PORTAL READS (Scope decision #1): portal clients
+-- are anon. Portal UI reads route through a dedicated Next.js
+-- service-role API that validates token hash → derives org_id /
+-- job_id → pre-filters by visibility_config. No RLS policy for
+-- anon reads; service-role bypasses RLS. Bounded attack surface.
+--
+-- BACKFILL (Scope decision #5): none. Forward-only.
+--
+-- GH #17 tracks Branch 3/4 pre-launch security review checklist.
+-- ============================================================
+
+CREATE TABLE public.client_portal_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL REFERENCES organizations(id),
-  job_id UUID NOT NULL REFERENCES jobs(id),
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  job_id UUID NOT NULL REFERENCES public.jobs(id),
   email TEXT NOT NULL,
   name TEXT,
-  access_token TEXT UNIQUE NOT NULL,
-  visibility_config JSONB NOT NULL DEFAULT '{}'::jsonb,
-  invited_at TIMESTAMPTZ,
+
+  -- Amendment D: SHA-256 hex digest of the plaintext token.
+  -- Plaintext is returned once by create_client_portal_invite
+  -- and never stored. 64-char length CHECK rejects short strings
+  -- and accidental plaintext storage.
+  access_token_hash TEXT NOT NULL
+    CHECK (char_length(access_token_hash) = 64),
+
+  -- Amendment N: both COMMENT + CHECK expression validating
+  -- JSONB shape at write time. Fall back to COMMENT-only if
+  -- Dry-Run performance measurement surfaces regression
+  -- (documented in execution QA §3 or §4).
+  visibility_config JSONB NOT NULL DEFAULT '{}'::jsonb
+    CHECK (
+      visibility_config IS NULL OR (
+        jsonb_typeof(visibility_config) = 'object'
+        AND NOT EXISTS (
+          SELECT 1 FROM jsonb_object_keys(visibility_config) AS key
+          WHERE key NOT IN ('show_invoices','show_budget',
+                            'show_schedule','show_change_orders',
+                            'show_draws','show_lien_releases',
+                            'show_daily_logs')
+            OR jsonb_typeof(visibility_config->key) != 'boolean'
+        )
+      )
+    ),
+
+  -- Amendment B audit-columns + invited_at/revoked_at/expires_at.
+  invited_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_accessed_at TIMESTAMPTZ,
-  revoked_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now(),
+  revoked_at    TIMESTAMPTZ,
+  expires_at    TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '90 days'),
+
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by    UUID REFERENCES auth.users(id)
+);
+
+-- Amendment E: dedup partial unique.
+CREATE UNIQUE INDEX client_portal_access_org_job_email_active
+  ON public.client_portal_access (org_id, job_id, email)
+  WHERE revoked_at IS NULL;
+
+-- Amendment D + K: hot-path RPC token lookup.
+CREATE UNIQUE INDEX idx_client_portal_access_token_hash
+  ON public.client_portal_access (access_token_hash)
+  WHERE revoked_at IS NULL;
+
+-- Amendment K: list + lookup indexes.
+CREATE INDEX idx_client_portal_access_org_job
+  ON public.client_portal_access (org_id, job_id)
+  WHERE revoked_at IS NULL;
+CREATE INDEX idx_client_portal_access_email
+  ON public.client_portal_access (email)
+  WHERE revoked_at IS NULL;
+
+-- Amendment B: updated_at trigger using shared helper.
+CREATE TRIGGER trg_client_portal_access_updated_at
+  BEFORE UPDATE ON public.client_portal_access
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TABLE public.client_portal_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  job_id UUID NOT NULL REFERENCES public.jobs(id),
+
+  from_type TEXT NOT NULL CHECK (from_type IN ('builder','client')),
+  from_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  from_client_email TEXT,
+
+  -- Amendment F: XOR enforcing from_type ↔ writer-identity alignment.
+  CHECK (
+    (from_type = 'builder' AND from_user_id IS NOT NULL
+       AND from_client_email IS NULL)
+    OR
+    (from_type = 'client' AND from_client_email IS NOT NULL
+       AND from_user_id IS NULL)
+  ),
+
+  message TEXT NOT NULL,
+  read_at TIMESTAMPTZ,
+
+  -- Amendment C: append-only audit columns (no updated_at,
+  -- no deleted_at).
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by UUID REFERENCES auth.users(id)
 );
 
-CREATE TABLE client_portal_messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL REFERENCES organizations(id),
-  job_id UUID NOT NULL REFERENCES jobs(id),
-  from_type TEXT NOT NULL CHECK (from_type IN ('builder','client')),
-  from_user_id UUID,
-  from_client_email TEXT,
-  message TEXT NOT NULL,
-  read_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+-- Amendment K: timeline + unread indexes.
+CREATE INDEX idx_client_portal_messages_timeline
+  ON public.client_portal_messages (org_id, job_id, created_at DESC);
+CREATE INDEX idx_client_portal_messages_unread
+  ON public.client_portal_messages (org_id, job_id)
+  WHERE read_at IS NULL;
+
+-- ============================================================
+-- Amendment H: RLS on client_portal_access — 3 policies,
+-- PM-on-own-jobs narrowing, no DELETE (revoked_at soft-delete).
+-- Write role-set: owner/admin/pm (accounting EXCLUDED per
+-- Scope decision #2 — accounting doesn't invite clients).
+-- Platform-admin SELECT bypass.
+-- ============================================================
+ALTER TABLE public.client_portal_access ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY client_portal_access_org_read
+  ON public.client_portal_access FOR SELECT
+  USING (
+    app_private.is_platform_admin()
+    OR (
+      org_id = app_private.user_org_id()
+      AND (
+        app_private.user_role() IN ('owner','admin','accounting')
+        OR (
+          app_private.user_role() = 'pm'
+          AND EXISTS (
+            SELECT 1 FROM public.jobs j
+            WHERE j.id = client_portal_access.job_id
+              AND j.pm_id = auth.uid()
+          )
+        )
+      )
+    )
+  );
+
+CREATE POLICY client_portal_access_org_insert
+  ON public.client_portal_access FOR INSERT
+  WITH CHECK (
+    org_id = app_private.user_org_id()
+    AND app_private.user_role() IN ('owner','admin','pm')
+    AND (
+      app_private.user_role() IN ('owner','admin')
+      OR EXISTS (
+        SELECT 1 FROM public.jobs j
+        WHERE j.id = client_portal_access.job_id
+          AND j.pm_id = auth.uid()
+      )
+    )
+  );
+
+CREATE POLICY client_portal_access_org_update
+  ON public.client_portal_access FOR UPDATE
+  USING (
+    org_id = app_private.user_org_id()
+    AND app_private.user_role() IN ('owner','admin','pm')
+    AND (
+      app_private.user_role() IN ('owner','admin')
+      OR EXISTS (
+        SELECT 1 FROM public.jobs j
+        WHERE j.id = client_portal_access.job_id
+          AND j.pm_id = auth.uid()
+      )
+    )
+  )
+  WITH CHECK (
+    org_id = app_private.user_org_id()
+    AND app_private.user_role() IN ('owner','admin','pm')
+  );
+
+-- ============================================================
+-- Amendment I: RLS on client_portal_messages — 3 policies,
+-- PM-on-own-jobs narrowing, no DELETE, narrow UPDATE for
+-- read_at flip. Write role-set INCLUDES accounting (different
+-- from access — billing questions route to accounting).
+-- ============================================================
+ALTER TABLE public.client_portal_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY client_portal_messages_org_read
+  ON public.client_portal_messages FOR SELECT
+  USING (
+    app_private.is_platform_admin()
+    OR (
+      org_id = app_private.user_org_id()
+      AND (
+        app_private.user_role() IN ('owner','admin','accounting')
+        OR (
+          app_private.user_role() = 'pm'
+          AND EXISTS (
+            SELECT 1 FROM public.jobs j
+            WHERE j.id = client_portal_messages.job_id
+              AND j.pm_id = auth.uid()
+          )
+        )
+      )
+    )
+  );
+
+CREATE POLICY client_portal_messages_org_insert
+  ON public.client_portal_messages FOR INSERT
+  WITH CHECK (
+    org_id = app_private.user_org_id()
+    AND app_private.user_role() IN ('owner','admin','pm','accounting')
+    AND from_type = 'builder'
+    AND (
+      app_private.user_role() IN ('owner','admin','accounting')
+      OR EXISTS (
+        SELECT 1 FROM public.jobs j
+        WHERE j.id = client_portal_messages.job_id
+          AND j.pm_id = auth.uid()
+      )
+    )
+  );
+
+-- Narrow UPDATE policy — read_at flip only.
+CREATE POLICY client_portal_messages_read_at_flip
+  ON public.client_portal_messages FOR UPDATE
+  USING (
+    org_id = app_private.user_org_id()
+    AND from_type = 'client'
+    AND read_at IS NULL
+    AND (
+      app_private.user_role() IN ('owner','admin','accounting')
+      OR (
+        app_private.user_role() = 'pm'
+        AND EXISTS (
+          SELECT 1 FROM public.jobs j
+          WHERE j.id = client_portal_messages.job_id
+            AND j.pm_id = auth.uid()
+        )
+      )
+    )
+  )
+  WITH CHECK (
+    org_id = app_private.user_org_id()
+    AND from_type = 'client'
+  );
+
+-- ============================================================
+-- Amendment J: 3 SECURITY DEFINER RPCs. pinned search_path.
+-- GRANT EXECUTE pattern: create_invite → authenticated;
+-- submit_message + mark_read → anon. Token validation inside
+-- each body defends the anon grant (silent no-op on invalid /
+-- revoked / expired).
+-- Lineage of the F.2 GRANT pattern: 00032 → 00067 → 00070 →
+-- 00073 (all authenticated) → 00074 (first anon).
+-- ============================================================
+
+-- (1) create_client_portal_invite — authenticated only.
+-- Returns plaintext token ONCE to the builder UI. Plaintext
+-- never stored.
+CREATE OR REPLACE FUNCTION public.create_client_portal_invite(
+  p_org_id UUID,
+  p_job_id UUID,
+  p_email TEXT,
+  p_name TEXT,
+  p_visibility_config JSONB,
+  p_expires_at TIMESTAMPTZ
+)
+RETURNS TABLE(portal_access_id UUID, plaintext_token TEXT)
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _plaintext TEXT;
+  _hash TEXT;
+  _new_id UUID;
+BEGIN
+  -- Caller must be org member with role IN ('owner','admin','pm')
+  -- and (if pm) own the job. Mirrors Amendment H insert policy.
+  IF NOT (
+    p_org_id = app_private.user_org_id()
+    AND app_private.user_role() IN ('owner','admin','pm')
+    AND (
+      app_private.user_role() IN ('owner','admin')
+      OR EXISTS (
+        SELECT 1 FROM public.jobs j
+        WHERE j.id = p_job_id AND j.pm_id = auth.uid()
+      )
+    )
+  ) THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  _plaintext := encode(gen_random_bytes(32), 'hex');
+  _hash := encode(digest(_plaintext, 'sha256'), 'hex');
+
+  INSERT INTO public.client_portal_access (
+    org_id, job_id, email, name, access_token_hash,
+    visibility_config, expires_at, created_by
+  ) VALUES (
+    p_org_id, p_job_id, p_email, p_name, _hash,
+    COALESCE(p_visibility_config, '{}'::jsonb),
+    COALESCE(p_expires_at, now() + interval '90 days'),
+    auth.uid()
+  )
+  RETURNING id INTO _new_id;
+
+  RETURN QUERY SELECT _new_id, _plaintext;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.create_client_portal_invite(
+  UUID, UUID, TEXT, TEXT, JSONB, TIMESTAMPTZ
+) TO authenticated;
+
+-- (2) submit_client_portal_message — anon. Client side.
+-- Silent no-op on invalid/revoked/expired to defeat timing
+-- oracles. Sliding-window expires_at extension on success.
+CREATE OR REPLACE FUNCTION public.submit_client_portal_message(
+  p_token TEXT,
+  p_message TEXT
+)
+RETURNS TABLE(message_id UUID)
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _hash TEXT;
+  _access RECORD;
+  _new_id UUID;
+BEGIN
+  IF p_token IS NULL OR p_message IS NULL OR p_message = '' THEN
+    RETURN;
+  END IF;
+
+  _hash := encode(digest(p_token, 'sha256'), 'hex');
+
+  SELECT id, org_id, job_id, email
+    INTO _access
+    FROM public.client_portal_access
+    WHERE access_token_hash = _hash
+      AND revoked_at IS NULL
+      AND expires_at > now();
+
+  IF NOT FOUND THEN
+    RETURN;  -- silent no-op
+  END IF;
+
+  INSERT INTO public.client_portal_messages (
+    org_id, job_id, from_type, from_client_email, message
+  ) VALUES (
+    _access.org_id, _access.job_id, 'client',
+    _access.email, p_message
+  )
+  RETURNING id INTO _new_id;
+
+  -- Sliding-window: extend expires_at on successful access.
+  UPDATE public.client_portal_access
+    SET last_accessed_at = now(),
+        expires_at = now() + interval '90 days'
+    WHERE id = _access.id;
+
+  RETURN QUERY SELECT _new_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.submit_client_portal_message(TEXT, TEXT)
+  TO anon;
+
+-- (3) mark_client_portal_message_read — anon. Client side.
+-- Flips read_at on builder messages the client just read.
+CREATE OR REPLACE FUNCTION public.mark_client_portal_message_read(
+  p_token TEXT,
+  p_message_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _hash TEXT;
+  _access RECORD;
+BEGIN
+  IF p_token IS NULL OR p_message_id IS NULL THEN
+    RETURN;
+  END IF;
+
+  _hash := encode(digest(p_token, 'sha256'), 'hex');
+
+  SELECT id, org_id, job_id
+    INTO _access
+    FROM public.client_portal_access
+    WHERE access_token_hash = _hash
+      AND revoked_at IS NULL
+      AND expires_at > now();
+
+  IF NOT FOUND THEN
+    RETURN;  -- silent no-op
+  END IF;
+
+  UPDATE public.client_portal_messages
+    SET read_at = now()
+    WHERE id = p_message_id
+      AND org_id = _access.org_id
+      AND job_id = _access.job_id
+      AND from_type = 'builder'
+      AND read_at IS NULL;
+
+  UPDATE public.client_portal_access
+    SET last_accessed_at = now(),
+        expires_at = now() + interval '90 days'
+    WHERE id = _access.id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.mark_client_portal_message_read(TEXT, UUID)
+  TO anon;
+
+-- ============================================================
+-- Amendment N + O: COMMENTs documenting expected shape +
+-- writer-contracts + decision rationale.
+-- ============================================================
+COMMENT ON TABLE public.client_portal_access IS
+'Per-job client portal invites. access_token_hash stores SHA-256 hex of a server-generated 64-char hex plaintext token; plaintext is returned ONCE by create_client_portal_invite RPC and never stored. Write role-set: owner/admin/pm (accounting excluded — not their workflow). Sliding-window expires_at: default 90 days; RPC token validations auto-extend. revoked_at is immediate + independent. R.23 COMPOSITION (no divergence): 3-policy + PM-on-own-jobs from job_milestones/00071+00072 + role-narrowing from approval_chains/00070. Platform-admin SELECT bypass. No DELETE policy — revoked_at is the soft-delete mechanism.';
+
+COMMENT ON COLUMN public.client_portal_access.access_token_hash IS
+'SHA-256 hex digest (64 chars) of the plaintext token. Plaintext is generated by create_client_portal_invite via encode(gen_random_bytes(32), ''hex'') and returned ONCE to the caller; it is NEVER stored. RPC validators hash input tokens and compare to this column. CHECK(char_length = 64) distinguishes hashes from 48-char org_invites-style plaintext. Threat model: long-lived persistent read-access credentials require higher security bar than org_invites'' 14-day single-use tokens.';
+
+COMMENT ON COLUMN public.client_portal_access.visibility_config IS
+'Which sections of the job portal the client sees. Expected keys (all boolean): show_invoices, show_budget, show_schedule, show_change_orders, show_draws, show_lien_releases, show_daily_logs. NULL or {} means default (application layer decides). CHECK expression validates shape at write time (Amendment N); fallback to COMMENT-only if Dry-Run surfaces INSERT latency regression — see migration header.';
+
+COMMENT ON COLUMN public.client_portal_access.expires_at IS
+'Sliding-window expiration. Default: now() + interval ''90 days''. Successful RPC token validations (submit_message, mark_read) extend to now() + interval ''90 days''. revoked_at is immediate and independent — a revoked row with expires_at in the future is still invalid.';
+
+COMMENT ON TABLE public.client_portal_messages IS
+'Builder ↔ client messaging per job. from_type XOR CHECK enforces that builder messages carry from_user_id (never from_client_email) and client messages carry from_client_email (never from_user_id). Write role-set INCLUDES accounting (billing questions route to accounting; different from access-table role-set). Append-only: no updated_at, no deleted_at, no retracted_at. Platform-admin service-role DELETE is the correction path for accidental-send scenarios (parallel to pricing_history Phase 2.8). Client-side INSERTs go exclusively through public.submit_client_portal_message RPC (Amendment J, anon grant). Builder-side read_at flip via RLS UPDATE policy; client-side read_at flip via public.mark_client_portal_message_read RPC (anon grant).';
+
+COMMENT ON FUNCTION public.create_client_portal_invite(UUID, UUID, TEXT, TEXT, JSONB, TIMESTAMPTZ) IS
+'Creates a client_portal_access row with a freshly generated 64-char hex plaintext token. Stores only the SHA-256 hash in access_token_hash; returns the plaintext ONCE to the caller (builder UI captures it for email delivery). Plaintext is never stored in any DB row, query log, or audit table. SECURITY DEFINER with pinned search_path. GRANT EXECUTE TO authenticated. Caller authorization mirrors Amendment H insert policy: owner/admin unrestricted; pm must own the job.';
+
+COMMENT ON FUNCTION public.submit_client_portal_message(TEXT, TEXT) IS
+'Anon-accessible client-side message submit. Hashes the input token, looks up the active (non-revoked, non-expired) portal_access row, INSERTs a message with from_type=''client''. On successful validation: updates last_accessed_at and extends expires_at = now() + interval ''90 days'' (sliding window). Silent no-op on invalid/revoked/expired tokens to defeat timing-oracle enumeration. GRANT EXECUTE TO anon — first anon-grant in Branch 2. Defense is the token validation inside the body.';
+
+COMMENT ON FUNCTION public.mark_client_portal_message_read(TEXT, UUID) IS
+'Anon-accessible client-side read-receipt flip. Validates the token, confirms the message belongs to the token''s (org_id, job_id) and is from_type=''builder'', sets read_at = now(). Silent no-op on invalid/revoked/expired tokens or mismatched message scopes. Extends parent access expires_at. GRANT EXECUTE TO anon.';
 ```
 
-**Commit:** `feat(client-portal): add tables for client access and messages`
+Also write `00074_client_portal.down.sql` per R.16 (Amendment L).
+Reverses in strict reverse-dependency order: drops 3 SECURITY
+DEFINER RPCs (mark_read → submit_message → create_invite) →
+drops all 6 RLS policies (3 per table) → DISABLES RLS on both
+tables → drops trg_client_portal_access_updated_at trigger →
+drops 5 indexes (2 partial unique + 3 non-unique/partial) →
+drops `public.client_portal_messages` → drops
+`public.client_portal_access`.
+
+**Code + type updates:** none at this phase. Pre-flight §3 R.18
+grep confirmed 0 `src/` / `__tests__/` / `supabase/migrations/`
+references to `client_portal`, `visibility_config`, `from_type`,
+`from_client_email`. Branch 3/4 will wire the 5 write paths (see
+Amendment O) + the service-role portal-read API.
+
+**Test (R.15 test-first):** write `__tests__/client-portal.test.ts`
+(Amendment M) covering the regression fences enumerated in
+Amendment M above. Dynamic live-auth RLS probes + anon-grant
+`has_function_privilege` probes + token-hashing RPC behavior
+(valid vs. revoked vs. expired vs. mismatched token) + Amendment
+N CHECK-expression performance measurement (100-row INSERT batch
+with + without CHECK) + sliding-window expires_at extension
+verification fire during the Migration Dry-Run per R.19 and are
+recorded in `qa-reports/qa-branch2-phase2.9.md`.
+
+**R.23 precedent statement:** Phase 2.9 is the **second Branch 2
+phase whose structural shape warrants explicit R.23 framing
+(after Phase 2.8's 1-policy divergence)** — but unlike Phase 2.8,
+Phase 2.9 **does NOT introduce a new R.23 category**. The mixed-
+auth surface resolves via composition: `client_portal_access` +
+`client_portal_messages` adopt the job_milestones Phase 2.7
+post-fix 3-policy + PM-on-own-jobs shape with approval_chains
+Phase 2.6 role-set narrowing (Amendment H writes exclude
+accounting; Amendment I writes include it — different surfaces,
+same precedent mechanism). The novel element — anon-authenticated
+client writes — is handled by Amendment J SECURITY DEFINER RPCs
+that extend the Amendment F.2 GRANT pattern (lineage 00032 → 00067
+→ 00070 → 00073, all `authenticated`) to `anon` for the first
+time in Branch 2. Defense for the anon grant is the token
+validation inside each RPC body (hash compare + revoked_at +
+expires_at checks) producing silent no-op on failure. Documented
+as intentional composition, not divergence; Amendment M R.15 test
+file asserts both the composition elements (3-policy count × 2
+tables, PM-on-own-jobs EXISTS, no DELETE policies) and the
+novel elements (anon grant, hashed-token column name, sliding-
+window expires_at extension, XOR from_type CHECK).
+
+**Commit:** `feat(client-portal): add client_portal_access + client_portal_messages with hashed tokens, 3 SECURITY DEFINER RPCs (first anon-grant), and sliding-window expires_at`
 
 ### Phase 2.10 — V2.0 schema hooks (empty tables)
 
