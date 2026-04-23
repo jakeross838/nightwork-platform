@@ -4344,6 +4344,11 @@ CREATE POLICY pricing_history_org_read
 
 -- (1) invoice_line_items trigger — fires when parent invoice
 -- reaches qa_approved status.
+-- RUNTIME NOTE (qa-reports/qa-branch2-phase2.8.md §3.1 + §3.2):
+-- invoice_line_items actual columns are qty / rate / amount_cents
+-- (NOT quantity / unit_price / amount). rate is stored in DOLLARS
+-- per invoice-parse convention — convert to BIGINT cents via
+-- ROUND(rate * 100)::BIGINT for pricing_history.unit_price (R.8).
 CREATE OR REPLACE FUNCTION public.trg_pricing_history_from_invoice_line()
 RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER
@@ -4361,6 +4366,12 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- job_id on invoices is nullable (legacy); pricing_history.job_id
+  -- is NOT NULL. Skip orphans rather than fail the parent INSERT.
+  IF _inv.job_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
   INSERT INTO public.pricing_history (
     org_id, job_id, source_type, source_id, source_line_id,
     vendor_id, cost_code_id, description,
@@ -4368,8 +4379,10 @@ BEGIN
     created_by
   ) VALUES (
     _inv.org_id, _inv.job_id, 'invoice', _inv.id, NEW.id,
-    _inv.vendor_id, NEW.cost_code_id, NEW.description,
-    NEW.quantity, NEW.unit, NEW.unit_price, NEW.amount,
+    _inv.vendor_id, NEW.cost_code_id, COALESCE(NEW.description, ''),
+    NEW.qty, NEW.unit,
+    CASE WHEN NEW.rate IS NOT NULL THEN ROUND(NEW.rate * 100)::BIGINT ELSE NULL END,
+    NEW.amount_cents,
     COALESCE(_inv.invoice_date, _inv.created_at::date),
     auth.uid()
   )
@@ -4496,6 +4509,14 @@ CREATE TRIGGER trg_po_line_items_pricing_history
 
 -- (4) change_order_lines trigger — fires when parent CO
 -- reaches approved status.
+-- RUNTIME NOTE (qa-reports/qa-branch2-phase2.8.md §3.3 + §3.4):
+-- change_orders has NO vendor_id column — parent SELECT omits it
+-- and pricing_history.vendor_id is inserted as NULL.
+-- change_order_lines uses co_id (NOT change_order_id), has NO
+-- quantity / unit / unit_price / cost_code_id columns (same
+-- asymmetry as po_line_items Amendment I) — insert NULL for
+-- q/u/up and resolve cost_code TEXT via (code, org_id) lookup
+-- on cost_codes.
 CREATE OR REPLACE FUNCTION public.trg_pricing_history_from_co_line()
 RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER
@@ -4503,15 +4524,22 @@ SET search_path = public, pg_temp
 AS $$
 DECLARE
   _co RECORD;
+  _cost_code_id UUID;
 BEGIN
-  SELECT id, org_id, job_id, vendor_id, status, approved_date, created_at
+  SELECT id, org_id, job_id, status, approved_date, created_at
     INTO _co
     FROM public.change_orders
-    WHERE id = NEW.change_order_id;
+    WHERE id = NEW.co_id;
 
   IF _co.status IS DISTINCT FROM 'approved' THEN
     RETURN NEW;
   END IF;
+
+  SELECT id INTO _cost_code_id
+    FROM public.cost_codes
+    WHERE code = NEW.cost_code
+      AND org_id = _co.org_id
+    LIMIT 1;
 
   INSERT INTO public.pricing_history (
     org_id, job_id, source_type, source_id, source_line_id,
@@ -4520,8 +4548,8 @@ BEGIN
     created_by
   ) VALUES (
     _co.org_id, _co.job_id, 'co', _co.id, NEW.id,
-    _co.vendor_id, NEW.cost_code_id, NEW.description,
-    NEW.quantity, NEW.unit, NEW.unit_price, NEW.amount,
+    NULL, _cost_code_id, COALESCE(NEW.description, ''),
+    NULL, NULL, NULL, NEW.amount,
     COALESCE(_co.approved_date, _co.created_at::date),
     auth.uid()
   )
@@ -4543,6 +4571,12 @@ CREATE TRIGGER trg_change_order_lines_pricing_history
 -- Amendment M: one-time backfill for qa_approved invoice lines.
 -- Execution-phase QA report captures the actual row count +
 -- spot-check sample per GH #16 signal-quality gate.
+-- RUNTIME NOTE (qa-reports/qa-branch2-phase2.8.md §3.1 + §3.2):
+-- uses actual invoice_line_items column names qty / rate /
+-- amount_cents (NOT quantity / unit_price / amount), with
+-- rate * 100 dollars-to-cents conversion for unit_price. Also
+-- filters i.job_id IS NOT NULL because pricing_history.job_id
+-- is NOT NULL.
 -- ------------------------------------------------------------
 INSERT INTO public.pricing_history (
   org_id, job_id, source_type, source_id, source_line_id,
@@ -4552,14 +4586,17 @@ INSERT INTO public.pricing_history (
 )
 SELECT
   i.org_id, i.job_id, 'invoice', i.id, ili.id,
-  i.vendor_id, ili.cost_code_id, ili.description,
-  ili.quantity, ili.unit, ili.unit_price, ili.amount,
+  i.vendor_id, ili.cost_code_id, COALESCE(ili.description, ''),
+  ili.qty, ili.unit,
+  CASE WHEN ili.rate IS NOT NULL THEN ROUND(ili.rate * 100)::BIGINT ELSE NULL END,
+  ili.amount_cents,
   COALESCE(i.invoice_date, i.created_at::date),
   NULL
 FROM public.invoice_line_items ili
 JOIN public.invoices i ON i.id = ili.invoice_id
 WHERE i.status = 'qa_approved'
   AND i.deleted_at IS NULL
+  AND i.job_id IS NOT NULL
 ON CONFLICT (source_type, source_line_id) DO NOTHING;
 
 -- ------------------------------------------------------------
