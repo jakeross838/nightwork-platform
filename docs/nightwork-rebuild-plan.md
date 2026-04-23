@@ -4993,6 +4993,36 @@ Migration `00074_client_portal.sql`:
 -- GH #17 tracks Branch 3/4 pre-launch security review checklist.
 -- ============================================================
 
+-- Amendment N validator (Defect #2 workaround). Subquery-in-CHECK
+-- is forbidden by Postgres (error 0A000). Refactored to IMMUTABLE
+-- plpgsql helper called from the visibility_config CHECK constraint
+-- below. See qa-reports/qa-branch2-phase2.9.md §3.2 for the runtime
+-- discovery.
+CREATE OR REPLACE FUNCTION public.validate_visibility_config(
+  p_config JSONB
+) RETURNS BOOLEAN
+LANGUAGE plpgsql IMMUTABLE
+SET search_path = public, pg_temp
+AS $$
+  DECLARE
+    _key TEXT;
+  BEGIN
+    IF p_config IS NULL THEN RETURN TRUE; END IF;
+    IF jsonb_typeof(p_config) != 'object' THEN RETURN FALSE; END IF;
+    FOR _key IN SELECT jsonb_object_keys(p_config) LOOP
+      IF _key NOT IN (
+        'show_invoices', 'show_budget', 'show_schedule',
+        'show_change_orders', 'show_draws',
+        'show_lien_releases', 'show_daily_logs'
+      ) THEN RETURN FALSE; END IF;
+      IF jsonb_typeof(p_config->_key) != 'boolean' THEN
+        RETURN FALSE;
+      END IF;
+    END LOOP;
+    RETURN TRUE;
+  END;
+$$;
+
 CREATE TABLE public.client_portal_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id UUID NOT NULL REFERENCES public.organizations(id),
@@ -5007,24 +5037,16 @@ CREATE TABLE public.client_portal_access (
   access_token_hash TEXT NOT NULL
     CHECK (char_length(access_token_hash) = 64),
 
-  -- Amendment N: both COMMENT + CHECK expression validating
-  -- JSONB shape at write time. Fall back to COMMENT-only if
-  -- Dry-Run performance measurement surfaces regression
-  -- (documented in execution QA §3 or §4).
+  -- Amendment N: both COMMENT + CHECK validating JSONB shape at
+  -- write time. CHECK delegates to public.validate_visibility_config
+  -- (defined above). Subquery-in-CHECK is forbidden by Postgres
+  -- (error 0A000). Refactored to IMMUTABLE plpgsql helper called
+  -- from CHECK. See qa-reports/qa-branch2-phase2.9.md §3.2 for the
+  -- runtime discovery. Fall back to COMMENT-only if Dry-Run
+  -- performance measurement surfaces regression (documented in
+  -- execution QA §3 or §4).
   visibility_config JSONB NOT NULL DEFAULT '{}'::jsonb
-    CHECK (
-      visibility_config IS NULL OR (
-        jsonb_typeof(visibility_config) = 'object'
-        AND NOT EXISTS (
-          SELECT 1 FROM jsonb_object_keys(visibility_config) AS key
-          WHERE key NOT IN ('show_invoices','show_budget',
-                            'show_schedule','show_change_orders',
-                            'show_draws','show_lien_releases',
-                            'show_daily_logs')
-            OR jsonb_typeof(visibility_config->key) != 'boolean'
-        )
-      )
-    ),
+    CHECK (public.validate_visibility_config(visibility_config)),
 
   -- Amendment B audit-columns + invited_at/revoked_at/expires_at.
   invited_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -5271,8 +5293,12 @@ BEGIN
     RAISE EXCEPTION 'unauthorized';
   END IF;
 
-  _plaintext := encode(gen_random_bytes(32), 'hex');
-  _hash := encode(digest(_plaintext, 'sha256'), 'hex');
+  -- pgcrypto functions live in extensions schema on Supabase, not
+  -- public. Bare calls would fail at RPC execute time with pinned
+  -- search_path. See qa-reports/qa-branch2-phase2.9.md §3.1 for the
+  -- runtime discovery.
+  _plaintext := encode(extensions.gen_random_bytes(32), 'hex');
+  _hash := encode(extensions.digest(_plaintext, 'sha256'), 'hex');
 
   INSERT INTO public.client_portal_access (
     org_id, job_id, email, name, access_token_hash,
@@ -5313,7 +5339,8 @@ BEGIN
     RETURN;
   END IF;
 
-  _hash := encode(digest(p_token, 'sha256'), 'hex');
+  -- extensions.* qualifier — see create_client_portal_invite body.
+  _hash := encode(extensions.digest(p_token, 'sha256'), 'hex');
 
   SELECT id, org_id, job_id, email
     INTO _access
@@ -5365,7 +5392,8 @@ BEGIN
     RETURN;
   END IF;
 
-  _hash := encode(digest(p_token, 'sha256'), 'hex');
+  -- extensions.* qualifier — see create_client_portal_invite body.
+  _hash := encode(extensions.digest(p_token, 'sha256'), 'hex');
 
   SELECT id, org_id, job_id
     INTO _access
