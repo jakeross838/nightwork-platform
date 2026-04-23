@@ -3162,6 +3162,8 @@ Also write `00066_co_type_expansion.down.sql` per R.16. Reverses the function-bo
 
 > **Mid-branch renumber (2026-04-22, second):** the 2026-04-14 Markgraf substantial-completion email surfaced 9+ distinct adjustment events on one draw with no clean entity to track (see `qa-reports/preflight-branch2-phase2.5.md`). Phase 2.5 was reassigned from approval_chains to draw_adjustments; approval_chains shifted to Phase 2.6; all subsequent Branch 2 phases shifted by +1 (current state: Phase 2.5 = draw_adjustments / 00069; Phase 2.6 = approval_chains / 00070; Phase 2.7 = job milestones + retainage / 00071; Phase 2.8 = pricing history / 00072; Phase 2.9 = client portal / 00073; Phase 2.10 = V2.0 hooks / 00074). The prior Phase 2.5 approval_chains pre-flight is frozen in git history at commit `f296e0a`. GH #13 tracks the CO numbering reconciliation surfaced by the same email thread.
 
+> **Mid-branch renumber (2026-04-23, third):** Phase 2.7 QA §5.7 (commit `c05da3a`, `qa-reports/qa-branch2-phase2.7.md`) surfaced a defense-in-depth asymmetry on `public.job_milestones` — read policy narrowed PMs to their own jobs via `EXISTS` on `public.jobs.pm_id = auth.uid()`, but the write policies only gated on role + org_id. `public.jobs` is org-wide readable (unlike `public.draws`), so the Phase 2.5 FK-through-RLS emergent defense didn't cover the write side. Resolved in migration `00072_job_milestones_pm_write_narrowing.sql` (commit `6b43caf`) before push, not deferred to Branch 8. Phase 2.8 / 2.9 / 2.10 shift by +1 (was 00072 / 00073 / 00074, now `00073` / `00074` / `00075`). Same mid-branch-insertion pattern as the Phase 2.3 grant-fix renumber (`ddf4063`) and the Markgraf-pivot renumber (`73eaba8`). See `qa-reports/qa-branch2-phase2.7.md` §5.10 for the asymmetry-resolution paper trail.
+
 ### Phase 2.4 — Cost codes hierarchy + starter templates
 
 **Plan-doc amendment history:**
@@ -4165,7 +4167,7 @@ Dynamic live-auth RLS probes + constraint-drop verification + milestone_completi
 
 ### Phase 2.8 — Pricing history table
 
-Migration `00072_pricing_history.sql`:
+Migration `00073_pricing_history.sql`:
 ```sql
 CREATE TABLE pricing_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4205,7 +4207,7 @@ Then add triggers that populate `pricing_history` on:
 
 ### Phase 2.9 — Client portal access
 
-Migration `00073_client_portal.sql`:
+Migration `00074_client_portal.sql`:
 ```sql
 CREATE TABLE client_portal_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -4239,7 +4241,7 @@ CREATE TABLE client_portal_messages (
 
 ### Phase 2.10 — V2.0 schema hooks (empty tables)
 
-Migration `00074_v2_hooks.sql`:
+Migration `00075_v2_hooks.sql`:
 ```sql
 -- Create empty tables for v2.0 features to lock in naming
 CREATE TABLE daily_logs ( id UUID PRIMARY KEY DEFAULT gen_random_uuid() /* full schema in v2.0 */ );
@@ -4271,7 +4273,7 @@ This isn't strictly necessary but locks in naming so v2.0 doesn't rename things.
 **Branch 2 Exit Gate** (see G.2 universal checklist; phase-specific additions):
 
 ```
-[ ] All 11 migrations (00064 through 00074, with 00067 as the mid-branch grant fix and 00069 as the mid-Branch-2 draw_adjustments insertion from the Markgraf-scenario pivot) applied on dev, committed to git
+[ ] All 12 migrations (00064 through 00075, with 3 mid-branch insertions: 00067 grant fix, 00069 draw_adjustments Markgraf pivot, and 00072 job_milestones PM write narrowing) applied on dev, committed to git
 [ ] Schema validator subagent confirms full alignment with Part 2 data model
 [ ] No migrations apply changes via MCP that aren't in git files
 [ ] `jobs.phase` and `jobs.contract_type` defaults don't break existing workflows
