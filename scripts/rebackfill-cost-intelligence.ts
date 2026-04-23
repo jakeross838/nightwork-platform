@@ -96,7 +96,7 @@ async function main() {
 
   // existing extraction row ids
   const { data: oldExtractions } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select("id")
     .in("invoice_id", invoiceIds);
 
@@ -106,18 +106,18 @@ async function main() {
     // lines first
     const nowIso = new Date().toISOString();
     const { count: deletedLines } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({ deleted_at: nowIso }, { count: "exact" })
       .in("extraction_id", oldExtractionIds)
       .is("deleted_at", null);
     console.log(`  soft-deleted ${deletedLines ?? 0} extraction_lines`);
 
     const { count: deletedRoots } = await supabase
-      .from("invoice_extractions")
+      .from("document_extractions")
       .update({ deleted_at: nowIso }, { count: "exact" })
       .in("id", oldExtractionIds)
       .is("deleted_at", null);
-    console.log(`  soft-deleted ${deletedRoots ?? 0} invoice_extractions`);
+    console.log(`  soft-deleted ${deletedRoots ?? 0} document_extractions`);
   } else {
     console.log("  no prior extractions to wipe");
   }
@@ -212,7 +212,7 @@ async function main() {
 
   // Confidence + tax/overhead aggregations from new data
   const { data: newExtractions } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select("id, invoice_tax_cents, invoice_overhead")
     .in("invoice_id", invoiceIds)
     .is("deleted_at", null);
@@ -237,7 +237,7 @@ async function main() {
   const newExtractionIds = (newExtractions ?? []).map((r) => r.id);
   if (newExtractionIds.length > 0) {
     const { data: lines } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("match_confidence")
       .in("extraction_id", newExtractionIds)
       .eq("is_allocated_overhead", false)

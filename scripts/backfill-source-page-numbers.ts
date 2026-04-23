@@ -2,7 +2,7 @@
  * Backfill source_page_number on Ross Built invoice extraction lines.
  *
  * Phase 2 added line_items[].source_page_number to the parse prompt and
- * threaded it through extract-invoice onto invoice_extraction_lines. That
+ * threaded it through extract-invoice onto document_extraction_lines. That
  * only helps freshly-uploaded invoices. Existing invoices parsed before
  * Phase 2 have null page numbers → the verification viewer falls back to
  * page 1 + a fuzzy text search.
@@ -180,7 +180,7 @@ async function processOne(inv: InvoiceRow, orgId: string, report: Report): Promi
 
   // Verification-status gate: skip anything that already has committed work.
   const { data: existingEx } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select("id")
     .eq("invoice_id", inv.id)
     .is("deleted_at", null)
@@ -188,7 +188,7 @@ async function processOne(inv: InvoiceRow, orgId: string, report: Report): Promi
 
   if (existingEx) {
     const { data: lineStatuses } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("verification_status")
       .eq("extraction_id", (existingEx as { id: string }).id)
       .is("deleted_at", null);
@@ -301,7 +301,7 @@ async function processOne(inv: InvoiceRow, orgId: string, report: Report): Promi
     });
 
     const { data: newLineRows } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("source_page_number")
       .eq("extraction_id", r.extraction_id)
       .is("deleted_at", null);

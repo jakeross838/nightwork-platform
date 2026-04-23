@@ -5,7 +5,7 @@
  * Residence):
  *   1. Call extractInvoice(..., { reextract: true }).
  *   2. extractInvoice soft-deletes old extraction_lines + components,
- *      resets invoice_extractions.skipped_lines, then runs the new
+ *      resets document_extractions.skipped_lines, then runs the new
  *      three-phase pipeline (regex pre-filter → invoice-level classifier
  *      → per-line matcher) and writes BOM attachments with confidence
  *      tiering.
@@ -155,7 +155,7 @@ async function main() {
   const invoiceIds = invoices.map((i) => i.id);
 
   const { data: extractionRows } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select("id, skipped_lines")
     .in("invoice_id", invoiceIds)
     .is("deleted_at", null);
@@ -173,7 +173,7 @@ async function main() {
 
   if (extractionIds.length > 0) {
     const { data: natureRows } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("line_nature")
       .in("extraction_id", extractionIds)
       .is("deleted_at", null);
@@ -249,7 +249,7 @@ async function main() {
 async function scopeLineIds(extractionIds: string[]): Promise<string[]> {
   if (extractionIds.length === 0) return [];
   const { data } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("id")
     .in("extraction_id", extractionIds)
     .eq("line_nature", "scope")

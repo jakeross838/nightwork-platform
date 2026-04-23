@@ -1,5 +1,5 @@
 /**
- * Normalize invoice_extraction_lines.proposed_item_data.canonical_name
+ * Normalize document_extraction_lines.proposed_item_data.canonical_name
  * in place using the same rules match-item.ts applies to new AI proposals.
  *
  * Context: the 82 pending extraction lines in dev were created by the C7
@@ -51,7 +51,7 @@ async function main() {
   console.log("============================================================");
 
   const { data, error } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("id, org_id, raw_description, proposed_item_data")
     .is("deleted_at", null)
     .eq("verification_status", "pending")
@@ -118,7 +118,7 @@ async function main() {
   let fail = 0;
   for (const r of toUpdate) {
     const { error: upErr } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({ proposed_item_data: r.next_proposal })
       .eq("id", r.id);
     if (upErr) {

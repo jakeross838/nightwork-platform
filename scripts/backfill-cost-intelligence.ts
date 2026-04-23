@@ -1,8 +1,8 @@
 /**
  * Backfill the cost intelligence spine from existing invoices.
  *
- * For every invoice in the selected orgs that does NOT yet have an
- * invoice_extractions row:
+ * For every invoice in the selected orgs that does NOT yet have a
+ * document_extractions row:
  *   1. Run extractInvoice(invoiceId) against the DEV Supabase.
  *   2. Extraction stages each line + runs the tiered matcher. High-confidence
  *      lines are left as 'pending' (NOT auto-committed) so a human can
@@ -107,7 +107,7 @@ async function main() {
 
   // 4. Filter out invoices that already have extractions
   const { data: existingExtractions } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select("invoice_id")
     .is("deleted_at", null);
 
@@ -187,7 +187,7 @@ async function main() {
 
   // 8. Confidence distribution of all pending/auto-committed lines we just staged
   const { data: lines } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("match_confidence")
     .in("extraction_id", await extractionIdsForInvoices(toProcess.map((i) => i.id)))
     .is("deleted_at", null);
@@ -269,7 +269,7 @@ async function countAliases(): Promise<number> {
 async function extractionIdsForInvoices(invoiceIds: string[]): Promise<string[]> {
   if (invoiceIds.length === 0) return [];
   const { data } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select("id")
     .in("invoice_id", invoiceIds)
     .is("deleted_at", null);
