@@ -102,6 +102,8 @@ export default function JobsPage() {
         .select("role")
         .eq("user_id", user.id)
         .eq("is_active", true)
+        .order("created_at", { ascending: true })
+        .limit(1)
         .maybeSingle();
       const userRole = (membership?.role as "owner" | "admin" | "pm" | "accounting" | undefined) ?? null;
 

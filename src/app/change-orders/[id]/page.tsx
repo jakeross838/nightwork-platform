@@ -82,7 +82,7 @@ export default function ChangeOrderDetailPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.replace(`/login?redirect=/change-orders/${params.id}`); return; }
       const { data: membership } = await supabase
-        .from("org_members").select("role").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+        .from("org_members").select("role").eq("user_id", user.id).eq("is_active", true).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (membership) setUserRole(membership.role);
       await load();
     }

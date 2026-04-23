@@ -39,6 +39,8 @@ export default function GettingStartedChecklist() {
         .select("org_id")
         .eq("user_id", user.id)
         .eq("is_active", true)
+        .order("created_at", { ascending: true })
+        .limit(1)
         .maybeSingle();
       if (!membership) return;
       const orgId = membership.org_id as string;

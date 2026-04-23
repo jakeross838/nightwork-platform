@@ -163,6 +163,8 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
             .select("role")
             .eq("user_id", user.id)
             .eq("is_active", true)
+            .order("created_at", { ascending: true })
+            .limit(1)
             .maybeSingle(),
           supabase
             .from("platform_admins")

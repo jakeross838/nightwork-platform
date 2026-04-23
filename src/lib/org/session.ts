@@ -63,6 +63,7 @@ async function resolveMembership(
     .select("org_id, role, is_active")
     .eq("user_id", userId)
     .eq("is_active", true)
+    .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 

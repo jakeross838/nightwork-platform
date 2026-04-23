@@ -53,7 +53,7 @@ export default function VendorsPage() {
     // Fetch role for admin sidebar
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { data: m } = await supabase.from("org_members").select("role").eq("user_id", user.id).eq("is_active", true).maybeSingle();
+      const { data: m } = await supabase.from("org_members").select("role").eq("user_id", user.id).eq("is_active", true).order("created_at", { ascending: true }).limit(1).maybeSingle();
       if (m?.role) setUserRole(m.role as UserRole);
     }
     const [vendorRes, invoiceRes] = await Promise.all([

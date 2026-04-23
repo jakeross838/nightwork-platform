@@ -86,6 +86,8 @@ export default function ChangeOrdersPage({ params }: { params: { id: string } })
         .select("role")
         .eq("user_id", user.id)
         .eq("is_active", true)
+        .order("created_at", { ascending: true })
+        .limit(1)
         .maybeSingle();
       if (membership) setUserRole(membership.role);
 

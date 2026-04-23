@@ -100,6 +100,7 @@ export async function updateSession(request: NextRequest) {
         .select("org_id, role")
         .eq("user_id", user.id)
         .eq("is_active", true)
+        .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
       if (member) {
@@ -113,6 +114,7 @@ export async function updateSession(request: NextRequest) {
         )
         .eq("user_id", user.id)
         .eq("is_active", true)
+        .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
       if (member) {
