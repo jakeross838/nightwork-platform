@@ -7,12 +7,12 @@
  * For each invoice line item:
  *   1. Build vendor context (aliases + past corrections).
  *   2. Run matchItem (tiered alias → trigram → AI semantic → AI new).
- *   3. Persist an invoice_extraction_lines row (pending verification).
+ *   3. Persist a document_extraction_lines row (pending verification).
  *
  * Then, per-org settings decide whether high-confidence lines auto-commit
  * straight to the spine (vendor_item_pricing) or wait for human verification.
  *
- * Idempotent: if an invoice_extractions row already exists, reuses it.
+ * Idempotent: if a document_extractions row already exists, reuses it.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -35,8 +35,8 @@ import {
 } from "./classify-line-natures";
 import type {
   CostIntelligenceSettings,
-  InvoiceExtractionLineRow,
-  InvoiceExtractionRow,
+  DocumentExtractionLineRow,
+  DocumentExtractionRow,
   MatchResult,
   ExtractedComponent,
   ComponentType,
@@ -166,7 +166,7 @@ const EXTRACTION_MODEL = "claude-sonnet-4-20250514";
 
 /**
  * Map the regex detector's transaction_line_type into the skipped_lines
- * skip_reason taxonomy stored on invoice_extractions.skipped_lines. Keeps the
+ * skip_reason taxonomy stored on document_extractions.skipped_lines. Keeps the
  * skip_reason vocabulary stable whether the regex or the AI flagged the row.
  */
 function regexTransactionToSkipReason(
@@ -285,17 +285,17 @@ export async function extractInvoice(
 
   // 2. Check for existing extraction row (idempotency)
   const { data: existingExtractionRaw } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select("*")
     .eq("invoice_id", invoiceId)
     .is("deleted_at", null)
     .maybeSingle();
 
-  const existingExtraction = existingExtractionRaw as InvoiceExtractionRow | null;
+  const existingExtraction = existingExtractionRaw as DocumentExtractionRow | null;
 
   if (existingExtraction && !opts.reextract) {
     const { data: lines } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("id, verification_status")
       .eq("extraction_id", existingExtraction.id)
       .is("deleted_at", null);
@@ -327,7 +327,7 @@ export async function extractInvoice(
   // Build line_index → source_page_number lookup from the invoice's JSONB
   // line_items copy. Claude's parse response carries 1-indexed PDF page
   // numbers per line; the extraction loop below threads them onto every
-  // invoice_extraction_lines insert so the verification viewer can jump to
+  // document_extraction_lines insert so the verification viewer can jump to
   // the right page on selection. Null for invoices parsed before Phase 2.
   const sourcePageByIndex = new Map<number, number | null>();
   const rawParsedLineItems = Array.isArray(invoice.line_items) ? invoice.line_items : [];
@@ -367,7 +367,7 @@ export async function extractInvoice(
     // first (so the UI doesn't see orphaned components), then soft-delete
     // the lines themselves.
     const { data: oldLineIds } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("id")
       .eq("extraction_id", existingExtraction.id)
       .is("deleted_at", null);
@@ -382,7 +382,7 @@ export async function extractInvoice(
     }
 
     await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({ deleted_at: new Date().toISOString() })
       .eq("extraction_id", existingExtraction.id);
 
@@ -400,7 +400,7 @@ export async function extractInvoice(
 
     extractionId = existingExtraction.id;
     await supabase
-      .from("invoice_extractions")
+      .from("document_extractions")
       .update({
         extracted_at: new Date().toISOString(),
         extraction_model: EXTRACTION_MODEL,
@@ -422,7 +422,7 @@ export async function extractInvoice(
       .eq("id", extractionId);
   } else {
     const { data: inserted, error: insertErr } = await supabase
-      .from("invoice_extractions")
+      .from("document_extractions")
       .insert({
         org_id: orgId,
         invoice_id: invoiceId,
@@ -454,7 +454,7 @@ export async function extractInvoice(
   //      lines (draws, progress payments, CO narratives). Overhead still gets
   //      a line row with is_allocated_overhead=true. Transaction lines are
   //      collected into skippedBuffer and NEVER persisted — their raw content
-  //      lives on invoice_extractions.skipped_lines for audit.
+  //      lives on document_extractions.skipped_lines for audit.
   //
   //   B. Invoice-level AI classifier (classifyLineNatures): assigns
   //      line_nature to everything the regex didn't pre-filter, identifies
@@ -513,7 +513,7 @@ export async function extractInvoice(
       // run matchItem (we're not trying to catalog "delivery charge" as an
       // item). They stay visible in the verification UI, greyed out.
       const { data: oRow, error: oErr } = await supabase
-        .from("invoice_extraction_lines")
+        .from("document_extraction_lines")
         .insert({
           org_id: orgId,
           extraction_id: extractionId,
@@ -606,7 +606,7 @@ export async function extractInvoice(
       // BOM spec lines do NOT get an item match or component rows — they're
       // product descriptions attached to a scope line.
       const { data: bRow, error: bErr } = await supabase
-        .from("invoice_extraction_lines")
+        .from("document_extraction_lines")
         .insert({
           org_id: orgId,
           extraction_id: extractionId,
@@ -680,7 +680,7 @@ export async function extractInvoice(
       : cls.line_nature;
 
     const { data: lineInsert, error: lineErr } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .insert({
         org_id: orgId,
         extraction_id: extractionId,
@@ -742,7 +742,7 @@ export async function extractInvoice(
   // 7b. Persist accumulated skipped_lines on the extraction row.
   if (skippedBuffer.length > 0) {
     await supabase
-      .from("invoice_extractions")
+      .from("document_extractions")
       .update({
         skipped_lines: skippedBuffer.map((s) => ({
           line_index: s.line_index,
@@ -803,7 +803,7 @@ export async function extractInvoice(
   // 7b. Persist detected overhead on the extraction + run allocation pass
   if (overheadEntries.length > 0) {
     await supabase
-      .from("invoice_extractions")
+      .from("document_extractions")
       .update({ invoice_overhead: overheadEntries })
       .eq("id", extractionId);
   }
@@ -854,7 +854,7 @@ export async function extractInvoice(
     if (linesAutoCommitted > 0) {
       autoCommitReason = `Auto-committed ${linesAutoCommitted}/${insertedLines.length} lines (alias/trigram always; ai_semantic >= ${threshold})`;
       await supabase
-        .from("invoice_extractions")
+        .from("document_extractions")
         .update({
           auto_committed: linesAutoCommitted === insertedLines.length,
           auto_commit_reason: autoCommitReason,
@@ -902,13 +902,13 @@ async function loadOrgSettings(
 export async function listExtractionLines(
   supabase: SupabaseClient,
   extractionId: string
-): Promise<InvoiceExtractionLineRow[]> {
+): Promise<DocumentExtractionLineRow[]> {
   const { data } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("*")
     .eq("extraction_id", extractionId)
     .is("deleted_at", null)
     .order("line_order", { ascending: true });
 
-  return (data ?? []) as InvoiceExtractionLineRow[];
+  return (data ?? []) as DocumentExtractionLineRow[];
 }

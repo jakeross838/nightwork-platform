@@ -175,7 +175,7 @@ export function computeAllocations(
 }
 
 /**
- * Persist allocations to invoice_extraction_lines.
+ * Persist allocations to document_extraction_lines.
  */
 export async function applyAllocationsToLines(
   supabase: SupabaseClient,
@@ -183,7 +183,7 @@ export async function applyAllocationsToLines(
 ): Promise<void> {
   for (const u of result.updates) {
     const { error } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({
         overhead_allocated_cents: u.overhead_allocated_cents,
         line_tax_cents: u.line_tax_cents,

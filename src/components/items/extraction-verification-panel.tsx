@@ -9,13 +9,13 @@ import NwMoney from "@/components/nw/Money";
 import { toast } from "@/lib/utils/toast";
 import RawOcrViewer from "@/components/items/raw-ocr-viewer";
 import type {
-  InvoiceExtractionRow,
-  InvoiceExtractionLineRow,
+  DocumentExtractionRow,
+  DocumentExtractionLineRow,
   LineCostComponentRow,
   ComponentType,
 } from "@/lib/cost-intelligence/types";
 
-export type ExtractionLineView = InvoiceExtractionLineRow & {
+export type ExtractionLineView = DocumentExtractionLineRow & {
   proposed_item: { id: string; canonical_name: string } | null;
   verified_item: { id: string; canonical_name: string } | null;
   components: LineCostComponentRow[];
@@ -24,7 +24,7 @@ export type ExtractionLineView = InvoiceExtractionLineRow & {
 interface Props {
   invoiceId: string;
   /** Initial data fetched server-side; if omitted component fetches itself. */
-  initialExtraction?: InvoiceExtractionRow | null;
+  initialExtraction?: DocumentExtractionRow | null;
   initialLines?: ExtractionLineView[];
 }
 
@@ -51,7 +51,7 @@ export default function ExtractionVerificationPanel({
   initialExtraction = null,
   initialLines = [],
 }: Props) {
-  const [extraction, setExtraction] = useState<InvoiceExtractionRow | null>(initialExtraction);
+  const [extraction, setExtraction] = useState<DocumentExtractionRow | null>(initialExtraction);
   const [lines, setLines] = useState<ExtractionLineView[]>(initialLines);
   const [loading, setLoading] = useState(!initialExtraction);
   const [ocrOpen, setOcrOpen] = useState(false);
@@ -444,7 +444,7 @@ function InvoiceTotalsPanel({
   extraction,
   lineCount,
 }: {
-  extraction: InvoiceExtractionRow;
+  extraction: DocumentExtractionRow;
   lineCount: number;
 }) {
   const subtotal = extraction.invoice_subtotal_cents;

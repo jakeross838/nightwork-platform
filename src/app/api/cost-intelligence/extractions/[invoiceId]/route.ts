@@ -4,8 +4,8 @@ import { ApiError, withApiError } from "@/lib/api/errors";
 import { getCurrentMembership } from "@/lib/org/session";
 import { extractInvoice } from "@/lib/cost-intelligence/extract-invoice";
 import type {
-  InvoiceExtractionRow,
-  InvoiceExtractionLineRow,
+  DocumentExtractionRow,
+  DocumentExtractionLineRow,
   LineCostComponentRow,
 } from "@/lib/cost-intelligence/types";
 
@@ -52,12 +52,12 @@ export const GET = withApiError(async (_req: NextRequest, ctx: { params: Promise
   const { data: lines } = await supabase
     .from("invoice_extraction_lines")
     .select("*, proposed_item:items!proposed_item_id(id,canonical_name,item_type,category,subcategory,unit), verified_item:items!verified_item_id(id,canonical_name,item_type,category,subcategory,unit)")
-    .eq("extraction_id", (extraction as InvoiceExtractionRow).id)
+    .eq("extraction_id", (extraction as DocumentExtractionRow).id)
     .eq("org_id", membership.org_id)
     .is("deleted_at", null)
     .order("line_order", { ascending: true });
 
-  type LineFull = InvoiceExtractionLineRow & {
+  type LineFull = DocumentExtractionLineRow & {
     proposed_item: { id: string; canonical_name: string } | null;
     verified_item: { id: string; canonical_name: string } | null;
   };
@@ -88,7 +88,7 @@ export const GET = withApiError(async (_req: NextRequest, ctx: { params: Promise
   }));
 
   return NextResponse.json({
-    extraction: extraction as InvoiceExtractionRow,
+    extraction: extraction as DocumentExtractionRow,
     lines: linesWithComponents,
   });
 });

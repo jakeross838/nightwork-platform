@@ -1,8 +1,16 @@
 /**
  * Cost Intelligence Spine — shared TypeScript types.
  *
- * Matches migration 00052. Numeric money fields are cents (BIGINT) on the
- * wire and `number` in TS — stay in cents until you hit the UI layer.
+ * Matches migration 00052 plus later evolution through 00076
+ * (Phase 3.1: invoice_extractions → document_extractions rename +
+ * classifier routing columns — the row types are still keyed to the
+ * pre-Part-2-§2.2-target shape; strict-minimal scope keeps existing
+ * columns so these interfaces only gain classified_type /
+ * target_entity_type / target_entity_id on the parent row, all
+ * nullable).
+ *
+ * Numeric money fields are cents (BIGINT) on the wire and `number`
+ * in TS — stay in cents until you hit the UI layer.
  */
 
 export type ItemType =
@@ -36,6 +44,31 @@ export type MatchTier =
 export type CreatedVia = MatchTier | "manual";
 
 export type ExtractionStatus = "pending" | "partial" | "verified" | "rejected";
+
+// Phase 3.1 (migration 00076) classifier routing enums. Matches the
+// CHECK constraints on document_extractions.classified_type (10 values)
+// and document_extractions.target_entity_type (7-value committable
+// subset — excludes plan/contract/other per Amendment D).
+export type ClassifiedType =
+  | "invoice"
+  | "purchase_order"
+  | "change_order"
+  | "proposal"
+  | "vendor"
+  | "budget"
+  | "historical_draw"
+  | "plan"
+  | "contract"
+  | "other";
+
+export type TargetEntityType =
+  | "invoice"
+  | "purchase_order"
+  | "change_order"
+  | "proposal"
+  | "vendor"
+  | "budget"
+  | "historical_draw";
 
 export type LineVerificationStatus =
   | "pending"
@@ -132,7 +165,7 @@ export interface InvoiceOverheadEntry {
   source_line_id?: string;
 }
 
-export interface InvoiceExtractionRow {
+export interface DocumentExtractionRow {
   id: string;
   org_id: string;
   invoice_id: string;
@@ -156,6 +189,12 @@ export interface InvoiceExtractionRow {
   invoice_tax_rate: number | null;
   invoice_overhead: InvoiceOverheadEntry[];
   invoice_total_cents: number | null;
+  // Phase 3.1 classifier routing columns (nullable; populated by
+  // backfill for existing invoice-sourced rows, populated by the
+  // Branch 3.2+ classifier for new documents).
+  classified_type: ClassifiedType | null;
+  target_entity_type: TargetEntityType | null;
+  target_entity_id: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -170,7 +209,7 @@ export type OverheadType =
   | "restocking"
   | "core_charge";
 
-export interface InvoiceExtractionLineRow {
+export interface DocumentExtractionLineRow {
   id: string;
   org_id: string;
   extraction_id: string;

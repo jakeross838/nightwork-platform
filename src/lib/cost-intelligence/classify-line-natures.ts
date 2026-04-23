@@ -7,7 +7,7 @@
  *   2. Identifies lines that should be skipped entirely (draws, progress
  *      payments, CO narratives, location headers, admin notes) and returns
  *      them in a separate `skipped_lines` array — the extractor persists
- *      these on invoice_extractions.skipped_lines for audit but does NOT
+ *      these on document_extractions.skipped_lines for audit but does NOT
  *      create extraction_lines for them.
  *   3. Proposes BOM attachments: $0 product spec lines that describe a
  *      product included in a scope line on the same invoice. Returns the

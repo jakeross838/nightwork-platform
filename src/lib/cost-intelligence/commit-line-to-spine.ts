@@ -20,8 +20,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
-  InvoiceExtractionLineRow,
-  InvoiceExtractionRow,
+  DocumentExtractionLineRow,
+  DocumentExtractionRow,
   LineVerificationStatus,
   ProposedItemData,
   CreatedVia,
@@ -65,8 +65,8 @@ type InvoiceRowSlim = {
   original_file_url: string | null;
 };
 
-type ExtractionLineFull = InvoiceExtractionLineRow & {
-  extraction: InvoiceExtractionRow | null;
+type ExtractionLineFull = DocumentExtractionLineRow & {
+  extraction: DocumentExtractionRow | null;
 };
 
 export async function commitLineToSpine(
@@ -76,8 +76,8 @@ export async function commitLineToSpine(
 ): Promise<CommitLineResult> {
   // 1. Load extraction line + parent extraction
   const { data: line, error: lineErr } = await supabase
-    .from("invoice_extraction_lines")
-    .select("*, extraction:invoice_extractions(*)")
+    .from("document_extraction_lines")
+    .select("*, extraction:document_extractions(*)")
     .eq("id", extractionLineId)
     .is("deleted_at", null)
     .single();
@@ -344,7 +344,7 @@ export async function commitLineToSpine(
 
   // 6. Update extraction_line
   const { error: updateErr } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .update({
       verification_status: opts.newStatus,
       verified_item_id: itemId,
@@ -509,7 +509,7 @@ export async function rejectExtractionLine(
   notes?: string
 ): Promise<void> {
   const { error } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .update({
       verification_status: "rejected",
       verified_at: new Date().toISOString(),

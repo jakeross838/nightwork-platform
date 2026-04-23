@@ -2,10 +2,10 @@
 
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwBadge from "@/components/nw/Badge";
-import type { InvoiceExtractionRow } from "@/lib/cost-intelligence/types";
+import type { DocumentExtractionRow } from "@/lib/cost-intelligence/types";
 
 interface Props {
-  extraction: InvoiceExtractionRow;
+  extraction: DocumentExtractionRow;
 }
 
 export default function RawOcrViewer({ extraction }: Props) {

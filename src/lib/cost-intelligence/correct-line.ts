@@ -6,7 +6,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { commitLineToSpine } from "./commit-line-to-spine";
-import type { ProposedItemData, InvoiceExtractionLineRow } from "./types";
+import type { ProposedItemData, DocumentExtractionLineRow } from "./types";
 
 export interface CorrectionInput {
   /** User selected an existing item (preferred). */
@@ -25,8 +25,8 @@ export async function correctLine(
 ): Promise<{ vendor_item_pricing_id: string; item_id: string }> {
   // Pull current line state for the audit trail
   const { data: line, error: lineErr } = await supabase
-    .from("invoice_extraction_lines")
-    .select("*, extraction:invoice_extractions(invoice_id)")
+    .from("document_extraction_lines")
+    .select("*, extraction:document_extractions(invoice_id)")
     .eq("id", extractionLineId)
     .is("deleted_at", null)
     .single();
@@ -35,7 +35,7 @@ export async function correctLine(
     throw new Error(`correctLine: line ${extractionLineId} not found: ${lineErr?.message}`);
   }
 
-  const extractionLine = line as InvoiceExtractionLineRow & {
+  const extractionLine = line as DocumentExtractionLineRow & {
     extraction: { invoice_id: string } | null;
   };
 
@@ -86,7 +86,7 @@ export async function correctLine(
   }
 
   // Now commit the corrected line to the spine. The vip_after_insert
-  // trigger pulls raw_description off invoice_extraction_lines and
+  // trigger pulls raw_description off document_extraction_lines and
   // upserts item_aliases keyed on (org_id, item_id, vendor_id,
   // lower(alias_text)), incrementing occurrence_count on conflict. So
   // the alias for the corrected item gets learned as a side-effect of
