@@ -35,7 +35,7 @@ export const GET = withApiError(async (_req: NextRequest, ctx: { params: Promise
   if (!invoice) throw new ApiError("Invoice not found", 404);
 
   const { data: extraction } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select("*")
     .eq("invoice_id", invoiceId)
     .eq("org_id", membership.org_id)
@@ -50,7 +50,7 @@ export const GET = withApiError(async (_req: NextRequest, ctx: { params: Promise
   }
 
   const { data: lines } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("*, proposed_item:items!proposed_item_id(id,canonical_name,item_type,category,subcategory,unit), verified_item:items!verified_item_id(id,canonical_name,item_type,category,subcategory,unit)")
     .eq("extraction_id", (extraction as DocumentExtractionRow).id)
     .eq("org_id", membership.org_id)

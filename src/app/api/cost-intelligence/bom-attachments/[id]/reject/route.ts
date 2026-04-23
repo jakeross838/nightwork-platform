@@ -54,7 +54,7 @@ export const POST = withApiError(
     // The $0 spec line becomes an orphan — move it to the Review tab so the
     // PM can decide what to do (re-attach elsewhere, reclassify, or skip).
     const { error: lineErr } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({ line_nature: "unclassified" })
       .eq("id", row.bom_extraction_line_id)
       .eq("org_id", membership.org_id);

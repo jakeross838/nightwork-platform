@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * PUT /api/cost-intelligence/extraction-lines/[id]/skip
  *
  * Treats a line as administrative (not a catalog item, not a BOM).
- * Appends the line content to invoice_extractions.skipped_lines for
+ * Appends the line content to document_extractions.skipped_lines for
  * audit, soft-deletes the extraction_line and its components.
  *
  * Used from the Review tab when a PM decides an 'unclassified' line is
@@ -28,7 +28,7 @@ export const PUT = withApiError(
     const supabase = createServerClient();
 
     const { data: line } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select(
         "id, org_id, extraction_id, raw_description, raw_total_cents, line_order, line_nature"
       )
@@ -51,7 +51,7 @@ export const PUT = withApiError(
     const now = new Date().toISOString();
 
     const { data: extraction } = await supabase
-      .from("invoice_extractions")
+      .from("document_extractions")
       .select("id, skipped_lines")
       .eq("id", row.extraction_id)
       .maybeSingle();
@@ -74,7 +74,7 @@ export const PUT = withApiError(
     };
 
     await supabase
-      .from("invoice_extractions")
+      .from("document_extractions")
       .update({ skipped_lines: [...existing, entry] })
       .eq("id", row.extraction_id);
 
@@ -85,7 +85,7 @@ export const PUT = withApiError(
       .is("deleted_at", null);
 
     const { error: lineErr } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({ deleted_at: now })
       .eq("id", id);
     if (lineErr) throw new ApiError(lineErr.message, 500);

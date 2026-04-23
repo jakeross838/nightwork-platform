@@ -48,7 +48,7 @@ export const POST = withApiError(async (req: Request) => {
   const userId = userRes.user?.id ?? null;
 
   const { data: lines } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("id, org_id, extraction_id, line_nature, raw_description")
     .in("id", [scopeLineId, bomLineId])
     .is("deleted_at", null);
@@ -120,7 +120,7 @@ export const POST = withApiError(async (req: Request) => {
   // Review tab. Safe to run unconditionally — setting bom_spec on a line
   // that already had it is a no-op.
   await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .update({ line_nature: "bom_spec" })
     .eq("id", bomLineId)
     .eq("org_id", membership.org_id);

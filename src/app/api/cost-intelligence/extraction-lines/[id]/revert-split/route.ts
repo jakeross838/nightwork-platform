@@ -24,7 +24,7 @@ export const PUT = withApiError(
     const supabase = createServerClient();
 
     const { data: line } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("id, org_id, line_nature, raw_total_cents")
       .eq("id", id)
       .is("deleted_at", null)
@@ -64,7 +64,7 @@ export const PUT = withApiError(
     if (insertErr) throw new ApiError(insertErr.message, 500);
 
     const { error: lineErr } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({
         scope_split_into_components: false,
         scope_estimated_material_cents: null,

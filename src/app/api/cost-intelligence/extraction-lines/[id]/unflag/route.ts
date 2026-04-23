@@ -26,7 +26,7 @@ export const POST = withApiError(
     const supabase = createServerClient();
 
     const { data: line } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("id, org_id, verification_status")
       .eq("id", id)
       .is("deleted_at", null)
@@ -37,7 +37,7 @@ export const POST = withApiError(
     if (row.org_id !== membership.org_id) throw new ApiError("Line not in your org", 403);
 
     const { error } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({
         is_transaction_line: false,
         transaction_line_type: null,

@@ -55,7 +55,7 @@ export const POST = withApiError(async (req: NextRequest, ctx: { params: Promise
 
   // Authorize: line belongs to the caller's org.
   const { data: line } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("id, org_id, verification_status")
     .eq("id", id)
     .is("deleted_at", null)
@@ -72,7 +72,7 @@ export const POST = withApiError(async (req: NextRequest, ctx: { params: Promise
   }
 
   const { error } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .update({
       verification_status: "not_item",
       transaction_line_type: type,

@@ -57,7 +57,7 @@ export const POST = withApiError(async (req: NextRequest) => {
   }
 
   let query = supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("id, match_tier, match_confidence")
     .eq("org_id", membership.org_id)
     .eq("verification_status", "pending")
@@ -124,7 +124,7 @@ export const GET = withApiError(async (req: NextRequest) => {
   const supabase = createServerClient();
 
   let query = supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("id", { count: "exact", head: true })
     .eq("org_id", membership.org_id)
     .eq("verification_status", "pending")

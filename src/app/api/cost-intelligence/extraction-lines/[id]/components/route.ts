@@ -110,7 +110,7 @@ export const PUT = withApiError(
 
     // Authorize: line belongs to caller's org.
     const { data: line } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("id, org_id, verification_status")
       .eq("id", id)
       .is("deleted_at", null)

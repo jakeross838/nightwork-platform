@@ -64,7 +64,7 @@ export const POST = withApiError(async (req: NextRequest) => {
   const supabase = service ?? createServerClient();
 
   const { data: eligibleRows, error: selErr } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select(
       "id, raw_description, match_tier, classification_confidence, match_confidence, proposed_item_data, created_at"
     )

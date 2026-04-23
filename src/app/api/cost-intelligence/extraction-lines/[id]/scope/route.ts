@@ -49,7 +49,7 @@ export const PUT = withApiError(
     const supabase = createServerClient();
 
     const { data: line } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select("id, org_id, verification_status")
       .eq("id", id)
       .is("deleted_at", null)
@@ -90,7 +90,7 @@ export const PUT = withApiError(
         : null;
 
     const { error } = await supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .update({
         proposed_pricing_model: pricingModel,
         proposed_scope_size_metric: metric,
