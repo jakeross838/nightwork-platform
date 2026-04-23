@@ -190,7 +190,7 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
     (async () => {
       const [{ count: verifCount }, { count: convCount }] = await Promise.all([
         supabase
-          .from("invoice_extraction_lines")
+          .from("document_extraction_lines")
           .select("id", { count: "exact", head: true })
           .eq("verification_status", "pending")
           .eq("is_allocated_overhead", false)

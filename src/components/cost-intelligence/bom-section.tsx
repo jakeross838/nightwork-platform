@@ -63,13 +63,13 @@ export default function BomSection({ scopeLineId, extractionId }: Props) {
         supabase
           .from("line_bom_attachments")
           .select(
-            "id, bom_extraction_line_id, ai_confidence, ai_reasoning, attachment_source, confirmation_status, product_description, bom_line:invoice_extraction_lines!bom_extraction_line_id(id, raw_description, raw_total_cents)"
+            "id, bom_extraction_line_id, ai_confidence, ai_reasoning, attachment_source, confirmation_status, product_description, bom_line:document_extraction_lines!bom_extraction_line_id(id, raw_description, raw_total_cents)"
           )
           .eq("scope_extraction_line_id", scopeLineId)
           .is("deleted_at", null)
           .order("created_at", { ascending: true }),
         supabase
-          .from("invoice_extraction_lines")
+          .from("document_extraction_lines")
           .select("id, raw_description, raw_total_cents")
           .eq("extraction_id", extractionId)
           .in("line_nature", ["bom_spec", "unclassified"])

@@ -56,7 +56,7 @@ type LineQueryRow = {
   scope_split_into_components: boolean | null;
   scope_estimated_material_cents: number | null;
   source_page_number: number | null;
-  invoice_extractions: {
+  document_extractions: {
     id: string;
     raw_ocr_text: string | null;
     invoices: {
@@ -97,9 +97,9 @@ function VerificationPageInner() {
     // bom_spec lines are filtered out of the main queue — they appear as
     // attached metadata on the scope line's detail panel, not as queue rows.
     let linesQ = supabase
-      .from("invoice_extraction_lines")
+      .from("document_extraction_lines")
       .select(
-        "id, extraction_id, raw_description, raw_quantity, raw_unit_text, raw_unit_price_cents, raw_total_cents, match_tier, match_confidence, match_confidence_score, classification_confidence, match_reasoning, created_at, is_transaction_line, transaction_line_type, line_tax_cents, overhead_allocated_cents, proposed_item_id, proposed_item_data, proposed_pricing_model, proposed_scope_size_metric, extracted_scope_size_value, extracted_scope_size_confidence, extracted_scope_size_source, line_nature, scope_split_into_components, scope_estimated_material_cents, source_page_number, proposed_item:items!proposed_item_id(id, canonical_name), invoice_extractions!inner(id, raw_ocr_text, invoices!inner(id, invoice_number, invoice_date, vendor_id, original_file_url, vendors(name)))"
+        "id, extraction_id, raw_description, raw_quantity, raw_unit_text, raw_unit_price_cents, raw_total_cents, match_tier, match_confidence, match_confidence_score, classification_confidence, match_reasoning, created_at, is_transaction_line, transaction_line_type, line_tax_cents, overhead_allocated_cents, proposed_item_id, proposed_item_data, proposed_pricing_model, proposed_scope_size_metric, extracted_scope_size_value, extracted_scope_size_confidence, extracted_scope_size_source, line_nature, scope_split_into_components, scope_estimated_material_cents, source_page_number, proposed_item:items!proposed_item_id(id, canonical_name), document_extractions!inner(id, raw_ocr_text, invoices!inner(id, invoice_number, invoice_date, vendor_id, original_file_url, vendors(name)))"
       )
       .eq("verification_status", "pending")
       .eq("is_allocated_overhead", false)
@@ -109,7 +109,7 @@ function VerificationPageInner() {
       .limit(1000);
 
     if (invoiceFilter) {
-      linesQ = linesQ.eq("invoice_extractions.invoice_id", invoiceFilter);
+      linesQ = linesQ.eq("document_extractions.invoice_id", invoiceFilter);
     }
 
     const { data: linesData, error: linesErr } = await linesQ;
@@ -120,7 +120,7 @@ function VerificationPageInner() {
     }
 
     const rows = ((linesData ?? []) as unknown as LineQueryRow[]).filter(
-      (r) => r.invoice_extractions?.invoices != null
+      (r) => r.document_extractions?.invoices != null
     );
     const lineIds = rows.map((r) => r.id);
 
@@ -166,7 +166,7 @@ function VerificationPageInner() {
     const uniquePaths = Array.from(
       new Set(
         rows
-          .map((r) => r.invoice_extractions?.invoices?.original_file_url)
+          .map((r) => r.document_extractions?.invoices?.original_file_url)
           .filter((p): p is string => Boolean(p))
       )
     );
@@ -183,7 +183,7 @@ function VerificationPageInner() {
     );
 
     const mapped: QueueLine[] = rows.map((r) => {
-      const inv = r.invoice_extractions!.invoices!;
+      const inv = r.document_extractions!.invoices!;
       return {
         id: r.id,
         extraction_id: r.extraction_id,
@@ -210,7 +210,7 @@ function VerificationPageInner() {
         extracted_scope_size_source: r.extracted_scope_size_source,
         line_tax_cents: r.line_tax_cents,
         overhead_allocated_cents: r.overhead_allocated_cents,
-        raw_ocr_text: r.invoice_extractions?.raw_ocr_text ?? null,
+        raw_ocr_text: r.document_extractions?.raw_ocr_text ?? null,
         line_nature: r.line_nature,
         scope_split_into_components: r.scope_split_into_components ?? false,
         scope_estimated_material_cents: r.scope_estimated_material_cents,

@@ -26,7 +26,7 @@ interface Props {
  * Inline reclassify + skip controls shown at the top of the detail panel
  * when a line is unclassified. Moves the line out of the Review tab into
  * the selected nature tab, or skips it entirely (soft-deletes + records
- * on invoice_extractions.skipped_lines).
+ * on document_extractions.skipped_lines).
  *
  * When multiple lineIds are passed (group selection), the action loops
  * over all of them — the group queue view bundles identical-text lines,

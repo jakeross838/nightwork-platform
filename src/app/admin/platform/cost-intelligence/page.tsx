@@ -409,7 +409,7 @@ function statusVariant(status: string): BadgeVariant {
 async function ExtractionsTab() {
   const supabase = createServerClient();
   const { data } = await supabase
-    .from("invoice_extractions")
+    .from("document_extractions")
     .select(
       "id, org_id, invoice_id, verification_status, verified_lines_count, total_lines_count, auto_committed, extracted_at, extraction_model, total_tokens_input, total_tokens_output, organizations(name), invoices(id, invoice_number, vendor_name_raw)"
     )
@@ -759,7 +759,7 @@ async function BootstrapTab() {
   // Count pending ai_new_item lines per org so the picker shows
   // meaningful state. Include only orgs that have anything to bootstrap.
   const { data: pendingRows } = await supabase
-    .from("invoice_extraction_lines")
+    .from("document_extraction_lines")
     .select("org_id, classification_confidence, organizations(id, name)")
     .eq("verification_status", "pending")
     .eq("is_allocated_overhead", false)

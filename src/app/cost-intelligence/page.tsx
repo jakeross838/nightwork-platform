@@ -72,7 +72,7 @@ export default function CostIntelligenceHubPage() {
         .is("deleted_at", null)
         .limit(50000),
       supabase
-        .from("invoice_extraction_lines")
+        .from("document_extraction_lines")
         .select("id, created_at", { count: "exact" })
         .eq("verification_status", "pending")
         .eq("is_allocated_overhead", false)
