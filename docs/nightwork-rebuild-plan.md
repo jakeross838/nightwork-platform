@@ -4167,43 +4167,440 @@ Dynamic live-auth RLS probes + constraint-drop verification + milestone_completi
 
 ### Phase 2.8 — Pricing history table
 
+**Plan-doc amendment history:**
+
+- Pre-flight (2026-04-23): fourteen amendments (A–N) plus one follow-up (O) landed after pre-flight findings at `qa-reports/preflight-branch2-phase2.8.md` (commit `7bc4db0`). The 30-line bare SQL + 4-bullet trigger list that preceded this rewrite was replaced wholesale.
+  - **A** — Audit columns on `public.pricing_history`: `created_at TIMESTAMPTZ NOT NULL DEFAULT now()` (spec had `DEFAULT now()` without NOT NULL), `created_by UUID REFERENCES auth.users(id)` nullable (triggers capture `auth.uid()` opportunistically). **`updated_at` omitted** — pricing_history is append-only; there is no app-layer UPDATE path. **No `deleted_at`** per Amendment C immutability decision.
+  - **B** — **RLS 1-policy read-only shape (R.23 divergence).** `ALTER TABLE public.pricing_history ENABLE ROW LEVEL SECURITY;` + single `pricing_history_org_read` SELECT policy (any active org member + platform-admin bypass). **No INSERT / UPDATE / DELETE policies.** Service-role triggers populate via SECURITY DEFINER functions (Amendment J). No app-layer mutation path. Documented as intentional divergence from the proposals / approval_chains / draw_adjustments / job_milestones 3-policy family because pricing_history is a trigger-populated audit spine with no lifecycle. Closest prior pattern: `activity_log`. **R.15 regression fence explicitly asserts "no INSERT/UPDATE/DELETE policies on pricing_history"** (Amendment L) so a future fixer cannot silently add a write policy without understanding the append-only semantic.
+  - **C** — **Immutable append-only — Option A.** No `deleted_at` column. `UNIQUE (source_type, source_line_id)` is a full non-partial unique constraint. No soft-delete cascade. Correction procedure for fraud/data-entry errors is documented in the migration header — platform-admin service-role SQL (`DELETE FROM public.pricing_history WHERE id = ...`) is the single correction path, and adding UPDATE or soft-delete policies is explicitly prohibited because the append-only semantic is load-bearing for pricing-intelligence signal integrity.
+  - **D** — `public.` schema qualification on every DDL statement (R.21). Spec left every FK and table reference unqualified.
+  - **E** — **`canonical_item_id UUID REFERENCES public.items(id)`** — FK wired now (ON DELETE NO ACTION). Cost-intelligence spine is stable; no deferral rationale. Column comment reads "populated by Branch 3/4 matching logic against cost-intelligence spine".
+  - **F** — `match_confidence NUMERIC CHECK (match_confidence IS NULL OR (match_confidence >= 0 AND match_confidence <= 1))`. 0–1 range matches the items.ai_confidence precedent family (no existing DB CHECK predicate on either column — this is a clean new convention).
+  - **G** — Two additional indexes beyond the three spec'd: `idx_pricing_history_job (org_id, job_id, date DESC) WHERE job_id IS NOT NULL`; `idx_pricing_history_source_lookup (org_id, source_type, source_id)` for trigger idempotency. Keeps the 3 spec'd indexes (cost_code + date DESC, vendor + date DESC, trigram GIN on description).
+  - **H** — **Trigger target rename: `purchase_order_line_items` → `public.po_line_items`.** Pre-flight §1.3 surfaced that `purchase_order_line_items` does not exist in the codebase; the canonical name is `po_line_items` (5 migrations + 5 `src/` consumers). Spec defect corrected.
+  - **I** — **PO trigger parent-entity resolution.** `po_line_items` is sparser than `invoice_line_items` (no `quantity` / `unit` / `unit_price` / `vendor_id` / `date`). Trigger function resolves missing fields from the parent `public.purchase_orders` row: `vendor_id ← purchase_orders.vendor_id`, `date ← purchase_orders.issued_date` (pre-flight probe confirmed this is the actual PO-date column — no `po_date`), with fallback to `purchase_orders.created_at::date` if `issued_date` is NULL. `quantity` / `unit` / `unit_price` insert as NULL. Asymmetry documented in the PO-trigger function's COMMENT.
+  - **J** — **Four trigger functions, each `SECURITY DEFINER` + pinned `search_path = public, pg_temp` + explicit `GRANT EXECUTE TO authenticated`** (Amendment F.2 pattern from 00067 / 00070). One per source entity: `public.trg_pricing_history_from_invoice_line()`, `public.trg_pricing_history_from_proposal_line()`, `public.trg_pricing_history_from_po_line()`, `public.trg_pricing_history_from_co_line()`. Each function: `AFTER INSERT OR UPDATE` on source-line table; status-gate check via parent entity; `INSERT … ON CONFLICT (source_type, source_line_id) DO NOTHING` for idempotency under re-processing. Four `GRANT EXECUTE` statements total. Each function gets an individual `has_function_privilege('authenticated', …, 'EXECUTE')` probe in the R.15 test file (GH #9 defense pattern).
+  - **K** — Paired `00073_pricing_history.down.sql` per R.16. Reverse order: drop 4 triggers → drop 4 trigger functions → drop RLS policy → DISABLE RLS → drop 5 indexes (3 spec'd + 2 per Amendment G) → drop table.
+  - **L** — R.15 test file `__tests__/pricing-history.test.ts`. Regression fences explicitly assert:
+    - File references `public.po_line_items`, **NOT** `purchase_order_line_items` (Amendment H defect guard)
+    - Exactly 1 policy on pricing_history; **no INSERT / UPDATE / DELETE policies** (Amendment B regression fence — prevents future fixer from adding a write policy without understanding the append-only semantic)
+    - `canonical_item_id UUID REFERENCES public.items(id)` wired (Amendment E guard)
+    - `match_confidence` CHECK 0–1 (Amendment F guard)
+    - 4-value `source_type` CHECK (`'invoice','proposal','po','co'`)
+    - 4 trigger registrations (one per source entity)
+    - Each of the 4 trigger functions is `SECURITY DEFINER` with pinned `search_path = public, pg_temp`
+    - Each of the 4 functions has `has_function_privilege('authenticated', …, 'EXECUTE')` = true (Amendment J / GH #9 defense pattern)
+    - Paired down.sql exists + drops in reverse-dependency order
+  - **M** — **Backfill Interpretation B: invoice-only, qa_approved gated.** One-time `INSERT … SELECT` at apply-time pulling `invoice_line_items` rows where the parent `invoices.status = 'qa_approved'`. 113 invoice_line_items exist on dev pre-apply; the `qa_approved` subset is probed during execution and the actual backfilled row count is reported in the QA report. If the count is anomalous (very low or very high vs. 113), the QA report flags it for review before push. Sanity checks in the QA report: (a) backfilled rows have non-null `vendor_id` + valid `amount` (BIGINT cents) + parseable `date`; (b) 5-row sample spot-check documented.
+  - **N** — Header documentation: migration header cites (a) R.23 divergence rationale with `activity_log` as the closest precedent; (b) Amendment C immutability decision + **explicit correction procedure** ("To invalidate a historical pricing_history row for fraud or data-entry error, use service-role SQL via platform admin: `DELETE FROM public.pricing_history WHERE id = ...`. This is the only correction path. Do not add UPDATE or soft-delete policies — the append-only semantic is load-bearing for pricing-intelligence signal integrity."); (c) Amendment H `po_line_items` correction; (d) Amendment I PO parent-entity resolution; (e) Amendment J SECURITY DEFINER / GRANT pattern lineage (00032 → 00067 → 00070); (f) Amendment M backfill scope + row-count probe; (g) Branch 3/4 writer-contract — which status transitions fire which triggers; (h) future `canonical_item_id` population via cost-intelligence spine.
+  - **O** — **GH #16 opened** — tracks Branch 3/4 pricing-intelligence signal-quality validation before enabling user-facing matching UI. The 113 invoice_line_items backfill carries AI-extraction data quality issues (typo'd vendors, mis-parsed units, numeric errors); platform admin should manually review a representative sample before any fuzzy-match search / "similar recent pricing" suggestion UI ships. Parallel pattern to GH #12 (approval_chains defaults onboarding) and GH #15 (retainage defaults onboarding).
+- **Ross-Built-vs-other-orgs context.** Ross Built has 113 existing `invoice_line_items` (subset qa_approved). `proposal_line_items` is empty (Phase 2.2 new, Branch 3/4 populates). `po_line_items` parent `purchase_orders` has 0 rows. `change_order_lines` is empty though `change_orders` has 73 rows. Backfill exercises only the invoice path; other 3 source paths come alive when Branch 3/4 lights up the workflows. The R.23 1-policy divergence scales to future tenants with equal semantic (pricing-intelligence signal is tenant-specific reference data — an org member should see their org's pricing history regardless of job assignment or role, and no one should UPDATE historical rows in place).
+- Related issues: **GH #9** (latent authenticated-role permission gaps — Amendment J GRANT pattern defends this class); **GH #12** (approval_chains defaults onboarding); **GH #15** (retainage defaults onboarding); **GH #16** (pricing-intelligence signal-quality validation for Branch 3/4).
+
 Migration `00073_pricing_history.sql`:
 ```sql
-CREATE TABLE pricing_history (
+-- ============================================================
+-- Phase 2.8 — Pricing history table (migration 00073).
+--
+-- Trigger-populated, append-only audit spine. Captures pricing
+-- observations across 4 source-entity writes: invoice line
+-- items (on invoices.status=qa_approved), proposal line items
+-- (on proposals.status=accepted), PO line items (on
+-- purchase_orders.status=issued), CO lines (on
+-- change_orders.status=approved). Backs future fuzzy-match /
+-- "similar recent pricing" Branch 3/4 UIs (GH #16 signal-
+-- quality validation gate).
+--
+-- R.23 DIVERGENCE (Amendment B): adopts a 1-policy RLS shape
+-- (single SELECT, no INSERT/UPDATE/DELETE) because
+-- pricing_history is a trigger-populated audit spine —
+-- neither workflow data (proposals/00065, draw_adjustments/
+-- 00069, job_milestones/00071+00072) nor tenant config
+-- (approval_chains/00070). Closest prior precedent:
+-- activity_log. This is the first Branch 2 phase outside the
+-- 3-policy family. Trigger functions are SECURITY DEFINER
+-- (Amendment J), so they bypass the RLS write-absence on
+-- INSERT. Service-role platform-admin SQL is the correction
+-- path.
+--
+-- IMMUTABILITY CONTRACT (Amendment C): no deleted_at, no
+-- UPDATE policy. Once a row lands, it is permanent historical
+-- record. Semantic rationale: a vendor did quote $X on that
+-- date, regardless of whether the source entity (invoice/PO/
+-- proposal/CO) was later voided. Pricing intel should reflect
+-- reality, not entity lifecycle.
+--
+-- CORRECTION PROCEDURE (Amendment C, §N):
+--   To invalidate a historical pricing_history row for fraud
+--   or data-entry error, use service-role SQL via platform
+--   admin:
+--     DELETE FROM public.pricing_history WHERE id = '...';
+--   This is the only correction path. Do not add UPDATE or
+--   soft-delete policies — the append-only semantic is load-
+--   bearing for pricing-intelligence signal integrity.
+--
+-- SPEC CORRECTION (Amendment H): the original plan spec
+-- referenced a `purchase_order_line_items` trigger target.
+-- That table does not exist. Actual canonical name is
+-- public.po_line_items (5 prior migrations + 5 src/ consumers
+-- confirm). Trigger target corrected here.
+--
+-- PO PARENT-ENTITY RESOLUTION (Amendment I): po_line_items is
+-- sparser than invoice_line_items (no quantity/unit/unit_price/
+-- vendor_id/date columns). The PO trigger function resolves
+-- vendor_id via po_line_items.po_id → purchase_orders.vendor_id,
+-- and date via purchase_orders.issued_date (pre-flight probe
+-- confirmed this is the actual PO-date column — no po_date)
+-- with fallback to purchase_orders.created_at::date. quantity /
+-- unit / unit_price insert as NULL.
+--
+-- GRANT PATTERN (Amendment J / F.2): all 4 trigger functions
+-- are SECURITY DEFINER with pinned search_path = public,
+-- pg_temp, and each has an explicit GRANT EXECUTE TO
+-- authenticated. Defends the GH #9 class of latent
+-- authenticated-role permission gaps. Pattern lineage:
+-- 00032 → 00067 → 00070.
+--
+-- BACKFILL (Amendment M): one-time INSERT...SELECT at apply
+-- time for invoice_line_items where parent invoices.status =
+-- 'qa_approved'. 113 invoice_line_items exist on dev pre-apply;
+-- qa_approved subset probed during execution and reported in
+-- the QA report. GH #16 gates Branch 3/4 user-facing matching
+-- UI on signal-quality validation of the backfill output.
+-- ============================================================
+
+CREATE TABLE public.pricing_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL REFERENCES organizations(id),
-  job_id UUID NOT NULL REFERENCES jobs(id),
-  source_type TEXT NOT NULL CHECK (source_type IN ('invoice','proposal','po','co')),
+  org_id UUID NOT NULL REFERENCES public.organizations(id),
+  job_id UUID NOT NULL REFERENCES public.jobs(id),
+
+  source_type TEXT NOT NULL CHECK (
+    source_type IN ('invoice','proposal','po','co')
+  ),
   source_id UUID NOT NULL,
   source_line_id UUID NOT NULL,
-  vendor_id UUID REFERENCES vendors(id),
-  cost_code_id UUID REFERENCES cost_codes(id),
+
+  vendor_id UUID REFERENCES public.vendors(id),
+  cost_code_id UUID REFERENCES public.cost_codes(id),
   description TEXT NOT NULL,
+
   quantity NUMERIC,
   unit TEXT,
-  unit_price BIGINT,
-  amount BIGINT NOT NULL,
+  unit_price BIGINT,     -- cents per R.8
+  amount BIGINT NOT NULL,-- cents per R.8
   date DATE NOT NULL,
-  canonical_item_id UUID, -- for advanced mode later
-  match_confidence NUMERIC,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (source_type, source_line_id) -- idempotency
+
+  -- Amendment E: FK wired to cost-intelligence spine.
+  -- Populated by Branch 3/4 matching logic.
+  canonical_item_id UUID REFERENCES public.items(id),
+
+  -- Amendment F: 0-1 range matching items.ai_confidence convention.
+  match_confidence NUMERIC
+    CHECK (match_confidence IS NULL OR (match_confidence >= 0 AND match_confidence <= 1)),
+
+  -- Amendment A: audit columns. No updated_at (append-only).
+  -- No deleted_at (Amendment C immutability).
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id),
+
+  -- Amendment C: full unique (non-partial) — idempotency guard
+  -- for trigger ON CONFLICT.
+  UNIQUE (source_type, source_line_id)
 );
 
-CREATE INDEX idx_pricing_history_cost_code ON pricing_history(org_id, cost_code_id, date DESC);
-CREATE INDEX idx_pricing_history_vendor ON pricing_history(org_id, vendor_id, date DESC);
-CREATE INDEX idx_pricing_history_description_trgm ON pricing_history USING GIN (description gin_trgm_ops);
+-- Amendment G: 5 indexes total (3 spec'd + 2 trigger idempotency).
+CREATE INDEX idx_pricing_history_cost_code
+  ON public.pricing_history (org_id, cost_code_id, date DESC);
+CREATE INDEX idx_pricing_history_vendor
+  ON public.pricing_history (org_id, vendor_id, date DESC);
+CREATE INDEX idx_pricing_history_description_trgm
+  ON public.pricing_history USING GIN (description gin_trgm_ops);
+CREATE INDEX idx_pricing_history_job
+  ON public.pricing_history (org_id, job_id, date DESC)
+  WHERE job_id IS NOT NULL;
+CREATE INDEX idx_pricing_history_source_lookup
+  ON public.pricing_history (org_id, source_type, source_id);
 
--- RLS: org-scoped read; writes via service role only (triggered from entity writes)
+-- Amendment B: single-SELECT-policy RLS. No INSERT/UPDATE/
+-- DELETE policies — trigger functions (SECURITY DEFINER)
+-- bypass RLS on writes. R.23 divergence.
+ALTER TABLE public.pricing_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY pricing_history_org_read
+  ON public.pricing_history
+  FOR SELECT
+  USING (
+    org_id IN (
+      SELECT org_id FROM public.org_members
+      WHERE user_id = auth.uid() AND is_active = true
+    )
+    OR app_private.is_platform_admin()
+  );
+
+-- Amendment J: 4 trigger functions. Each: SECURITY DEFINER,
+-- pinned search_path, INSERT ... ON CONFLICT DO NOTHING for
+-- idempotency. Explicit GRANT EXECUTE TO authenticated per
+-- F.2 / 00067 pattern.
+
+-- (1) invoice_line_items trigger — fires when parent invoice
+-- reaches qa_approved status.
+CREATE OR REPLACE FUNCTION public.trg_pricing_history_from_invoice_line()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _inv RECORD;
+BEGIN
+  SELECT id, org_id, job_id, vendor_id, status, invoice_date, created_at
+    INTO _inv
+    FROM public.invoices
+    WHERE id = NEW.invoice_id;
+
+  IF _inv.status IS DISTINCT FROM 'qa_approved' THEN
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.pricing_history (
+    org_id, job_id, source_type, source_id, source_line_id,
+    vendor_id, cost_code_id, description,
+    quantity, unit, unit_price, amount, date,
+    created_by
+  ) VALUES (
+    _inv.org_id, _inv.job_id, 'invoice', _inv.id, NEW.id,
+    _inv.vendor_id, NEW.cost_code_id, NEW.description,
+    NEW.quantity, NEW.unit, NEW.unit_price, NEW.amount,
+    COALESCE(_inv.invoice_date, _inv.created_at::date),
+    auth.uid()
+  )
+  ON CONFLICT (source_type, source_line_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.trg_pricing_history_from_invoice_line()
+  TO authenticated;
+
+CREATE TRIGGER trg_invoice_line_items_pricing_history
+  AFTER INSERT OR UPDATE ON public.invoice_line_items
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trg_pricing_history_from_invoice_line();
+
+-- (2) proposal_line_items trigger — fires when parent proposal
+-- reaches accepted status.
+CREATE OR REPLACE FUNCTION public.trg_pricing_history_from_proposal_line()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _prop RECORD;
+BEGIN
+  SELECT id, org_id, job_id, vendor_id, status, received_date, created_at
+    INTO _prop
+    FROM public.proposals
+    WHERE id = NEW.proposal_id;
+
+  IF _prop.status IS DISTINCT FROM 'accepted' THEN
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.pricing_history (
+    org_id, job_id, source_type, source_id, source_line_id,
+    vendor_id, cost_code_id, description,
+    quantity, unit, unit_price, amount, date,
+    created_by
+  ) VALUES (
+    _prop.org_id, _prop.job_id, 'proposal', _prop.id, NEW.id,
+    _prop.vendor_id, NEW.cost_code_id, NEW.description,
+    NEW.quantity, NEW.unit, NEW.unit_price, NEW.amount,
+    COALESCE(_prop.received_date, _prop.created_at::date),
+    auth.uid()
+  )
+  ON CONFLICT (source_type, source_line_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.trg_pricing_history_from_proposal_line()
+  TO authenticated;
+
+CREATE TRIGGER trg_proposal_line_items_pricing_history
+  AFTER INSERT OR UPDATE ON public.proposal_line_items
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trg_pricing_history_from_proposal_line();
+
+-- (3) po_line_items trigger — fires when parent PO reaches
+-- issued status. Amendment I parent-entity resolution:
+-- vendor_id via po.vendor_id; date via po.issued_date (with
+-- po.created_at fallback); quantity/unit/unit_price NULL
+-- because po_line_items doesn't carry them. Note: table name
+-- is po_line_items (Amendment H correction from the original
+-- spec's purchase_order_line_items).
+CREATE OR REPLACE FUNCTION public.trg_pricing_history_from_po_line()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _po RECORD;
+  _cost_code_id UUID;
+BEGIN
+  SELECT id, org_id, job_id, vendor_id, status, issued_date, created_at
+    INTO _po
+    FROM public.purchase_orders
+    WHERE id = NEW.po_id;
+
+  IF _po.status IS DISTINCT FROM 'issued' THEN
+    RETURN NEW;
+  END IF;
+
+  -- po_line_items.cost_code is TEXT (the 5-digit code), not a
+  -- UUID FK — resolve to cost_codes.id for pricing_history.
+  SELECT id INTO _cost_code_id
+    FROM public.cost_codes
+    WHERE code = NEW.cost_code
+      AND org_id = _po.org_id
+    LIMIT 1;
+
+  INSERT INTO public.pricing_history (
+    org_id, job_id, source_type, source_id, source_line_id,
+    vendor_id, cost_code_id, description,
+    quantity, unit, unit_price, amount, date,
+    created_by
+  ) VALUES (
+    _po.org_id, _po.job_id, 'po', _po.id, NEW.id,
+    _po.vendor_id, _cost_code_id, NEW.description,
+    NULL, NULL, NULL, NEW.amount,
+    COALESCE(_po.issued_date, _po.created_at::date),
+    auth.uid()
+  )
+  ON CONFLICT (source_type, source_line_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION public.trg_pricing_history_from_po_line() IS
+'Populates pricing_history from public.po_line_items on PO issuance (parent purchase_orders.status = ''issued''). Resolves missing columns from the parent PO: vendor_id ← purchase_orders.vendor_id; date ← purchase_orders.issued_date with purchase_orders.created_at::date fallback. quantity / unit / unit_price insert as NULL because po_line_items does not carry them (asymmetry vs invoice_line_items and proposal_line_items). cost_code TEXT on po_line_items is resolved to cost_codes.id via (code, org_id) lookup. Amendment H renamed the trigger target from the spec''s purchase_order_line_items to po_line_items (canonical name in the codebase).';
+
+GRANT EXECUTE ON FUNCTION public.trg_pricing_history_from_po_line()
+  TO authenticated;
+
+CREATE TRIGGER trg_po_line_items_pricing_history
+  AFTER INSERT OR UPDATE ON public.po_line_items
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trg_pricing_history_from_po_line();
+
+-- (4) change_order_lines trigger — fires when parent CO
+-- reaches approved status.
+CREATE OR REPLACE FUNCTION public.trg_pricing_history_from_co_line()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _co RECORD;
+BEGIN
+  SELECT id, org_id, job_id, vendor_id, status, approved_date, created_at
+    INTO _co
+    FROM public.change_orders
+    WHERE id = NEW.change_order_id;
+
+  IF _co.status IS DISTINCT FROM 'approved' THEN
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.pricing_history (
+    org_id, job_id, source_type, source_id, source_line_id,
+    vendor_id, cost_code_id, description,
+    quantity, unit, unit_price, amount, date,
+    created_by
+  ) VALUES (
+    _co.org_id, _co.job_id, 'co', _co.id, NEW.id,
+    _co.vendor_id, NEW.cost_code_id, NEW.description,
+    NEW.quantity, NEW.unit, NEW.unit_price, NEW.amount,
+    COALESCE(_co.approved_date, _co.created_at::date),
+    auth.uid()
+  )
+  ON CONFLICT (source_type, source_line_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.trg_pricing_history_from_co_line()
+  TO authenticated;
+
+CREATE TRIGGER trg_change_order_lines_pricing_history
+  AFTER INSERT OR UPDATE ON public.change_order_lines
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trg_pricing_history_from_co_line();
+
+-- ------------------------------------------------------------
+-- Amendment M: one-time backfill for qa_approved invoice lines.
+-- Execution-phase QA report captures the actual row count +
+-- spot-check sample per GH #16 signal-quality gate.
+-- ------------------------------------------------------------
+INSERT INTO public.pricing_history (
+  org_id, job_id, source_type, source_id, source_line_id,
+  vendor_id, cost_code_id, description,
+  quantity, unit, unit_price, amount, date,
+  created_by
+)
+SELECT
+  i.org_id, i.job_id, 'invoice', i.id, ili.id,
+  i.vendor_id, ili.cost_code_id, ili.description,
+  ili.quantity, ili.unit, ili.unit_price, ili.amount,
+  COALESCE(i.invoice_date, i.created_at::date),
+  NULL
+FROM public.invoice_line_items ili
+JOIN public.invoices i ON i.id = ili.invoice_id
+WHERE i.status = 'qa_approved'
+  AND i.deleted_at IS NULL
+ON CONFLICT (source_type, source_line_id) DO NOTHING;
+
+-- ------------------------------------------------------------
+-- COMMENTs (Amendment N).
+-- ------------------------------------------------------------
+COMMENT ON TABLE public.pricing_history IS
+'Trigger-populated append-only audit spine for pricing observations across 4 source entities (invoice / proposal / po / co). Captures a pricing row when the parent entity reaches its "pricing-committed" status (invoice=qa_approved, proposal=accepted, po=issued, co=approved). R.23 DIVERGENCE (Amendment B): adopts a 1-policy RLS shape (single SELECT; no INSERT/UPDATE/DELETE policies) because pricing_history is a trigger-populated audit spine — neither workflow data nor tenant config. Closest prior precedent: activity_log. IMMUTABILITY (Amendment C): no deleted_at, no UPDATE. Correction procedure is service-role SQL DELETE by platform admin only. Adding UPDATE or soft-delete policies is prohibited — the append-only semantic is load-bearing for pricing-intelligence signal integrity. GH #16 tracks Branch 3/4 signal-quality validation before enabling user-facing fuzzy-match UIs.';
+
+COMMENT ON COLUMN public.pricing_history.canonical_item_id IS
+'Populated by Branch 3/4 matching logic against the cost-intelligence spine (public.items). NULL until matched. FK wired (Amendment E) — ON DELETE NO ACTION preserves history even if a canonical item is retired.';
+
+COMMENT ON COLUMN public.pricing_history.match_confidence IS
+'Confidence score for canonical_item_id match, in range [0, 1]. NULL until matching runs. Matches the items.ai_confidence convention (Amendment F).';
 ```
 
-Then add triggers that populate `pricing_history` on:
-- `invoice_line_items` insert + invoice status → qa_approved
-- `proposal_line_items` insert + proposal status → accepted
-- `purchase_order_line_items` insert + PO status → issued
-- `change_order_lines` insert + CO status → approved
+Also write `00073_pricing_history.down.sql` per R.16 (Amendment K). Reverses in strict reverse-dependency order: drops 4 triggers (invoice/proposal/po/co) → drops 4 trigger functions → drops `pricing_history_org_read` policy → DISABLES RLS → drops 5 indexes (job, source_lookup, trigram, vendor, cost_code) → drops `public.pricing_history` table. Backfilled rows are discarded implicitly by the table DROP.
 
-**Commit:** `feat(pricing): add pricing_history table with triggers`
+**Code + type updates:** none. Pre-flight §3 R.18 grep confirmed 0 `src/` / `__tests__/` / `supabase/migrations/` references to `pricing_history`. The `canonical_item_id` / `match_confidence` hits in the cost-intelligence subsystem (00052 spine + `src/lib/cost-intelligence/*`) are conceptual alignment, not DB-level collision — no live table currently has a `canonical_item_id` column. Branch 3/4 matching logic populates it post-apply.
+
+**Test (R.15 test-first):** write `__tests__/pricing-history.test.ts` (Amendment L) covering:
+
+- Migrations `00073_pricing_history.sql` + `.down.sql` exist.
+- Header citations: R.23 divergence (1-policy shape + activity_log precedent), Amendment C immutability + correction procedure, Amendment H `po_line_items` rename, Amendment I parent-entity resolution, Amendment J SECURITY DEFINER / F.2 GRANT pattern, Amendment M backfill + GH #16.
+- `public.pricing_history` has all 16 columns (Amendment A audit cols incl. `created_at NOT NULL DEFAULT now()` + `created_by` nullable; no `updated_at`, no `deleted_at`).
+- 4-value `source_type` CHECK (`'invoice','proposal','po','co'`).
+- `canonical_item_id UUID REFERENCES public.items(id)` wired (Amendment E guard).
+- `match_confidence CHECK (... >= 0 AND ... <= 1)` (Amendment F guard).
+- 5 indexes present with correct predicates.
+- RLS enabled; exactly 1 policy (`pricing_history_org_read`, FOR SELECT); **no INSERT / UPDATE / DELETE policies** (Amendment B regression fence — explicit policy-count = 1 assertion + no-write-policy negative assertion).
+- 4 trigger function definitions + 4 CREATE TRIGGER statements on the correct target tables: `public.invoice_line_items`, `public.proposal_line_items`, `public.po_line_items` (NOT `purchase_order_line_items` — Amendment H defect guard), `public.change_order_lines`.
+- Each of the 4 trigger functions declared `SECURITY DEFINER` with `SET search_path = public, pg_temp`.
+- 4 `GRANT EXECUTE ON FUNCTION … TO authenticated` statements (Amendment J).
+- PO trigger function body references `purchase_orders.issued_date` + `created_at` fallback (Amendment I).
+- PO trigger function body inserts NULL for `quantity` / `unit` / `unit_price` (Amendment I).
+- Paired down.sql exists + drops in strict reverse-dependency order.
+
+Dynamic live-auth RLS probes + GRANT-verification probes (`has_function_privilege('authenticated', …, 'EXECUTE')` for each of the 4 functions) + backfill row-count verification + trigger firing verification + signal-quality spot-check (5-row sample) fire during the Migration Dry-Run per R.19 and are recorded in `qa-reports/qa-branch2-phase2.8.md`.
+
+**R.23 precedent statement:** Phase 2.8 is the **first Branch 2 phase outside the 3-policy RLS family**. `pricing_history` is a trigger-populated append-only audit spine, neither workflow data (proposals/00065 precedent family: draw_adjustments/00069, job_milestones/00071+00072) nor tenant config (approval_chains/00070). Closest prior precedent: `activity_log` (4-policy older RESTRICTIVE-layered shape). Phase 2.8 adopts a **new 1-policy shape** — single `pricing_history_org_read` SELECT policy, no INSERT/UPDATE/DELETE policies. Service-role SECURITY DEFINER triggers bypass RLS on writes. Immutability (no `deleted_at`, no UPDATE) is load-bearing for pricing-intelligence signal integrity; correction is platform-admin service-role SQL DELETE only (documented in header). Documented as **intentional R.23 divergence**; Amendment B regression fence in the R.15 test file prevents future fixers from silently adding write policies. Amendment F.2 GRANT-verification pattern reactivates (4 trigger functions × explicit `GRANT EXECUTE TO authenticated` + individual `has_function_privilege` probes in the R.15 test).
+
+**Commit:** `feat(pricing): add pricing_history table with 4 triggers + invoice-only backfill; 1-policy RLS (R.23 divergence)`
 
 ### Phase 2.9 — Client portal access
 
