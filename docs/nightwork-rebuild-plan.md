@@ -1967,6 +1967,98 @@ document_extraction_lines
   created_at, verified_at, verified_by
 ```
 
+#### Current vs Target Shape (Amendment M, 2026-04-23)
+
+The shape above describes the eventual v1.5/v2.0 target. Phase 3.1
+pre-flight (`qa-reports/preflight-branch3-phase3.1.md`, commit `777b752`)
+surfaced a plan-internal scope-drift: the Phase 3.1 phase-spec shipped a
+strict-minimal rename + 3 classifier routing columns, NOT the full
+target shape above. This subsection documents the roadmap to honor the
+divergence rather than rewriting the ideal to match what ships today.
+
+**CURRENT (Phase 3.1, migration 00076 — rename + 3 classifier routing columns):**
+
+```
+document_extractions  (27 columns post-rename — preserves all pre-rename columns)
+  id, org_id, invoice_id (NOT NULL FK invoices — preserved),
+  raw_ocr_text, raw_pdf_url,
+  extracted_at, extraction_model, extraction_prompt_version,
+  total_tokens_input, total_tokens_output,
+  field_confidences JSONB,
+  verification_status (pending | partial | verified | rejected),  -- current enum preserved
+  verified_lines_count, total_lines_count, verified_at, verified_by,
+  auto_committed, auto_commit_reason,
+  invoice_subtotal_cents, invoice_tax_cents, invoice_tax_rate,
+  invoice_overhead JSONB, invoice_total_cents,
+  skipped_lines JSONB,
+  created_at, updated_at, deleted_at,
+  -- Phase 3.1 additions (classifier routing):
+  classified_type TEXT
+    CHECK (10-val: invoice | purchase_order | change_order | proposal |
+           vendor | budget | historical_draw | plan | contract | other),
+  target_entity_type TEXT
+    CHECK (7-val committable subset: invoice | purchase_order |
+           change_order | proposal | vendor | budget | historical_draw),
+  target_entity_id UUID  -- bare UUID, no FK; app-layer integrity
+
+document_extraction_lines  (45 columns post-rename — preserves all pre-rename columns)
+  id, org_id, extraction_id, invoice_line_item_id,
+  line_order, raw_description, raw_quantity, raw_unit_price_cents,
+  raw_total_cents, raw_unit_text,
+  proposed_item_id, proposed_item_data,
+  match_tier, match_confidence, match_confidence_score,
+  classification_confidence, match_reasoning, candidates_considered,
+  verification_status (6-val: pending | verified | corrected | rejected |
+                              auto_committed | not_item),
+  verified_item_id, verified_at, verified_by, correction_notes,
+  vendor_item_pricing_id,
+  line_tax_cents, line_is_taxable,
+  overhead_allocated_cents, landed_total_cents,
+  is_allocated_overhead, overhead_type,
+  is_transaction_line, transaction_line_type, non_item_reason,
+  proposed_pricing_model, proposed_scope_size_metric,
+  extracted_scope_size_value, extracted_scope_size_confidence,
+  extracted_scope_size_source,
+  line_nature, scope_split_into_components, scope_estimated_material_cents,
+  source_page_number,
+  created_at, updated_at, deleted_at
+```
+
+**TARGET (future work, probably Branch 3.8 or Branch 4 —
+post-classifier production validation):**
+
+The full Part 2 §2.2 shape listed in the code block above — drops
+`invoice_id` FK (replaced by `uploaded_by` + polymorphic
+`target_entity_*`), adds file-metadata cols (`original_file_url`,
+`original_filename`, `file_type`, `file_size`), adds
+`classification_confidence`, `extracted_data JSONB`, `error_message`,
+`committed_at`, `rejected_at`, evolves `verification_status` enum from
+current 4-val `(pending|partial|verified|rejected)` to target 4-val
+`(pending|verified|committed|rejected)` (semantically different —
+`partial` becomes derivable from line-rollup, `committed` replaces
+`auto_committed` boolean). Lines-side: rename `line_order → sort_order`,
+`invoice_line_item_id → target_line_id`, split `proposed_item_id` into
+`proposed_cost_code_id` + `proposed_vendor_id`, drop tax/overhead/
+scope-pricing columns that cost-intelligence v2 obsoletes.
+
+**Rationale for strict-minimal Phase 3.1:**
+
+Phase 3.1 ships the rename early so Branches 3.2+ can build the
+classifier against the new name. Remaining Part 2 §2.2 enhancements are
+deferred until the classifier is production-validated and we know which
+additions are actually needed vs. speculative. This converts the drift
+from "plan is internally inconsistent" into "plan has a documented
+roadmap with current and target states" — a more honest paper trail
+that also avoids building schema ceremony for columns the real pipeline
+may not need.
+
+**Convergence trigger:** when Branch 3.2–3.7 classifier + extraction
+pipelines are production-tested against ≥20 documents per type per Phase
+3.2 exit gate, Branch 3.8 (or a Branch 4 phase) opens a "document_
+extractions convergence" migration to bring the live schema to the
+target shape. At that point the shape-drift closes with real signal,
+not speculation.
+
 ### Pricing history (the simple cost intelligence)
 
 ```
@@ -5555,21 +5647,263 @@ This is the big one. Split into focused phases.
 
 ### Phase 3.1 — Schema rename
 
-Rename `invoice_extractions` → `document_extractions`, same for lines. Add `classified_type`, `target_entity_type`, `target_entity_id`.
+**Amendment history (2026-04-23, pre-execution):** Phase 3.1 pre-flight
+findings at `qa-reports/preflight-branch3-phase3.1.md` (commit `777b752`)
+surfaced a plan-internal scope-drift — the phase-spec here (rename + 3
+cols) conflicts with Part 2 §2.2's larger target shape. User approved
+**strict-minimal scope** (Amendment B): rename + 3 classifier routing
+columns, preserve all existing columns and existing `verification_status`
+enum and `invoice_id` FK. Part 2 §2.2 gets a "Current vs Target Shape"
+subsection documenting the deferred convergence work rather than being
+rewritten to match the shipped shape. Full amendments A–N listed in the
+findings; the subset that shapes this spec is embedded inline below.
 
-Migration, code rename cascade (routes, types, components), verify existing invoice flow still works post-rename.
+Rename `invoice_extractions` → `document_extractions`, same for lines.
+Add 3 new columns to `document_extractions`: `classified_type` (10-val
+CHECK), `target_entity_type` (7-val committable-subset CHECK), and
+`target_entity_id` (bare UUID, no FK — app-layer integrity, per Phase
+2.2 `proposals.source_document_id` precedent).
 
-**Rebuild-vs-patch call:** REBUILD (the generalization is core to the architecture, and it's a foundational rename that affects every extraction pipeline downstream — patching would create ongoing name/type drift).
+Migration, code rename cascade (routes, types, components, TS type
+aliases — 131 refs across 36 src/ files + 5 scripts/ files, plus 26 TS
+type refs across 7 files), verify existing invoice flow still works
+post-rename. No `__tests__/` files reference the old names (0 refs) so
+no existing tests break; a new R.15 fence ships with this phase.
+
+**Rebuild-vs-patch call:** REBUILD (the generalization is core to the
+architecture, and it's a foundational rename that affects every
+extraction pipeline downstream — patching would create ongoing name/type
+drift; also 131 refs across 36 files is firmly >30-file rebuild
+threshold).
+
+#### Migration SQL (strict-minimal scope — Amendment B)
+
+```sql
+-- 00076_document_extractions_rename.sql
+-- Phase 3.1: strict-minimal rename + 3 classifier routing columns.
+-- See pre-flight qa-reports/preflight-branch3-phase3.1.md (commit 777b752)
+-- for full scope rationale and Amendment B decision.
+--
+-- target_entity_id is a BARE UUID with NO FK constraint. The referenced
+-- entity varies by target_entity_type (invoice | purchase_order |
+-- change_order | proposal | vendor | budget | historical_draw), so
+-- referential integrity is enforced at the classifier write-path
+-- (Branch 3.2+), not at the DB level. Matches Phase 2.2
+-- proposals.source_document_id precedent. Do not "fix" this later by
+-- adding a FK — it would break every row where target_entity_type is
+-- not 'invoice'. The R.15 regression fence explicitly asserts no FK.
+
+BEGIN;
+
+-- 1. Rename tables. RENAME TABLE preserves: row data, self-FK
+-- relationships, RLS policies (names only — see step 2), triggers,
+-- indexes, CHECK constraints, dependent FK references from other
+-- tables. Live-probed pre-flight §4.
+ALTER TABLE public.invoice_extractions      RENAME TO document_extractions;
+ALTER TABLE public.invoice_extraction_lines RENAME TO document_extraction_lines;
+
+-- 2. Selective rename of dependent objects whose names reference the
+-- old table (Amendment G). Policies / triggers / indexes / constraints
+-- with an `iel_*` or `trg_iel_*` or `idx_iel_*` prefix are kept — that
+-- prefix is table-neutral and renaming adds churn without gain.
+
+-- Policies (document_extractions side)
+ALTER POLICY invoice_extractions_org_read   ON public.document_extractions RENAME TO document_extractions_org_read;
+ALTER POLICY invoice_extractions_org_write  ON public.document_extractions RENAME TO document_extractions_org_write;
+ALTER POLICY invoice_extractions_org_update ON public.document_extractions RENAME TO document_extractions_org_update;
+-- iel_org_read | iel_org_write | iel_org_update kept (neutral prefix)
+
+-- Triggers
+ALTER TRIGGER trg_invoice_extractions_touch      ON public.document_extractions      RENAME TO trg_document_extractions_touch;
+ALTER TRIGGER trg_invoice_extraction_lines_touch ON public.document_extraction_lines RENAME TO trg_document_extraction_lines_touch;
+-- trg_iel_landed_total | trg_iel_status_rollup kept (neutral prefix)
+
+-- Indexes (primary ones + named non-pkey)
+ALTER INDEX invoice_extractions_pkey         RENAME TO document_extractions_pkey;
+ALTER INDEX invoice_extraction_lines_pkey    RENAME TO document_extraction_lines_pkey;
+ALTER INDEX idx_invoice_extractions_invoice  RENAME TO idx_document_extractions_invoice;
+ALTER INDEX idx_invoice_extractions_pending  RENAME TO idx_document_extractions_pending;
+ALTER INDEX idx_invoice_extractions_status   RENAME TO idx_document_extractions_status;
+-- idx_iel_* (7 indexes) kept (neutral prefix)
+
+-- Constraints (named non-pkey on document_extractions side)
+ALTER TABLE public.document_extractions
+  RENAME CONSTRAINT invoice_extractions_invoice_id_fkey              TO document_extractions_invoice_id_fkey;
+ALTER TABLE public.document_extractions
+  RENAME CONSTRAINT invoice_extractions_org_id_fkey                  TO document_extractions_org_id_fkey;
+ALTER TABLE public.document_extractions
+  RENAME CONSTRAINT invoice_extractions_verified_by_fkey             TO document_extractions_verified_by_fkey;
+ALTER TABLE public.document_extractions
+  RENAME CONSTRAINT invoice_extractions_verification_status_check    TO document_extractions_verification_status_check;
+
+-- Constraints on document_extraction_lines side (invoice_extraction_lines_* prefix)
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_extraction_id_fkey         TO document_extraction_lines_extraction_id_fkey;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_invoice_line_item_id_fkey  TO document_extraction_lines_invoice_line_item_id_fkey;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_match_tier_check           TO document_extraction_lines_match_tier_check;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_org_id_fkey                TO document_extraction_lines_org_id_fkey;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_proposed_item_id_fkey      TO document_extraction_lines_proposed_item_id_fkey;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_transaction_line_type_check TO document_extraction_lines_transaction_line_type_check;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_vendor_item_pricing_id_fkey TO document_extraction_lines_vendor_item_pricing_id_fkey;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_verification_status_check  TO document_extraction_lines_verification_status_check;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_verified_by_fkey           TO document_extraction_lines_verified_by_fkey;
+ALTER TABLE public.document_extraction_lines
+  RENAME CONSTRAINT invoice_extraction_lines_verified_item_id_fkey      TO document_extraction_lines_verified_item_id_fkey;
+-- iel_line_nature_check | iel_overhead_type_check | iel_proposed_pricing_model_check kept (neutral prefix)
+
+-- Note: FK COLUMN names on dependent tables are left unchanged (Amendment H).
+-- line_cost_components.invoice_extraction_line_id, vendor_item_pricing.source_extraction_line_id,
+-- unit_conversion_suggestions.source_extraction_line_id, line_bom_attachments.scope_extraction_line_id,
+-- line_bom_attachments.bom_extraction_line_id all continue to FK to the renamed tables without issue.
+-- Column-name normalization is deferred — renaming cascades to ~15 additional src/ files with no correctness gain.
+
+-- 3. Add 3 classifier routing columns (Amendment C / D / E).
+
+-- classified_type: classifier's output — what the document IS.
+-- 10-val CHECK matches Part 2 §2.2 enum inventory.
+ALTER TABLE public.document_extractions
+  ADD COLUMN classified_type TEXT
+    CHECK (classified_type IS NULL OR classified_type IN (
+      'invoice','purchase_order','change_order','proposal',
+      'vendor','budget','historical_draw','plan','contract','other'
+    ));
+
+COMMENT ON COLUMN public.document_extractions.classified_type IS
+  'What the document IS per the Branch 3.2 classifier. 10-value set: invoice, purchase_order, change_order, proposal, vendor, budget, historical_draw, plan, contract, other. NULL until classifier runs. Semantically distinct from target_entity_type: a document can be classified as one type but committed to a different entity (e.g., a proposal document classified_type=''proposal'' that the PM accepts and converts to a PO → target_entity_type=''purchase_order''). These fields intentionally diverge in real flows.';
+
+-- target_entity_type: commit destination — where the document's data
+-- ends up. 7-val committable SUBSET (excludes plan/contract/other —
+-- those have no committable entity in v1.0).
+ALTER TABLE public.document_extractions
+  ADD COLUMN target_entity_type TEXT
+    CHECK (target_entity_type IS NULL OR target_entity_type IN (
+      'invoice','purchase_order','change_order','proposal','vendor','budget','historical_draw'
+    ));
+
+COMMENT ON COLUMN public.document_extractions.target_entity_type IS
+  'Where this extraction WILL commit to — the 7-value committable subset of classified_type (excludes plan/contract/other, which have no v1.0 commit target). NULL until PM/classifier decides commit destination. Distinct from classified_type by design: (1) classified=proposal, target=purchase_order when proposal accepted and converted; (2) classified=contract, target=NULL because contract has no commit entity yet.';
+
+-- target_entity_id: bare UUID, NO FK. App-layer integrity per Phase 2.2
+-- proposals.source_document_id precedent. Referenced entity varies by
+-- target_entity_type, so cannot be a single FK.
+ALTER TABLE public.document_extractions
+  ADD COLUMN target_entity_id UUID;
+  -- deliberately NO REFERENCES clause — see COMMENT below.
+
+COMMENT ON COLUMN public.document_extractions.target_entity_id IS
+  'UUID of the entity this extraction committed to. App-layer integrity: populated by Branch 3.2+ classifier/commit-path after successful match. Referential integrity enforced at classifier write-path, not at DB level, because referenced entity varies by target_entity_type (invoices, purchase_orders, change_orders, proposals, vendors, budgets, historical draws). Matches Phase 2.2 proposals.source_document_id precedent. DO NOT add a FK constraint later — it would break every row where target_entity_type is not ''invoice''. The R.15 test (__tests__/document-extractions-rename.test.ts) explicitly asserts no FK on this column.';
+
+-- 4. Backfill the 56 active pre-existing rows (Amendment F).
+-- All current extraction rows came from invoices, so classified_type
+-- and target_entity_type are both 'invoice' and target_entity_id is
+-- derivable from invoice_id. Makes target_entity_* populate from day one.
+-- Soft-deleted rows left NULL to preserve state-at-time.
+UPDATE public.document_extractions
+SET classified_type    = 'invoice',
+    target_entity_type = 'invoice',
+    target_entity_id   = invoice_id
+WHERE deleted_at IS NULL;
+
+-- 5. Backfill completeness probe (Amendment F addition).
+-- After backfill, every active row must have classified_type='invoice'
+-- AND a non-NULL target_entity_id. If any row has classified_type set
+-- but target_entity_id NULL, the backfill is incomplete.
+DO $$
+DECLARE
+  bad_count INT;
+BEGIN
+  SELECT COUNT(*) INTO bad_count
+  FROM public.document_extractions
+  WHERE deleted_at IS NULL
+    AND classified_type = 'invoice'
+    AND target_entity_id IS NULL;
+  IF bad_count > 0 THEN
+    RAISE EXCEPTION 'Phase 3.1 backfill incomplete: % active rows have classified_type=''invoice'' but target_entity_id IS NULL', bad_count;
+  END IF;
+END $$;
+
+-- 6. Row-preservation probes (Amendment F / §11 pre-flight).
+-- Stats snapshot before migration captured in pre-flight: 130 total /
+-- 56 active on document_extractions, 391 total / 87 active on
+-- document_extraction_lines. Counts may drift between pre-flight and
+-- execution; parameterize by reading pre-migration counts in a temp
+-- table at migration top, then re-assert after backfill.
+-- (Implementation detail: execution-phase decides temp-table vs
+-- hard-coded numbers based on whether drift is acceptable.)
+
+COMMIT;
+```
+
+#### R.23 precedent statement
+
+No divergence. `invoice_extractions` and `invoice_extraction_lines`
+already adopt the 3-policy R.23 pattern (`_org_read` SELECT,
+`_org_write` INSERT, `_org_update` UPDATE). The rename preserves
+policies automatically (live-probed pre-flight §4 Probe 2). Policy
+NAMES rename per Amendment G; policy BODIES are unchanged (no string
+references to the table name inside USING/WITH CHECK clauses). This
+phase does not add a new entry to the R.23 catalog — it preserves the
+existing entry with a note that the table was renamed in 00076.
+
+#### R.19 live-regression plan (Amendment K)
+
+This is the first non-schema-only phase since Branch 1. R.19 live
+regression IS required. Full plan in pre-flight findings §8. Summary:
+
+- Upload 3 reference invoice formats (clean PDF SmartShield, T&M
+  Florida Sunshine Carpentry, lump-sum Word Doug Naeher Drywall)
+  post-migration.
+- Validate full flow: storage → parse → `document_extractions` row →
+  PM review → approve → qa_approved.
+- Synthetic fixtures per R.21: 3 test jobs, reused vendors, seeded
+  cost codes.
+- Teardown per R.22: `scripts/phase3.1-regression-teardown.ts` soft-
+  deletes test data in dependency order.
+- Acceptance: all 3 formats complete flow cleanly, console clean,
+  `iel_status_rollup` trigger still fires correctly, existing 358
+  tests + new document-extractions-rename test all pass.
+
+#### GH issues — Phase 3.1 does NOT resolve any of them
+
+For reassurance that cross-cutting GH housekeeping is NOT Phase 3.1
+scope: open issues #1–#4 (Branch 1 backlog), #6–#17 (Branch 2
+backlog) are all tracked by their respective owners/phases. Phase 3.1
+does not touch any of them. #5 closed in Phase 2.7 (job_milestones).
 
 **Phase 3.1 Exit Gate:**
 
 ```
-[ ] Migration 00072 applied, rollback tested
-[ ] Grep validator subagent: zero references to `invoice_extractions` remain
-[ ] Invoice flow still works end-to-end post-rename (regression test)
-[ ] New columns populate correctly on new invoice ingest (classified_type, target_entity_type)
-[ ] RLS policies migrated to new table names
-[ ] QA report generated
+[ ] Migration 00076 applied, rollback tested
+[ ] Grep validator: zero references to `invoice_extractions` or
+    `invoice_extraction_lines` remain in src/ / __tests__/ / scripts/
+    (docs/ legacy references at plan lines 579 / 2488 / 2515 / 5575
+    intentional — describe legacy / pre-rename state)
+[ ] Invoice flow still works end-to-end post-rename (R.19 regression
+    — 3 reference invoice formats per CLAUDE.md)
+[ ] New columns populate correctly on new invoice ingest
+    (classified_type, target_entity_type, target_entity_id)
+[ ] Backfill completeness probe passes (zero rows with
+    classified_type='invoice' AND target_entity_id IS NULL among
+    active rows)
+[ ] RLS policies migrated to new table names (Amendment G)
+[ ] R.15 regression fence in __tests__/document-extractions-rename.test.ts
+    covers: table existence, CHECK enforcement (10-val classified_type
+    + 7-val target_entity_type), target_entity_id NO-FK assertion,
+    RLS shape preservation, row-count preservation, backfill
+    correctness, downstream-FK integrity (5 dependent FKs across 4
+    tables), iel_status_rollup trigger regression
+[ ] 00076 down.sql tested via apply → rollback → apply cycle
+[ ] QA report `qa-reports/qa-branch3-phase3.1.md` generated
+[ ] Plan-doc sync commit updates Part 2 §2.2 convergence note if
+    strict-minimal execution diverged from this spec
 ```
 
 **Commit:** `refactor(ingestion): rename invoice_extractions → document_extractions`
