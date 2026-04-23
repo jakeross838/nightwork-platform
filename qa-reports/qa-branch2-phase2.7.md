@@ -233,6 +233,31 @@ Post-migration: **`jobs_retainage_percent_check` DROPPED.** Remaining: `chk_jobs
 
 Every pre-apply row count matches post-apply (see §4.3). All default backfills applied uniformly. Zero data loss.
 
+### 5.10 §5.7 asymmetry RESOLVED in migration 00072 (commit `6b43caf`)
+
+**Addendum, 2026-04-23** — the FK-through-RLS write-side asymmetry flagged in §5.7 did **not** defer to Branch 8. A follow-up migration `00072_job_milestones_pm_write_narrowing.sql` landed in the same Phase 2.7 paper trail (commit `6b43caf`, `fix(milestones): tighten job_milestones PM write policies to match read-side narrowing (Phase 2.7 QA §5.7 addendum)`).
+
+**Fix:** extend the WITH CHECK predicate on `job_milestones_org_insert` and the USING predicate on `job_milestones_org_update` with the same `EXISTS (SELECT 1 FROM public.jobs j WHERE j.id = job_milestones.job_id AND j.pm_id = auth.uid())` clause the read policy uses, gated on `app_private.user_role() = 'pm'`. Owner / admin / accounting continue to write without the PM EXISTS gate.
+
+**Key regression probe (post-apply, same harness as §5.6):**
+
+| User / role | Pre-fix (00071) | Post-fix (00072) |
+|---|---|---|
+| Martin (PM on Fish) INSERT on **Dewberry** (Bob's job) | ❗ SUCCEEDED (§5.7 asymmetry) | ✅ **42501 insufficient_privilege** — asymmetry closed |
+| Martin INSERT on Fish (his own job) | ✅ success | ✅ success |
+| Bob (PM on Dewberry) INSERT on Dewberry (his own job) | ✅ success | ✅ success |
+| Bob INSERT on Fish (not his job) | ❗ would succeed | ✅ **42501** |
+| Jake (owner) / Diane (accounting) INSERT on any job | ✅ success | ✅ success |
+| Stranger | ✅ 42501 | ✅ 42501 |
+
+Writes now match reads. The 00069 draw_adjustments FK-through-RLS emergent defense-in-depth is replaced by explicit policy-level narrowing, which is more defensible and more portable to future tables with org-wide read posture on their FK-referenced parents.
+
+**Paper trail in Branch 2 Final Exit Gate (§10) below has been updated:** 9 of 11 migrations applied (00071 + 00072). R.15 test file `__tests__/job-milestones-pm-write-narrowing.test.ts` ships 11 static assertions (11/11 FAIL baseline → 11/11 PASS post-apply; full suite **263 tests passing**). R.16 paired `00072_...down.sql` restores the pre-fix asymmetric shape — rollback intentionally reintroduces §5.7, documented in the down.sql header.
+
+**Structural shape preserved:** still exactly 3 policies on `job_milestones`, no DELETE, workflow-data 4-role gate at the outer level. The PM narrowing is a predicate-level extension within the same 3-policy shape — identical to the 00069 draw_adjustments application of the pattern, applied symmetrically to reads AND writes.
+
+**GH #14 context update:** GH #14 tracked the *inverse* of §5.7 (emergent defense-in-depth stricter than declared). §5.7 was the complement (no defense-in-depth where declared). With 00072 landed, both PM-narrowing patterns — Phase 2.5 draw_adjustments and Phase 2.7 job_milestones — now have symmetric read + write narrowing, though via different mechanisms (FK-through-RLS vs. explicit policy clause). Documentation ask on GH #14 can now reference both phases as the canonical pattern catalog.
+
 ---
 
 ## 6. R.19 static-validation carve-out — both conditions cited
@@ -266,7 +291,9 @@ No new policies on parent tables.
 
 ### 8.1 FK-through-RLS defense does not propagate from Phase 2.5 on job_milestones writes (see §5.7)
 
-Not a CVE. PMs cannot see cross-job milestones they write, so the UX never reveals the leak. Recommended follow-up (option 1 in §5.7): add PM-narrowing EXISTS clause to `job_milestones_org_insert` + `org_update` WITH CHECK in a small follow-on migration. Awaiting Jake's decision.
+**RESOLVED 2026-04-23 in migration 00072 — see §5.10 for the fix, regression probes, and paper trail. Commit `6b43caf`.** Jake approved option 1 (add PM-narrowing EXISTS to the WITH CHECK predicate) as a follow-up migration before push, not deferred to Branch 8. Writes now match reads; the asymmetry is closed.
+
+The original §5.7 finding remains preserved above as-written for historical accuracy — it documents the pre-fix behavior that motivated 00072.
 
 ### 8.2 Three COMMENT-test regex failures required removing embedded semicolons from COMMENT string literals
 
@@ -317,11 +344,14 @@ Suite delta: +34 tests vs. Phase 2.6's 218.
 | 2.5 | 00069_draw_adjustments | ✅ applied |
 | 2.6 | 00070_approval_chains | ✅ applied |
 | **2.7** | **00071_milestones_retainage** | ✅ **applied (this report)** |
-| 2.8 | 00072_pricing_history | ⬜ not started |
-| 2.9 | 00073_client_portal | ⬜ not started |
-| 2.10 | 00074_v2_hooks | ⬜ not started |
+| **2.7 addendum** | **00072_job_milestones_pm_write_narrowing** | ✅ **applied — §5.10 above, commit `6b43caf`** |
+| 2.8 | 00073_pricing_history | ⬜ not started (renumbered +1 by the §5.7 addendum) |
+| 2.9 | 00074_client_portal | ⬜ not started |
+| 2.10 | 00075_v2_hooks | ⬜ not started |
 
-**8 of 11 migrations applied.** Phase 2.7 complete pending user review + push.
+**9 of 11 migrations applied.** Phase 2.7 closes with the §5.10 addendum in a single push.
+
+> **Renumber note (2026-04-23):** the §5.7 addendum consumed slot 00072 for the PM write-narrowing fix. Phases 2.8 / 2.9 / 2.10 shift by +1 (00073 / 00074 / 00075). Plan doc at `docs/nightwork-rebuild-plan.md` §3945 / §3985 / §4019 still uses the old numbering — a docs(plan) sync can fold into the Phase 2.8 kickoff, same pattern as the Phase 2.6 `7a1e33d` ON-CONFLICT sync.
 
 ### GH issue status
 
@@ -330,7 +360,7 @@ Suite delta: +34 tests vs. Phase 2.6's 218.
 | #5 — duplicate retainage CHECK on jobs | ✅ **CLOSED** by this migration (Amendment E / Option A) |
 | #12 — onboarding-wizard override for approval_chains defaults | open (tracked for Branch 6/7) |
 | #13 — CO-numbering reconciliation (Markgraf bridge) | open (Branch 3 scope) |
-| #14 — FK-through-RLS UX implications from Phase 2.5 | open — **§5.7 of this report adds context**: the Phase 2.7 finding is the *inverse* of GH #14 (where the defense-in-depth was emergent and stricter than expected; here the defense-in-depth doesn't exist at all because the FK target lacks PM narrowing) |
+| #14 — FK-through-RLS UX implications from Phase 2.5 | open — §5.7 of this report documented the inverse case (no defense-in-depth where declared); §5.10 / commit `6b43caf` resolves the Phase 2.7 side via explicit policy-level narrowing. Both patterns (FK-through-RLS emergent in 00069; explicit policy EXISTS in 00072) now catalogued as canonical PM-narrowing recipes for Branch 3/4 reference. |
 | #15 — onboarding-wizard override for retainage threshold/dropoff defaults | open — opened during Phase 2.7 plan-amendment step |
 
 ---
