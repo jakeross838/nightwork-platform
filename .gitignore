@@ -51,6 +51,9 @@ skills-lock.json
 # test invoices (local only — real client PDFs, never committed)
 /test-invoices/
 
+# classifier test fixtures (local only — real Ross Built PDFs, never committed per preflight R8)
+/__tests__/fixtures/classifier/.local/
+
 # smoke + E2E runtime logs (ephemeral, regenerated each run)
 /e2e-state.json
 /e2e-*.log

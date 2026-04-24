@@ -199,6 +199,14 @@ export async function callClaude(
     const durationMs = Date.now() - startedAt;
     const inputTokens = response.usage?.input_tokens ?? 0;
     const outputTokens = response.usage?.output_tokens ?? 0;
+    const cacheCreateTokens = response.usage?.cache_creation_input_tokens ?? 0;
+    const cacheReadTokens = response.usage?.cache_read_input_tokens ?? 0;
+
+    const loggedMetadata: Record<string, unknown> = {
+      ...(metadata ?? {}),
+      cache_creation_input_tokens: cacheCreateTokens,
+      cache_read_input_tokens: cacheReadTokens,
+    };
 
     await logUsage({
       org_id,
@@ -211,7 +219,7 @@ export async function callClaude(
       duration_ms: durationMs,
       status: "success",
       error_message: null,
-      metadata: metadata ?? null,
+      metadata: loggedMetadata,
     });
 
     return response;
