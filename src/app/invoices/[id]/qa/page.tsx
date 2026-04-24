@@ -289,12 +289,14 @@ export default function QaReviewPage() {
  <table className="w-full text-xs">
  <thead><tr className="bg-[var(--bg-subtle)]">
  <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold">Description</th>
+ <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold">Cost Code</th>
  <th className="py-2 px-3 text-right text-[color:var(--text-primary)] font-semibold">Amount</th>
  </tr></thead>
  <tbody>
  {invoice.line_items.map((item, i) => (
  <tr key={i} className="border-t border-[var(--border-default)]">
  <td className="py-2 px-3 text-[color:var(--text-primary)]">{item.description}</td>
+ <td className="py-2 px-3 text-[color:var(--text-secondary)] italic" title="Legacy record — per-line cost codes not captured at parse time">—</td>
  <td className="py-2 px-3 text-right text-[color:var(--text-primary)] font-medium">{item.amount ? formatDollars(item.amount) : "—"}</td>
  </tr>
  ))}

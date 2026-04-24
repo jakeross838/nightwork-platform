@@ -300,6 +300,7 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
  <thead>
  <tr className="bg-[var(--bg-subtle)] text-left">
  <th className="py-2 px-3 text-[color:var(--text-secondary)] font-medium text-xs">Description</th>
+ <th className="py-2 px-3 text-[color:var(--text-secondary)] font-medium text-xs">Cost Code</th>
  <th className="py-2 px-3 text-[color:var(--text-secondary)] font-medium text-xs text-right">Qty</th>
  <th className="py-2 px-3 text-[color:var(--text-secondary)] font-medium text-xs">Unit</th>
  <th className="py-2 px-3 text-[color:var(--text-secondary)] font-medium text-xs text-right">Rate</th>
@@ -307,15 +308,30 @@ function ParsedDataCard({ parsed }: { parsed: ParsedInvoice }) {
  </tr>
  </thead>
  <tbody>
- {parsed.line_items.map((item, i) => (
+ {parsed.line_items.map((item, i) => {
+ const lineCode = item.cost_code_suggestion?.code ?? null;
+ return (
  <tr key={i} className="border-t border-[var(--border-default)]">
  <td className="py-2 px-3 text-[color:var(--text-muted)]">{item.description}</td>
+ <td className="py-2 px-3 text-xs">
+ {lineCode ? (
+ <span className="font-mono text-[color:var(--nw-stone-blue)]">{lineCode}</span>
+ ) : (
+ <span
+ className="text-[color:var(--text-secondary)] italic"
+ title="AI did not assign a per-line cost code — allocate after save"
+ >
+ —
+ </span>
+ )}
+ </td>
  <td className="py-2 px-3 text-[color:var(--text-muted)] text-right">{item.qty ?? "—"}</td>
  <td className="py-2 px-3 text-[color:var(--text-secondary)]">{item.unit ?? "—"}</td>
  <td className="py-2 px-3 text-[color:var(--text-muted)] text-right">{item.rate != null ? formatDollars(item.rate) : "—"}</td>
  <td className="py-2 px-3 text-[color:var(--text-primary)] text-right font-medium">{formatDollars(item.amount)}</td>
  </tr>
- ))}
+ );
+ })}
  </tbody>
  </table>
  </div>
