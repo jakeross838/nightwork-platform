@@ -25,6 +25,23 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
   ::selection { background: rgba(63, 88, 98, 0.2); color: var(--text-primary); }
+
+  /* Global disabled affordance for form controls. Browser defaults
+     were effectively invisible against our tinted backgrounds — the
+     allocations editor's locked fields looked editable to non-
+     privileged users on locked invoices (Phase 3a feedback). Tokens
+     flip automatically in dark theme. Tailwind's `disabled:opacity-*`
+     arbitrary variants still win (higher specificity) where
+     explicitly applied. */
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    background: var(--bg-muted);
+    color: var(--text-tertiary);
+    border-color: var(--border-subtle);
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
 }
 
 @layer components {
