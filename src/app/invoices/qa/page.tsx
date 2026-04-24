@@ -117,7 +117,7 @@ export default function QaQueuePage() {
  <tr key={inv.id}
  className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] cursor-pointer transition-colors animate-fade-up"
  style={{ animationDelay: `${0.05 + i * 0.03}s` }}
- onClick={() => window.location.href = `/invoices/${inv.id}/qa`}
+ onClick={() => window.location.href = `/invoices/${inv.id}`}
  >
  <td className="py-4 px-5 text-[color:var(--text-primary)] font-medium">{inv.vendor_name_raw ?? "Unknown"}</td>
  <td className="py-4 px-5 text-[color:var(--text-muted)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
