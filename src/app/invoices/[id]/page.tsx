@@ -338,13 +338,6 @@ export default function InvoiceReviewPage() {
  const [showMissingFieldsBlock, setShowMissingFieldsBlock] = useState(false);
  const [showOverBudgetModal, setShowOverBudgetModal] = useState(false);
  const [overBudgetNote, setOverBudgetNote] = useState("");
- // Default the PDF pane to open on desktop and closed on small screens so
- // we can always offer a toggle without pushing a tall preview onto mobile
- // users by default.
- const [showDocPreview, setShowDocPreview] = useState(() => {
- if (typeof window === "undefined") return true;
- return window.matchMedia("(min-width: 1280px)").matches;
- });
  const [pmUsers, setPmUsers] = useState<{ id: string; full_name: string }[]>([]);
  const [reassigning, setReassigning] = useState(false);
  const [showRequestInfoModal, setShowRequestInfoModal] = useState(false);
@@ -1514,40 +1507,6 @@ export default function InvoiceReviewPage() {
  </div>
 
  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
- {/* ── Left: Document Preview ── */}
- <div className="xl:col-span-1">
- {/* Toggle button — visible at every viewport width so desktop users can
-     collapse the PDF pane too, not just mobile. */}
- <button
- onClick={() => setShowDocPreview(!showDocPreview)}
- className="w-full flex items-center justify-between px-4 py-3 bg-[var(--bg-card)] border border-[var(--border-default)] mb-4"
- >
- <span className="text-sm font-medium text-[color:var(--text-primary)]">
- {showDocPreview ? "Hide Original Document" : "View Original Document"}
- </span>
- <svg className={`w-4 h-4 text-[color:var(--text-secondary)] transition-transform ${showDocPreview ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
- </svg>
- </button>
- <div className={showDocPreview ? "block" : "hidden"}>
- <div className="xl:sticky xl:top-24">
- <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-3 brass-underline hidden xl:block">Original Document</p>
- <div className="xl:mt-5">
- <InvoiceFilePreview
- invoiceId={invoice.id}
- fileUrl={invoice.signed_file_url}
- downloadUrl={invoice.signed_file_url}
- fileName={invoiceDisplayName({
- vendor_name_raw: invoice.vendor_name_raw,
- invoice_number: invoice.invoice_number,
- jobs: invoice.jobs,
- })}
- />
- </div>
- </div>
- </div>
- </div>
-
  {/* ── Middle: Editable Form ── */}
  <div className="xl:col-span-1 space-y-6 animate-fade-up stagger-2">
  <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider brass-underline">Invoice Details</p>
