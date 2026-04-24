@@ -1306,7 +1306,6 @@ export default function InvoiceReviewPage() {
    const subLineParts: string[] = [];
    if (vendorName) subLineParts.push(vendorName);
    if (projectName && projectName !== "—") subLineParts.push(projectName);
-   if (receivedAtLabel) subLineParts.push(`Received ${receivedAtLabel}`);
    if (drawLabel) subLineParts.push(`Assigned to ${drawLabel}`);
 
    return (
@@ -1382,7 +1381,64 @@ export default function InvoiceReviewPage() {
                {subLineParts.join(" · ")}
              </p>
            </div>
-           <div className="flex gap-[10px] flex-wrap">
+           <div className="hidden md:flex gap-[8px] flex-wrap items-center justify-end">
+             {isReviewable ? (
+               <>
+                 <NwButton
+                   variant="primary"
+                   size="sm"
+                   onClick={openApproveFlow}
+                   disabled={saving || !!approveDisabledReason}
+                   loading={saving}
+                   title={approveDisabledReason ?? undefined}
+                 >
+                   {saving ? "Saving" : "Approve"}
+                 </NwButton>
+                 <NwButton
+                   variant="secondary"
+                   size="sm"
+                   onClick={() => {
+                     setPartialApprovedIds(new Set());
+                     setPartialNote("");
+                     setPartialError(null);
+                     setShowPartialModal(true);
+                   }}
+                   disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
+                   title={
+                     approveDisabledReason ??
+                     (lineItems.length < 2
+                       ? "Partial approval requires 2+ line items"
+                       : "Split this invoice into approved and held portions")
+                   }
+                 >
+                   Partial
+                 </NwButton>
+                 <NwButton
+                   variant="secondary"
+                   size="sm"
+                   onClick={() => setShowNoteModal("hold")}
+                   disabled={saving}
+                 >
+                   Hold
+                 </NwButton>
+                 <NwButton
+                   variant="danger"
+                   size="sm"
+                   onClick={() => setShowNoteModal("deny")}
+                   disabled={saving}
+                 >
+                   Deny
+                 </NwButton>
+                 <NwButton
+                   variant="ghost"
+                   size="sm"
+                   onClick={() => setShowRequestInfoModal(true)}
+                   disabled={saving}
+                 >
+                   Request Info
+                 </NwButton>
+               </>
+             ) : null}
              {invoice.signed_file_url ? (
                <a
                  href={invoice.signed_file_url}
@@ -1392,16 +1448,6 @@ export default function InvoiceReviewPage() {
                >
                  <NwButton variant="ghost" size="sm">Download PDF</NwButton>
                </a>
-             ) : null}
-             {isReviewable ? (
-               <NwButton
-                 variant="ghost"
-                 size="sm"
-                 onClick={() => setShowNoteModal("deny")}
-                 disabled={saving}
-               >
-                 Reject
-               </NwButton>
              ) : null}
              {isQaApproved ? (
                <NwButton
@@ -1418,7 +1464,7 @@ export default function InvoiceReviewPage() {
 
        {/* ── 50/50 HERO ── */}
        <div
-         className="grid grid-cols-1 lg:grid-cols-2"
+         className="grid grid-cols-1 lg:grid-cols-2 items-start"
          style={{
            gap: "1px",
            background: "var(--border-default)",
@@ -1460,8 +1506,11 @@ export default function InvoiceReviewPage() {
              ) : null}
            </div>
            <div
-             className="relative"
-             style={{ background: "var(--bg-card)" }}
+             className="relative overflow-auto"
+             style={{
+               background: "var(--bg-card)",
+               maxHeight: "460px",
+             }}
            >
              <InvoiceFilePreview
                invoiceId={invoice.id}
@@ -1516,8 +1565,8 @@ export default function InvoiceReviewPage() {
        </div>
 
        {/* ── ROW 1: Line items editor (full-width) ── */}
-       <div className="mt-8">
-         <div className="mb-3">
+       <div className="mt-5">
+         <div className="mb-2">
            <NwEyebrow tone="default">
              Line items · edit cost code allocations
            </NwEyebrow>
@@ -1531,83 +1580,8 @@ export default function InvoiceReviewPage() {
          />
        </div>
 
-       {/* ── ROW 2: PM workflow actions (only when reviewable) ── */}
-       {isReviewable && (
-         <div
-           className="mt-6 hidden md:block p-5 space-y-3"
-           style={{
-             background: "var(--bg-card)",
-             border: "1px solid var(--border-default)",
-           }}
-         >
-           <div className="mb-3">
-             <NwEyebrow tone="default">Actions</NwEyebrow>
-           </div>
-           <div className="flex gap-3 flex-wrap">
-             <NwButton
-               variant="primary"
-               size="lg"
-               onClick={openApproveFlow}
-               disabled={saving || !!approveDisabledReason}
-               loading={saving}
-               title={approveDisabledReason ?? undefined}
-               className="flex-1 min-w-[120px]"
-             >
-               {saving ? "Saving" : "Approve"}
-             </NwButton>
-             <NwButton
-               variant="secondary"
-               size="lg"
-               onClick={() => {
-                 setPartialApprovedIds(new Set());
-                 setPartialNote("");
-                 setPartialError(null);
-                 setShowPartialModal(true);
-               }}
-               disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
-               title={
-                 approveDisabledReason ??
-                 (lineItems.length < 2
-                   ? "Partial approval requires 2+ line items"
-                   : "Split this invoice into approved and held portions")
-               }
-               className="flex-1 min-w-[120px]"
-             >
-               Partial Approve
-             </NwButton>
-             <NwButton
-               variant="secondary"
-               size="lg"
-               onClick={() => setShowNoteModal("hold")}
-               disabled={saving}
-               className="flex-1 min-w-[120px]"
-             >
-               Hold
-             </NwButton>
-             <NwButton
-               variant="danger"
-               size="lg"
-               onClick={() => setShowNoteModal("deny")}
-               disabled={saving}
-               className="flex-1 min-w-[120px]"
-             >
-               Deny
-             </NwButton>
-           </div>
-           <NwButton
-             variant="ghost"
-             size="md"
-             onClick={() => setShowRequestInfoModal(true)}
-             disabled={saving}
-             className="w-full"
-           >
-             Request Info
-           </NwButton>
-         </div>
-       )}
-
-       {/* ── ROW 3: Payment + Payment Tracking ── */}
-       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+       {/* ── Payment + Payment Tracking ── */}
+       <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
          <PaymentPanel invoice={invoice} onRefresh={refreshInvoice} />
          {showPaymentTracking ? (
            <details
@@ -1656,7 +1630,7 @@ export default function InvoiceReviewPage() {
        {/* Edit history — shown only when overrides exist */}
        {((invoice.pm_overrides && Object.keys(invoice.pm_overrides).length > 0) ||
          (invoice.qa_overrides && Object.keys(invoice.qa_overrides).length > 0)) ? (
-         <div className="mt-6">
+         <div className="mt-5">
            <EditHistoryCard
              pmOverrides={invoice.pm_overrides}
              qaOverrides={invoice.qa_overrides}
@@ -1666,7 +1640,7 @@ export default function InvoiceReviewPage() {
 
        {/* ── FOOTER: Cost Intelligence link-out ── */}
        <div
-         className="mt-8 pt-5"
+         className="mt-5 pt-4"
          style={{ borderTop: "1px solid var(--border-default)" }}
        >
          <Link

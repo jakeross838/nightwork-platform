@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { formatCents, formatDate, formatFlag, formatWho } from "@/lib/utils/format";
 
@@ -70,6 +71,9 @@ export default function InvoiceDetailsPanel({
   userNames,
 }: InvoiceDetailsPanelProps) {
   const timeline = buildTimeline(statusHistory, currentStatus, userNames);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const currentLabel = humanStatus(currentStatus);
+  const nextPending = pendingAfter(currentStatus)[0] ?? null;
   const overallPct = (confidenceScore * 100).toFixed(1);
   const autoFills = (confidenceDetails as Record<string, unknown> | null)
     ?.auto_fills as Record<string, boolean> | undefined;
@@ -280,35 +284,74 @@ export default function InvoiceDetailsPanel({
         </div>
       </div>
 
-      {/* ─── Status timeline (vertical) ─── */}
-      <h3
-        className="m-0 mt-[22px] mb-0.5"
-        style={{
-          fontFamily: "var(--font-display)",
-          fontWeight: 500,
-          fontSize: "15px",
-          color: "var(--text-primary)",
-        }}
-      >
-        Status timeline
-      </h3>
-      <Eyebrow>End-to-end audit trail · every action logged</Eyebrow>
-
-      <div className="relative pl-4 mt-3">
-        <div
-          className="absolute"
+      {/* ─── Status timeline — collapsed summary + expand toggle ─── */}
+      <div className="mt-[22px] flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Eyebrow>Current stage</Eyebrow>
+          <div
+            className="mt-1"
+            style={{
+              fontSize: "13px",
+              color: "var(--text-primary)",
+              fontWeight: 500,
+            }}
+          >
+            {currentLabel}
+          </div>
+          <div
+            className="mt-0.5"
+            style={{
+              fontSize: "12px",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            {nextPending ? `Next: ${nextPending}` : "No further steps pending"}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setTimelineOpen((o) => !o)}
+          className="flex items-center gap-1.5 shrink-0"
+          aria-expanded={timelineOpen}
           style={{
-            left: "4px",
-            top: "6px",
-            bottom: "6px",
-            width: "1px",
-            background: "var(--border-default)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--nw-stone-blue)",
           }}
-        />
-        {timeline.map((ev, i) => (
-          <TimelineRow key={i} event={ev} />
-        ))}
+        >
+          {timelineOpen ? "Collapse" : "View full timeline"}
+          <svg
+            className={`w-3 h-3 transition-transform ${timelineOpen ? "rotate-180" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
       </div>
+
+      {timelineOpen && (
+        <div className="relative pl-4 mt-3">
+          <div
+            className="absolute"
+            style={{
+              left: "4px",
+              top: "6px",
+              bottom: "6px",
+              width: "1px",
+              background: "var(--border-default)",
+            }}
+          />
+          {timeline.map((ev, i) => (
+            <TimelineRow key={i} event={ev} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

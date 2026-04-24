@@ -29,6 +29,7 @@ export default function InvoiceAllocationsEditor({
   onChange?: () => void;
 }) {
   const [rows, setRows] = useState<Allocation[]>([]);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>("[]");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +40,9 @@ export default function InvoiceAllocationsEditor({
     setLoading(true);
     const res = await fetch(`/api/invoices/${invoiceId}/allocations`);
     const data = await res.json();
-    setRows(data.allocations ?? []);
+    const loaded: Allocation[] = data.allocations ?? [];
+    setRows(loaded);
+    setInitialSnapshot(JSON.stringify(loaded));
     setAutoCreated(!!data.auto_created);
     setLoading(false);
   }
@@ -55,6 +58,7 @@ export default function InvoiceAllocationsEditor({
   );
   const balanced = sum === invoiceTotalCents;
   const anyCostCodeMissing = rows.some((r) => !r.cost_code_id);
+  const isDirty = JSON.stringify(rows) !== initialSnapshot;
 
   function updateRow(i: number, patch: Partial<Allocation>) {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -122,17 +126,17 @@ export default function InvoiceAllocationsEditor({
 
   return (
     <div
-      className="mt-3 border p-4"
+      className="mt-2 border px-4 py-3"
       style={{
         background: "var(--bg-subtle)",
         borderColor: "var(--border-default)",
       }}
     >
-      <div className="flex items-start justify-between mb-3 gap-3">
+      <div className="flex items-center justify-between mb-2 gap-3">
         <div className="min-w-0">
           <NwEyebrow tone="default">Allocations</NwEyebrow>
           <p
-            className="text-[11px] mt-1"
+            className="text-[11px] mt-0.5"
             style={{ color: "var(--text-secondary)" }}
           >
             Split this invoice across multiple cost codes. Sum must equal the invoice total.
@@ -246,8 +250,8 @@ export default function InvoiceAllocationsEditor({
         </div>
       )}
 
-      {canEdit && (
-        <div className="mt-3 flex items-center gap-3 flex-wrap">
+      {canEdit && (isDirty || !balanced || anyCostCodeMissing) && (
+        <div className="mt-2 flex items-center gap-3 flex-wrap">
           <NwButton
             variant="primary"
             size="sm"

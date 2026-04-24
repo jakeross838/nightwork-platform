@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatCents, formatDate } from "@/lib/utils/format";
+import { formatCents } from "@/lib/utils/format";
 
 export interface PaymentPanelInvoice {
   id: string;
@@ -58,14 +58,14 @@ export default function PaymentPanel({ invoice, onRefresh }: PaymentPanelProps) 
       {/* Inline SidebarCard chrome — duplicated from page.tsx helper so this
           component is self-contained (Phase 1 rule: no shared-utility files). */}
       <div
-        className="border p-5"
+        className="border px-5 py-3 flex items-center gap-4 flex-wrap"
         style={{
           background: "var(--bg-card)",
           borderColor: "var(--border-default)",
         }}
       >
         <p
-          className="text-[10px] uppercase mb-4"
+          className="text-[10px] uppercase shrink-0"
           style={{
             fontFamily: "var(--font-jetbrains-mono)",
             letterSpacing: "0.14em",
@@ -75,91 +75,61 @@ export default function PaymentPanel({ invoice, onRefresh }: PaymentPanelProps) 
         >
           Payment
         </p>
-        <div>
-          <div className="space-y-2.5 text-sm">
-            <div className="flex justify-between items-center">
-              <span className="text-[color:var(--text-muted)]">Status</span>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border ${
-                  status === "paid"
-                    ? "border-[rgba(74,138,111,0.5)] text-[color:var(--nw-success)]"
-                    : status === "scheduled"
-                      ? "border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)]"
-                      : status === "partial"
-                        ? "border-[var(--nw-warn)] text-[color:var(--nw-warn)]"
-                        : "border-[var(--border-strong)] text-[color:var(--text-secondary)]"
-                }`}
+        <span
+          className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium border shrink-0 ${
+            status === "paid"
+              ? "border-[rgba(74,138,111,0.5)] text-[color:var(--nw-success)]"
+              : status === "scheduled"
+                ? "border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)]"
+                : status === "partial"
+                  ? "border-[var(--nw-warn)] text-[color:var(--nw-warn)]"
+                  : "border-[var(--border-strong)] text-[color:var(--text-secondary)]"
+          }`}
+        >
+          {status}
+        </span>
+
+        {canPay && (
+          <div className="flex items-center gap-2 flex-wrap ml-auto">
+            {status === "unpaid" && (
+              <button
+                onClick={() => call({ action: "schedule" })}
+                disabled={busy}
+                className="px-3 py-1.5 border border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)] hover:bg-[rgba(91,134,153,0.12)] disabled:opacity-50 text-sm font-medium transition-colors"
               >
-                {status}
-              </span>
-            </div>
-            <div className="flex justify-between"><span className="text-[color:var(--text-muted)]">Received</span><span className="text-[color:var(--text-muted)]">{formatDate(invoice.received_date)}</span></div>
-            {invoice.scheduled_payment_date && (
-              <div className="flex justify-between"><span className="text-[color:var(--text-muted)]">Scheduled</span><span className="text-[color:var(--text-primary)]">{formatDate(invoice.scheduled_payment_date)}</span></div>
+                {busy ? "Scheduling…" : "Schedule Payment"}
+              </button>
             )}
-            {invoice.payment_date && (
-              <div className="flex justify-between"><span className="text-[color:var(--text-muted)]">Paid</span><span className="text-[color:var(--text-primary)]">{formatDate(invoice.payment_date)}</span></div>
+            {status !== "paid" && (
+              <button
+                onClick={() => setShowPayModal(true)}
+                disabled={busy}
+                className="px-3 py-1.5 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 text-white text-sm font-medium transition-colors"
+              >
+                Mark as Paid
+              </button>
             )}
-            {invoice.payment_method && (
-              <div className="flex justify-between"><span className="text-[color:var(--text-muted)]">Method</span><span className="text-[color:var(--text-primary)]">{invoice.payment_method}</span></div>
-            )}
-            {invoice.payment_reference && (
-              <div className="flex justify-between"><span className="text-[color:var(--text-muted)]">Reference</span><span className="text-[color:var(--text-primary)] font-mono text-xs">{invoice.payment_reference}</span></div>
-            )}
-            <div className="flex justify-between border-t border-[var(--border-default)] pt-2.5">
-              <span className="text-[color:var(--text-muted)]">Total</span>
-              <span className="text-[color:var(--text-primary)] font-display text-base font-medium">{formatCents(invoice.total_amount)}</span>
-            </div>
-            {invoice.payment_amount != null && invoice.payment_amount !== invoice.total_amount && (
-              <div className="flex justify-between">
-                <span className="text-[color:var(--text-muted)]">Paid so far</span>
-                <span className="text-[color:var(--nw-warn)] font-display font-medium">{formatCents(invoice.payment_amount)}</span>
-              </div>
+            {(status === "paid" || status === "partial") && (
+              <button
+                onClick={() => {
+                  if (window.confirm("Reverse payment? This unmarks the invoice and clears payment fields.")) {
+                    call({ action: "reverse" });
+                  }
+                }}
+                disabled={busy}
+                className="px-3 py-1.5 border border-[rgba(176,85,78,0.5)] text-[color:var(--nw-danger)] hover:bg-[rgba(176,85,78,0.12)] disabled:opacity-50 text-sm font-medium transition-colors"
+              >
+                Reverse Payment
+              </button>
             )}
           </div>
+        )}
 
-          {error && (
-            <div className="mt-3 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.35)] px-3 py-2 text-xs text-[color:var(--nw-danger)]">
-              {error}
-            </div>
-          )}
-
-          {canPay && (
-            <div className="mt-4 flex flex-col gap-2">
-              {status === "unpaid" && (
-                <button
-                  onClick={() => call({ action: "schedule" })}
-                  disabled={busy}
-                  className="px-3 py-2 border border-[var(--nw-stone-blue)] text-[color:var(--nw-stone-blue)] hover:bg-[rgba(91,134,153,0.12)] disabled:opacity-50 text-sm font-medium transition-colors"
-                >
-                  {busy ? "Scheduling…" : "Schedule Payment"}
-                </button>
-              )}
-              {status !== "paid" && (
-                <button
-                  onClick={() => setShowPayModal(true)}
-                  disabled={busy}
-                  className="px-3 py-2 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 text-white text-sm font-medium transition-colors"
-                >
-                  Mark as Paid
-                </button>
-              )}
-              {(status === "paid" || status === "partial") && (
-                <button
-                  onClick={() => {
-                    if (window.confirm("Reverse payment? This unmarks the invoice and clears payment fields.")) {
-                      call({ action: "reverse" });
-                    }
-                  }}
-                  disabled={busy}
-                  className="px-3 py-2 border border-[rgba(176,85,78,0.5)] text-[color:var(--nw-danger)] hover:bg-[rgba(176,85,78,0.12)] disabled:opacity-50 text-sm font-medium transition-colors"
-                >
-                  Reverse Payment
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        {error && (
+          <div className="w-full bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.35)] px-3 py-2 text-xs text-[color:var(--nw-danger)]">
+            {error}
+          </div>
+        )}
       </div>
 
       {showPayModal && (
