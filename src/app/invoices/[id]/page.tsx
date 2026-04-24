@@ -28,6 +28,7 @@ import PaymentTrackingPanel from "@/components/invoices/PaymentTrackingPanel";
 import InvoiceHeader from "@/components/invoices/InvoiceHeader";
 import InvoiceTitleStrip from "@/components/invoices/InvoiceTitleStrip";
 import InvoiceDetailsCard from "@/components/invoices/InvoiceDetailsCard";
+import InvoiceDetailsForm from "@/components/invoices/InvoiceDetailsForm";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -129,115 +130,6 @@ interface EditableLineItem {
 }
 
 // ── Searchable Combobox ────────────────────────────────
-function SearchCombobox({ label, value, onChange, options, disabled, aiFilled, grouped, placeholder }: {
- label: string; value: string; onChange: (v: string) => void;
- options: { value: string; label: string; group?: string }[];
- disabled?: boolean; aiFilled?: boolean; grouped?: boolean; placeholder?: string;
-}) {
- const [open, setOpen] = useState(false);
- const [search, setSearch] = useState("");
- const ref = useRef<HTMLDivElement>(null);
- const inputRef = useRef<HTMLInputElement>(null);
-
- const selectedLabel = options.find(o => o.value === value)?.label ?? "";
-
- useEffect(() => {
- function handleClick(e: MouseEvent) {
- if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
- }
- document.addEventListener("mousedown", handleClick);
- return () => document.removeEventListener("mousedown", handleClick);
- }, []);
-
- const filtered = options.filter(o =>
- o.value === "" || o.label.toLowerCase().includes(search.toLowerCase())
- );
-
- const groups = grouped
- ? Array.from(new Set(filtered.filter(o => o.group).map(o => o.group!)))
- : [];
-
- return (
- <div ref={ref} className="relative">
- <label className="flex items-center gap-2 text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5">
- {label}
- {aiFilled && <AiBadge />}
- </label>
- <div
- className={`flex items-center w-full px-3 py-2.5 bg-[var(--bg-subtle)] border text-sm transition-colors cursor-text ${
- open ? "border-[var(--nw-stone-blue)]" : aiFilled ? "border-[rgba(91,134,153,0.35)]" : "border-[var(--border-default)]"
- } ${disabled ? "opacity-50 pointer-events-none" : ""}`}
- onClick={() => { setOpen(true); setSearch(""); setTimeout(() => inputRef.current?.focus(), 0); }}
- >
- {open ? (
- <input
- ref={inputRef}
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- placeholder={selectedLabel || placeholder || "Type to search..."}
- className="flex-1 bg-transparent text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] outline-none text-sm"
- onKeyDown={(e) => {
- if (e.key === "Escape") setOpen(false);
- if (e.key === "Enter" && filtered.length > 0) {
- const first = filtered.find(o => o.value !== "");
- if (first) { onChange(first.value); setOpen(false); }
- }
- }}
- />
- ) : (
- <span className={`flex-1 truncate ${value ? "text-[color:var(--text-primary)]" : "text-[color:var(--text-secondary)]"}`}>
- {selectedLabel || placeholder || "Select..."}
- </span>
- )}
- {value && !disabled && (
- <button onClick={(e) => { e.stopPropagation(); onChange(""); }} className="ml-2 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]">
- <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
- </svg>
- </button>
- )}
- <svg className={`w-4 h-4 ml-1 text-[color:var(--text-secondary)] transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
- </svg>
- </div>
-
- {open && (
- <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-[var(--bg-card)] border border-[var(--border-default)] shadow-2xl">
- {filtered.length === 0 ? (
- <div className="px-3 py-4 text-sm text-[color:var(--text-secondary)] text-center">No matches</div>
- ) : grouped && groups.length > 0 ? (
- groups.map(group => {
- const groupItems = filtered.filter(o => o.group === group);
- if (groupItems.length === 0) return null;
- return (
- <div key={group}>
- <div className="px-3 py-1.5 text-[10px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider bg-[var(--bg-subtle)] sticky top-0">{group}</div>
- {groupItems.map(o => (
- <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
- className={`w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-muted)] transition-colors ${o.value === value ? "text-[color:var(--nw-stone-blue)] bg-[rgba(91,134,153,0.08)]" : "text-[color:var(--text-primary)]"}`}>
- {o.label}
- </button>
- ))}
- </div>
- );
- })
- ) : (
- filtered.map(o => (
- <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
- className={`w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-muted)] transition-colors ${o.value === value ? "text-[color:var(--nw-stone-blue)] bg-[rgba(91,134,153,0.08)]" : o.value === "" ? "text-[color:var(--text-secondary)]" : "text-[color:var(--text-primary)]"}`}>
- {o.label}
- </button>
- ))
- )}
- </div>
- )}
- </div>
- );
-}
-
-function AiBadge() {
- return <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)] normal-case tracking-normal">AI</span>;
-}
 
 /** Resolve the matching base↔CO cost code variant. Mapping is the literal
  *  code string: "07101" ↔ "07101C". Returns the original id if no partner
@@ -1692,116 +1584,56 @@ export default function InvoiceReviewPage() {
  )}
 
  <div className="mt-5 space-y-4">
- {/* Job — searchable combobox */}
- <SearchCombobox label="Job" value={jobId} onChange={setJobId}
- options={jobOptions} disabled={!isReviewable}
- aiFilled={!!autoFills?.job_id} placeholder="Search jobs..." />
-
- {/* Change Order toggle — auto-swaps default cost code + every line
- between base ("07101 Pilings") and C-variant ("07101C Pilings CO"). */}
- <div className="flex items-center gap-3">
- <label className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Change Order?</label>
- <button
- onClick={() => {
- const next = !isChangeOrder;
- setIsChangeOrder(next);
- // Swap the default cost code to the matching variant.
- setCostCodeId(prev => resolveVariant(costCodes, prev, next) ?? "");
- // Every line follows the invoice-level flag by default. Swap each
- // line's assigned cost code to its variant AND flip its own CO flag
- // so the table matches the top-level toggle.
- setLineItems(prev => prev.map(li => ({
- ...li,
- is_change_order: next,
- cost_code_id: resolveVariant(costCodes, li.cost_code_id, next),
- // When flipping off, also clear the CO reference so the PM has
- // to re-enter one if they flip back on later.
- co_reference: next ? li.co_reference : "",
- })));
- }}
- disabled={!isReviewable}
- className={`relative inline-flex h-6 w-11 items-center transition-colors disabled:opacity-50 ${isChangeOrder ? "bg-[var(--nw-warn)]" : "bg-[var(--border-default)]"}`}
- >
- <span className={`inline-block h-4 w-4 transform bg-white transition-transform ${isChangeOrder ? "translate-x-6" : "translate-x-1"}`} />
- </button>
- <span className="text-xs text-[color:var(--text-secondary)]">{isChangeOrder ? "Yes" : "No"}</span>
- </div>
-
- {/* CO Reference — only when toggle is on */}
- {isChangeOrder && (
- <FormField label="CO Reference" value={coReference} onChange={setCoReference}
- disabled={!isReviewable} placeholder="e.g. PCCO #3" />
- )}
-
- {/* Cost Code — searchable, grouped by category */}
- <SearchCombobox label="Cost Code" value={costCodeId} onChange={setCostCodeId}
- options={costCodeOptions} disabled={!isReviewable}
- aiFilled={!!autoFills?.cost_code_id} grouped placeholder="Search cost codes..." />
-
- {/* Phase D: invoice allocation splitter — persists per-line splits
-     separately from the invoice-level cost_code default. The id
-     `workbench-allocations` is a scroll target for the showcase
-     read-only allocation summary above (click any row to jump here). */}
- {invoice && invoice.total_amount != null && invoice.status !== "received" && (
-   <div id="workbench-allocations" className="scroll-mt-24">
-     <InvoiceAllocationsEditor
-       invoiceId={invoice.id}
-       invoiceTotalCents={invoice.total_amount}
-       costCodes={costCodes}
-       readOnly={!isReviewable}
-     />
-   </div>
- )}
-
- {purchaseOrders.length > 0 && (
- <SearchCombobox label="Purchase Order" value={poId} onChange={setPoId}
- options={[{ value: "", label: "— No PO —" }, ...purchaseOrders.map(p => ({ value: p.id, label: `${p.po_number ?? "PO"} — ${formatCents(p.amount)}` }))]}
- disabled={!isReviewable} placeholder="Select PO..." />
- )}
-
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <FormField label="Invoice #" value={invoiceNumber} onChange={setInvoiceNumber} disabled={!isReviewable} />
- <FormField label="Invoice Date" value={invoiceDate} onChange={setInvoiceDate} type="date" disabled={!isReviewable} />
- </div>
-
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <div>
- <FormField label="Total ($)" value={totalAmount} onChange={setTotalAmount} type="number" disabled={!isReviewable} />
- {amountOverAi && !amountOver10Pct && (
- <p className="mt-1.5 text-[11px] text-[color:var(--nw-warn)]">
- +{amountIncreasePct.toFixed(1)}% vs AI-parsed {formatCents(aiParsedTotal)}
- </p>
- )}
- {amountOver10Pct && (
- <p className="mt-1.5 text-[11px] text-[color:var(--nw-danger)] font-medium">
- Warning: +{amountIncreasePct.toFixed(1)}% over AI-parsed {formatCents(aiParsedTotal)} — note required
- </p>
- )}
- {isCreditMemo && (
- <span className="mt-1.5 inline-flex items-center px-2 py-0.5 text-[11px] font-medium bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)]">
- Credit Memo
- </span>
- )}
- </div>
- <div>
- <label className="flex items-center gap-2 text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5">Type</label>
- <select value={invoiceType} onChange={(e) => setInvoiceType(e.target.value)} disabled={!isReviewable}
- className="w-full px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none disabled:opacity-50">
- <option value="lump_sum">Lump Sum</option>
- <option value="progress">Progress</option>
- <option value="time_and_materials">Time &amp; Materials</option>
- </select>
- </div>
- </div>
-
- <FormField label="Description" value={description} onChange={setDescription} type="textarea" disabled={!isReviewable} />
-
- {/* Raw AI data */}
- <AiParsedRawPanel
+ <InvoiceDetailsForm
+   invoiceId={invoice.id}
+   invoiceTotalCents={invoice.total_amount}
+   invoiceStatus={invoice.status}
    vendorNameRaw={invoice.vendor_name_raw}
    jobReferenceRaw={invoice.job_reference_raw}
    poReferenceRaw={invoice.po_reference_raw}
    coReferenceRaw={invoice.co_reference_raw}
+   isReviewable={isReviewable}
+   jobId={jobId}
+   onJobIdChange={setJobId}
+   jobOptions={jobOptions}
+   jobAiFilled={!!autoFills?.job_id}
+   isChangeOrder={isChangeOrder}
+   onChangeOrderToggle={() => {
+     const next = !isChangeOrder;
+     setIsChangeOrder(next);
+     setCostCodeId(prev => resolveVariant(costCodes, prev, next) ?? "");
+     setLineItems(prev => prev.map(li => ({
+       ...li,
+       is_change_order: next,
+       cost_code_id: resolveVariant(costCodes, li.cost_code_id, next),
+       co_reference: next ? li.co_reference : "",
+     })));
+   }}
+   coReference={coReference}
+   onCoReferenceChange={setCoReference}
+   costCodeId={costCodeId}
+   onCostCodeIdChange={setCostCodeId}
+   costCodeOptions={costCodeOptions}
+   costCodeAiFilled={!!autoFills?.cost_code_id}
+   costCodes={costCodes}
+   poOptions={purchaseOrders.length > 0 ? [{ value: "", label: "— No PO —" }, ...purchaseOrders.map(p => ({ value: p.id, label: `${p.po_number ?? "PO"} — ${formatCents(p.amount)}` }))] : null}
+   poId={poId}
+   onPoIdChange={setPoId}
+   invoiceNumber={invoiceNumber}
+   onInvoiceNumberChange={setInvoiceNumber}
+   invoiceDate={invoiceDate}
+   onInvoiceDateChange={setInvoiceDate}
+   totalAmount={totalAmount}
+   onTotalAmountChange={setTotalAmount}
+   invoiceType={invoiceType}
+   onInvoiceTypeChange={setInvoiceType}
+   description={description}
+   onDescriptionChange={setDescription}
+   amountOverAi={amountOverAi}
+   amountOver10Pct={amountOver10Pct}
+   amountIncreasePct={amountIncreasePct}
+   aiParsedTotal={aiParsedTotal}
+   isCreditMemo={isCreditMemo}
  />
 
  {/* Line Items — editable per-row cost code + CO toggle (multi-cost-code support) */}
@@ -2886,22 +2718,6 @@ function SidebarCard({ title, children }: { title: string; children: React.React
  );
 }
 
-function FormField({ label, value, onChange, type = "text", disabled, placeholder }: {
- label: string; value: string; onChange: (v: string) => void;
- type?: "text" | "number" | "date" | "textarea"; disabled?: boolean; placeholder?: string;
-}) {
- const base = "w-full px-3 py-2.5 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none disabled:opacity-50 transition-colors";
- return (
- <div>
- <label className="flex items-center gap-2 text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5">{label}</label>
- {type === "textarea" ? (
- <textarea value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} rows={3} placeholder={placeholder} className={`${base} resize-none`} />
- ) : (
- <input type={type} value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} placeholder={placeholder} className={base} />
- )}
- </div>
- );
-}
 
 const FIELD_LABELS: Record<string, string> = {
  invoice_number: "Invoice #",
