@@ -5910,7 +5910,9 @@ does not touch any of them. #5 closed in Phase 2.7 (job_milestones).
 
 ### Phase 3.2 — Document classifier
 
-Claude Vision classifier. First-page image → type + confidence.
+Claude Vision classifier. Document → type + confidence. (Original
+scope said "first-page image"; Amendment Q7-A below pivots to
+full-document content blocks — see Resolved decisions.)
 
 Files:
 - `src/lib/ingestion/classify.ts`
@@ -5918,15 +5920,90 @@ Files:
 
 **Rebuild-vs-patch call:** REBUILD (new capability, built clean from the start).
 
+**R.18 blast radius:** SMALL (Amendment Q9-A). Surface = 1 new migration
+(additive column `classification_confidence`), 2 new files (lib + route),
+0 modified files. No code cascade — nothing today references the
+classifier. Greenfield risk profile.
+
+#### Resolved design decisions (Pre-flight `e5f8b94`, 2026-04-23)
+
+Pre-flight `docs/preflight-branch3-phase3.2.md` (commit `e5f8b94`)
+captured 9 design decisions resolved before execution. The load-bearing
+ones for engineers:
+
+- **Confidence storage:** new column
+  `document_extractions.classification_confidence NUMERIC(5,4)
+  NOT NULL DEFAULT 0.0000` via migration **00078**. CHECK enforces
+  0.0–1.0 range. App-layer fill at classify time (no trigger). Distinct
+  from `field_confidences` JSONB by design — this is the type-decision
+  confidence, not a per-field extraction confidence.
+
+- **Routing mechanics:** sync inside the POST handler. Response payload:
+  `{extraction_id, classified_type, classification_confidence}`.
+  No async queue, no background job. The classifier call is the
+  bottleneck; the POST blocks on it.
+
+- **Prompt caching:** system prompt block uses
+  `cache_control: { type: "ephemeral" }`. Document content (PDF/image)
+  uncached — dynamic per request. Standard Anthropic pattern. Phase 3.2
+  is the first prompt-caching adopter in the codebase; integration
+  test must verify cache hit on second call via
+  `api_usage.metadata.cache_read_input_tokens > 0`.
+
+- **File handling (Amendment Q7-A):** classifier sends the full
+  document directly to Claude Vision via `type: "document"` content
+  block, matching the existing `src/lib/claude/parse-invoice.ts`
+  precedent. Do **NOT** render first-page images server-side. No
+  `canvas` / `pdf2pic` / `pdfjs-dist` server bootstrap. Claude's
+  vision capability handles multi-page PDFs natively. The classifier
+  prompt should instruct the model to base its decision primarily on
+  first-page signals (header, vendor block, document title) for token
+  efficiency. Trade-off: marginally more input tokens vs single-image
+  classifier on multi-page PDFs (estimated <$0.01/call). Accepted for
+  zero new dependencies and proven precedent.
+
+- **Scope boundary:** classification-only. Phase 3.2 sets
+  `classified_type` + `classification_confidence`, leaves
+  `target_entity_type` + `target_entity_id` NULL. Phases 3.3–3.8 own
+  type-specific extraction and commit-time population of the target
+  entity columns.
+
+- **Dependencies:** Phase 3.2 BLOCKS Phases 3.3–3.8. Each needs
+  `classified_type` to route to its extraction prompt. No manual
+  override path in production; dev testing may inject `classified_type`
+  directly via SQL.
+
+- **Wrapper alignment:** classifier MUST call Claude through the
+  existing `callClaude()` wrapper (`src/lib/claude.ts`) for org-scoped
+  plan-limit metering and `api_usage` logging. Use
+  `function_type: "document_classify"`.
+
+- **Low-confidence UX:** rows with `classification_confidence < 0.70`
+  sit in DB queryable via predicate. Phase 3.10 owns the manual-
+  type-selection UI surface. NO stopgap admin view in Phase 3.2.
+
 **Phase 3.2 Exit Gate:**
 
 ```
-[ ] Classifier achieves ≥90% accuracy on 20-document test set (5 of each major type)
+[ ] Classifier achieves ≥90% accuracy on 20-document test set:
+    5 real invoices (sourced from existing dogfood invoice-files
+    bucket), 5 real purchase_orders (Ross Built archive),
+    5 real change_orders (Ross Built archive), 5 real proposals
+    (Ross Built archive) per Q1-A Option B sourcing. Q1-A fallback
+    permitted: if proposal sourcing fails the pre-execution sanity
+    check, swap proposal for another archived type (likely
+    historical_draw or budget) — document substitution in QA report.
+    Fixtures stored in __tests__/fixtures/classifier/.local/ (gitignored)
+    to mitigate Risk R8 (Ross Built financial data leakage).
 [ ] Universal /api/ingest accepts file → creates document_extraction row with classified_type
-[ ] Confidence score recorded; low-confidence (<0.70) flagged for manual type selection
+[ ] Confidence score recorded in classification_confidence NUMERIC(5,4) column;
+    low-confidence (<0.70) flagged for manual type selection (Phase 3.10 surface)
 [ ] Test runner subagent: all classifier tests PASS
-[ ] Classifier system prompt cached via prompt caching
-[ ] QA report generated with sample classifications for each type
+[ ] Classifier system prompt cached via prompt caching (verify cache hit on
+    second call via api_usage metadata)
+[ ] QA report generated with sample classifications for each type, including
+    per-fixture: source (real/synthetic), filename, expected type, actual type,
+    confidence, pass/fail
 ```
 
 **Commit:** `feat(ingestion): document classifier`
