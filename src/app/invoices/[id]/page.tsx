@@ -19,6 +19,7 @@ import NwDataRow from "@/components/nw/DataRow";
 import { invoiceDisplayName } from "@/lib/invoices/display";
 import { toast } from "@/lib/utils/toast";
 import ExtractionVerificationPanel from "@/components/items/extraction-verification-panel";
+import AiExtractionNote from "@/components/invoices/AiExtractionNote";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -1499,39 +1500,6 @@ export default function InvoiceReviewPage() {
      ? `Draw #${drawInfo.draw_number}${drawInfo.status === "submitted" || drawInfo.status === "paid" ? "" : ` (${drawInfo.status})`}`
      : null;
 
-   // AI extraction narrative — composed from confidence_score and
-   // confidence_details (per-field confidences + auto_fills bools).
-   // Falls back to a simpler line when only the score is present.
-   const conf = invoice.confidence_details ?? {};
-   const fields = Object.entries(conf).filter(
-     ([k, v]) => k !== "auto_fills" && typeof v === "number"
-   );
-   const autoFillCount = autoFills
-     ? Object.values(autoFills).filter(Boolean).length
-     : 0;
-   const flagsRaw = (invoice.ai_raw_response?.flags as string[] | undefined) ?? [];
-   const aiNarrative = (() => {
-     const parts: string[] = [];
-     if (autoFillCount > 0) {
-       parts.push(`${autoFillCount} field${autoFillCount === 1 ? "" : "s"} auto-filled by Claude.`);
-     }
-     if (fields.length > 0) {
-       const avg = fields.reduce((s, [, v]) => s + (v as number), 0) / fields.length;
-       parts.push(
-         `Per-field confidence avg ${(avg * 100).toFixed(0)}% across ${fields.length} extracted field${fields.length === 1 ? "" : "s"}.`
-       );
-     }
-     if (flagsRaw.length > 0) {
-       parts.push(
-         `Flags raised: ${flagsRaw.map((f) => formatFlag(f)).join(", ")}.`
-       );
-     }
-     if (parts.length === 0) {
-       parts.push("Extracted by Claude. No additional metadata recorded.");
-     }
-     return parts.join(" ");
-   })();
-   const overallConfPct = (invoice.confidence_score * 100).toFixed(1);
 
    // Aggregate line items into a read-only cost-code allocation summary.
    // Matches the "alloc" table in the Slate reference.
@@ -1950,45 +1918,12 @@ export default function InvoiceReviewPage() {
        </div>
 
        {/* ── AI Extraction narrative panel ── */}
-       <div
-         className="mt-4 p-4 border"
-         style={{
-           background: "rgba(91,134,153,0.08)",
-           borderColor: "rgba(91,134,153,0.3)",
-         }}
-       >
-         <div className="flex items-center gap-2 mb-2">
-           <span
-             className="inline-block w-1.5 h-1.5"
-             style={{ background: "var(--nw-stone-blue)" }}
-             aria-hidden="true"
-           />
-           <NwEyebrow tone="accent">AI Extraction · {(invoice as { ai_model_used?: string }).ai_model_used ?? "Claude"}</NwEyebrow>
-         </div>
-         <p
-           className="m-0 text-[13px] leading-relaxed"
-           style={{ color: "var(--text-primary)" }}
-         >
-           {aiNarrative}
-         </p>
-         <div
-           className="mt-2 text-[11px]"
-           style={{
-             fontFamily: "var(--font-jetbrains-mono)",
-             letterSpacing: "0.04em",
-             color: "var(--text-tertiary)",
-           }}
-         >
-           CONFIDENCE{" "}
-           <b style={{ color: invoice.confidence_score >= 0.85 ? "var(--nw-success)" : invoice.confidence_score >= 0.7 ? "var(--nw-warn)" : "var(--nw-danger)" }}>
-             {overallConfPct}%
-           </b>
-           {(() => {
-             const model = (invoice as { ai_model_used?: string }).ai_model_used;
-             return model ? <> · MODEL {model.toUpperCase()}</> : null;
-           })()}
-         </div>
-       </div>
+       <AiExtractionNote
+         confidenceScore={invoice.confidence_score}
+         confidenceDetails={invoice.confidence_details}
+         flags={(invoice.ai_raw_response?.flags as string[] | undefined) ?? []}
+         aiModelUsed={(invoice as { ai_model_used?: string }).ai_model_used}
+       />
 
        {/* ── Status timeline (milestone view) ── */}
        <div className="mt-6">
