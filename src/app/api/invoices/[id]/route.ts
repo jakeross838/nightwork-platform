@@ -7,6 +7,49 @@ import {
 import { createServerClient } from "@/lib/supabase/server";
 import { tryCreateServiceRoleClient } from "@/lib/supabase/service";
 import { captureCorrections } from "@/lib/invoices/corrections";
+import {
+  isInvoiceLocked,
+  canEditLockedFields,
+} from "@/lib/invoice-permissions";
+import { logFieldEdit } from "@/lib/audit/log-field-edit";
+
+// ─── PATCH allowlist (segmented by rule matrix) ──────────────────────
+// Each category has different lock/privilege/integrity/audit semantics.
+// Anything outside the union of these sets is rejected with 400.
+
+/** PM-approved data. Locked after pm_approved; privileged-only edit
+ *  when locked; hard-blocked on in_draw/paid (integrity); audit-logged
+ *  when edited during lock by a privileged role. */
+const FINANCIAL_FIELDS = new Set<string>([
+  "vendor_name_raw",
+  "invoice_number",
+  "invoice_date",
+  "total_amount",
+  "invoice_type",
+  "description",
+]);
+
+/** Payment-tracking metadata. No lock — these fields exist to be
+ *  edited on post-payment states (check_number recorded on pickup,
+ *  mailed_date on mail-out, etc.). Routine work; no audit log. */
+const PAYMENT_TRACKING_FIELDS = new Set<string>([
+  "check_number",
+  "picked_up",
+  "mailed_date",
+]);
+
+/** Operational assignment. No lock; any org member can reassign. But
+ *  reassignment on a locked invoice is unusual, so it's audit-logged
+ *  regardless of role. */
+const ASSIGNMENT_FIELDS = new Set<string>([
+  "assigned_pm_id",
+]);
+
+const ALLOWED_PATCH_FIELDS = new Set<string>([
+  ...Array.from(FINANCIAL_FIELDS),
+  ...Array.from(PAYMENT_TRACKING_FIELDS),
+  ...Array.from(ASSIGNMENT_FIELDS),
+]);
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -119,26 +162,121 @@ export const PATCH = withApiError(async (
   const membership = getMembershipFromRequest(request) ?? (await getCurrentMembership());
   if (!membership) throw new ApiError("Not authenticated", 401);
 
-  const supabase = tryCreateServiceRoleClient() ?? createServerClient();
-  const updates = await request.json();
+  const body = (await request.json()) as Record<string, unknown>;
 
-  // Capture parser corrections BEFORE applying the update so we can diff
-  // against the AI original values. Fire-and-forget — never blocks the save.
-  const { data: { user } } = await supabase.auth.getUser();
+  // 1. Allowlist: reject any field outside the union of FINANCIAL /
+  //    PAYMENT_TRACKING / ASSIGNMENT sets. Closes the pre-3b hole
+  //    where any invoice column could be PATCHed (status, org_id,
+  //    created_at, …).
+  const rejectedKeys = Object.keys(body).filter((k) => !ALLOWED_PATCH_FIELDS.has(k));
+  if (rejectedKeys.length > 0) {
+    throw new ApiError(
+      `Fields not allowed for PATCH: ${rejectedKeys.join(", ")}`,
+      400
+    );
+  }
+  const changedKeys = Object.keys(body);
+  if (changedKeys.length === 0) {
+    throw new ApiError("No fields to update", 400);
+  }
+
+  // Auth lookup goes through the session-bearing client, not the
+  // service-role client — the latter has no user context, so
+  // auth.getUser() would return null and the audit log would no-op.
+  const authClient = createServerClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  const supabase = tryCreateServiceRoleClient() ?? authClient;
+
+  // 2. Fetch current invoice so we can (a) evaluate lock/integrity
+  //    gates against the current status and (b) diff old→new values
+  //    for audit logging.
+  const { data: invoice, error: fetchError } = await supabase
+    .from("invoices")
+    .select(
+      "id, org_id, status, vendor_name_raw, invoice_number, invoice_date, total_amount, invoice_type, description, check_number, picked_up, mailed_date, assigned_pm_id"
+    )
+    .eq("id", params.id)
+    .single();
+  if (fetchError || !invoice || invoice.org_id !== membership.org_id) {
+    throw new ApiError("Invoice not found", 404);
+  }
+
+  const status = invoice.status as string;
+  const locked = isInvoiceLocked(status);
+  const privileged = canEditLockedFields(membership.role);
+
+  // 3. Category-specific gates. Only FINANCIAL fields enforce lock
+  //    or integrity. PAYMENT_TRACKING/ASSIGNMENT skip those checks.
+  const touchesFinancial = changedKeys.some((k) => FINANCIAL_FIELDS.has(k));
+  if (touchesFinancial) {
+    // Integrity guard — in_draw / paid block edits for every role.
+    // Draw math and payment records depend on these values being
+    // stable after the invoice has been drawn / paid.
+    if (["in_draw", "paid"].includes(status)) {
+      throw new ApiError(
+        `Cannot edit financial fields on a ${status} invoice — post-draw / post-payment edits are blocked for all roles`,
+        403
+      );
+    }
+    // Lock gate — privileged-only when the invoice is in a locked
+    // (post-approval) status.
+    if (locked && !privileged) {
+      throw new ApiError(
+        `This invoice is in ${status} status and can only be edited by accounting, admin, or owner roles.`,
+        403
+      );
+    }
+  }
+
+  // 4. Capture parser corrections BEFORE applying the update so the
+  //    corrections module can diff against pre-update values. Fire-
+  //    and-forget — never blocks the save (pre-existing behaviour).
   if (user) {
-    captureCorrections(supabase, params.id, updates, user.id).catch((err) => {
+    captureCorrections(supabase, params.id, body, user.id).catch((err) => {
       console.warn("[corrections] capture failed:", err);
     });
   }
 
+  // 5. Apply the update.
   const { data, error } = await supabase
     .from("invoices")
-    .update(updates)
+    .update(body)
     .eq("id", params.id)
     .eq("org_id", membership.org_id)
     .select("id")
     .single();
-
   if (error) throw new ApiError(error.message, 500);
+
+  // 6. Audit log per category rules.
+  //    - FINANCIAL: log when locked AND privileged (override event)
+  //    - ASSIGNMENT: log when locked (any role) — reassignment on a
+  //      post-approval invoice is unusual enough to trail
+  //    - PAYMENT_TRACKING: never — routine operational work
+  if (user) {
+    const invoiceRecord = invoice as unknown as Record<string, unknown>;
+    for (const field of changedKeys) {
+      const isFinancial = FINANCIAL_FIELDS.has(field);
+      const isAssignment = ASSIGNMENT_FIELDS.has(field);
+      const shouldLog =
+        (isFinancial && locked && privileged) || (isAssignment && locked);
+      if (!shouldLog) continue;
+      const oldValue = invoiceRecord[field] ?? null;
+      const newValue = body[field];
+      if (oldValue === newValue) continue;
+      await logFieldEdit({
+        invoiceId: params.id,
+        orgId: membership.org_id,
+        userId: user.id,
+        field,
+        oldValue,
+        newValue,
+        byRole: membership.role,
+      });
+    }
+  }
+
   return NextResponse.json(data);
 });
