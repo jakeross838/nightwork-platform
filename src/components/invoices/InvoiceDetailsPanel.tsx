@@ -38,7 +38,6 @@ export interface InvoiceDetailsPanelProps {
   invoiceDateLabel: string | null;
   drawLabel: string | null;
   drawInfo: InvoiceDetailsPanelDrawInfo | null;
-  allocSummary: InvoiceDetailsPanelAllocRow[];
   confidenceScore: number;
   confidenceDetails:
     | (Record<string, number> & { auto_fills?: Record<string, boolean> })
@@ -82,7 +81,6 @@ export default function InvoiceDetailsPanel({
   invoiceDateLabel,
   drawLabel,
   drawInfo,
-  allocSummary,
   confidenceScore,
   confidenceDetails,
   flags,
@@ -237,52 +235,10 @@ export default function InvoiceDetailsPanel({
         </div>
       )}
 
-      {/* ─── Cost-code allocation table ─── */}
-      {allocSummary.length > 0 && (
-        <div
-          className="mt-[18px] border"
-          style={{
-            borderColor: "var(--border-default)",
-            background: "var(--bg-subtle)",
-          }}
-        >
-          <table className="w-full border-collapse" style={{ fontSize: "13px" }}>
-            <thead>
-              <tr>
-                <AllocTh>Cost code allocation</AllocTh>
-                <AllocTh align="right">Allocated</AllocTh>
-                <AllocTh align="right">% of invoice</AllocTh>
-              </tr>
-            </thead>
-            <tbody>
-              {allocSummary.map((row, i) => (
-                <tr key={i}>
-                  <AllocTd>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "11px",
-                        color: "var(--nw-stone-blue)",
-                        fontWeight: 600,
-                        marginRight: "8px",
-                      }}
-                    >
-                      {row.code}
-                    </span>
-                    {row.description}
-                  </AllocTd>
-                  <AllocTd align="right" mono>
-                    {formatCents(row.amount)}
-                  </AllocTd>
-                  <AllocTd align="right" mono tertiary>
-                    {row.pct.toFixed(1)}%
-                  </AllocTd>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* Cost-code allocations now render via InvoiceAllocationsEditor
+          in the page composition (below this panel in the right-column
+          hero cell). The previous read-only summary was removed to
+          collapse view + edit into a single surface. */}
 
       {/* ─── AI extraction summary ─── */}
       <div
@@ -459,60 +415,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </span>
       <span style={{ fontSize: "13px" }}>{children}</span>
     </div>
-  );
-}
-
-function AllocTh({
-  children,
-  align,
-}: {
-  children: React.ReactNode;
-  align?: "right";
-}) {
-  return (
-    <th
-      className={align === "right" ? "text-right" : "text-left"}
-      style={{
-        fontFamily: "var(--font-mono)",
-        fontSize: "9px",
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color: "var(--text-tertiary)",
-        padding: "8px 12px",
-        borderBottom: "1px solid var(--border-default)",
-        fontWeight: 500,
-      }}
-    >
-      {children}
-    </th>
-  );
-}
-
-function AllocTd({
-  children,
-  align,
-  mono,
-  tertiary,
-}: {
-  children: React.ReactNode;
-  align?: "right";
-  mono?: boolean;
-  tertiary?: boolean;
-}) {
-  return (
-    <td
-      className={align === "right" ? "text-right" : ""}
-      style={{
-        padding: "10px 12px",
-        borderBottom: "1px solid var(--border-subtle)",
-        color: tertiary ? "var(--text-tertiary)" : "var(--text-primary)",
-        fontVariantNumeric: "tabular-nums",
-        fontFamily: mono ? "var(--font-mono)" : undefined,
-        fontSize: mono ? "12px" : undefined,
-      }}
-    >
-      {children}
-    </td>
   );
 }
 

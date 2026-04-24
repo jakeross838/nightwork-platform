@@ -15,7 +15,7 @@ import { toast } from "@/lib/utils/toast";
 import PaymentPanel from "@/components/invoices/PaymentPanel";
 import PaymentTrackingPanel from "@/components/invoices/PaymentTrackingPanel";
 import InvoiceHeader from "@/components/invoices/InvoiceHeader";
-import InvoiceDetailsPanel, { buildAllocSummary } from "@/components/invoices/InvoiceDetailsPanel";
+import InvoiceDetailsPanel from "@/components/invoices/InvoiceDetailsPanel";
 import { useCurrentRole } from "@/hooks/use-current-role";
 import { isInvoiceLocked, canEditLockedFields } from "@/lib/invoice-permissions";
 
@@ -1391,7 +1391,6 @@ export default function InvoiceReviewPage() {
    const drawLabel = drawInfo
      ? `Draw #${drawInfo.draw_number}${drawInfo.status === "submitted" || drawInfo.status === "paid" ? "" : ` (${drawInfo.status})`}`
      : null;
-   const allocSummary = buildAllocSummary(invoice.invoice_line_items);
    const aiModelUsed = (invoice as { ai_model_used?: string }).ai_model_used ?? null;
    const flags = (invoice.ai_raw_response?.flags as string[] | undefined) ?? [];
 
@@ -1592,10 +1591,16 @@ export default function InvoiceReviewPage() {
            border: "1px solid var(--border-default)",
          }}
        >
-         {/* LEFT — Source document */}
+         {/* LEFT — Source document. Matches right-column bg-card so
+             both hero cells present as a single matched pair, separated
+             by the grid's 1px hairline. Natural height: the PDF
+             canvas renders at the column's available width without a
+             max-height cap (which previously capped at 460px and made
+             the canvas render at a small resolution, then got scaled
+             up and looked blurry). */}
          <div
            className="p-[22px]"
-           style={{ background: "var(--bg-subtle)" }}
+           style={{ background: "var(--bg-card)" }}
          >
            <div className="flex items-center justify-between mb-[14px]">
              <h3
@@ -1626,13 +1631,7 @@ export default function InvoiceReviewPage() {
                </a>
              ) : null}
            </div>
-           <div
-             className="relative overflow-auto"
-             style={{
-               background: "var(--bg-card)",
-               maxHeight: "460px",
-             }}
-           >
+           <div className="relative">
              <InvoiceFilePreview
                invoiceId={invoice.id}
                fileUrl={invoice.signed_file_url}
@@ -1663,48 +1662,47 @@ export default function InvoiceReviewPage() {
            </div>
          </div>
 
-         {/* RIGHT — Details panel */}
-         <InvoiceDetailsPanel
-           totalAmountCents={invoice.total_amount}
-           vendorName={vendorName}
-           vendorId={invoice.vendor_id}
-           projectName={projectName}
-           jobId={invoice.job_id}
-           receivedAtLabel={receivedAtLabel}
-           invoiceDateLabel={invoiceDateLabel}
-           drawLabel={drawLabel}
-           drawInfo={drawInfo}
-           allocSummary={allocSummary}
-           confidenceScore={invoice.confidence_score}
-           confidenceDetails={invoice.confidence_details}
-           flags={flags}
-           aiModelUsed={aiModelUsed}
-           statusHistory={invoice.status_history ?? []}
-           currentStatus={invoice.status}
-           userNames={userNames}
-           role={role}
-           onVendorNameSave={handleVendorNameSave}
-           savingVendorName={savingVendorName}
-           qbNotes={qbNotes}
-           onQbNotesChange={setQbNotes}
-           showQbNotes={isQaReviewable}
-         />
-       </div>
-
-       {/* ── ROW 1: Line items editor (full-width) ── */}
-       <div className="mt-5">
-         <div className="mb-2">
-           <NwEyebrow tone="default">
-             Line items · edit cost code allocations
-           </NwEyebrow>
+         {/* RIGHT — Details panel + allocations editor, stacked.
+             Both sit on the same bg-card so the hero grid's 1px gap
+             traces a single vertical hairline between the two columns. */}
+         <div style={{ background: "var(--bg-card)" }}>
+           <InvoiceDetailsPanel
+             totalAmountCents={invoice.total_amount}
+             vendorName={vendorName}
+             vendorId={invoice.vendor_id}
+             projectName={projectName}
+             jobId={invoice.job_id}
+             receivedAtLabel={receivedAtLabel}
+             invoiceDateLabel={invoiceDateLabel}
+             drawLabel={drawLabel}
+             drawInfo={drawInfo}
+             confidenceScore={invoice.confidence_score}
+             confidenceDetails={invoice.confidence_details}
+             flags={flags}
+             aiModelUsed={aiModelUsed}
+             statusHistory={invoice.status_history ?? []}
+             currentStatus={invoice.status}
+             userNames={userNames}
+             role={role}
+             onVendorNameSave={handleVendorNameSave}
+             savingVendorName={savingVendorName}
+             qbNotes={qbNotes}
+             onQbNotesChange={setQbNotes}
+             showQbNotes={isQaReviewable}
+           />
+           <div
+             className="px-[22px] pb-[22px] pt-[4px]"
+             style={{ borderTop: "1px solid var(--border-default)" }}
+           >
+             <InvoiceAllocationsEditor
+               invoiceId={invoice.id}
+               invoiceTotalCents={invoice.total_amount}
+               costCodes={costCodes}
+               readOnly={!canEdit}
+               onChange={refreshInvoice}
+             />
+           </div>
          </div>
-         <InvoiceAllocationsEditor
-           invoiceId={invoice.id}
-           invoiceTotalCents={invoice.total_amount}
-           costCodes={costCodes}
-           readOnly={!canEdit}
-           onChange={refreshInvoice}
-         />
        </div>
 
        {/* ── Payment + Payment Tracking ── */}
