@@ -7,30 +7,15 @@ import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDollars, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, formatWho, statusBadgeOutline } from "@/lib/utils/format";
 import AppShell from "@/components/app-shell";
 import InvoiceFilePreview from "@/components/invoice-file-preview";
-import InvoiceStatusTimeline from "@/components/invoice-status-timeline";
 import InvoiceAllocationsEditor from "@/components/invoice-allocations-editor";
-import VendorContactPopover from "@/components/vendor-contact-popover";
-import Breadcrumbs from "@/components/breadcrumbs";
 import NwButton from "@/components/nw/Button";
-import NwBadge from "@/components/nw/Badge";
 import NwEyebrow from "@/components/nw/Eyebrow";
-import NwMoney from "@/components/nw/Money";
-import NwDataRow from "@/components/nw/DataRow";
 import { invoiceDisplayName } from "@/lib/invoices/display";
 import { toast } from "@/lib/utils/toast";
-import ExtractionVerificationPanel from "@/components/items/extraction-verification-panel";
-import AiExtractionNote from "@/components/invoices/AiExtractionNote";
-import AiParsedRawPanel from "@/components/invoices/AiParsedRawPanel";
-import AiConfidenceBreakdown from "@/components/invoices/AiConfidenceBreakdown";
-import StatusHistoryPanel from "@/components/invoices/StatusHistoryPanel";
 import PaymentPanel from "@/components/invoices/PaymentPanel";
 import PaymentTrackingPanel from "@/components/invoices/PaymentTrackingPanel";
 import InvoiceHeader from "@/components/invoices/InvoiceHeader";
-import InvoiceTitleStrip from "@/components/invoices/InvoiceTitleStrip";
-import InvoiceDetailsCard from "@/components/invoices/InvoiceDetailsCard";
-import InvoiceDetailsForm from "@/components/invoices/InvoiceDetailsForm";
-import InvoiceSummaryStrip from "@/components/invoices/InvoiceSummaryStrip";
-import CollapsibleSection from "@/components/invoices/CollapsibleSection";
+import InvoiceDetailsPanel, { buildAllocSummary } from "@/components/invoices/InvoiceDetailsPanel";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -1212,15 +1197,6 @@ export default function InvoiceReviewPage() {
  Status: {formatStatus(invoice.status)}
  </p>
  </div>
- <Breadcrumbs
- items={[
- { label: "Invoices", href: "/invoices" },
- { label: "PM Queue", href: "/invoices/queue" },
- {
- label: `${invoice.vendor_name_raw ?? "Invoice"}${invoice.invoice_number ? ` — ${invoice.invoice_number}` : ""}`,
- },
- ]}
- />
  {/* Receipt document type badge */}
  {invoice.document_type === "receipt" && (
  <div className="mb-4 border border-[rgba(59,88,100,0.21)] bg-[rgba(59,88,100,0.04)] px-4 py-2.5 text-sm text-[color:var(--text-secondary)] animate-fade-up inline-flex items-center gap-2">
@@ -1304,358 +1280,164 @@ export default function InvoiceReviewPage() {
  </div>
  </div>
  )}
- {/* ════════════════════════════════════════════════════════════════
-       SHOWCASE — Slate Invoice Detail reference
-       Polished read-only header + two-column body + AI extraction
-       narrative + milestone status timeline. Workbench (full editing
-       UI) sits below the section divider.
-       ════════════════════════════════════════════════════════════════ */}
+ {/* ═══ Unified two-column invoice detail — Phase 2 final rewrite.
+        Matches Nightwork Design System reference (Nightwork Invoice
+        Detail - Standalone.html). Two-column hero (PDF left / metadata
+        + AI + timeline right), full-width line items editor, workflow
+        actions row, payment row, cost-intelligence link-out. ═══ */}
  {(() => {
-   // Status → Badge variant mapping for the showcase header.
-   const statusBadgeVariant = (() => {
-     switch (invoice.status) {
-       case "qa_approved":
-       case "pm_approved":
-       case "paid":
-         return "success" as const;
-       case "pm_held":
-       case "qa_review":
-       case "qa_kicked_back":
-       case "info_requested":
-         return "warning" as const;
-       case "pm_denied":
-       case "void":
-         return "danger" as const;
-       case "pm_review":
-         return "info" as const;
-       case "pushed_to_qb":
-       case "in_draw":
-         return "accent" as const;
-       default:
-         return "neutral" as const;
-     }
-   })();
-
    const isQaApproved = invoice.status === "qa_approved";
    const vendorName = invoice.vendor_name_raw ?? invoice.vendors?.name ?? "Unknown vendor";
    const projectName = invoice.jobs?.name ?? "—";
-   const receivedDate = invoice.received_date
-     ? formatDate(invoice.received_date)
-     : null;
+   const receivedAtLabel = invoice.received_date ? formatDate(invoice.received_date) : null;
+   const invoiceDateLabel = invoice.invoice_date ? formatDate(invoice.invoice_date) : null;
    const drawLabel = drawInfo
      ? `Draw #${drawInfo.draw_number}${drawInfo.status === "submitted" || drawInfo.status === "paid" ? "" : ` (${drawInfo.status})`}`
      : null;
+   const allocSummary = buildAllocSummary(invoice.invoice_line_items);
+   const aiModelUsed = (invoice as { ai_model_used?: string }).ai_model_used ?? null;
+   const flags = (invoice.ai_raw_response?.flags as string[] | undefined) ?? [];
 
-
-   // Aggregate line items into a read-only cost-code allocation summary.
-   // Matches the "alloc" table in the Slate reference.
-   const allocSummary = (() => {
-     const total = invoice.invoice_line_items.reduce((s, li) => s + li.amount_cents, 0);
-     const byCode = new Map<string, { code: string; description: string; amount: number; ccId: string | null }>();
-     for (const li of invoice.invoice_line_items) {
-       const cc = li.cost_codes;
-       const key = cc?.code ?? "unassigned";
-       const prev = byCode.get(key);
-       if (prev) {
-         prev.amount += li.amount_cents;
-       } else {
-         byCode.set(key, {
-           code: cc?.code ?? "—",
-           description: cc?.description ?? "Unassigned",
-           amount: li.amount_cents,
-           ccId: li.cost_code_id,
-         });
-       }
-     }
-     return Array.from(byCode.values()).map((row) => ({
-       ...row,
-       pct: total > 0 ? (row.amount / total) * 100 : 0,
-     }));
-   })();
+   const isReceipt = invoice.document_type === "receipt";
+   const titleMain = isReceipt
+     ? `Receipt ${invoice.invoice_number ?? ""}`.trim()
+     : `Invoice #${invoice.invoice_number ?? "—"}`;
+   const breadcrumbTrail = `#${invoice.invoice_number ?? "—"} · ${vendorName}`;
+   const subLineParts: string[] = [];
+   if (vendorName) subLineParts.push(vendorName);
+   if (projectName && projectName !== "—") subLineParts.push(projectName);
+   if (receivedAtLabel) subLineParts.push(`Received ${receivedAtLabel}`);
+   if (drawLabel) subLineParts.push(`Assigned to ${drawLabel}`);
 
    return (
-     <div className="mb-10 animate-fade-up">
-       {/* ── Summary strip — consolidates vendor / amount / invoice # /
-              dates / job / status / confidence / draw / utility actions
-              into one scannable horizontal row. Replaces the old
-              InvoiceTitleStrip H1 + the dark teal InvoiceDetailsCard. */}
-       <InvoiceSummaryStrip
-         vendorName={vendorName}
-         invoiceNumber={invoice.invoice_number}
-         totalAmountCents={invoice.total_amount}
-         invoiceDate={invoice.invoice_date}
-         invoiceDateLabel={invoice.invoice_date ? formatDate(invoice.invoice_date) : null}
-         receivedDateLabel={receivedDate}
-         projectName={projectName}
-         jobId={invoice.job_id}
-         status={invoice.status}
-         statusBadgeVariant={statusBadgeVariant}
-         confidenceScore={invoice.confidence_score}
-         drawLabel={drawLabel}
-         drawId={drawInfo?.id ?? null}
-         signedFileUrl={invoice.signed_file_url}
-         isQaApproved={isQaApproved}
-       />
-
-       {/* ── Main 60/40 body — LEFT: Line Items (primary real estate).
-              RIGHT: sticky PDF viewer pinned under the nav at top-24. On
-              small screens collapses to single-column stack (PDF on top,
-              line items below), with sticky disabled. */}
-       <div
-         className="grid grid-cols-1 lg:grid-cols-5 gap-px items-start"
-         style={{ background: "var(--border-default)", border: "1px solid var(--border-default)" }}
-       >
-         {/* LEFT 60% — Line Items table (moved from workbench middle) */}
+     <div className="max-w-[1280px] mx-auto animate-fade-up">
+       {/* ── HEADER BLOCK ── */}
+       <div className="mb-6">
          <div
-           className="lg:col-span-3 p-5"
-           style={{ background: "var(--bg-card)" }}
+           className="mb-[14px]"
+           style={{
+             fontFamily: "var(--font-mono)",
+             fontSize: "10px",
+             letterSpacing: "0.12em",
+             textTransform: "uppercase",
+             color: "var(--text-muted)",
+           }}
          >
-           {lineItems.length > 0 ? (
-             <>
-               <div className="flex items-center justify-between mb-2">
-                 <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Line Items</p>
-                 {uniqueLineCodeIds.length > 0 && (
-                   <p className="text-[11px] text-[color:var(--text-secondary)]">
-                     {lineItems.length} line{lineItems.length === 1 ? "" : "s"} across {uniqueLineCodeIds.length} cost code{uniqueLineCodeIds.length === 1 ? "" : "s"}
-                   </p>
-                 )}
-               </div>
-
-               {/* Cost code summary */}
-               {costCodeSummary.length > 0 && (
-                 <div className="mb-2 bg-[rgba(91,134,153,0.08)] border border-[var(--border-default)]">
-                   <div className="px-3 py-2 border-b border-[var(--border-default)]">
-                     <p className="text-[10px] text-[color:var(--text-secondary)] uppercase tracking-wider">
-                       Cost Code Split · {costCodeSummary.length} code{costCodeSummary.length !== 1 ? "s" : ""}
-                     </p>
-                   </div>
-                   <table className="w-full text-xs">
-                     <thead>
-                       <tr className="text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)]">
-                         <th className="text-left px-3 py-1.5 font-medium">Code</th>
-                         <th className="text-left px-3 py-1.5 font-medium">Description</th>
-                         <th className="text-right px-3 py-1.5 font-medium">Lines</th>
-                         <th className="text-right px-3 py-1.5 font-medium">Total</th>
-                       </tr>
-                     </thead>
-                     <tbody>
-                       {costCodeSummary.map(cs => (
-                         <tr key={cs.id} className="border-t border-[var(--border-default)]">
-                           <td className="px-3 py-1.5 font-mono text-[color:var(--nw-stone-blue)]">{cs.code}</td>
-                           <td className="px-3 py-1.5 text-[color:var(--text-muted)]">{cs.description}</td>
-                           <td className="px-3 py-1.5 text-right text-[color:var(--text-secondary)] tabular-nums">{cs.count}</td>
-                           <td className="px-3 py-1.5 text-right text-[color:var(--text-primary)] font-medium tabular-nums">{formatCents(cs.total)}</td>
-                         </tr>
-                       ))}
-                     </tbody>
-                   </table>
-                 </div>
-               )}
-
-               <div className="overflow-x-auto border border-[var(--border-default)]">
-                 <table className="w-full text-xs">
-                   <thead>
-                     <tr className="bg-[var(--bg-subtle)]">
-                       <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold">Description</th>
-                       <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[220px]">Cost Code</th>
-                       <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[180px]">PO</th>
-                       <th className="py-2 px-3 text-center text-[color:var(--text-primary)] font-semibold">CO</th>
-                       <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[120px]">CO Ref</th>
-                       <th className="py-2 px-3 text-right text-[color:var(--text-primary)] font-semibold">Amount</th>
-                     </tr>
-                   </thead>
-                   <tbody>
-                     {lineItems.map((li, idx) => {
-                       const aiSug = li.ai_suggested_cost_code_id && costCodes.find(c => c.id === li.ai_suggested_cost_code_id);
-                       const aiSugActive = li.cost_code_id === li.ai_suggested_cost_code_id && aiSug;
-                       const missingCoRef = li.is_change_order && !li.co_reference.trim();
-                       return (
-                         <tr key={li.id ?? idx} className="border-t border-[var(--border-default)] align-top">
-                           <td className="py-2 px-3 text-[color:var(--text-primary)] max-w-[360px]">
-                             {li.description ? (
-                               <>
-                                 <div className={expandedDescriptions.has(idx) ? "" : "line-clamp-2"}>
-                                   {li.description}
-                                 </div>
-                                 {li.description.length > 100 && (
-                                   <button
-                                     type="button"
-                                     onClick={() => setExpandedDescriptions(prev => {
-                                       const next = new Set(prev);
-                                       if (next.has(idx)) next.delete(idx);
-                                       else next.add(idx);
-                                       return next;
-                                     })}
-                                     className="text-[10px] text-[color:var(--nw-stone-blue)] hover:underline mt-0.5"
-                                   >
-                                     {expandedDescriptions.has(idx) ? "Show less" : "Show more"}
-                                   </button>
-                                 )}
-                               </>
-                             ) : (
-                               <span className="text-[color:var(--text-secondary)] italic">(no description)</span>
-                             )}
-                             {(li.qty != null || li.rate != null) && (
-                               <div className="text-[10px] text-[color:var(--text-secondary)] mt-0.5">
-                                 {li.qty != null && <span>{li.qty}{li.unit ? ` ${li.unit}` : ""}</span>}
-                                 {li.qty != null && li.rate != null && <span> × </span>}
-                                 {li.rate != null && <span>{formatDollars(li.rate)}</span>}
-                               </div>
-                             )}
-                           </td>
-                           <td className="py-2 px-3">
-                             <LineCostCodeSelect
-                               value={li.cost_code_id ?? ""}
-                               onChange={(v) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, cost_code_id: v || null } : item))}
-                               options={lineCostCodeOptions}
-                               disabled={!isReviewable}
-                               aiSuggestion={aiSugActive ? { code: aiSug!.code, confidence: li.ai_suggestion_confidence ?? 0 } : null}
-                             />
-                             {(() => {
-                               if (!li.cost_code_id) return null;
-                               const budget = budgetByCostCode.get(li.cost_code_id);
-                               if (!budget) return (
-                                 <p className="mt-1 text-[10px] text-[color:var(--text-secondary)]">No budget line for this cost code</p>
-                               );
-                               const remainingAfter = budget.remaining - li.amount_cents;
-                               const willOver = remainingAfter < 0;
-                               return (
-                                 <p className={`mt-1 text-[10px] ${willOver ? "text-[color:var(--nw-danger)] font-medium" : "text-[color:var(--text-secondary)]"}`}>
-                                   {willOver
-                                     ? `Over budget by ${formatCents(Math.abs(remainingAfter))}`
-                                     : `${formatCents(budget.remaining)} remaining · after: ${formatCents(remainingAfter)}`}
-                                 </p>
-                               );
-                             })()}
-                           </td>
-                           <td className="py-2 px-3">
-                             <select
-                               value={li.po_id ?? ""}
-                               onChange={(e) => {
-                                 const newPoId = e.target.value || null;
-                                 const po = newPoId ? purchaseOrders.find(p => p.id === newPoId) : null;
-                                 setLineItems(prev => prev.map((item, i) => {
-                                   if (i !== idx) return item;
-                                   return {
-                                     ...item,
-                                     po_id: newPoId,
-                                     cost_code_id: po?.budget_line_id
-                                       ? (costCodes.find(c => budgetByCostCode.has(c.id))?.id ?? item.cost_code_id)
-                                       : item.cost_code_id,
-                                   };
-                                 }));
-                               }}
-                               disabled={!isReviewable}
-                               className="w-full px-2 py-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)] disabled:opacity-50"
-                             >
-                               <option value="">— No PO —</option>
-                               {purchaseOrders.map(po => {
-                                 const remaining = po.amount - po.invoiced_total;
-                                 return (
-                                   <option key={po.id} value={po.id}>
-                                     {po.po_number ?? "—"}: {formatCents(remaining)} left
-                                   </option>
-                                 );
-                               })}
-                             </select>
-                             {(() => {
-                               if (!li.po_id) return null;
-                               const po = purchaseOrders.find(p => p.id === li.po_id);
-                               if (!po) return null;
-                               const remaining = po.amount - po.invoiced_total;
-                               const over = li.amount_cents > remaining;
-                               return (
-                                 <p className={`mt-1 text-[10px] ${over ? "text-[color:var(--nw-warn)] font-medium" : "text-[color:var(--text-secondary)]"}`}>
-                                   {over
-                                     ? `Exceeds PO by ${formatCents(li.amount_cents - remaining)}`
-                                     : `${formatCents(remaining)} remaining on PO`}
-                                 </p>
-                               );
-                             })()}
-                           </td>
-                           <td className="py-2 px-3 text-center">
-                             <button
-                               onClick={() => setLineItems(prev => prev.map((item, i) => {
-                                 if (i !== idx) return item;
-                                 const next = !item.is_change_order;
-                                 return {
-                                   ...item,
-                                   is_change_order: next,
-                                   cost_code_id: resolveVariant(costCodes, item.cost_code_id, next),
-                                   co_reference: next ? item.co_reference : "",
-                                 };
-                               }))}
-                               disabled={!isReviewable}
-                               className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-[var(--nw-warn)]" : "bg-[var(--border-default)]"}`}
-                               aria-label="Toggle Change Order"
-                             >
-                               <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${li.is_change_order ? "translate-x-5" : "translate-x-1"}`} />
-                             </button>
-                           </td>
-                           <td className="py-2 px-3">
-                             {li.is_change_order ? (
-                               <input
-                                 type="text"
-                                 value={li.co_reference}
-                                 onChange={(e) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, co_reference: e.target.value } : item))}
-                                 disabled={!isReviewable}
-                                 placeholder="PCCO #"
-                                 className={`w-full max-w-[140px] px-2 py-1 bg-[var(--bg-subtle)] border text-xs text-[color:var(--text-primary)] focus:outline-none disabled:opacity-50 ${missingCoRef ? "border-[rgba(176,85,78,0.5)]" : "border-[var(--border-default)] focus:border-[var(--nw-stone-blue)]"}`}
-                               />
-                             ) : (
-                               <span className="text-[color:var(--text-secondary)]">—</span>
-                             )}
-                           </td>
-                           <td className="py-2 px-3 text-right text-[color:var(--text-primary)] font-medium">{formatCents(li.amount_cents)}</td>
-                         </tr>
-                       );
-                     })}
-                   </tbody>
-                   <tfoot>
-                     <tr className="border-t-2 border-[var(--border-default)] bg-[rgba(91,134,153,0.06)]">
-                       <td colSpan={5} className="py-2 px-3 text-right text-[color:var(--text-secondary)] text-[11px] uppercase tracking-wider">Line Items Sum</td>
-                       <td className={`py-2 px-3 text-right font-medium ${hasAmountMismatch ? "text-[color:var(--nw-danger)]" : "text-[color:var(--text-primary)]"}`}>
-                         {formatCents(lineItemSumCents)}
-                       </td>
-                     </tr>
-                   </tfoot>
-                 </table>
-               </div>
-               {hasAmountMismatch && (
-                 <div className="mt-2 px-3 py-2 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.24)]">
-                   <p className="text-xs text-[color:var(--nw-danger)] font-medium">
-                     Line items sum ({formatCents(lineItemSumCents)}) does not match invoice total ({formatCents(totalCents)})
-                   </p>
-                 </div>
-               )}
-               {missingCoReference && (
-                 <div className="mt-2 px-3 py-2 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.24)]">
-                   <p className="text-xs text-[color:var(--nw-danger)] font-medium">
-                     {lineItemsMissingCoReference.length} change-order line{lineItemsMissingCoReference.length === 1 ? "" : "s"} missing CO Reference
-                   </p>
-                 </div>
-               )}
-             </>
-           ) : (
-             <p className="text-sm text-[color:var(--text-secondary)] italic">No line items extracted for this invoice.</p>
-           )}
+           Home / Financial / Invoices /{" "}
+           <b style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+             {breadcrumbTrail}
+           </b>
          </div>
-
-         {/* RIGHT 40% — Source document (sticky on desktop, pinned under
-             the nav at top-24 so the PDF stays visible while the user
-             scrolls through the line items on the left). */}
-         <div
-           className="lg:col-span-2 p-5 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-auto"
-           style={{ background: "var(--bg-card)" }}
-         >
-           <div className="flex items-center justify-between mb-4">
-             <h3
-               className="m-0"
+         <div className="flex items-end justify-between gap-5 flex-wrap">
+           <div className="min-w-0">
+             <h1
+               className="flex items-center gap-3 flex-wrap"
                style={{
-                 fontFamily: "var(--font-space-grotesk)",
+                 fontFamily: "var(--font-display)",
+                 fontWeight: 500,
+                 fontSize: "30px",
+                 letterSpacing: "-0.02em",
+                 margin: "0 0 4px",
+                 color: "var(--text-primary)",
+                 lineHeight: 1.15,
+               }}
+             >
+               <span>{titleMain}</span>
+               <span
+                 className={`inline-flex items-center px-[9px] py-[3px] ${statusBadgeOutline(invoice.status)}`}
+                 style={{
+                   fontFamily: "var(--font-mono)",
+                   fontSize: "10px",
+                   letterSpacing: "0.12em",
+                   textTransform: "uppercase",
+                   fontWeight: 500,
+                 }}
+               >
+                 {formatStatus(invoice.status)}
+               </span>
+               {isReceipt ? (
+                 <span
+                   className="inline-flex items-center px-[9px] py-[3px] border"
+                   style={{
+                     fontFamily: "var(--font-mono)",
+                     fontSize: "10px",
+                     letterSpacing: "0.12em",
+                     textTransform: "uppercase",
+                     fontWeight: 500,
+                     borderColor: "var(--border-strong)",
+                     color: "var(--text-secondary)",
+                   }}
+                 >
+                   Receipt
+                 </span>
+               ) : null}
+             </h1>
+             <p
+               style={{
+                 fontSize: "13px",
+                 color: "var(--text-tertiary)",
+                 margin: 0,
+               }}
+             >
+               {subLineParts.join(" · ")}
+             </p>
+           </div>
+           <div className="flex gap-[10px] flex-wrap">
+             {invoice.signed_file_url ? (
+               <a
+                 href={invoice.signed_file_url}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 download
+               >
+                 <NwButton variant="ghost" size="sm">Download PDF</NwButton>
+               </a>
+             ) : null}
+             {isReviewable ? (
+               <NwButton
+                 variant="ghost"
+                 size="sm"
+                 onClick={() => setShowNoteModal("deny")}
+                 disabled={saving}
+               >
+                 Reject
+               </NwButton>
+             ) : null}
+             {isQaApproved ? (
+               <NwButton
+                 variant="primary"
+                 size="sm"
+                 onClick={() => toast.info("QuickBooks integration coming soon")}
+               >
+                 Push to QuickBooks →
+               </NwButton>
+             ) : null}
+           </div>
+         </div>
+       </div>
+
+       {/* ── 50/50 HERO ── */}
+       <div
+         className="grid grid-cols-1 lg:grid-cols-2"
+         style={{
+           gap: "1px",
+           background: "var(--border-default)",
+           border: "1px solid var(--border-default)",
+         }}
+       >
+         {/* LEFT — Source document */}
+         <div
+           className="p-[22px]"
+           style={{ background: "var(--bg-subtle)" }}
+         >
+           <div className="flex items-center justify-between mb-[14px]">
+             <h3
+               style={{
+                 fontFamily: "var(--font-display)",
                  fontWeight: 500,
                  fontSize: "15px",
                  color: "var(--text-primary)",
+                 margin: 0,
                }}
              >
                Source document
@@ -1665,10 +1447,11 @@ export default function InvoiceReviewPage() {
                  href={invoice.signed_file_url}
                  target="_blank"
                  rel="noopener noreferrer"
-                 className="text-[10px] uppercase"
                  style={{
-                   fontFamily: "var(--font-jetbrains-mono)",
-                   letterSpacing: "0.12em",
+                   fontFamily: "var(--font-mono)",
+                   fontSize: "10px",
+                   letterSpacing: "0.1em",
+                   textTransform: "uppercase",
                    color: "var(--nw-stone-blue)",
                  }}
                >
@@ -1678,7 +1461,7 @@ export default function InvoiceReviewPage() {
            </div>
            <div
              className="relative"
-             style={{ background: "var(--nw-white-sand)", color: "var(--nw-slate-tile)" }}
+             style={{ background: "var(--bg-card)" }}
            >
              <InvoiceFilePreview
                invoiceId={invoice.id}
@@ -1690,7 +1473,6 @@ export default function InvoiceReviewPage() {
                  jobs: invoice.jobs,
                })}
              />
-             {/* QA Approved stamp overlay (per Slate reference) */}
              {isQaApproved ? (
                <div
                  className="pointer-events-none absolute bottom-6 right-6 px-3 py-1.5 border-2"
@@ -1698,11 +1480,11 @@ export default function InvoiceReviewPage() {
                    transform: "rotate(-8deg)",
                    borderColor: "var(--nw-success)",
                    color: "var(--nw-success)",
-                   fontFamily: "var(--font-jetbrains-mono)",
+                   fontFamily: "var(--font-mono)",
                    letterSpacing: "0.14em",
                    fontSize: "11px",
                    fontWeight: 600,
-                   opacity: 0.7,
+                   opacity: 0.75,
                  }}
                >
                  QA APPROVED
@@ -1710,333 +1492,199 @@ export default function InvoiceReviewPage() {
              ) : null}
            </div>
          </div>
-       </div>
 
-       {/* AiExtractionNote relocated to the "AI Confidence & Extraction"
-           accordion below the workbench divider (Phase 2 commit 4). */}
-
-       {/* ── Status timeline (milestone view) ── */}
-       <div className="mt-6">
-         <div className="mb-3">
-           <NwEyebrow tone="default">Status timeline · end-to-end audit</NwEyebrow>
-         </div>
-         <InvoiceStatusTimeline
+         {/* RIGHT — Details panel */}
+         <InvoiceDetailsPanel
+           totalAmountCents={invoice.total_amount}
+           vendorName={vendorName}
+           vendorId={invoice.vendor_id}
+           projectName={projectName}
+           jobId={invoice.job_id}
+           receivedAtLabel={receivedAtLabel}
+           invoiceDateLabel={invoiceDateLabel}
+           drawLabel={drawLabel}
+           drawInfo={drawInfo}
+           allocSummary={allocSummary}
+           confidenceScore={invoice.confidence_score}
+           confidenceDetails={invoice.confidence_details}
+           flags={flags}
+           aiModelUsed={aiModelUsed}
+           statusHistory={invoice.status_history ?? []}
            currentStatus={invoice.status}
-           history={invoice.status_history ?? []}
            userNames={userNames}
          />
        </div>
 
+       {/* ── ROW 1: Line items editor (full-width) ── */}
+       <div className="mt-8">
+         <div className="mb-3">
+           <NwEyebrow tone="default">
+             Line items · edit cost code allocations
+           </NwEyebrow>
+         </div>
+         <InvoiceAllocationsEditor
+           invoiceId={invoice.id}
+           invoiceTotalCents={invoice.total_amount}
+           costCodes={costCodes}
+           readOnly={!isReviewable}
+           onChange={refreshInvoice}
+         />
+       </div>
+
+       {/* ── ROW 2: PM workflow actions (only when reviewable) ── */}
+       {isReviewable && (
+         <div
+           className="mt-6 hidden md:block p-5 space-y-3"
+           style={{
+             background: "var(--bg-card)",
+             border: "1px solid var(--border-default)",
+           }}
+         >
+           <div className="mb-3">
+             <NwEyebrow tone="default">Actions</NwEyebrow>
+           </div>
+           <div className="flex gap-3 flex-wrap">
+             <NwButton
+               variant="primary"
+               size="lg"
+               onClick={openApproveFlow}
+               disabled={saving || !!approveDisabledReason}
+               loading={saving}
+               title={approveDisabledReason ?? undefined}
+               className="flex-1 min-w-[120px]"
+             >
+               {saving ? "Saving" : "Approve"}
+             </NwButton>
+             <NwButton
+               variant="secondary"
+               size="lg"
+               onClick={() => {
+                 setPartialApprovedIds(new Set());
+                 setPartialNote("");
+                 setPartialError(null);
+                 setShowPartialModal(true);
+               }}
+               disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
+               title={
+                 approveDisabledReason ??
+                 (lineItems.length < 2
+                   ? "Partial approval requires 2+ line items"
+                   : "Split this invoice into approved and held portions")
+               }
+               className="flex-1 min-w-[120px]"
+             >
+               Partial Approve
+             </NwButton>
+             <NwButton
+               variant="secondary"
+               size="lg"
+               onClick={() => setShowNoteModal("hold")}
+               disabled={saving}
+               className="flex-1 min-w-[120px]"
+             >
+               Hold
+             </NwButton>
+             <NwButton
+               variant="danger"
+               size="lg"
+               onClick={() => setShowNoteModal("deny")}
+               disabled={saving}
+               className="flex-1 min-w-[120px]"
+             >
+               Deny
+             </NwButton>
+           </div>
+           <NwButton
+             variant="ghost"
+             size="md"
+             onClick={() => setShowRequestInfoModal(true)}
+             disabled={saving}
+             className="w-full"
+           >
+             Request Info
+           </NwButton>
+         </div>
+       )}
+
+       {/* ── ROW 3: Payment + Payment Tracking ── */}
+       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+         <PaymentPanel invoice={invoice} onRefresh={refreshInvoice} />
+         {showPaymentTracking ? (
+           <details
+             className="group p-5"
+             style={{
+               background: "var(--bg-card)",
+               border: "1px solid var(--border-default)",
+             }}
+           >
+             <summary
+               className="cursor-pointer flex items-center justify-between list-none [&::-webkit-details-marker]:hidden"
+             >
+               <NwEyebrow tone="default">Payment tracking</NwEyebrow>
+               <svg
+                 className="w-4 h-4 transition-transform group-open:rotate-180"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 strokeWidth={2}
+                 style={{ color: "var(--text-secondary)" }}
+                 aria-hidden="true"
+               >
+                 <path
+                   strokeLinecap="round"
+                   strokeLinejoin="round"
+                   d="M19 9l-7 7-7-7"
+                 />
+               </svg>
+             </summary>
+             <div className="mt-4">
+               <PaymentTrackingPanel
+                 checkNumber={checkNumber}
+                 onCheckNumberChange={setCheckNumber}
+                 pickedUp={pickedUp}
+                 onPickedUpChange={setPickedUp}
+                 mailedDate={mailedDate}
+                 onMailedDateChange={setMailedDate}
+                 saving={savingPayment}
+                 onSave={handleSavePaymentTracking}
+               />
+             </div>
+           </details>
+         ) : null}
+       </div>
+
+       {/* Edit history — shown only when overrides exist */}
+       {((invoice.pm_overrides && Object.keys(invoice.pm_overrides).length > 0) ||
+         (invoice.qa_overrides && Object.keys(invoice.qa_overrides).length > 0)) ? (
+         <div className="mt-6">
+           <EditHistoryCard
+             pmOverrides={invoice.pm_overrides}
+             qaOverrides={invoice.qa_overrides}
+           />
+         </div>
+       ) : null}
+
+       {/* ── FOOTER: Cost Intelligence link-out ── */}
+       <div
+         className="mt-8 pt-5"
+         style={{ borderTop: "1px solid var(--border-default)" }}
+       >
+         <Link
+           href={`/cost-intelligence/verification?invoice=${invoice.id}`}
+           style={{
+             color: "var(--nw-stone-blue)",
+             textDecoration: "underline",
+             textUnderlineOffset: "3px",
+             fontSize: "13px",
+           }}
+         >
+           Verify extracted line items in Cost Intelligence →
+         </Link>
+       </div>
      </div>
    );
  })()}
 
- {/* ════════════════════════════════════════════════════════════════
-       SECTION DIVIDER — showcase ends, workbench begins
-       ════════════════════════════════════════════════════════════════ */}
- <div className="my-10 flex items-center gap-4">
-   <div className="flex-1 h-px" style={{ background: "var(--border-default)" }} />
-   <NwEyebrow tone="muted">Workbench · internal tools</NwEyebrow>
-   <div className="flex-1 h-px" style={{ background: "var(--border-default)" }} />
- </div>
-
- <div className="max-w-[1180px] mx-auto space-y-5 animate-fade-up">
- {/* Payment — Phase 8 — expanded, no accordion wrapper */}
- <PaymentPanel invoice={invoice} onRefresh={refreshInvoice} />
-
- {/* Payment Tracking — expanded when relevant */}
- {showPaymentTracking && (
- <SidebarCard title="Payment Tracking">
- <PaymentTrackingPanel
-   checkNumber={checkNumber}
-   onCheckNumberChange={setCheckNumber}
-   pickedUp={pickedUp}
-   onPickedUpChange={setPickedUp}
-   mailedDate={mailedDate}
-   onMailedDateChange={setMailedDate}
-   saving={savingPayment}
-   onSave={handleSavePaymentTracking}
- />
- </SidebarCard>
- )}
-
- {/* Status History — collapsible */}
- {invoice.status_history && invoice.status_history.length > 0 && (
- <CollapsibleSection
-   title="Status History"
-   badge={`${invoice.status_history.length} event${invoice.status_history.length === 1 ? "" : "s"}`}
- >
- <StatusHistoryPanel history={invoice.status_history} userNames={userNames} />
- </CollapsibleSection>
- )}
-
- {/* AI Confidence & Extraction — collapsible, groups the narrative
-     panel + per-field confidence breakdown. AiParsedRawPanel renders
-     inside InvoiceDetailsForm (kept there from Phase 1), not here. */}
- <CollapsibleSection
-   title="AI Confidence & Extraction"
-   badge={(() => {
-     const pct = Math.round(invoice.confidence_score * 100);
-     const afCount = autoFills ? Object.values(autoFills).filter(Boolean).length : 0;
-     return afCount > 0 ? `${pct}% · ${afCount} auto-filled` : `${pct}%`;
-   })()}
- >
- <AiExtractionNote
-   confidenceScore={invoice.confidence_score}
-   confidenceDetails={invoice.confidence_details}
-   flags={(invoice.ai_raw_response?.flags as string[] | undefined) ?? []}
-   aiModelUsed={(invoice as { ai_model_used?: string }).ai_model_used}
- />
- {invoice.confidence_details && (
- <div className="mt-4">
- <AiConfidenceBreakdown confidenceDetails={invoice.confidence_details} />
- </div>
- )}
- </CollapsibleSection>
-
- {/* Invoice Details — collapsible (form is read-only in QA-approved
-     state; editable in pm_review). Badge previews invoice type +
-     primary cost code. */}
- <CollapsibleSection
-   title="Invoice Details"
-   badge={(() => {
-     const typeLabel = invoiceType ? formatStatus(invoiceType) : "—";
-     const primaryCode = costCodes.find(c => c.id === costCodeId)?.code;
-     return primaryCode ? `${typeLabel} · ${primaryCode}` : typeLabel;
-   })()}
- >
- {/* Missing field flags */}
- {(missingInvoiceNumber || missingInvoiceDate || dateReasonablenessWarning) && (
- <div className="mt-1 flex flex-wrap gap-2">
- {missingInvoiceNumber && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
- <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
- No invoice #
- </span>
- )}
- {missingInvoiceDate && (
- workflowSettings?.require_invoice_date ? (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(176,85,78,0.12)] text-[color:var(--nw-danger)] border border-[rgba(176,85,78,0.35)]">
- <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
- No date detected — required
- </span>
- ) : (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
- <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
- No date detected
- </span>
- )
- )}
- {dateReasonablenessWarning && (
- <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
- <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
- {dateReasonablenessWarning}
- </span>
- )}
- </div>
- )}
-
- <div className="mt-5 space-y-4">
- <InvoiceDetailsForm
-   invoiceId={invoice.id}
-   invoiceTotalCents={invoice.total_amount}
-   invoiceStatus={invoice.status}
-   vendorNameRaw={invoice.vendor_name_raw}
-   jobReferenceRaw={invoice.job_reference_raw}
-   poReferenceRaw={invoice.po_reference_raw}
-   coReferenceRaw={invoice.co_reference_raw}
-   isReviewable={isReviewable}
-   jobId={jobId}
-   onJobIdChange={setJobId}
-   jobOptions={jobOptions}
-   jobAiFilled={!!autoFills?.job_id}
-   isChangeOrder={isChangeOrder}
-   onChangeOrderToggle={() => {
-     const next = !isChangeOrder;
-     setIsChangeOrder(next);
-     setCostCodeId(prev => resolveVariant(costCodes, prev, next) ?? "");
-     setLineItems(prev => prev.map(li => ({
-       ...li,
-       is_change_order: next,
-       cost_code_id: resolveVariant(costCodes, li.cost_code_id, next),
-       co_reference: next ? li.co_reference : "",
-     })));
-   }}
-   coReference={coReference}
-   onCoReferenceChange={setCoReference}
-   costCodeId={costCodeId}
-   onCostCodeIdChange={setCostCodeId}
-   costCodeOptions={costCodeOptions}
-   costCodeAiFilled={!!autoFills?.cost_code_id}
-   costCodes={costCodes}
-   poOptions={purchaseOrders.length > 0 ? [{ value: "", label: "— No PO —" }, ...purchaseOrders.map(p => ({ value: p.id, label: `${p.po_number ?? "PO"} — ${formatCents(p.amount)}` }))] : null}
-   poId={poId}
-   onPoIdChange={setPoId}
-   invoiceNumber={invoiceNumber}
-   onInvoiceNumberChange={setInvoiceNumber}
-   invoiceDate={invoiceDate}
-   onInvoiceDateChange={setInvoiceDate}
-   totalAmount={totalAmount}
-   onTotalAmountChange={setTotalAmount}
-   invoiceType={invoiceType}
-   onInvoiceTypeChange={setInvoiceType}
-   description={description}
-   onDescriptionChange={setDescription}
-   amountOverAi={amountOverAi}
-   amountOver10Pct={amountOver10Pct}
-   amountIncreasePct={amountIncreasePct}
-   aiParsedTotal={aiParsedTotal}
-   isCreditMemo={isCreditMemo}
- />
- </div>
-
- {/* Budget Status — kept inside Invoice Details accordion because it's
-     cost-code-contextual (driven by form's cost-code selection). */}
- <div className="mt-5">
- <SidebarCard title="Budget Status">
- {uniqueLineCodeIds.length > 1 ? (
- <div className="space-y-4">
- {overBudgetByCode.map(s => {
- const cc = costCodes.find(c => c.id === s.ccId);
- return (
- <div key={s.ccId} className="border-b border-[var(--border-default)] pb-3 last:border-b-0 last:pb-0">
- <div className="flex items-baseline justify-between mb-2">
- <span className="text-xs font-mono text-[color:var(--nw-stone-blue)]">{cc?.code ?? "???"}</span>
- <span className="flex items-center gap-1">
- {s.bi?.is_allowance && (
- <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-bold bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)] uppercase">Allowance</span>
- )}
- <span className="text-[10px] text-[color:var(--text-secondary)] truncate max-w-[120px] text-right">{cc?.description ?? ""}</span>
- </span>
- </div>
- {s.bi ? (
- <div className="space-y-1.5">
- <BudgetRow label="Budget" value={s.bi.revised_estimate} />
- <BudgetRow label="Spent" value={s.bi.total_spent} />
- <BudgetRow label="This Invoice" value={s.thisInvoicePortion} />
- <BudgetRow
- label="Remaining"
- value={s.bi.remaining - s.thisInvoicePortion}
- highlight={s.severity === "red" ? "danger" : s.severity === "orange" ? "danger" : s.severity === "yellow" ? "warning" : "success"}
- />
- {s.severity !== "none" && <OverBudgetAlert severity={s.severity} overage={s.overageCents} pct={s.pct} isAllowance={!!s.bi.is_allowance} />}
- </div>
- ) : (
- <div className="px-2 py-1.5 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.24)]">
- <p className="text-[11px] text-[color:var(--nw-danger)] font-medium">No budget set — $0 budget line</p>
- <p className="text-[10px] text-[color:var(--text-secondary)] mt-0.5">Use Convert to Change Order or Approve as Overage.</p>
- </div>
- )}
- </div>
- );
- })}
- </div>
- ) : budgetInfo ? (() => {
- const singleClass = classifyOverBudget(
- budgetInfo.revised_estimate,
- budgetInfo.total_spent,
- totalCents,
- !!budgetInfo.is_allowance
- );
- return (
- <div className="space-y-3">
- {budgetInfo.is_allowance && (
- <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)] uppercase">Allowance</span>
- )}
- <BudgetRow label="Original Estimate" value={budgetInfo.original_estimate} />
- <BudgetRow label="Revised Estimate" value={budgetInfo.revised_estimate} />
- <BudgetRow label="Total Spent" value={budgetInfo.total_spent} />
- <div className="border-t border-[var(--border-default)] pt-3">
- <BudgetRow label="Remaining" value={budgetInfo.remaining}
- highlight={singleClass.severity === "red" || singleClass.severity === "orange" ? "danger" : singleClass.severity === "yellow" ? "warning" : "success"} />
- </div>
- {singleClass.severity !== "none" && <OverBudgetAlert severity={singleClass.severity} overage={singleClass.overageCents} pct={singleClass.pct} isAllowance={!!budgetInfo.is_allowance} />}
- </div>
- );
- })() : (
- jobId && costCodeId ? (
- <div className="px-3 py-2.5 bg-[rgba(201,138,59,0.12)] border border-[rgba(201,138,59,0.25)] ">
- <p className="text-xs text-[color:var(--nw-warn)] font-medium">No budget set for this cost code</p>
- <p className="text-[11px] text-[color:var(--text-secondary)] mt-1">Approving will create a $0 budget line — this invoice will show as over-budget on the draw.</p>
- </div>
- ) : (
- <p className="text-sm text-[color:var(--text-secondary)]">Select job + cost code</p>
- )
- )}
- </SidebarCard>
- </div>
- </CollapsibleSection>
-
- {/* Actions — desktop only (mobile uses sticky bar below).
-     Commit 5 will move these into the bottom sticky workflow bar.
-     Until then, render as a flat card below the accordion sections. */}
- {isReviewable && (
- <div className="hidden md:block bg-[var(--bg-card)] border border-[var(--border-default)] p-5 space-y-3">
- <div className="mb-3">
- <NwEyebrow tone="default">Actions</NwEyebrow>
- </div>
- <div className="flex gap-3 flex-wrap">
- <NwButton
- variant="primary"
- size="lg"
- onClick={openApproveFlow}
- disabled={saving || !!approveDisabledReason}
- loading={saving}
- title={approveDisabledReason ?? undefined}
- className="flex-1 min-w-[120px]"
- >
- {saving ? "Saving" : "Approve"}
- </NwButton>
- <NwButton
- variant="secondary"
- size="lg"
- onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }}
- disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
- title={approveDisabledReason ?? (lineItems.length < 2 ? "Partial approval requires 2+ line items" : "Split this invoice into approved and held portions")}
- className="flex-1 min-w-[120px]"
- >
- Partial Approve
- </NwButton>
- <NwButton
- variant="secondary"
- size="lg"
- onClick={() => setShowNoteModal("hold")}
- disabled={saving}
- className="flex-1 min-w-[120px]"
- >
- Hold
- </NwButton>
- <NwButton
- variant="danger"
- size="lg"
- onClick={() => setShowNoteModal("deny")}
- disabled={saving}
- className="flex-1 min-w-[120px]"
- >
- Deny
- </NwButton>
- </div>
- <NwButton
- variant="ghost"
- size="md"
- onClick={() => setShowRequestInfoModal(true)}
- disabled={saving}
- className="w-full"
- >
- Request Info
- </NwButton>
- </div>
- )}
-
- {/* Edit History (PM + QA overrides) — already collapsible, keep inline */}
- {(invoice.pm_overrides && Object.keys(invoice.pm_overrides).length > 0) || (invoice.qa_overrides && Object.keys(invoice.qa_overrides).length > 0) ? (
- <EditHistoryCard pmOverrides={invoice.pm_overrides} qaOverrides={invoice.qa_overrides} />
- ) : null}
- </div>
-
- {/* Cost Intelligence verification — staged line items awaiting review.
-     Renders full-width below the main invoice grid. */}
- <ExtractionVerificationPanel invoiceId={invoice.id} />
  </main>
 
  {/* ── Sticky Mobile Action Bar ── */}
