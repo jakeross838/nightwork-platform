@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatCents, formatDate, formatFlag, formatWho } from "@/lib/utils/format";
+import type { OrgMemberRole } from "@/lib/org/session";
 
 export interface InvoiceDetailsPanelAllocRow {
   code: string;
@@ -43,6 +44,12 @@ export interface InvoiceDetailsPanelProps {
   statusHistory: Array<Record<string, unknown>>;
   currentStatus: string;
   userNames: Map<string, string>;
+  /**
+   * Current authenticated user's org role, or null while the role is
+   * still loading. Used to compute lock-state editability. Null is
+   * treated as non-privileged (fail-closed).
+   */
+  role: OrgMemberRole | null;
 }
 
 /**
@@ -69,11 +76,19 @@ export default function InvoiceDetailsPanel({
   statusHistory,
   currentStatus,
   userNames,
+  role,
 }: InvoiceDetailsPanelProps) {
   const timeline = buildTimeline(statusHistory, currentStatus, userNames);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const currentLabel = humanStatus(currentStatus);
   const nextPending = pendingAfter(currentStatus)[0] ?? null;
+  // Phase 3a: role prop is threaded in so Phase 3b (vendor name,
+  // invoice #, date editing in-panel) can gate fields via
+  // canEditInvoice({status}, role). Today the panel has no editable
+  // fields; lock/permission logic lives at the page + allocations
+  // editor level. Suppress unused-var complaint without introducing
+  // dead code in the meantime.
+  void role;
   const overallPct = (confidenceScore * 100).toFixed(1);
   const autoFills = (confidenceDetails as Record<string, unknown> | null)
     ?.auto_fills as Record<string, boolean> | undefined;

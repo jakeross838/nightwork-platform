@@ -7,6 +7,11 @@ import {
   getClientForRequest,
   logImpersonatedWrite,
 } from "@/lib/auth/impersonation-client";
+import {
+  isInvoiceLocked,
+  canEditLockedFields,
+} from "@/lib/invoice-permissions";
+import { logFieldEdit } from "@/lib/audit/log-field-edit";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -84,8 +89,11 @@ export const PUT = withApiError(async (
 ) => {
   const membership = await getCurrentMembership();
   if (!membership) throw new ApiError("Not authenticated", 401);
-  if (!["owner", "admin", "pm"].includes(membership.role)) {
-    throw new ApiError("Only admins/PMs can split invoices", 403);
+  // accounting joins owner/admin/pm as of Phase 3a — accounting
+  // must be able to edit allocations on locked invoices as part of
+  // the QA-into-main-page unification.
+  if (!["owner", "admin", "pm", "accounting"].includes(membership.role)) {
+    throw new ApiError("Unauthorized", 403);
   }
   const ctx = await getClientForRequest();
   if (!ctx.ok) throw new ApiError(`Impersonation rejected: ${ctx.reason}`, 401);
@@ -109,6 +117,22 @@ export const PUT = withApiError(async (
   if (!invoice || invoice.org_id !== membership.org_id) {
     throw new ApiError("Invoice not found", 404);
   }
+  // Phase 3a: lock-aware authorization. Non-privileged roles (pm)
+  // cannot modify allocations on locked invoices — privileged roles
+  // (accounting, admin, owner) can, and the edit is audit-logged
+  // further down.
+  const invoiceLocked = isInvoiceLocked(invoice.status as string);
+  if (invoiceLocked && !canEditLockedFields(membership.role)) {
+    throw new ApiError(
+      `Cannot edit allocations on a ${invoice.status} invoice — requires privileged role`,
+      403
+    );
+  }
+  // Hard data-integrity block: in_draw/paid are also locked per
+  // Phase 3a spec, but even privileged users cannot edit allocations
+  // on an invoice already attached to a submitted draw or paid out
+  // — that would desync draw math / payment records. Separate check
+  // so the 400 message is distinct from the lock 403.
   if (["in_draw", "paid"].includes(invoice.status as string)) {
     throw new ApiError(
       `Cannot edit allocations on a ${invoice.status} invoice`,
@@ -139,6 +163,16 @@ export const PUT = withApiError(async (
     );
   }
 
+  // Capture the pre-save allocation set for the audit log below.
+  // Only needed when this is a privileged override on a locked
+  // invoice — but cheap to fetch either way, and keeps the audit
+  // path simple.
+  const { data: previousAllocations } = await supabase
+    .from("invoice_allocations")
+    .select("cost_code_id, amount_cents, description")
+    .eq("invoice_id", context.params.id)
+    .is("deleted_at", null);
+
   // Soft-delete existing live allocations so the replacement set is clean.
   // Hard delete would lose audit history; past rows stay via deleted_at IS NOT NULL.
   await supabase
@@ -160,6 +194,30 @@ export const PUT = withApiError(async (
 
   if (drawId) {
     await recomputePercentageBillings(drawId);
+  }
+
+  // Phase 3a: audit-log privileged edits on locked invoices. The
+  // `if (!locked)` early-return keeps normal pm_review saves out of
+  // activity_log — that's just routine editing, not an override.
+  if (invoiceLocked && canEditLockedFields(membership.role)) {
+    const {
+      data: { user: auditUser },
+    } = await supabase.auth.getUser();
+    if (auditUser) {
+      await logFieldEdit({
+        invoiceId: context.params.id,
+        orgId: membership.org_id,
+        userId: auditUser.id,
+        field: "allocations",
+        oldValue: previousAllocations ?? [],
+        newValue: toInsert.map((a) => ({
+          cost_code_id: a.cost_code_id,
+          amount_cents: a.amount_cents,
+          description: a.description,
+        })),
+        byRole: membership.role,
+      });
+    }
   }
 
   await logImpersonatedWrite(ctx, {

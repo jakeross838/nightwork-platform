@@ -16,6 +16,8 @@ import PaymentPanel from "@/components/invoices/PaymentPanel";
 import PaymentTrackingPanel from "@/components/invoices/PaymentTrackingPanel";
 import InvoiceHeader from "@/components/invoices/InvoiceHeader";
 import InvoiceDetailsPanel, { buildAllocSummary } from "@/components/invoices/InvoiceDetailsPanel";
+import { useCurrentRole } from "@/hooks/use-current-role";
+import { isInvoiceLocked, canEditLockedFields } from "@/lib/invoice-permissions";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -293,6 +295,12 @@ export default function InvoiceReviewPage() {
  const params = useParams();
  const router = useRouter();
  const invoiceId = params.id as string;
+
+ // Current user's org role (null while loading). Drives lock + edit
+ // gating via canEditInvoice(). A loading (null) role is treated as
+ // non-privileged — see use-current-role.ts for the fail-closed
+ // contract.
+ const role = useCurrentRole();
 
  const [invoice, setInvoice] = useState<InvoiceData | null>(null);
  const [loading, setLoading] = useState(true);
@@ -834,6 +842,15 @@ export default function InvoiceReviewPage() {
  );
 
  const isReviewable = ["pm_review", "ai_processed", "pm_held", "info_requested"].includes(invoice.status);
+ // Phase 3a: canEdit drives the allocations editor's readOnly gate.
+ // - Non-locked statuses are editable by anyone with endpoint
+ //   permission — role value doesn't matter.
+ // - Locked statuses (pm_approved, qa_review, qa_approved, in_draw,
+ //   paid) require a privileged role. While role is still loading
+ //   (null), we fail closed so a locked invoice stays readOnly until
+ //   confirmed.
+ const locked = isInvoiceLocked(invoice.status);
+ const canEdit = !locked || (role !== null && canEditLockedFields(role));
  const showPaymentTracking = ["qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(invoice.status);
  const autoFills = (invoice.confidence_details as Record<string, unknown>)?.auto_fills as Record<string, boolean> | undefined;
 
@@ -1561,6 +1578,7 @@ export default function InvoiceReviewPage() {
            statusHistory={invoice.status_history ?? []}
            currentStatus={invoice.status}
            userNames={userNames}
+           role={role}
          />
        </div>
 
@@ -1575,7 +1593,7 @@ export default function InvoiceReviewPage() {
            invoiceId={invoice.id}
            invoiceTotalCents={invoice.total_amount}
            costCodes={costCodes}
-           readOnly={!isReviewable}
+           readOnly={!canEdit}
            onChange={refreshInvoice}
          />
        </div>

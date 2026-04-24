@@ -15,6 +15,7 @@ import NavDropdown, {
   MobileNavSection,
   type NavDropdownItem,
 } from "@/components/nav/nav-dropdown";
+import { useCurrentRole } from "@/hooks/use-current-role";
 
 function NavThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -144,6 +145,7 @@ function buildAdminItems(isPlatformAdmin: boolean): NavDropdownItem[] {
 
 export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => void } = {}) {
   const pathname = usePathname();
+  const role = useCurrentRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
@@ -151,38 +153,37 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
   const [pendingConversions, setPendingConversions] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Wait for role to resolve before composing the Profile state — the
+  // nav renders the role badge alongside the user name, so loading
+  // both together avoids a flash of a placeholder role.
   useEffect(() => {
-    async function loadProfile() {
+    if (!role) return;
+    let cancelled = false;
+    (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const [{ data: profileRow }, { data: membership }, { data: adminRow }] =
-        await Promise.all([
-          supabase.from("profiles").select("id, full_name").eq("id", user.id).single(),
-          supabase
-            .from("org_members")
-            .select("role")
-            .eq("user_id", user.id)
-            .eq("is_active", true)
-            .order("created_at", { ascending: true })
-            .limit(1)
-            .maybeSingle(),
-          supabase
-            .from("platform_admins")
-            .select("user_id")
-            .eq("user_id", user.id)
-            .maybeSingle(),
-        ]);
-      if (profileRow && membership?.role) {
+      if (!user || cancelled) return;
+      const [{ data: profileRow }, { data: adminRow }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name").eq("id", user.id).single(),
+        supabase
+          .from("platform_admins")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      if (profileRow) {
         setProfile({
           id: profileRow.id as string,
           full_name: profileRow.full_name as string,
-          role: membership.role as UserRole,
+          role: role as UserRole,
         });
       }
       setIsPlatformAdmin(!!adminRow);
-    }
-    loadProfile();
-  }, []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [role]);
 
   // Fetch pending counts (verification + conversions). Best-effort —
   // silent failure keeps the nav rendering for users missing either
@@ -239,7 +240,8 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
     pathname.startsWith("/settings") ||
     pathname.startsWith("/vendors");
 
-  const role = profile?.role ?? null;
+  // Use the hook's role directly for show-gates; profile?.role is
+  // redundant once the hook drives profile assembly above.
   const show = {
     dashboard: can(role, "dashboard"),
     financial: can(role, "financial"),
