@@ -30,6 +30,7 @@ import InvoiceTitleStrip from "@/components/invoices/InvoiceTitleStrip";
 import InvoiceDetailsCard from "@/components/invoices/InvoiceDetailsCard";
 import InvoiceDetailsForm from "@/components/invoices/InvoiceDetailsForm";
 import InvoiceSummaryStrip from "@/components/invoices/InvoiceSummaryStrip";
+import CollapsibleSection from "@/components/invoices/CollapsibleSection";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -1711,13 +1712,8 @@ export default function InvoiceReviewPage() {
          </div>
        </div>
 
-       {/* ── AI Extraction narrative panel ── */}
-       <AiExtractionNote
-         confidenceScore={invoice.confidence_score}
-         confidenceDetails={invoice.confidence_details}
-         flags={(invoice.ai_raw_response?.flags as string[] | undefined) ?? []}
-         aiModelUsed={(invoice as { ai_model_used?: string }).ai_model_used}
-       />
+       {/* AiExtractionNote relocated to the "AI Confidence & Extraction"
+           accordion below the workbench divider (Phase 2 commit 4). */}
 
        {/* ── Status timeline (milestone view) ── */}
        <div className="mt-6">
@@ -1744,14 +1740,74 @@ export default function InvoiceReviewPage() {
    <div className="flex-1 h-px" style={{ background: "var(--border-default)" }} />
  </div>
 
- <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-up">
- {/* ── Middle: Editable Form ── */}
- <div className="xl:col-span-1 space-y-6 animate-fade-up stagger-2">
- <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider brass-underline">Invoice Details</p>
+ <div className="max-w-[1180px] mx-auto space-y-5 animate-fade-up">
+ {/* Payment — Phase 8 — expanded, no accordion wrapper */}
+ <PaymentPanel invoice={invoice} onRefresh={refreshInvoice} />
 
+ {/* Payment Tracking — expanded when relevant */}
+ {showPaymentTracking && (
+ <SidebarCard title="Payment Tracking">
+ <PaymentTrackingPanel
+   checkNumber={checkNumber}
+   onCheckNumberChange={setCheckNumber}
+   pickedUp={pickedUp}
+   onPickedUpChange={setPickedUp}
+   mailedDate={mailedDate}
+   onMailedDateChange={setMailedDate}
+   saving={savingPayment}
+   onSave={handleSavePaymentTracking}
+ />
+ </SidebarCard>
+ )}
+
+ {/* Status History — collapsible */}
+ {invoice.status_history && invoice.status_history.length > 0 && (
+ <CollapsibleSection
+   title="Status History"
+   badge={`${invoice.status_history.length} event${invoice.status_history.length === 1 ? "" : "s"}`}
+ >
+ <StatusHistoryPanel history={invoice.status_history} userNames={userNames} />
+ </CollapsibleSection>
+ )}
+
+ {/* AI Confidence & Extraction — collapsible, groups the narrative
+     panel + per-field confidence breakdown. AiParsedRawPanel renders
+     inside InvoiceDetailsForm (kept there from Phase 1), not here. */}
+ <CollapsibleSection
+   title="AI Confidence & Extraction"
+   badge={(() => {
+     const pct = Math.round(invoice.confidence_score * 100);
+     const afCount = autoFills ? Object.values(autoFills).filter(Boolean).length : 0;
+     return afCount > 0 ? `${pct}% · ${afCount} auto-filled` : `${pct}%`;
+   })()}
+ >
+ <AiExtractionNote
+   confidenceScore={invoice.confidence_score}
+   confidenceDetails={invoice.confidence_details}
+   flags={(invoice.ai_raw_response?.flags as string[] | undefined) ?? []}
+   aiModelUsed={(invoice as { ai_model_used?: string }).ai_model_used}
+ />
+ {invoice.confidence_details && (
+ <div className="mt-4">
+ <AiConfidenceBreakdown confidenceDetails={invoice.confidence_details} />
+ </div>
+ )}
+ </CollapsibleSection>
+
+ {/* Invoice Details — collapsible (form is read-only in QA-approved
+     state; editable in pm_review). Badge previews invoice type +
+     primary cost code. */}
+ <CollapsibleSection
+   title="Invoice Details"
+   badge={(() => {
+     const typeLabel = invoiceType ? formatStatus(invoiceType) : "—";
+     const primaryCode = costCodes.find(c => c.id === costCodeId)?.code;
+     return primaryCode ? `${typeLabel} · ${primaryCode}` : typeLabel;
+   })()}
+ >
  {/* Missing field flags */}
  {(missingInvoiceNumber || missingInvoiceDate || dateReasonablenessWarning) && (
- <div className="mt-4 flex flex-wrap gap-2">
+ <div className="mt-1 flex flex-wrap gap-2">
  {missingInvoiceNumber && (
  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-[rgba(201,138,59,0.12)] text-[color:var(--nw-warn)] border border-[rgba(201,138,59,0.25)]">
  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
@@ -1832,76 +1888,11 @@ export default function InvoiceReviewPage() {
    aiParsedTotal={aiParsedTotal}
    isCreditMemo={isCreditMemo}
  />
-
  </div>
 
- {/* Actions — desktop only (mobile uses sticky bar below).
-     Restyled with NwButton primitives. Approve uses primary; Partial /
-     Hold / Deny / Request Info follow the secondary / danger / ghost
-     pattern from the design system. */}
- {isReviewable && (
- <div className="hidden md:block border-t border-[var(--border-default)] pt-6 space-y-3">
- <div className="mb-3">
- <NwEyebrow tone="default">Actions</NwEyebrow>
- </div>
- <div className="flex gap-3 flex-wrap">
- <NwButton
- variant="primary"
- size="lg"
- onClick={openApproveFlow}
- disabled={saving || !!approveDisabledReason}
- loading={saving}
- title={approveDisabledReason ?? undefined}
- className="flex-1 min-w-[120px]"
- >
- {saving ? "Saving" : "Approve"}
- </NwButton>
- <NwButton
- variant="secondary"
- size="lg"
- onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }}
- disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
- title={approveDisabledReason ?? (lineItems.length < 2 ? "Partial approval requires 2+ line items" : "Split this invoice into approved and held portions")}
- className="flex-1 min-w-[120px]"
- >
- Partial Approve
- </NwButton>
- <NwButton
- variant="secondary"
- size="lg"
- onClick={() => setShowNoteModal("hold")}
- disabled={saving}
- className="flex-1 min-w-[120px]"
- >
- Hold
- </NwButton>
- <NwButton
- variant="danger"
- size="lg"
- onClick={() => setShowNoteModal("deny")}
- disabled={saving}
- className="flex-1 min-w-[120px]"
- >
- Deny
- </NwButton>
- </div>
- <NwButton
- variant="ghost"
- size="md"
- onClick={() => setShowRequestInfoModal(true)}
- disabled={saving}
- className="w-full"
- >
- Request Info
- </NwButton>
- </div>
- )}
- </div>
-
- {/* ── Right: Sidebar ── */}
- <div className="xl:col-span-1 animate-fade-up stagger-4">
- <div className="sticky top-24 space-y-5">
- {/* Budget — stacked per unique cost code in line items */}
+ {/* Budget Status — kept inside Invoice Details accordion because it's
+     cost-code-contextual (driven by form's cost-code selection). */}
+ <div className="mt-5">
  <SidebarCard title="Budget Status">
  {uniqueLineCodeIds.length > 1 ? (
  <div className="space-y-4">
@@ -1973,46 +1964,74 @@ export default function InvoiceReviewPage() {
  )
  )}
  </SidebarCard>
+ </div>
+ </CollapsibleSection>
 
- {/* Payment — Phase 8 */}
- <PaymentPanel invoice={invoice} onRefresh={refreshInvoice} />
-
- {/* Payment Tracking */}
- {showPaymentTracking && (
- <SidebarCard title="Payment Tracking">
- <PaymentTrackingPanel
-   checkNumber={checkNumber}
-   onCheckNumberChange={setCheckNumber}
-   pickedUp={pickedUp}
-   onPickedUpChange={setPickedUp}
-   mailedDate={mailedDate}
-   onMailedDateChange={setMailedDate}
-   saving={savingPayment}
-   onSave={handleSavePaymentTracking}
- />
- </SidebarCard>
+ {/* Actions — desktop only (mobile uses sticky bar below).
+     Commit 5 will move these into the bottom sticky workflow bar.
+     Until then, render as a flat card below the accordion sections. */}
+ {isReviewable && (
+ <div className="hidden md:block bg-[var(--bg-card)] border border-[var(--border-default)] p-5 space-y-3">
+ <div className="mb-3">
+ <NwEyebrow tone="default">Actions</NwEyebrow>
+ </div>
+ <div className="flex gap-3 flex-wrap">
+ <NwButton
+ variant="primary"
+ size="lg"
+ onClick={openApproveFlow}
+ disabled={saving || !!approveDisabledReason}
+ loading={saving}
+ title={approveDisabledReason ?? undefined}
+ className="flex-1 min-w-[120px]"
+ >
+ {saving ? "Saving" : "Approve"}
+ </NwButton>
+ <NwButton
+ variant="secondary"
+ size="lg"
+ onClick={() => { setPartialApprovedIds(new Set()); setPartialNote(""); setPartialError(null); setShowPartialModal(true); }}
+ disabled={saving || lineItems.length < 2 || !!approveDisabledReason}
+ title={approveDisabledReason ?? (lineItems.length < 2 ? "Partial approval requires 2+ line items" : "Split this invoice into approved and held portions")}
+ className="flex-1 min-w-[120px]"
+ >
+ Partial Approve
+ </NwButton>
+ <NwButton
+ variant="secondary"
+ size="lg"
+ onClick={() => setShowNoteModal("hold")}
+ disabled={saving}
+ className="flex-1 min-w-[120px]"
+ >
+ Hold
+ </NwButton>
+ <NwButton
+ variant="danger"
+ size="lg"
+ onClick={() => setShowNoteModal("deny")}
+ disabled={saving}
+ className="flex-1 min-w-[120px]"
+ >
+ Deny
+ </NwButton>
+ </div>
+ <NwButton
+ variant="ghost"
+ size="md"
+ onClick={() => setShowRequestInfoModal(true)}
+ disabled={saving}
+ className="w-full"
+ >
+ Request Info
+ </NwButton>
+ </div>
  )}
 
- {/* AI Confidence */}
- {invoice.confidence_details && (
- <SidebarCard title="AI Confidence">
- <AiConfidenceBreakdown confidenceDetails={invoice.confidence_details} />
- </SidebarCard>
- )}
-
- {/* Status History Timeline — newest first */}
- {invoice.status_history?.length > 0 && (
- <SidebarCard title="Status History">
- <StatusHistoryPanel history={invoice.status_history} userNames={userNames} />
- </SidebarCard>
- )}
-
- {/* Edit History (PM + QA overrides) — collapsible */}
+ {/* Edit History (PM + QA overrides) — already collapsible, keep inline */}
  {(invoice.pm_overrides && Object.keys(invoice.pm_overrides).length > 0) || (invoice.qa_overrides && Object.keys(invoice.qa_overrides).length > 0) ? (
  <EditHistoryCard pmOverrides={invoice.pm_overrides} qaOverrides={invoice.qa_overrides} />
  ) : null}
- </div>
- </div>
  </div>
 
  {/* Cost Intelligence verification — staged line items awaiting review.
