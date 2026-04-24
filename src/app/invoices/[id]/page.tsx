@@ -21,6 +21,7 @@ import { toast } from "@/lib/utils/toast";
 import ExtractionVerificationPanel from "@/components/items/extraction-verification-panel";
 import AiExtractionNote from "@/components/invoices/AiExtractionNote";
 import AiParsedRawPanel from "@/components/invoices/AiParsedRawPanel";
+import AiConfidenceBreakdown from "@/components/invoices/AiConfidenceBreakdown";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -2543,16 +2544,7 @@ export default function InvoiceReviewPage() {
  {/* AI Confidence */}
  {invoice.confidence_details && (
  <SidebarCard title="AI Confidence">
- <div className="space-y-2">
- {Object.entries(invoice.confidence_details)
- .filter(([f, s]) => f !== "auto_fills" && typeof s === "number")
- .map(([field, score]) => (
- <div key={field} className="flex items-center justify-between text-sm">
- <span className="text-[color:var(--text-muted)]">{formatFlag(field)}</span>
- <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${confidenceColor(score as number)}`}>{Math.round((score as number) * 100)}%</span>
- </div>
- ))}
- </div>
+ <AiConfidenceBreakdown confidenceDetails={invoice.confidence_details} />
  </SidebarCard>
  )}
 
