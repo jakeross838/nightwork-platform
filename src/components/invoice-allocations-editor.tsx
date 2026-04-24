@@ -295,6 +295,17 @@ export default function InvoiceAllocationsEditor({
           outline: none;
           border-color: var(--nw-stone-blue);
         }
+        /* Match globals.css input:disabled. styled-jsx scopes .input
+           with an auto-attribute that boosts its specificity above
+           bare element+:disabled, so we repeat the rule here for
+           parity. Same tokens, both themes. */
+        .input:disabled {
+          background: var(--bg-muted);
+          color: var(--text-tertiary);
+          border-color: var(--border-subtle);
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
       `}</style>
     </div>
   );
