@@ -25,6 +25,7 @@ import AiConfidenceBreakdown from "@/components/invoices/AiConfidenceBreakdown";
 import StatusHistoryPanel from "@/components/invoices/StatusHistoryPanel";
 import PaymentPanel from "@/components/invoices/PaymentPanel";
 import PaymentTrackingPanel from "@/components/invoices/PaymentTrackingPanel";
+import InvoiceHeader from "@/components/invoices/InvoiceHeader";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -1203,59 +1204,20 @@ export default function InvoiceReviewPage() {
  <AppShell>
 
  {/* Sub-header */}
- <div className="border-b border-[var(--border-default)] bg-[rgba(91,134,153,0.04)] px-4 md:px-6 py-3 print:hidden">
- <div className="max-w-[1600px] mx-auto flex items-center gap-3 md:gap-4 flex-wrap">
- <Link href="/invoices/queue" className="text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors text-sm">&larr; Queue</Link>
- <h1 className="font-display text-base md:text-xl text-[color:var(--text-primary)] flex items-center gap-2 min-w-0">
- <span className="truncate">{invoice.vendor_name_raw ?? "Invoice"}</span>
- <VendorContactPopover
- vendorId={invoice.vendor_id}
- vendorName={invoice.vendor_name_raw ?? invoice.vendors?.name ?? null}
- vendor={invoice.vendors}
+ <InvoiceHeader
+   vendorNameRaw={invoice.vendor_name_raw}
+   vendorId={invoice.vendor_id}
+   vendor={invoice.vendors}
+   invoiceNumber={invoice.invoice_number}
+   confidenceScore={invoice.confidence_score}
+   status={invoice.status}
+   isCreditMemo={isCreditMemo}
+   isChangeOrder={isChangeOrder}
+   assignedPmId={invoice.assigned_pm?.id}
+   pmUsers={pmUsers}
+   reassigning={reassigning}
+   onReassignPm={handleReassignPm}
  />
- <span className="text-[color:var(--text-secondary)] hidden md:inline">&mdash;</span>
- <span className="md:hidden"> </span>
- <span className="truncate">{invoice.invoice_number ?? "No #"}</span>
- </h1>
- <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium ${confidenceColor(invoice.confidence_score)}`}>
- {Math.round(invoice.confidence_score * 100)}% {confidenceLabel(invoice.confidence_score)}
- </span>
- <span className={`inline-flex items-center text-xs px-3 py-1 font-medium ${statusBadgeOutline(invoice.status)}`}>
- {formatStatus(invoice.status)}
- </span>
- {isCreditMemo && (
- <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)]">
- Credit Memo
- </span>
- )}
- {isChangeOrder && (
- <span className="inline-flex items-center text-xs px-3 py-1 font-medium bg-transparent text-[color:var(--nw-warn)] border border-[var(--nw-warn)]">
- Change Order
- </span>
- )}
- <span className="inline-flex items-center gap-1.5 text-xs text-[color:var(--text-secondary)]">
- <span>PM:</span>
- <select
- value={invoice.assigned_pm?.id ?? ""}
- onChange={(e) => handleReassignPm(e.target.value)}
- disabled={reassigning}
- className="bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] px-2 py-1 focus:border-[var(--nw-stone-blue)] focus:outline-none disabled:opacity-50 cursor-pointer"
- >
- <option value="">Unassigned</option>
- {pmUsers.map(u => (
- <option key={u.id} value={u.id}>{u.full_name}</option>
- ))}
- </select>
- </span>
- <button
- onClick={() => window.print()}
- className="ml-auto px-3 py-1 border border-[var(--border-default)] text-[color:var(--text-primary)] hover:bg-[var(--bg-muted)] text-xs uppercase tracking-[0.06em] transition-colors"
- aria-label="Print this invoice"
- >
- Print
- </button>
- </div>
- </div>
 
  {/* Kick-back banner from QA */}
  {kickBackInfo && (
