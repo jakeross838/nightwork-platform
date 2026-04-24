@@ -29,6 +29,7 @@ import InvoiceHeader from "@/components/invoices/InvoiceHeader";
 import InvoiceTitleStrip from "@/components/invoices/InvoiceTitleStrip";
 import InvoiceDetailsCard from "@/components/invoices/InvoiceDetailsCard";
 import InvoiceDetailsForm from "@/components/invoices/InvoiceDetailsForm";
+import InvoiceSummaryStrip from "@/components/invoices/InvoiceSummaryStrip";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -1373,15 +1374,22 @@ export default function InvoiceReviewPage() {
 
    return (
      <div className="mb-10 animate-fade-up">
-       {/* ── Showcase header ── */}
-       <InvoiceTitleStrip
+       {/* ── Summary strip — consolidates vendor / amount / invoice # /
+              dates / job / status / confidence / draw / utility actions
+              into one scannable horizontal row. Replaces the old
+              InvoiceTitleStrip H1 + the dark teal InvoiceDetailsCard. */}
+       <InvoiceSummaryStrip
          vendorName={vendorName}
+         invoiceNumber={invoice.invoice_number}
+         totalAmountCents={invoice.total_amount}
+         invoiceDate={invoice.invoice_date}
+         invoiceDateLabel={invoice.invoice_date ? formatDate(invoice.invoice_date) : null}
+         receivedDateLabel={receivedDate}
          projectName={projectName}
          jobId={invoice.job_id}
-         invoiceNumber={invoice.invoice_number}
          status={invoice.status}
          statusBadgeVariant={statusBadgeVariant}
-         receivedDateLabel={receivedDate}
+         confidenceScore={invoice.confidence_score}
          drawLabel={drawLabel}
          drawId={drawInfo?.id ?? null}
          signedFileUrl={invoice.signed_file_url}
@@ -1723,25 +1731,6 @@ export default function InvoiceReviewPage() {
          />
        </div>
 
-       {/* InvoiceDetailsCard — temporarily parked here after the timeline.
-           Commit 3 consolidates this data into a SummaryStrip and removes
-           this card. Wrapped in lg:grid-cols-5 so its hard-coded
-           `lg:col-span-2` keeps the original ~40% width. */}
-       <div className="mt-6 grid grid-cols-1 lg:grid-cols-5 gap-px">
-         <InvoiceDetailsCard
-           totalAmountCents={invoice.total_amount}
-           vendorName={vendorName}
-           vendorId={invoice.vendor_id}
-           projectName={projectName}
-           jobId={invoice.job_id}
-           invoiceDate={invoice.invoice_date}
-           receivedDateLabel={receivedDate}
-           invoiceType={invoice.invoice_type}
-           drawInfo={drawInfo}
-           drawLabel={drawLabel}
-           allocSummary={allocSummary}
-         />
-       </div>
      </div>
    );
  })()}
