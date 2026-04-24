@@ -1388,11 +1388,255 @@ export default function InvoiceReviewPage() {
          isQaApproved={isQaApproved}
        />
 
-       {/* ── Showcase 2-col body ── */}
-       <div className="grid grid-cols-1 lg:grid-cols-5 gap-px" style={{ background: "var(--border-default)", border: "1px solid var(--border-default)" }}>
-         {/* LEFT: Source Document Card */}
+       {/* ── Main 60/40 body — LEFT: Line Items (primary real estate).
+              RIGHT: sticky PDF viewer pinned under the nav at top-24. On
+              small screens collapses to single-column stack (PDF on top,
+              line items below), with sticky disabled. */}
+       <div
+         className="grid grid-cols-1 lg:grid-cols-5 gap-px items-start"
+         style={{ background: "var(--border-default)", border: "1px solid var(--border-default)" }}
+       >
+         {/* LEFT 60% — Line Items table (moved from workbench middle) */}
          <div
            className="lg:col-span-3 p-5"
+           style={{ background: "var(--bg-card)" }}
+         >
+           {lineItems.length > 0 ? (
+             <>
+               <div className="flex items-center justify-between mb-2">
+                 <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Line Items</p>
+                 {uniqueLineCodeIds.length > 0 && (
+                   <p className="text-[11px] text-[color:var(--text-secondary)]">
+                     {lineItems.length} line{lineItems.length === 1 ? "" : "s"} across {uniqueLineCodeIds.length} cost code{uniqueLineCodeIds.length === 1 ? "" : "s"}
+                   </p>
+                 )}
+               </div>
+
+               {/* Cost code summary */}
+               {costCodeSummary.length > 0 && (
+                 <div className="mb-2 bg-[rgba(91,134,153,0.08)] border border-[var(--border-default)]">
+                   <div className="px-3 py-2 border-b border-[var(--border-default)]">
+                     <p className="text-[10px] text-[color:var(--text-secondary)] uppercase tracking-wider">
+                       Cost Code Split · {costCodeSummary.length} code{costCodeSummary.length !== 1 ? "s" : ""}
+                     </p>
+                   </div>
+                   <table className="w-full text-xs">
+                     <thead>
+                       <tr className="text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)]">
+                         <th className="text-left px-3 py-1.5 font-medium">Code</th>
+                         <th className="text-left px-3 py-1.5 font-medium">Description</th>
+                         <th className="text-right px-3 py-1.5 font-medium">Lines</th>
+                         <th className="text-right px-3 py-1.5 font-medium">Total</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {costCodeSummary.map(cs => (
+                         <tr key={cs.id} className="border-t border-[var(--border-default)]">
+                           <td className="px-3 py-1.5 font-mono text-[color:var(--nw-stone-blue)]">{cs.code}</td>
+                           <td className="px-3 py-1.5 text-[color:var(--text-muted)]">{cs.description}</td>
+                           <td className="px-3 py-1.5 text-right text-[color:var(--text-secondary)] tabular-nums">{cs.count}</td>
+                           <td className="px-3 py-1.5 text-right text-[color:var(--text-primary)] font-medium tabular-nums">{formatCents(cs.total)}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               )}
+
+               <div className="overflow-x-auto border border-[var(--border-default)]">
+                 <table className="w-full text-xs">
+                   <thead>
+                     <tr className="bg-[var(--bg-subtle)]">
+                       <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold">Description</th>
+                       <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[220px]">Cost Code</th>
+                       <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[180px]">PO</th>
+                       <th className="py-2 px-3 text-center text-[color:var(--text-primary)] font-semibold">CO</th>
+                       <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[120px]">CO Ref</th>
+                       <th className="py-2 px-3 text-right text-[color:var(--text-primary)] font-semibold">Amount</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     {lineItems.map((li, idx) => {
+                       const aiSug = li.ai_suggested_cost_code_id && costCodes.find(c => c.id === li.ai_suggested_cost_code_id);
+                       const aiSugActive = li.cost_code_id === li.ai_suggested_cost_code_id && aiSug;
+                       const missingCoRef = li.is_change_order && !li.co_reference.trim();
+                       return (
+                         <tr key={li.id ?? idx} className="border-t border-[var(--border-default)] align-top">
+                           <td className="py-2 px-3 text-[color:var(--text-primary)] max-w-[360px]">
+                             {li.description ? (
+                               <>
+                                 <div className={expandedDescriptions.has(idx) ? "" : "line-clamp-2"}>
+                                   {li.description}
+                                 </div>
+                                 {li.description.length > 100 && (
+                                   <button
+                                     type="button"
+                                     onClick={() => setExpandedDescriptions(prev => {
+                                       const next = new Set(prev);
+                                       if (next.has(idx)) next.delete(idx);
+                                       else next.add(idx);
+                                       return next;
+                                     })}
+                                     className="text-[10px] text-[color:var(--nw-stone-blue)] hover:underline mt-0.5"
+                                   >
+                                     {expandedDescriptions.has(idx) ? "Show less" : "Show more"}
+                                   </button>
+                                 )}
+                               </>
+                             ) : (
+                               <span className="text-[color:var(--text-secondary)] italic">(no description)</span>
+                             )}
+                             {(li.qty != null || li.rate != null) && (
+                               <div className="text-[10px] text-[color:var(--text-secondary)] mt-0.5">
+                                 {li.qty != null && <span>{li.qty}{li.unit ? ` ${li.unit}` : ""}</span>}
+                                 {li.qty != null && li.rate != null && <span> × </span>}
+                                 {li.rate != null && <span>{formatDollars(li.rate)}</span>}
+                               </div>
+                             )}
+                           </td>
+                           <td className="py-2 px-3">
+                             <LineCostCodeSelect
+                               value={li.cost_code_id ?? ""}
+                               onChange={(v) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, cost_code_id: v || null } : item))}
+                               options={lineCostCodeOptions}
+                               disabled={!isReviewable}
+                               aiSuggestion={aiSugActive ? { code: aiSug!.code, confidence: li.ai_suggestion_confidence ?? 0 } : null}
+                             />
+                             {(() => {
+                               if (!li.cost_code_id) return null;
+                               const budget = budgetByCostCode.get(li.cost_code_id);
+                               if (!budget) return (
+                                 <p className="mt-1 text-[10px] text-[color:var(--text-secondary)]">No budget line for this cost code</p>
+                               );
+                               const remainingAfter = budget.remaining - li.amount_cents;
+                               const willOver = remainingAfter < 0;
+                               return (
+                                 <p className={`mt-1 text-[10px] ${willOver ? "text-[color:var(--nw-danger)] font-medium" : "text-[color:var(--text-secondary)]"}`}>
+                                   {willOver
+                                     ? `Over budget by ${formatCents(Math.abs(remainingAfter))}`
+                                     : `${formatCents(budget.remaining)} remaining · after: ${formatCents(remainingAfter)}`}
+                                 </p>
+                               );
+                             })()}
+                           </td>
+                           <td className="py-2 px-3">
+                             <select
+                               value={li.po_id ?? ""}
+                               onChange={(e) => {
+                                 const newPoId = e.target.value || null;
+                                 const po = newPoId ? purchaseOrders.find(p => p.id === newPoId) : null;
+                                 setLineItems(prev => prev.map((item, i) => {
+                                   if (i !== idx) return item;
+                                   return {
+                                     ...item,
+                                     po_id: newPoId,
+                                     cost_code_id: po?.budget_line_id
+                                       ? (costCodes.find(c => budgetByCostCode.has(c.id))?.id ?? item.cost_code_id)
+                                       : item.cost_code_id,
+                                   };
+                                 }));
+                               }}
+                               disabled={!isReviewable}
+                               className="w-full px-2 py-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)] disabled:opacity-50"
+                             >
+                               <option value="">— No PO —</option>
+                               {purchaseOrders.map(po => {
+                                 const remaining = po.amount - po.invoiced_total;
+                                 return (
+                                   <option key={po.id} value={po.id}>
+                                     {po.po_number ?? "—"}: {formatCents(remaining)} left
+                                   </option>
+                                 );
+                               })}
+                             </select>
+                             {(() => {
+                               if (!li.po_id) return null;
+                               const po = purchaseOrders.find(p => p.id === li.po_id);
+                               if (!po) return null;
+                               const remaining = po.amount - po.invoiced_total;
+                               const over = li.amount_cents > remaining;
+                               return (
+                                 <p className={`mt-1 text-[10px] ${over ? "text-[color:var(--nw-warn)] font-medium" : "text-[color:var(--text-secondary)]"}`}>
+                                   {over
+                                     ? `Exceeds PO by ${formatCents(li.amount_cents - remaining)}`
+                                     : `${formatCents(remaining)} remaining on PO`}
+                                 </p>
+                               );
+                             })()}
+                           </td>
+                           <td className="py-2 px-3 text-center">
+                             <button
+                               onClick={() => setLineItems(prev => prev.map((item, i) => {
+                                 if (i !== idx) return item;
+                                 const next = !item.is_change_order;
+                                 return {
+                                   ...item,
+                                   is_change_order: next,
+                                   cost_code_id: resolveVariant(costCodes, item.cost_code_id, next),
+                                   co_reference: next ? item.co_reference : "",
+                                 };
+                               }))}
+                               disabled={!isReviewable}
+                               className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-[var(--nw-warn)]" : "bg-[var(--border-default)]"}`}
+                               aria-label="Toggle Change Order"
+                             >
+                               <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${li.is_change_order ? "translate-x-5" : "translate-x-1"}`} />
+                             </button>
+                           </td>
+                           <td className="py-2 px-3">
+                             {li.is_change_order ? (
+                               <input
+                                 type="text"
+                                 value={li.co_reference}
+                                 onChange={(e) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, co_reference: e.target.value } : item))}
+                                 disabled={!isReviewable}
+                                 placeholder="PCCO #"
+                                 className={`w-full max-w-[140px] px-2 py-1 bg-[var(--bg-subtle)] border text-xs text-[color:var(--text-primary)] focus:outline-none disabled:opacity-50 ${missingCoRef ? "border-[rgba(176,85,78,0.5)]" : "border-[var(--border-default)] focus:border-[var(--nw-stone-blue)]"}`}
+                               />
+                             ) : (
+                               <span className="text-[color:var(--text-secondary)]">—</span>
+                             )}
+                           </td>
+                           <td className="py-2 px-3 text-right text-[color:var(--text-primary)] font-medium">{formatCents(li.amount_cents)}</td>
+                         </tr>
+                       );
+                     })}
+                   </tbody>
+                   <tfoot>
+                     <tr className="border-t-2 border-[var(--border-default)] bg-[rgba(91,134,153,0.06)]">
+                       <td colSpan={5} className="py-2 px-3 text-right text-[color:var(--text-secondary)] text-[11px] uppercase tracking-wider">Line Items Sum</td>
+                       <td className={`py-2 px-3 text-right font-medium ${hasAmountMismatch ? "text-[color:var(--nw-danger)]" : "text-[color:var(--text-primary)]"}`}>
+                         {formatCents(lineItemSumCents)}
+                       </td>
+                     </tr>
+                   </tfoot>
+                 </table>
+               </div>
+               {hasAmountMismatch && (
+                 <div className="mt-2 px-3 py-2 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.24)]">
+                   <p className="text-xs text-[color:var(--nw-danger)] font-medium">
+                     Line items sum ({formatCents(lineItemSumCents)}) does not match invoice total ({formatCents(totalCents)})
+                   </p>
+                 </div>
+               )}
+               {missingCoReference && (
+                 <div className="mt-2 px-3 py-2 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.24)]">
+                   <p className="text-xs text-[color:var(--nw-danger)] font-medium">
+                     {lineItemsMissingCoReference.length} change-order line{lineItemsMissingCoReference.length === 1 ? "" : "s"} missing CO Reference
+                   </p>
+                 </div>
+               )}
+             </>
+           ) : (
+             <p className="text-sm text-[color:var(--text-secondary)] italic">No line items extracted for this invoice.</p>
+           )}
+         </div>
+
+         {/* RIGHT 40% — Source document (sticky on desktop, pinned under
+             the nav at top-24 so the PDF stays visible while the user
+             scrolls through the line items on the left). */}
+         <div
+           className="lg:col-span-2 p-5 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-auto"
            style={{ background: "var(--bg-card)" }}
          >
            <div className="flex items-center justify-between mb-4">
@@ -1457,21 +1701,6 @@ export default function InvoiceReviewPage() {
              ) : null}
            </div>
          </div>
-
-         {/* RIGHT: Inverse Card with metadata + read-only allocations */}
-         <InvoiceDetailsCard
-           totalAmountCents={invoice.total_amount}
-           vendorName={vendorName}
-           vendorId={invoice.vendor_id}
-           projectName={projectName}
-           jobId={invoice.job_id}
-           invoiceDate={invoice.invoice_date}
-           receivedDateLabel={receivedDate}
-           invoiceType={invoice.invoice_type}
-           drawInfo={drawInfo}
-           drawLabel={drawLabel}
-           allocSummary={allocSummary}
-         />
        </div>
 
        {/* ── AI Extraction narrative panel ── */}
@@ -1491,6 +1720,26 @@ export default function InvoiceReviewPage() {
            currentStatus={invoice.status}
            history={invoice.status_history ?? []}
            userNames={userNames}
+         />
+       </div>
+
+       {/* InvoiceDetailsCard — temporarily parked here after the timeline.
+           Commit 3 consolidates this data into a SummaryStrip and removes
+           this card. Wrapped in lg:grid-cols-5 so its hard-coded
+           `lg:col-span-2` keeps the original ~40% width. */}
+       <div className="mt-6 grid grid-cols-1 lg:grid-cols-5 gap-px">
+         <InvoiceDetailsCard
+           totalAmountCents={invoice.total_amount}
+           vendorName={vendorName}
+           vendorId={invoice.vendor_id}
+           projectName={projectName}
+           jobId={invoice.job_id}
+           invoiceDate={invoice.invoice_date}
+           receivedDateLabel={receivedDate}
+           invoiceType={invoice.invoice_type}
+           drawInfo={drawInfo}
+           drawLabel={drawLabel}
+           allocSummary={allocSummary}
          />
        </div>
      </div>
@@ -1595,237 +1844,6 @@ export default function InvoiceReviewPage() {
    isCreditMemo={isCreditMemo}
  />
 
- {/* Line Items — editable per-row cost code + CO toggle (multi-cost-code support) */}
- {lineItems.length > 0 && (
- <div className="border-t border-[var(--border-default)] pt-4">
- <div className="flex items-center justify-between mb-2">
- <p className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider">Line Items</p>
- {uniqueLineCodeIds.length > 0 && (
- <p className="text-[11px] text-[color:var(--text-secondary)]">
- {lineItems.length} line{lineItems.length === 1 ? "" : "s"} across {uniqueLineCodeIds.length} cost code{uniqueLineCodeIds.length === 1 ? "" : "s"}
- </p>
- )}
- </div>
-
- {/* Cost code summary */}
- {costCodeSummary.length > 0 && (
- <div className="mb-2 bg-[rgba(91,134,153,0.08)] border border-[var(--border-default)]">
- <div className="px-3 py-2 border-b border-[var(--border-default)]">
- <p className="text-[10px] text-[color:var(--text-secondary)] uppercase tracking-wider">
- Cost Code Split · {costCodeSummary.length} code{costCodeSummary.length !== 1 ? "s" : ""}
- </p>
- </div>
- <table className="w-full text-xs">
- <thead>
- <tr className="text-[10px] uppercase tracking-wider text-[color:var(--text-secondary)]">
- <th className="text-left px-3 py-1.5 font-medium">Code</th>
- <th className="text-left px-3 py-1.5 font-medium">Description</th>
- <th className="text-right px-3 py-1.5 font-medium">Lines</th>
- <th className="text-right px-3 py-1.5 font-medium">Total</th>
- </tr>
- </thead>
- <tbody>
- {costCodeSummary.map(cs => (
- <tr key={cs.id} className="border-t border-[var(--border-default)]">
- <td className="px-3 py-1.5 font-mono text-[color:var(--nw-stone-blue)]">{cs.code}</td>
- <td className="px-3 py-1.5 text-[color:var(--text-muted)]">{cs.description}</td>
- <td className="px-3 py-1.5 text-right text-[color:var(--text-secondary)] tabular-nums">{cs.count}</td>
- <td className="px-3 py-1.5 text-right text-[color:var(--text-primary)] font-medium tabular-nums">{formatCents(cs.total)}</td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- )}
-
- <div className="overflow-x-auto border border-[var(--border-default)]">
- <table className="w-full text-xs">
- <thead>
- <tr className="bg-[var(--bg-subtle)]">
- <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold">Description</th>
- <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[220px]">Cost Code</th>
- <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[180px]">PO</th>
- <th className="py-2 px-3 text-center text-[color:var(--text-primary)] font-semibold">CO</th>
- <th className="py-2 px-3 text-left text-[color:var(--text-primary)] font-semibold min-w-[120px]">CO Ref</th>
- <th className="py-2 px-3 text-right text-[color:var(--text-primary)] font-semibold">Amount</th>
- </tr>
- </thead>
- <tbody>
- {lineItems.map((li, idx) => {
- const aiSug = li.ai_suggested_cost_code_id && costCodes.find(c => c.id === li.ai_suggested_cost_code_id);
- const aiSugActive = li.cost_code_id === li.ai_suggested_cost_code_id && aiSug;
- const missingCoRef = li.is_change_order && !li.co_reference.trim();
- return (
- <tr key={li.id ?? idx} className="border-t border-[var(--border-default)] align-top">
- <td className="py-2 px-3 text-[color:var(--text-primary)] max-w-[360px]">
- {li.description ? (
- <>
- <div className={expandedDescriptions.has(idx) ? "" : "line-clamp-2"}>
- {li.description}
- </div>
- {li.description.length > 100 && (
- <button
- type="button"
- onClick={() => setExpandedDescriptions(prev => {
- const next = new Set(prev);
- if (next.has(idx)) next.delete(idx);
- else next.add(idx);
- return next;
- })}
- className="text-[10px] text-[color:var(--nw-stone-blue)] hover:underline mt-0.5"
- >
- {expandedDescriptions.has(idx) ? "Show less" : "Show more"}
- </button>
- )}
- </>
- ) : (
- <span className="text-[color:var(--text-secondary)] italic">(no description)</span>
- )}
- {(li.qty != null || li.rate != null) && (
- <div className="text-[10px] text-[color:var(--text-secondary)] mt-0.5">
- {li.qty != null && <span>{li.qty}{li.unit ? ` ${li.unit}` : ""}</span>}
- {li.qty != null && li.rate != null && <span> × </span>}
- {li.rate != null && <span>{formatDollars(li.rate)}</span>}
- </div>
- )}
- </td>
- <td className="py-2 px-3">
- <LineCostCodeSelect
- value={li.cost_code_id ?? ""}
- onChange={(v) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, cost_code_id: v || null } : item))}
- options={lineCostCodeOptions}
- disabled={!isReviewable}
- aiSuggestion={aiSugActive ? { code: aiSug!.code, confidence: li.ai_suggestion_confidence ?? 0 } : null}
- />
- {(() => {
- // Budget allocation hint (Phase 6). Shows the matched budget
- // line's remaining amount and flags over-budget pushes.
- if (!li.cost_code_id) return null;
- const budget = budgetByCostCode.get(li.cost_code_id);
- if (!budget) return (
- <p className="mt-1 text-[10px] text-[color:var(--text-secondary)]">No budget line for this cost code</p>
- );
- const remainingAfter = budget.remaining - li.amount_cents;
- const willOver = remainingAfter < 0;
- return (
- <p className={`mt-1 text-[10px] ${willOver ? "text-[color:var(--nw-danger)] font-medium" : "text-[color:var(--text-secondary)]"}`}>
- {willOver
- ? `Over budget by ${formatCents(Math.abs(remainingAfter))}`
- : `${formatCents(budget.remaining)} remaining · after: ${formatCents(remainingAfter)}`}
- </p>
- );
- })()}
- </td>
- <td className="py-2 px-3">
- <select
- value={li.po_id ?? ""}
- onChange={(e) => {
- const newPoId = e.target.value || null;
- const po = newPoId ? purchaseOrders.find(p => p.id === newPoId) : null;
- setLineItems(prev => prev.map((item, i) => {
- if (i !== idx) return item;
- return {
- ...item,
- po_id: newPoId,
- // If PO has a budget_line_id, try to match its cost code.
- cost_code_id: po?.budget_line_id
- ? (costCodes.find(c => budgetByCostCode.has(c.id))?.id ?? item.cost_code_id)
- : item.cost_code_id,
- };
- }));
- }}
- disabled={!isReviewable}
- className="w-full px-2 py-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-xs text-[color:var(--text-primary)] focus:outline-none focus:border-[var(--nw-stone-blue)] disabled:opacity-50"
- >
- <option value="">— No PO —</option>
- {purchaseOrders.map(po => {
- const remaining = po.amount - po.invoiced_total;
- return (
- <option key={po.id} value={po.id}>
- {po.po_number ?? "—"}: {formatCents(remaining)} left
- </option>
- );
- })}
- </select>
- {(() => {
- if (!li.po_id) return null;
- const po = purchaseOrders.find(p => p.id === li.po_id);
- if (!po) return null;
- const remaining = po.amount - po.invoiced_total;
- const over = li.amount_cents > remaining;
- return (
- <p className={`mt-1 text-[10px] ${over ? "text-[color:var(--nw-warn)] font-medium" : "text-[color:var(--text-secondary)]"}`}>
- {over
- ? `Exceeds PO by ${formatCents(li.amount_cents - remaining)}`
- : `${formatCents(remaining)} remaining on PO`}
- </p>
- );
- })()}
- </td>
- <td className="py-2 px-3 text-center">
- <button
- onClick={() => setLineItems(prev => prev.map((item, i) => {
- if (i !== idx) return item;
- const next = !item.is_change_order;
- return {
- ...item,
- is_change_order: next,
- cost_code_id: resolveVariant(costCodes, item.cost_code_id, next),
- co_reference: next ? item.co_reference : "",
- };
- }))}
- disabled={!isReviewable}
- className={`relative inline-flex h-5 w-9 items-center transition-colors disabled:opacity-50 ${li.is_change_order ? "bg-[var(--nw-warn)]" : "bg-[var(--border-default)]"}`}
- aria-label="Toggle Change Order"
- >
- <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${li.is_change_order ? "translate-x-5" : "translate-x-1"}`} />
- </button>
- </td>
- <td className="py-2 px-3">
- {li.is_change_order ? (
- <input
- type="text"
- value={li.co_reference}
- onChange={(e) => setLineItems(prev => prev.map((item, i) => i === idx ? { ...item, co_reference: e.target.value } : item))}
- disabled={!isReviewable}
- placeholder="PCCO #"
- className={`w-full max-w-[140px] px-2 py-1 bg-[var(--bg-subtle)] border text-xs text-[color:var(--text-primary)] focus:outline-none disabled:opacity-50 ${missingCoRef ? "border-[rgba(176,85,78,0.5)]" : "border-[var(--border-default)] focus:border-[var(--nw-stone-blue)]"}`}
- />
- ) : (
- <span className="text-[color:var(--text-secondary)]">—</span>
- )}
- </td>
- <td className="py-2 px-3 text-right text-[color:var(--text-primary)] font-medium">{formatCents(li.amount_cents)}</td>
- </tr>
- );
- })}
- </tbody>
- <tfoot>
- <tr className="border-t-2 border-[var(--border-default)] bg-[rgba(91,134,153,0.06)]">
- <td colSpan={5} className="py-2 px-3 text-right text-[color:var(--text-secondary)] text-[11px] uppercase tracking-wider">Line Items Sum</td>
- <td className={`py-2 px-3 text-right font-medium ${hasAmountMismatch ? "text-[color:var(--nw-danger)]" : "text-[color:var(--text-primary)]"}`}>
- {formatCents(lineItemSumCents)}
- </td>
- </tr>
- </tfoot>
- </table>
- </div>
- {hasAmountMismatch && (
- <div className="mt-2 px-3 py-2 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.24)]">
- <p className="text-xs text-[color:var(--nw-danger)] font-medium">
- Line items sum ({formatCents(lineItemSumCents)}) does not match invoice total ({formatCents(totalCents)})
- </p>
- </div>
- )}
- {missingCoReference && (
- <div className="mt-2 px-3 py-2 bg-[rgba(176,85,78,0.12)] border border-[rgba(176,85,78,0.24)]">
- <p className="text-xs text-[color:var(--nw-danger)] font-medium">
- {lineItemsMissingCoReference.length} change-order line{lineItemsMissingCoReference.length === 1 ? "" : "s"} missing CO Reference
- </p>
- </div>
- )}
- </div>
- )}
  </div>
 
  {/* Actions — desktop only (mobile uses sticky bar below).
