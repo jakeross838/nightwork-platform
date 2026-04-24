@@ -342,6 +342,13 @@ export default function InvoiceReviewPage() {
  const [partialApprovedIds, setPartialApprovedIds] = useState<Set<string>>(new Set());
  const [partialNote, setPartialNote] = useState("");
  const [partialSubmitting, setPartialSubmitting] = useState(false);
+ // Phase 3b: QA-flow state. qbNotes is bundled into the qa_approve
+ // action's note (not a persisted column). Kick-back modal lives here
+ // because its note string is specific to kick-back semantics.
+ const [qbNotes, setQbNotes] = useState("");
+ const [showKickBackModal, setShowKickBackModal] = useState(false);
+ const [kickBackNote, setKickBackNote] = useState("");
+ const [savingVendorName, setSavingVendorName] = useState(false);
  const [partialError, setPartialError] = useState<string | null>(null);
  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set());
 
@@ -842,6 +849,10 @@ export default function InvoiceReviewPage() {
  );
 
  const isReviewable = ["pm_review", "ai_processed", "pm_held", "info_requested"].includes(invoice.status);
+ // Phase 3b: QA-action visibility. Matches the original QA detail
+ // page's `isQaReviewable` gate — accounting actions apply only when
+ // the PM has already approved and the invoice is awaiting QA.
+ const isQaReviewable = ["qa_review", "pm_approved"].includes(invoice.status);
  // Phase 3a: canEdit drives the allocations editor's readOnly gate.
  // - Non-locked statuses are editable by anyone with endpoint
  //   permission — role value doesn't matter.
@@ -1067,6 +1078,75 @@ export default function InvoiceReviewPage() {
  });
  setSaving(false);
  if (res.ok) router.refresh();
+ };
+
+ // Phase 3b: QA Approve — ported verbatim from src/app/invoices/[id]/qa/
+ // page.tsx (handleQaApprove). Bundles QB notes into the action's `note`
+ // field (qb_notes is not a DB column). On success, route back to the
+ // QA queue so accounting can clear the next item.
+ const handleQaApprove = async () => {
+ setSaving(true);
+ const res = await fetch(`/api/invoices/${invoiceId}/action`, {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({
+ action: "qa_approve",
+ note: qbNotes.trim()
+ ? `QA approved. QB notes: ${qbNotes.trim()}`
+ : "QA approved",
+ }),
+ });
+ setSaving(false);
+ if (res.ok) {
+ router.push("/invoices/qa");
+ } else {
+ const data = await res.json().catch(() => ({}));
+ toast.error(data.error ?? "Failed to QA approve");
+ }
+ };
+
+ // Phase 3b: Kick Back — ported verbatim. Requires a note (enforced by
+ // the action route). Route back to QA queue on success.
+ const handleKickBack = async () => {
+ if (!kickBackNote.trim()) return;
+ setSaving(true);
+ const res = await fetch(`/api/invoices/${invoiceId}/action`, {
+ method: "POST",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({
+ action: "kick_back",
+ note: kickBackNote.trim(),
+ }),
+ });
+ setSaving(false);
+ if (res.ok) {
+ router.push("/invoices/qa");
+ } else {
+ const data = await res.json().catch(() => ({}));
+ toast.error(data.error ?? "Failed to kick back");
+ }
+ };
+
+ // Phase 3b: Vendor name save via hardened PATCH (audit log handled
+ // server-side when privileged role edits a locked invoice). Called
+ // from InvoiceDetailsPanel on blur when the value changed.
+ const handleVendorNameSave = async (newVendorName: string) => {
+ if (!invoice) return;
+ if (newVendorName === (invoice.vendor_name_raw ?? "")) return;
+ setSavingVendorName(true);
+ const res = await fetch(`/api/invoices/${invoiceId}`, {
+ method: "PATCH",
+ headers: { "Content-Type": "application/json" },
+ body: JSON.stringify({ vendor_name_raw: newVendorName }),
+ });
+ if (res.ok) {
+ setInvoice({ ...invoice, vendor_name_raw: newVendorName });
+ toast.success("Vendor name saved");
+ } else {
+ const data = await res.json().catch(() => ({}));
+ toast.error(data.error ?? "Failed to save vendor name");
+ }
+ setSavingVendorName(false);
  };
 
  const handleSavePaymentTracking = async () => {
@@ -1456,6 +1536,30 @@ export default function InvoiceReviewPage() {
                  </NwButton>
                </>
              ) : null}
+             {isQaReviewable ? (
+               <>
+                 <NwButton
+                   variant="primary"
+                   size="sm"
+                   onClick={handleQaApprove}
+                   disabled={saving}
+                   loading={saving}
+                 >
+                   {saving ? "Saving" : "QA Approve"}
+                 </NwButton>
+                 <NwButton
+                   variant="danger"
+                   size="sm"
+                   onClick={() => {
+                     setKickBackNote("");
+                     setShowKickBackModal(true);
+                   }}
+                   disabled={saving}
+                 >
+                   Kick Back to PM
+                 </NwButton>
+               </>
+             ) : null}
              {invoice.signed_file_url ? (
                <a
                  href={invoice.signed_file_url}
@@ -1579,6 +1683,11 @@ export default function InvoiceReviewPage() {
            currentStatus={invoice.status}
            userNames={userNames}
            role={role}
+           onVendorNameSave={handleVendorNameSave}
+           savingVendorName={savingVendorName}
+           qbNotes={qbNotes}
+           onQbNotesChange={setQbNotes}
+           showQbNotes={isQaReviewable}
          />
        </div>
 
@@ -2112,6 +2221,51 @@ export default function InvoiceReviewPage() {
  {showNoteModal === "hold" ? "Hold" : "Deny"}
  </NwButton>
  <NwButton variant="ghost" size="md" onClick={() => { setShowNoteModal(null); setActionNote(""); }} className="flex-1">
+ Cancel
+ </NwButton>
+ </div>
+ </div>
+ </div>
+ )}
+
+ {/* ── Kick Back Modal (Phase 3b) ── */}
+ {showKickBackModal && (
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
+ <h3 className="font-display text-xl text-[color:var(--text-primary)] mb-2">
+ Kick Back to PM
+ </h3>
+ <p className="text-sm text-[color:var(--text-secondary)] mb-4">
+ This invoice will be sent back to the PM queue with your note.
+ </p>
+ <textarea
+ value={kickBackNote}
+ onChange={(e) => setKickBackNote(e.target.value)}
+ placeholder="Reason for kick back (required)..."
+ className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+ />
+ <div className="flex gap-3 mt-4">
+ <NwButton
+ variant="danger"
+ size="md"
+ onClick={async () => {
+ await handleKickBack();
+ setShowKickBackModal(false);
+ }}
+ disabled={!kickBackNote.trim() || saving}
+ className="flex-1"
+ >
+ Kick Back
+ </NwButton>
+ <NwButton
+ variant="ghost"
+ size="md"
+ onClick={() => {
+ setShowKickBackModal(false);
+ setKickBackNote("");
+ }}
+ className="flex-1"
+ >
  Cancel
  </NwButton>
  </div>

@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatCents, formatDate, formatFlag, formatWho } from "@/lib/utils/format";
 import type { OrgMemberRole } from "@/lib/org/session";
+import {
+  isInvoiceLocked,
+  canEditLockedFields,
+} from "@/lib/invoice-permissions";
 
 export interface InvoiceDetailsPanelAllocRow {
   code: string;
@@ -50,6 +54,16 @@ export interface InvoiceDetailsPanelProps {
    * treated as non-privileged (fail-closed).
    */
   role: OrgMemberRole | null;
+  /** Phase 3b: called on blur when the vendor name input value has
+   *  changed. Parent owns the save + refetch. */
+  onVendorNameSave?: (newValue: string) => void;
+  /** Phase 3b: non-persisted QB Mapping Notes textarea. Parent owns
+   *  the string; the panel only renders the textarea when
+   *  `showQbNotes` is true (qa_review / pm_approved statuses). */
+  qbNotes?: string;
+  onQbNotesChange?: (value: string) => void;
+  showQbNotes?: boolean;
+  savingVendorName?: boolean;
 }
 
 /**
@@ -77,18 +91,30 @@ export default function InvoiceDetailsPanel({
   currentStatus,
   userNames,
   role,
+  onVendorNameSave,
+  qbNotes,
+  onQbNotesChange,
+  showQbNotes,
+  savingVendorName,
 }: InvoiceDetailsPanelProps) {
   const timeline = buildTimeline(statusHistory, currentStatus, userNames);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const currentLabel = humanStatus(currentStatus);
   const nextPending = pendingAfter(currentStatus)[0] ?? null;
-  // Phase 3a: role prop is threaded in so Phase 3b (vendor name,
-  // invoice #, date editing in-panel) can gate fields via
-  // canEditInvoice({status}, role). Today the panel has no editable
-  // fields; lock/permission logic lives at the page + allocations
-  // editor level. Suppress unused-var complaint without introducing
-  // dead code in the meantime.
-  void role;
+
+  // Phase 3b: canEdit gates in-panel editable fields. Fail-closed on
+  // null role (still loading) — shows locked state until confirmed.
+  const canEdit =
+    !isInvoiceLocked(currentStatus) ||
+    (role !== null && canEditLockedFields(role));
+
+  // Local draft of the vendor name so the input doesn't jitter while
+  // the user types. Sync back to the canonical prop whenever it
+  // changes (e.g. after a successful save + refetch).
+  const [vendorDraft, setVendorDraft] = useState(vendorName);
+  useEffect(() => {
+    setVendorDraft(vendorName);
+  }, [vendorName]);
   const overallPct = (confidenceScore * 100).toFixed(1);
   const autoFills = (confidenceDetails as Record<string, unknown> | null)
     ?.auto_fills as Record<string, boolean> | undefined;
@@ -131,17 +157,33 @@ export default function InvoiceDetailsPanel({
             {formatCents(totalAmountCents)}
           </span>
         </Field>
-        <Field label="Vendor">
-          <Link
-            href={vendorId ? `/vendors/${vendorId}` : "#"}
-            style={{
-              color: "var(--nw-stone-blue)",
-              textDecoration: "underline",
-              textUnderlineOffset: "3px",
-            }}
-          >
-            {vendorName} ↗
-          </Link>
+        <Field label={onVendorNameSave ? "Vendor name (editable — match to QuickBooks)" : "Vendor"}>
+          {onVendorNameSave ? (
+            <input
+              type="text"
+              value={vendorDraft}
+              onChange={(e) => setVendorDraft(e.target.value)}
+              onBlur={() => {
+                if (vendorDraft !== vendorName) {
+                  onVendorNameSave(vendorDraft);
+                }
+              }}
+              disabled={!canEdit || savingVendorName}
+              placeholder="—"
+              className="w-full bg-[var(--bg-subtle)] border border-[var(--border-default)] px-2 py-1 text-[13px] text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
+            />
+          ) : (
+            <Link
+              href={vendorId ? `/vendors/${vendorId}` : "#"}
+              style={{
+                color: "var(--nw-stone-blue)",
+                textDecoration: "underline",
+                textUnderlineOffset: "3px",
+              }}
+            >
+              {vendorName} ↗
+            </Link>
+          )}
         </Field>
         <Field label="Project">
           <Link
@@ -180,6 +222,20 @@ export default function InvoiceDetailsPanel({
           </Field>
         )}
       </div>
+
+      {/* ─── QB Mapping Notes (Phase 3b) ─── */}
+      {showQbNotes && onQbNotesChange && (
+        <div className="mt-[14px]">
+          <Eyebrow>QB mapping notes · bundled into QA Approve</Eyebrow>
+          <textarea
+            value={qbNotes ?? ""}
+            onChange={(e) => onQbNotesChange(e.target.value)}
+            rows={2}
+            placeholder="Optional notes for QuickBooks entry..."
+            className="w-full mt-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] px-2 py-1.5 text-[13px] text-[color:var(--text-primary)] placeholder:text-[color:var(--text-tertiary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+          />
+        </div>
+      )}
 
       {/* ─── Cost-code allocation table ─── */}
       {allocSummary.length > 0 && (
