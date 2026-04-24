@@ -26,6 +26,7 @@ import StatusHistoryPanel from "@/components/invoices/StatusHistoryPanel";
 import PaymentPanel from "@/components/invoices/PaymentPanel";
 import PaymentTrackingPanel from "@/components/invoices/PaymentTrackingPanel";
 import InvoiceHeader from "@/components/invoices/InvoiceHeader";
+import InvoiceTitleStrip from "@/components/invoices/InvoiceTitleStrip";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -1487,87 +1488,19 @@ export default function InvoiceReviewPage() {
    return (
      <div className="mb-10 animate-fade-up">
        {/* ── Showcase header ── */}
-       <div className="mb-6">
-         <div
-           className="mb-3 text-[10px] uppercase"
-           style={{
-             fontFamily: "var(--font-jetbrains-mono)",
-             letterSpacing: "0.14em",
-             color: "var(--text-tertiary)",
-           }}
-         >
-           Home / Financial / Invoices /{" "}
-           <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
-             #{invoice.invoice_number ?? "—"} · {vendorName}
-           </span>
-         </div>
-         <div className="flex items-end justify-between gap-5 flex-wrap">
-           <div className="min-w-0">
-             <h1
-               className="m-0 mb-1 flex items-center gap-3 flex-wrap"
-               style={{
-                 fontFamily: "var(--font-space-grotesk)",
-                 fontWeight: 500,
-                 fontSize: "30px",
-                 letterSpacing: "-0.02em",
-                 color: "var(--text-primary)",
-               }}
-             >
-               <span>Invoice #{invoice.invoice_number ?? "—"}</span>
-               <NwBadge variant={statusBadgeVariant}>{formatStatus(invoice.status)}</NwBadge>
-             </h1>
-             <p
-               className="text-[13px] m-0"
-               style={{ color: "var(--text-secondary)" }}
-             >
-               {vendorName} ·{" "}
-               <Link
-                 href={invoice.job_id ? `/jobs/${invoice.job_id}` : "#"}
-                 className="font-medium"
-                 style={{ color: "var(--nw-stone-blue)" }}
-               >
-                 {projectName}
-               </Link>
-               {receivedDate ? <> · Received {receivedDate}</> : null}
-               {drawLabel ? (
-                 <>
-                   {" · Assigned to "}
-                   <Link
-                     href={drawInfo ? `/draws/${drawInfo.id}` : "#"}
-                     className="font-medium"
-                     style={{ color: "var(--nw-stone-blue)" }}
-                   >
-                     {drawLabel}
-                   </Link>
-                 </>
-               ) : null}
-             </p>
-           </div>
-           <div className="flex items-center gap-2 flex-wrap">
-             {invoice.signed_file_url ? (
-               <a
-                 href={invoice.signed_file_url}
-                 target="_blank"
-                 rel="noopener noreferrer"
-                 download
-               >
-                 <NwButton variant="ghost" size="md">
-                   Download PDF
-                 </NwButton>
-               </a>
-             ) : null}
-             {isQaApproved ? (
-               <NwButton
-                 variant="primary"
-                 size="md"
-                 onClick={() => toast.info("QuickBooks integration coming soon")}
-               >
-                 Push to QuickBooks →
-               </NwButton>
-             ) : null}
-           </div>
-         </div>
-       </div>
+       <InvoiceTitleStrip
+         vendorName={vendorName}
+         projectName={projectName}
+         jobId={invoice.job_id}
+         invoiceNumber={invoice.invoice_number}
+         status={invoice.status}
+         statusBadgeVariant={statusBadgeVariant}
+         receivedDateLabel={receivedDate}
+         drawLabel={drawLabel}
+         drawId={drawInfo?.id ?? null}
+         signedFileUrl={invoice.signed_file_url}
+         isQaApproved={isQaApproved}
+       />
 
        {/* ── Showcase 2-col body ── */}
        <div className="grid grid-cols-1 lg:grid-cols-5 gap-px" style={{ background: "var(--border-default)", border: "1px solid var(--border-default)" }}>
