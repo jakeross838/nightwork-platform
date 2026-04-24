@@ -184,7 +184,7 @@ export default function InvoiceAllocationsEditor({
                   <option value="">-- select cost code --</option>
                   {costCodes.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.code} \u2014 {c.description}
+                      {c.code} — {c.description}
                     </option>
                   ))}
                 </select>
