@@ -20,6 +20,7 @@ import { invoiceDisplayName } from "@/lib/invoices/display";
 import { toast } from "@/lib/utils/toast";
 import ExtractionVerificationPanel from "@/components/items/extraction-verification-panel";
 import AiExtractionNote from "@/components/invoices/AiExtractionNote";
+import AiParsedRawPanel from "@/components/invoices/AiParsedRawPanel";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -2125,15 +2126,12 @@ export default function InvoiceReviewPage() {
  <FormField label="Description" value={description} onChange={setDescription} type="textarea" disabled={!isReviewable} />
 
  {/* Raw AI data */}
- <div className="border-t border-[var(--border-default)] pt-4">
- <p className="text-[11px] text-[color:var(--text-secondary)] mb-2 uppercase tracking-wider">AI Parsed (raw)</p>
- <div className="grid grid-cols-2 gap-2 text-xs text-[color:var(--text-secondary)]">
- <div>Vendor: {invoice.vendor_name_raw ?? "—"}</div>
- <div>Job Ref: {invoice.job_reference_raw ?? "—"}</div>
- <div>PO Ref: {invoice.po_reference_raw ?? "—"}</div>
- <div>CO Ref: {invoice.co_reference_raw ?? "—"}</div>
- </div>
- </div>
+ <AiParsedRawPanel
+   vendorNameRaw={invoice.vendor_name_raw}
+   jobReferenceRaw={invoice.job_reference_raw}
+   poReferenceRaw={invoice.po_reference_raw}
+   coReferenceRaw={invoice.co_reference_raw}
+ />
 
  {/* Line Items — editable per-row cost code + CO toggle (multi-cost-code support) */}
  {lineItems.length > 0 && (
