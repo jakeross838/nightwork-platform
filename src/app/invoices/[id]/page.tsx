@@ -22,6 +22,7 @@ import ExtractionVerificationPanel from "@/components/items/extraction-verificat
 import AiExtractionNote from "@/components/invoices/AiExtractionNote";
 import AiParsedRawPanel from "@/components/invoices/AiParsedRawPanel";
 import AiConfidenceBreakdown from "@/components/invoices/AiConfidenceBreakdown";
+import StatusHistoryPanel from "@/components/invoices/StatusHistoryPanel";
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
@@ -402,16 +403,6 @@ function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }
  </div>
  );
 }
-
-// ── Status History Timeline ─────────────────────────────
-function statusDotColor(newStatus: string): string {
- if (["pm_approved", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(newStatus)) return "bg-[var(--nw-success)]";
- if (["pm_held", "info_requested"].includes(newStatus)) return "bg-[var(--nw-warn)]";
- if (["pm_denied", "qa_kicked_back", "void"].includes(newStatus)) return "bg-[var(--nw-danger)]";
- return "bg-[var(--nw-stone-blue)]"; // forward progress: pm_review, qa_review, ai_processed
-}
-
-// formatWho is imported from lib/utils/format
 
 // ── Main Page ───────────────────────────────────────────
 export default function InvoiceReviewPage() {
@@ -2551,28 +2542,7 @@ export default function InvoiceReviewPage() {
  {/* Status History Timeline — newest first */}
  {invoice.status_history?.length > 0 && (
  <SidebarCard title="Status History">
- <div className="space-y-0">
- {[...invoice.status_history].reverse().map((entry, i) => {
- const newStatus = String(entry.new_status);
- return (
- <div key={i} className="relative pl-6 pb-4 last:pb-0">
- {i < invoice.status_history.length - 1 && (
- <div className="absolute left-[7px] top-3 bottom-0 w-px bg-[var(--border-default)]" />
- )}
- <div className={`absolute left-0 top-1 w-[15px] h-[15px] border-2 border-[var(--bg-card)] ${statusDotColor(newStatus)}`} />
- <div className="text-xs">
- <p className="text-[color:var(--text-primary)] font-medium">
- {formatStatus(String(entry.old_status))} &rarr; {formatStatus(newStatus)}
- </p>
- <p className="text-[color:var(--text-secondary)] mt-0.5">
- {formatWho(String(entry.who), userNames)} &mdash; {formatDateTime(String(entry.when))}
- </p>
- {entry.note ? <p className="text-[color:var(--text-secondary)]/80 mt-1 italic text-[11px] leading-relaxed">{String(entry.note)}</p> : null}
- </div>
- </div>
- );
- })}
- </div>
+ <StatusHistoryPanel history={invoice.status_history} userNames={userNames} />
  </SidebarCard>
  )}
 
