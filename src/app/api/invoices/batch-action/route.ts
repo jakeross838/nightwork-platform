@@ -218,17 +218,20 @@ export async function POST(request: NextRequest) {
           },
         ];
 
-        const { error: updateError } = await supabase
+        const { data: updated, error: updateError } = await supabase
           .from("invoices")
           .update({
             status: "qa_review",
             status_history: [...existingHistory, ...statusEntries],
           })
           .eq("id", id)
-          .eq("org_id", membership.org_id);
+          .eq("org_id", membership.org_id)
+          .select("id");
 
         if (updateError) {
           failed.push({ id, reason: updateError.message });
+        } else if (!updated || updated.length === 0) {
+          failed.push({ id, reason: "Permission denied or invoice not found" });
         } else {
           success.push(id);
         }
@@ -240,15 +243,18 @@ export async function POST(request: NextRequest) {
           new_status: "pm_held",
           note: note ?? "pm hold (batch)",
         };
-        const { error: updateError } = await supabase
+        const { data: updated, error: updateError } = await supabase
           .from("invoices")
           .update({
             status: "pm_held",
             status_history: [...existingHistory, statusEntry],
           })
           .eq("id", id)
-          .eq("org_id", membership.org_id);
+          .eq("org_id", membership.org_id)
+          .select("id");
         if (updateError) failed.push({ id, reason: updateError.message });
+        else if (!updated || updated.length === 0)
+          failed.push({ id, reason: "Permission denied or invoice not found" });
         else success.push(id);
       } else {
         // deny
@@ -259,15 +265,18 @@ export async function POST(request: NextRequest) {
           new_status: "pm_denied",
           note: note ?? "pm deny (batch)",
         };
-        const { error: updateError } = await supabase
+        const { data: updated, error: updateError } = await supabase
           .from("invoices")
           .update({
             status: "pm_denied",
             status_history: [...existingHistory, statusEntry],
           })
           .eq("id", id)
-          .eq("org_id", membership.org_id);
+          .eq("org_id", membership.org_id)
+          .select("id");
         if (updateError) failed.push({ id, reason: updateError.message });
+        else if (!updated || updated.length === 0)
+          failed.push({ id, reason: "Permission denied or invoice not found" });
         else success.push(id);
       }
     }

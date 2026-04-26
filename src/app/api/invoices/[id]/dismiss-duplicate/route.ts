@@ -31,16 +31,21 @@ export const POST = withApiError(async (
     return NextResponse.json({ ok: true, note: "Not flagged" });
   }
 
-  const { error: updErr } = await supabase
+  const { data: updated, error: updErr } = await supabase
     .from("invoices")
     .update({
       is_potential_duplicate: false,
       duplicate_dismissed_at: new Date().toISOString(),
       duplicate_dismissed_by: user?.id ?? null,
     })
-    .eq("id", params.id);
+    .eq("id", params.id)
+    .eq("org_id", membership.org_id)
+    .select("id");
 
   if (updErr) throw new ApiError(updErr.message, 500);
+  if (!updated || updated.length === 0) {
+    throw new ApiError("Permission denied or invoice not found", 403);
+  }
 
   await logStatusChange({
     org_id: (invoice.org_id as string | null) ?? membership.org_id,
