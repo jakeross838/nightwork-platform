@@ -40,3 +40,31 @@ export function tryCreateServiceRoleClient(): SupabaseClient | null {
   });
   return cached;
 }
+
+/**
+ * Startup-time assertion that SUPABASE_SERVICE_ROLE_KEY is set and
+ * non-empty. Call this ONCE at server boot (from instrumentation.ts).
+ * Fails loudly with remediation guidance — designed to catch the
+ * silent-degradation pattern where a fresh dev checkout or unset
+ * production env causes audit logs, plan-limit counters, bulk imports,
+ * and impersonation audits to all silently skip via the best-effort
+ * fallback in `tryCreateServiceRoleClient`.
+ *
+ * Distinguishes "missing" from "empty string" — both fail. Does NOT
+ * print the key value in the error message.
+ *
+ * The existing `tryCreateServiceRoleClient()` helper retains its
+ * best-effort null-return semantics for code paths where a missing key
+ * is acceptable. This assertion ONLY fires at startup so production
+ * boot fails fast instead of degrading silently per request.
+ */
+export function assertServiceRoleKey(): void {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key || key.trim() === "") {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY is missing. Set it in .env.local (dev) " +
+        "or your hosting provider's env settings (production). " +
+        "Get the value from Supabase Dashboard → Project Settings → API → service_role key."
+    );
+  }
+}
