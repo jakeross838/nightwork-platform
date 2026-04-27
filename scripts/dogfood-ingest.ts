@@ -86,7 +86,7 @@ async function postFile(filename: string, buf: Buffer): Promise<{
   latencyMs: number;
 }> {
   const form = new FormData();
-  const blob = new Blob([buf], { type: "application/pdf" });
+  const blob = new Blob([new Uint8Array(buf)], { type: "application/pdf" });
   form.append("file", blob, filename);
 
   const t0 = Date.now();
