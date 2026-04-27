@@ -91,16 +91,19 @@ function firstNameOf(fullName: string) {
 }
 
 function buildFinancialItems(): NavDropdownItem[] {
+  // Routes verified: every href below resolves to an existing page.tsx
+  // (audit ux U-1 — six broken links removed from the dropdown).
+  // Change Orders and Purchase Orders are job-scoped; no top-level list
+  // exists, so they're dropped here. They remain reachable via
+  // /jobs/[id]/change-orders and /jobs/[id]/purchase-orders.
   return [
     { href: "/invoices", label: "Invoices" },
     { href: "/invoices/queue", label: "Queue" },
     { href: "/invoices/qa", label: "QA" },
-    { href: "/payments", label: "Payments" },
+    { href: "/invoices/payments", label: "Payments" },
     { href: "/draws", label: "Draws" },
-    { href: "/aging", label: "Aging" },
-    { href: "/lien-releases", label: "Liens" },
-    { href: "/change-orders", label: "Change Orders" },
-    { href: "/purchase-orders", label: "Purchase Orders" },
+    { href: "/financials/aging-report", label: "Aging" },
+    { href: "/invoices/liens", label: "Liens" },
   ];
 }
 
