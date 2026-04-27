@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import DOMPurify from "isomorphic-dompurify";
 import { fileKindFromUrl } from "@/lib/invoices/display";
 
 // Lazy, client-only — react-pdf uses Web Workers that don't SSR.
@@ -255,7 +256,13 @@ function DocxPreview({
         </p>
       )}
       {!loading && !error && html !== null && (
-        <div dangerouslySetInnerHTML={{ __html: html }} />
+        // XSS guard: DOMPurify strips <script>, on*= handlers, and javascript: URLs.
+        // Mammoth output is otherwise treated as untrusted (vendor-supplied DOCX).
+        <div
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(html, { USE_PROFILES: { html: true } }),
+          }}
+        />
       )}
       {!loading && !error && html === null && !invoiceId && (
         <p className="text-[color:var(--text-secondary)] text-sm">
