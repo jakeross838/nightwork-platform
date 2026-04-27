@@ -341,7 +341,26 @@ The fifth commit is this QA report itself.
 | `npm test` | PASS | 47 test files green |
 | `RUN_CLASSIFIER_EVAL=1 npm test` (eval) | PASS | 36 fixtures, 100% accuracy, cache verified, 0 INVESTIGATE |
 | `npm run lint` | warnings only | No errors. The 4 React-hooks / aria warnings predate Phase 3.2 v2 (live on `main`). v2 introduces zero new lint flags. |
-| `npm run build` | **fails on `/admin` page-data-collection** | **Pre-existing.** Documented at commit `67e463e qa(phase-a): record final gate results — pre-existing lint/build fail`. Verified by `git stash && git checkout main && npm run build` reproducing the same `PageNotFoundError: Cannot find module for page: /admin`. v2's compile of `src/app/api/ingest/route.ts` and `src/lib/ingestion/classify.ts` succeeds; the failure is downstream and unrelated. Phase A's QA owns this. |
+| `npm run build` | PASS | Exit 0. See §13.1 below for the corrected story behind this row. |
+
+### 13.1 Build status — correction to the original claim
+
+**Original claim in this row (before correction commit):**
+
+> `npm run build` fails on `/admin` page-data-collection. Pre-existing on `main` since Phase A (commit `67e463e`).
+
+**Reality (verified after dogfood landed):**
+
+The original claim was wrong about both the symptom and the cause.
+
+- **Symptom**: there is no `/admin` build error. `npm run build` on `main` (HEAD `c885ce3`) succeeds with exit 0 when `.next/` is clean and no concurrent `next dev` is running.
+- **Cause of what I originally observed**: almost certainly `.next/` cache corruption from running `npm run dev` and `npm run build` concurrently during the v2 work. With the dev server killed and `.next/` removed, both `main` and `phase-3.2-v2` build cleanly.
+- **The actual build failure** I saw on `phase-3.2-v2` after committing the dogfood scripts was a TypeScript error in `scripts/dogfood-ingest.ts:89` (Buffer→Blob compatibility under Node 24's stricter types) introduced in commit `5bf9cdf`. Fixed in commit `ed1f39a`: wrap with `new Uint8Array(buf)` in the Blob constructor.
+- **A second related break** was a fixture-discovery assertion in the eval harness — adding the `dogfood/` directory under `__tests__/fixtures/classifier/.local/` triggered the dynamic-discovery's "unknown category" assertion. Fixed in commit `bb4be24`: introduce a `SKIPPED_DIRS` set so intentionally-non-category subdirs (initial entry: `dogfood`; pattern open for future names like `experiments`/`archive`) are filtered before the assertion runs.
+
+**What was NOT a real bug**: `/admin`. No fix to that directory was warranted; the `fix-admin-build` branch envisioned in the original plan was abandoned without commits because the premise was wrong.
+
+**Audit trail discipline**: the original §13 row was preserved in the git history (this file at the previous commit retains the wrong claim). The correction is a forward-only edit, no force-push or amend, so the chain shows the false claim → its discovery → the fix → this correction. That's the spirit of R.12: QA reports document what was true at a point in time AND the corrections when reality diverges.
 
 ---
 
