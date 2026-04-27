@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
-import { getCurrentMembership } from "@/lib/org/session";
+import {
+  getCurrentMembership,
+  getMembershipFromRequest,
+} from "@/lib/org/session";
 import { requireRole, ADMIN_OR_OWNER } from "@/lib/org/require";
 import { recalcBudgetLine, recalcPO } from "@/lib/recalc";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
@@ -15,10 +18,15 @@ import {
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-export const GET = withApiError(async (_req: NextRequest, { params }: { params: { id: string } }) => {
+export const GET = withApiError(async (req: NextRequest, { params }: { params: { id: string } }) => {
+  // Defense-in-depth: GET previously relied on RLS alone (audit backend C-2).
+  // Adopt the getCurrentMembership() + org_id filter pattern that the same
+  // file's PATCH already uses on its writes.
+  const membership =
+    getMembershipFromRequest(req) ?? (await getCurrentMembership());
+  if (!membership) throw new ApiError("Not authenticated", 401);
+
   const supabase = createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new ApiError("Not authenticated", 401);
 
   const { data, error } = await supabase
     .from("purchase_orders")
@@ -32,6 +40,7 @@ export const GET = withApiError(async (_req: NextRequest, { params }: { params: 
       jobs:job_id(id, name, address)
     `)
     .eq("id", params.id)
+    .eq("org_id", membership.org_id)
     .is("deleted_at", null)
     .single();
   if (error || !data) throw new ApiError("PO not found", 404);
@@ -43,6 +52,7 @@ export const GET = withApiError(async (_req: NextRequest, { params }: { params: 
       budget_lines:budget_line_id(id, cost_codes:cost_code_id(code, description))
     `)
     .eq("po_id", params.id)
+    .eq("org_id", membership.org_id)
     .is("deleted_at", null)
     .order("sort_order");
 
@@ -53,6 +63,7 @@ export const GET = withApiError(async (_req: NextRequest, { params }: { params: 
       invoices:invoice_id(id, invoice_number, invoice_date, status, vendor_name_raw)
     `)
     .eq("po_id", params.id)
+    .eq("org_id", membership.org_id)
     .is("deleted_at", null);
 
   return NextResponse.json({
