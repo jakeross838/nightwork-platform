@@ -100,6 +100,9 @@ function estimateCostCents(inputTokens: number): number {
  * bug, not a user-facing error).
  */
 async function logUsage(row: UsageRow): Promise<void> {
+  // total_tokens is GENERATED ALWAYS (input_tokens + output_tokens) on the
+  // api_usage table — explicit values are rejected by Postgres. Mirror
+  // src/lib/claude.ts which also omits total_tokens from its insert.
   const insert = {
     org_id: row.org_id,
     user_id: row.user_id ?? null,
@@ -107,7 +110,6 @@ async function logUsage(row: UsageRow): Promise<void> {
     model: row.model,
     input_tokens: row.input_tokens,
     output_tokens: row.output_tokens,
-    total_tokens: row.input_tokens ?? 0,
     estimated_cost_cents: row.estimated_cost_cents,
     duration_ms: row.duration_ms,
     status: row.status,
