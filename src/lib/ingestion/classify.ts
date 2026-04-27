@@ -158,7 +158,7 @@ export async function classifyDocument(
 
   if (!isClassifiedType(parsed.classified_type)) {
     console.warn(
-      `[classify-document] Unknown classified_type "${String(parsed.classified_type)}" — defaulting to other with confidence 0`
+      `[ingestion/classify] Unknown classified_type "${String(parsed.classified_type)}" — defaulting to other with confidence 0`
     );
     return { classified_type: "other", classification_confidence: 0 };
   }

@@ -65,7 +65,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 
 async function main() {
   // Import after dotenv so the SDK has its API key.
-  const { classifyDocument } = await import("../src/lib/claude/classify-document");
+  const { classifyDocument } = await import("../src/lib/ingestion/classify");
   const { createClient } = await import("@supabase/supabase-js");
 
   assert.ok(existsSync(FIXTURE_ROOT), `fixture root missing: ${FIXTURE_ROOT}`);
