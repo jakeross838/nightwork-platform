@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { formatCents, formatDollars, confidenceColor, confidenceLabel, formatStatus, formatFlag, formatDate, formatDateTime, formatWho, statusBadgeOutline } from "@/lib/utils/format";
+import { formatCents, formatDollars, formatStatus, formatDate, statusBadgeOutline } from "@/lib/utils/format";
 import AppShell from "@/components/app-shell";
 import InvoiceFilePreview from "@/components/invoice-file-preview";
 import InvoiceAllocationsEditor from "@/components/invoice-allocations-editor";
@@ -21,15 +21,6 @@ import { isInvoiceLocked, canEditLockedFields } from "@/lib/invoice-permissions"
 
 interface Job { id: string; name: string; address: string | null; }
 interface CostCode { id: string; code: string; description: string; category: string; is_change_order: boolean; }
-interface PurchaseOrder {
- id: string;
- po_number: string | null;
- description: string | null;
- amount: number;
- invoiced_total: number;
- budget_line_id: string | null;
- status: string;
-}
 interface BudgetInfo {
  original_estimate: number;
  revised_estimate: number;
@@ -118,178 +109,6 @@ interface EditableLineItem {
  ai_suggestion_confidence: number | null;
 }
 
-// ── Searchable Combobox ────────────────────────────────
-
-/** Resolve the matching base↔CO cost code variant. Mapping is the literal
- *  code string: "07101" ↔ "07101C". Returns the original id if no partner
- *  exists in the table (so the dropdown stays populated with a valid code
- *  even when the PM has picked something that doesn't have both variants). */
-function resolveVariant(
- costCodes: { id: string; code: string; is_change_order: boolean }[],
- costCodeId: string | null | undefined,
- wantChangeOrder: boolean
-): string | null {
- if (!costCodeId) return costCodeId ?? null;
- const current = costCodes.find(c => c.id === costCodeId);
- if (!current) return costCodeId;
- if (current.is_change_order === wantChangeOrder) return costCodeId;
- const targetCode = wantChangeOrder
- ? `${current.code}C`
- : current.code.replace(/C$/, "");
- const partner = costCodes.find(
- c => c.code === targetCode && c.is_change_order === wantChangeOrder
- );
- return partner ? partner.id : costCodeId;
-}
-
-// Compact searchable cost-code picker sized for the per-line-item table.
-// Renders as a filterable dropdown — 230+ codes would be unusable otherwise.
-function LineCostCodeSelect({ value, onChange, options, disabled, aiSuggestion }: {
- value: string;
- onChange: (v: string) => void;
- options: { value: string; label: string; group?: string }[];
- disabled?: boolean;
- aiSuggestion?: { code: string; confidence: number } | null;
-}) {
- const [open, setOpen] = useState(false);
- const [search, setSearch] = useState("");
- const [highlight, setHighlight] = useState(0);
- const rootRef = useRef<HTMLDivElement>(null);
- const inputRef = useRef<HTMLInputElement>(null);
-
- const selected = options.find(o => o.value === value) ?? null;
-
- useEffect(() => {
- if (!open) return;
- function handleClick(e: MouseEvent) {
- if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
- }
- document.addEventListener("mousedown", handleClick);
- return () => document.removeEventListener("mousedown", handleClick);
- }, [open]);
-
- useEffect(() => {
- if (open) {
- setSearch("");
- setHighlight(0);
- setTimeout(() => inputRef.current?.focus(), 0);
- }
- }, [open]);
-
- const filtered = search.trim()
- ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
- : options;
- const groups = Array.from(new Set(filtered.filter(o => o.group).map(o => o.group!)));
- const flat = filtered;
-
- function commit(v: string) {
- onChange(v);
- setOpen(false);
- }
-
- const borderColor = open ? "border-[var(--nw-stone-blue)]" : aiSuggestion ? "border-[rgba(91,134,153,0.35)]" : "border-[var(--border-default)]";
-
- return (
- <div ref={rootRef} className="relative">
- <div
- role="combobox"
- aria-expanded={open}
- tabIndex={disabled ? -1 : 0}
- onClick={() => !disabled && setOpen(o => !o)}
- onKeyDown={(e) => {
- if (disabled) return;
- if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
- e.preventDefault();
- setOpen(true);
- }
- }}
- className={`flex items-center w-full min-h-[26px] px-2 py-1 bg-[var(--bg-subtle)] border ${borderColor} text-xs text-[color:var(--text-primary)] cursor-pointer transition-colors ${disabled ? "opacity-50 pointer-events-none" : "hover:border-[rgba(91,134,153,0.5)]"}`}
- >
- <span className={`flex-1 truncate ${selected && selected.value ? "text-[color:var(--text-primary)]" : "text-[color:var(--text-secondary)]"}`}>
- {selected?.label || "Select…"}
- </span>
- <svg className={`w-3 h-3 ml-1 text-[color:var(--text-secondary)] transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
- </svg>
- </div>
- {aiSuggestion && (
- <span className="absolute -top-2 right-1 text-[9px] px-1 bg-[var(--bg-card)] text-[color:var(--nw-stone-blue)] border border-[var(--nw-stone-blue)] tracking-tight z-10">
- AI {Math.round(aiSuggestion.confidence * 100)}%
- </span>
- )}
- {open && (
- <div className="absolute z-40 mt-1 min-w-[280px] max-w-[400px] bg-[var(--bg-card)] border border-[var(--border-default)] shadow-2xl left-0">
- <div className="p-1.5 border-b border-[var(--border-default)] bg-[var(--bg-subtle)]">
- <input
- ref={inputRef}
- value={search}
- onChange={(e) => { setSearch(e.target.value); setHighlight(0); }}
- placeholder="Type to filter…"
- className="w-full px-2 py-1 bg-[var(--bg-card)] border border-[var(--border-default)] text-xs text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:outline-none focus:border-[var(--nw-stone-blue)]"
- onKeyDown={(e) => {
- if (e.key === "Escape") { e.preventDefault(); setOpen(false); }
- else if (e.key === "ArrowDown") { e.preventDefault(); setHighlight(h => Math.min(h + 1, flat.length - 1)); }
- else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight(h => Math.max(h - 1, 0)); }
- else if (e.key === "Enter" && flat[highlight]) { e.preventDefault(); commit(flat[highlight].value); }
- }}
- />
- </div>
- <div className="max-h-56 overflow-y-auto">
- {flat.length === 0 ? (
- <div className="px-3 py-3 text-xs text-[color:var(--text-secondary)] text-center">No matches</div>
- ) : groups.length > 0 ? (
- <>
- {filtered.filter(o => !o.group).map(o => {
- const idx = flat.indexOf(o);
- const isHl = idx === highlight;
- return (
- <button key={o.value} data-idx={idx} type="button"
- onMouseEnter={() => setHighlight(idx)}
- onClick={() => commit(o.value)}
- className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-[rgba(91,134,153,0.12)]" : ""} ${o.value === value ? "text-[color:var(--nw-stone-blue)] font-medium" : o.value === "" ? "text-[color:var(--text-secondary)]" : "text-[color:var(--text-primary)]"}`}>
- {o.label}
- </button>
- );
- })}
- {groups.map(group => (
- <div key={group}>
- <div className="sticky top-0 px-2.5 py-1 text-[10px] font-semibold text-[color:var(--text-secondary)] uppercase tracking-wider bg-[var(--bg-subtle)] border-b border-[var(--border-default)]">{group}</div>
- {filtered.filter(o => o.group === group).map(o => {
- const idx = flat.indexOf(o);
- const isHl = idx === highlight;
- return (
- <button key={o.value} data-idx={idx} type="button"
- onMouseEnter={() => setHighlight(idx)}
- onClick={() => commit(o.value)}
- className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-[rgba(91,134,153,0.12)]" : ""} ${o.value === value ? "text-[color:var(--nw-stone-blue)] font-medium" : "text-[color:var(--text-primary)]"}`}>
- {o.label}
- </button>
- );
- })}
- </div>
- ))}
- </>
- ) : (
- flat.map(o => {
- const idx = flat.indexOf(o);
- const isHl = idx === highlight;
- return (
- <button key={o.value} data-idx={idx} type="button"
- onMouseEnter={() => setHighlight(idx)}
- onClick={() => commit(o.value)}
- className={`w-full text-left px-2.5 py-1.5 text-xs transition-colors ${isHl ? "bg-[rgba(91,134,153,0.12)]" : ""} ${o.value === value ? "text-[color:var(--nw-stone-blue)] font-medium" : "text-[color:var(--text-primary)]"}`}>
- {o.label}
- </button>
- );
- })
- )}
- </div>
- </div>
- )}
- </div>
- );
-}
-
 // ── Main Page ───────────────────────────────────────────
 export default function InvoiceReviewPage() {
  const params = useParams();
@@ -320,8 +139,6 @@ export default function InvoiceReviewPage() {
 
  const [jobs, setJobs] = useState<Job[]>([]);
  const [costCodes, setCostCodes] = useState<CostCode[]>([]);
- const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
- const [budgetInfo, setBudgetInfo] = useState<BudgetInfo | null>(null);
  const [lineItems, setLineItems] = useState<EditableLineItem[]>([]);
  const [budgetByCostCode, setBudgetByCostCode] = useState<Map<string, BudgetInfo>>(new Map());
  const [actionNote, setActionNote] = useState("");
@@ -350,7 +167,6 @@ export default function InvoiceReviewPage() {
  const [kickBackNote, setKickBackNote] = useState("");
  const [savingVendorName, setSavingVendorName] = useState(false);
  const [partialError, setPartialError] = useState<string | null>(null);
- const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set());
 
  // Cross-link to the "other side" of a partial split
  const [siblingInvoice, setSiblingInvoice] = useState<{ id: string; status: string; total_amount: number } | null>(null);
@@ -562,43 +378,6 @@ export default function InvoiceReviewPage() {
  cancelled = true;
  };
  }, []);
-
- // Fetch POs
- useEffect(() => {
- let cancelled = false;
- async function fetchPOs() {
- if (!jobId) { setPurchaseOrders([]); return; }
- const { data } = await supabase
- .from("purchase_orders")
- .select("id, po_number, description, amount, invoiced_total, budget_line_id, status")
- .eq("job_id", jobId)
- .is("deleted_at", null)
- .in("status", ["issued", "partially_invoiced", "fully_invoiced"])
- .order("po_number");
- if (!cancelled && data) setPurchaseOrders(data);
- }
- fetchPOs();
- return () => { cancelled = true; };
- }, [jobId]);
-
- // Fetch budget (legacy single-cost-code sidebar — retained for fallback)
- useEffect(() => {
- let cancelled = false;
- async function fetchBudget() {
- if (!jobId || !costCodeId) { setBudgetInfo(null); return; }
- // Parallel: budget line + spent invoices
- const [{ data: bl }, { data: spent }] = await Promise.all([
- supabase.from("budget_lines").select("original_estimate, revised_estimate, is_allowance").eq("job_id", jobId).eq("cost_code_id", costCodeId).is("deleted_at", null).maybeSingle(),
- supabase.from("invoices").select("total_amount").eq("job_id", jobId).eq("cost_code_id", costCodeId).in("status", ["pm_approved","qa_review","qa_approved","pushed_to_qb","in_draw","paid"]).is("deleted_at", null),
- ]);
- if (cancelled) return;
- if (!bl) { setBudgetInfo(null); return; }
- const totalSpent = spent?.reduce((s, i) => s + i.total_amount, 0) ?? 0;
- setBudgetInfo({ original_estimate: bl.original_estimate, revised_estimate: bl.revised_estimate, total_spent: totalSpent, remaining: bl.revised_estimate - totalSpent, is_allowance: !!bl.is_allowance });
- }
- fetchBudget();
- return () => { cancelled = true; };
- }, [jobId, costCodeId]);
 
  // When the PM picks a default Cost Code, pre-fill any line item that has
  // no cost_code_id yet (don't override PM's per-line picks).
@@ -863,40 +642,16 @@ export default function InvoiceReviewPage() {
  const locked = isInvoiceLocked(invoice.status);
  const canEdit = !locked || (role !== null && canEditLockedFields(role));
  const showPaymentTracking = ["qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(invoice.status);
- const autoFills = (invoice.confidence_details as Record<string, unknown>)?.auto_fills as Record<string, boolean> | undefined;
-
- // Filter cost codes based on CO toggle
- const filteredCostCodes = costCodes.filter(c => c.is_change_order === isChangeOrder);
-
- // Build grouped cost code options
- const costCodeOptions = filteredCostCodes.map(c => ({
- value: c.id, label: `${c.code} — ${c.description}`, group: c.category,
- }));
-
- // Per-line cost code options — unfiltered, because each line can be
- // independently a base or CO line. Include both variants so PM has full control.
- const lineCostCodeOptions = [
- { value: "", label: "— Unassigned —" },
- ...costCodes.map(c => ({
- value: c.id,
- label: `${c.code} — ${c.description}${c.is_change_order ? " (CO)" : ""}`,
- group: c.category,
- })),
- ];
 
  // Summary: how many unique cost codes the line items span
  const uniqueLineCodeIds = Array.from(new Set(lineItems.map(l => l.cost_code_id).filter(Boolean) as string[]));
- const lineItemSumCents = lineItems.reduce((s, l) => s + l.amount_cents, 0);
  const totalCents = Math.round((parseFloat(totalAmount) || 0) * 100);
- const amountMismatchCents = Math.abs(lineItemSumCents - totalCents);
- const hasAmountMismatch = lineItems.length > 0 && amountMismatchCents > 1; // 1¢ rounding tolerance
 
  // Amount guard: PM edited total above original AI-parsed amount
  const aiParsedTotal = invoice.ai_parsed_total_amount ?? invoice.total_amount;
  const amountIncreasePct = aiParsedTotal > 0
  ? ((totalCents - aiParsedTotal) / aiParsedTotal) * 100
  : 0;
- const amountOverAi = totalCents > aiParsedTotal;
  const amountOver10Pct = amountIncreasePct > 10;
 
  // Credit memo (negative total)
@@ -905,20 +660,6 @@ export default function InvoiceReviewPage() {
  // CO reference required: any line flagged as CO must have a co_reference
  const lineItemsMissingCoReference = lineItems.filter(l => l.is_change_order && !l.co_reference.trim());
  const missingCoReference = lineItemsMissingCoReference.length > 0;
-
- // Per-line-item breakdown (for summary display)
- const costCodeSummary = uniqueLineCodeIds.map(ccId => {
- const cc = costCodes.find(c => c.id === ccId);
- const rows = lineItems.filter(l => l.cost_code_id === ccId);
- const total = rows.reduce((s, l) => s + l.amount_cents, 0);
- return {
- id: ccId,
- code: cc?.code ?? "???",
- description: cc?.description ?? "",
- total,
- count: rows.length,
- };
- });
 
  // Over-budget severity classifier. Returns the worst-case severity across
  // every cost code this invoice touches. Drives the graduated warnings in
@@ -993,9 +734,6 @@ export default function InvoiceReviewPage() {
  setShowApproveConfirm(true);
  };
 
- // Job options
- const jobOptions = jobs.map(j => ({ value: j.id, label: `${j.name} — ${j.address ?? ""}` }));
-
  // Resolve labels for approve confirmation
  const selectedJob = jobs.find(j => j.id === jobId);
  const selectedCostCode = costCodes.find(c => c.id === costCodeId);
@@ -1018,20 +756,6 @@ export default function InvoiceReviewPage() {
  : duplicateBlocked
  ? "Flagged as potential duplicate — dismiss or deny"
  : null;
-
- // Date reasonableness warning (always on, regardless of settings).
- // Shows when the invoice date is >90 days in the past or in the future.
- const dateReasonablenessWarning = (() => {
- if (!invoiceDate.trim()) return null;
- const ivDate = new Date(invoiceDate);
- if (isNaN(ivDate.getTime())) return null;
- const today = new Date();
- today.setHours(0, 0, 0, 0);
- const diffDays = Math.round((today.getTime() - ivDate.getTime()) / (1000 * 60 * 60 * 24));
- if (diffDays > 90) return `Invoice date is ${diffDays} days ago — verify`;
- if (diffDays < 0) return `Invoice date is in the future — verify`;
- return null;
- })();
 
  // Detect if this invoice was kicked back by QA
  const kickBackInfo = (() => {
@@ -2419,83 +2143,6 @@ export default function InvoiceReviewPage() {
  );
 }
 
-// Graduated over-budget badge used in the budget sidebar.
-// Yellow  (≤10% over)  — soft warning; PM can still approve normally.
-// Orange  (10-25% over) — note required at approve time.
-// Red     (>25% over OR $0 budget OR allowance) — forces the over-budget modal.
-function OverBudgetAlert({ severity, overage, pct, isAllowance }: {
- severity: "yellow" | "orange" | "red";
- overage: number;
- pct: number;
- isAllowance: boolean;
-}) {
- const colorMap: Record<string, { bg: string; border: string; text: string; label: string }> = {
- yellow: { bg: "bg-[rgba(201,138,59,0.12)]", border: "border-[rgba(201,138,59,0.3)]", text: "text-[color:var(--nw-warn)]", label: "Over budget" },
- orange: { bg: "bg-[rgba(201,138,59,0.12)]", border: "border-[rgba(201,138,59,0.35)]", text: "text-[color:var(--nw-warn)]", label: "Significantly over budget" },
- red: { bg: "bg-[rgba(176,85,78,0.12)]", border: "border-[rgba(176,85,78,0.35)]", text: "text-[color:var(--nw-danger)]", label: isAllowance ? "Allowance overage" : "Severely over budget" },
- };
- const c = colorMap[severity];
- const fmt = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
- return (
- <div className={`mt-3 p-3 ${c.bg} border ${c.border}`}>
- <div className="flex items-start gap-2">
- <svg className={`w-4 h-4 ${c.text} shrink-0 mt-0.5`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
- <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M4.93 19.07A10 10 0 1119.07 4.93 10 10 0 014.93 19.07z" />
- </svg>
- <div className="flex-1 min-w-0">
- <p className={`text-xs ${c.text} font-semibold break-words`}>
- {c.label}
- </p>
- <p className={`text-[11px] ${c.text}/90 mt-0.5 break-words`}>
- +{fmt(overage)} · {pct.toFixed(1)}% over
- </p>
- {severity === "orange" && (
- <p className="text-[11px] text-[color:var(--text-secondary)] mt-1.5 leading-snug">
- A note is required at approval time.
- </p>
- )}
- {severity === "red" && (
- <p className="text-[11px] text-[color:var(--text-secondary)] mt-1.5 leading-snug">
- {isAllowance
- ? "Allowances usually become change orders. Use Convert to Change Order below."
- : "Approve as overage with a note, or convert to a formal change order."}
- </p>
- )}
- </div>
- </div>
- </div>
- );
-}
-
-function SidebarCard({ title, children }: { title: string; children: React.ReactNode }) {
- // Uses semantic tokens via direct CSS vars so the card's surface +
- // border swap with theme. Eyebrow is rendered with the standard
- // JetBrains Mono tracked-uppercase pattern from the design system.
- return (
- <div
- className="border p-5"
- style={{
- background: "var(--bg-card)",
- borderColor: "var(--border-default)",
- }}
- >
- <p
- className="text-[10px] uppercase mb-4"
- style={{
- fontFamily: "var(--font-jetbrains-mono)",
- letterSpacing: "0.14em",
- color: "var(--text-tertiary)",
- fontWeight: 500,
- }}
- >
- {title}
- </p>
- <div>{children}</div>
- </div>
- );
-}
-
-
 const FIELD_LABELS: Record<string, string> = {
  invoice_number: "Invoice #",
  invoice_date: "Invoice Date",
@@ -2576,16 +2223,6 @@ function EditHistoryCard({
  ))}
  </div>
  )}
- </div>
- );
-}
-
-function BudgetRow({ label, value, highlight }: { label: string; value: number; highlight?: "danger" | "warning" | "success" }) {
- const color = highlight === "danger" ? "text-[color:var(--nw-danger)]" : highlight === "warning" ? "text-[color:var(--nw-warn)]" : highlight === "success" ? "text-[color:var(--nw-success)]" : "text-[color:var(--text-primary)]";
- return (
- <div className="flex justify-between text-sm">
- <span className="text-[color:var(--text-secondary)]">{label}</span>
- <span className={`font-medium font-display ${color}`}>{formatCents(value)}</span>
  </div>
  );
 }
