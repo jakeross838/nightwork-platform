@@ -54,6 +54,9 @@ skills-lock.json
 # classifier test fixtures (local only — real Ross Built PDFs, never committed per preflight R8)
 /__tests__/fixtures/classifier/.local/
 
+# classifier eval intermediate output (regenerable, varies per run — final results are pasted into qa-branch3-phase3.2-v2.md)
+/qa-reports/.eval/
+
 # /gsd-map-codebase output, regenerable, kept local
 /.planning/
 
