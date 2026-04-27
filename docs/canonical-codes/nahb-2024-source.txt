@@ -1,0 +1,345 @@
+# NAHB Standard Homebuilder Cost Codes — raw source data
+# Extracted 2026-04-27 from https://mcbia.org/nahb-standard-homebuilder-cost-codes/
+# Format: CODE|NAME (one row per line, 315 rows total)
+# Source: Marion County Building Industry Association published list of NAHB
+# Standard Cost Codes. Public domain reference data.
+#
+# Hierarchy is derived in scripts/build-nahb-csv.cjs from this raw list:
+#   - Level 1 = 5 synthesized top-level categories (Product Definition,
+#     Land Development, Direct Construction, Financing, Indirect Construction)
+#   - Level 2 = ALL-CAPS or round-number anchors within each level-1
+#   - Level 3 = leaf line items
+#
+# Preserve this file as committed evidence of the source we ingested. If
+# Marion County BIA updates their list, append-and-version rather than
+# overwrite (e.g., nahb-2025-source.txt) so the seed remains auditable.
+01-01-0110|Feasibility Study
+01-01-0120|Environmental Impact Study
+01-01-0130|Option Fees
+01-01-0140|Professional Fees
+02-01-0101|Appraisal Fees
+02-01-0102|Attorney Fees
+02-01-0103|Environmental Reports
+02-01-0104|Extension Fees
+02-01-0105|Option Fees
+02-01-0110|Land Acquisition Costs
+02-01-0111|Attorney Fees
+02-01-0112|Land Acquisition Expense
+02-01-0113|Settlement Charges
+02-01-0114|Option Fees
+02-01-0120|Land Planning and Design
+02-01-0121|Attorney Fees
+02-01-0122|Engineering Fees
+02-01-0123|Planning commission fees
+02-01-0124|Planning review fees
+02-01-0130|Engineering
+02-01-0131|Onsite Engineering
+02-01-0132|Offsite Engineering
+02-01-0135|Restaking
+02-01-0140|Earthwork
+02-01-0141|Clearing
+02-01-0142|Compaction
+02-01-0143|Erosion and Sedimentation Control
+02-01-0144|Fine Grading
+02-01-0145|Gabon's
+02-01-0146|Haul Offsite
+02-01-0147|Miscellaneous
+02-01-0148|Replace Topsoil
+02-01-0149|Retention Basins
+02-01-0150|Rock Removal
+02-01-0151|Site Excavation
+02-01-0152|Strip Topsoil
+02-01-0153|Trenching
+02-01-0160|Utilities
+02-01-0161|Cable Offsite
+02-01-0162|Cable Onsite
+02-01-0163|Electric Offsite/Pole Relocation
+02-01-0164|Electric Onsite
+02-01-0165|Gas Line Offsite
+02-01-0166|Gas Line Onsite
+02-01-0167|Intent to Construct Fee
+02-01-0168|Miscellaneous
+02-01-0169|Phone Offsite
+02-01-0170|Phone Onsite
+02-01-0171|Propane for Permanent Heat Source
+02-01-0172|Propane for Temp Heat Source
+02-01-0173|Sanitary Sewer Offsite
+02-01-0174|Sanitary Sewer Onsite
+02-01-0175|Storm Sewer Offsite
+02-01-0176|Storm Sewer Onsite
+02-01-0177|Temporary Electric and Gas Services
+02-01-0178|Water Line Offsite
+02-01-0179|Water Line Onsite
+02-01-0180|Streets and Walks
+02-01-0181|Curbing
+02-01-0182|Gates and Fencing
+02-01-0183|Guard Rails
+02-01-0184|Public Sidewalks
+02-01-0185|Roadway Paving Onsite
+02-01-0186|Roadway work /widening Offsite
+02-01-0187|Roadway work Onsite
+02-01-0188|Street Lights
+02-01-0189|Traffic Lights
+02-01-0190|Trails and Bike Paths
+02-01-0200|Signage
+02-01-0201|Directional Signs – Offsite
+02-01-0202|Entrance Signs
+02-01-0203|Road Painting and Directional Lines
+02-01-0204|Street Signs
+02-01-0210|Landscaping
+02-01-0211|Common Areas
+02-01-0212|Entrance Way
+02-01-0213|Maintenance
+02-01-0214|Pavers and hardscaping
+02-01-0215|Retaining walls/segmental retaining walls
+02-01-0216|Wells/Irrigation Systems
+02-01-0220|Amenities
+02-01-0221|Flag Poles
+02-01-0222|Guard House
+02-01-0223|Miscellaneous
+02-01-0224|Recreation Building
+02-01-0225|Swimming Pool
+02-01-0226|Tennis Courts
+02-01-0230|Sample Costs
+02-01-0231|Utilities
+02-01-0232|Wallpapering
+02-01-0233|Wall Treatments
+02-01-0234|Temporary Furnishings
+02-01-0235|Permanent Furnishings
+02-01-0236|Installation Labor
+03-01-1010|Building Permits
+03-01-1020|HBA Assessments
+03-01-1030|Warranty Fees
+03-01-1110|Blueprints
+03-01-1120|Surveys
+03-01-1210|Lot Clearing
+03-01-1220|Fill Dirt and Material
+03-01-1230|Rough Grading
+03-01-1410|Temporary Electric
+03-01-1420|Individual Wells
+03-01-1430|Water Service
+03-01-1440|Septic Systems
+03-01-1450|Sewer Service
+03-01-1460|Gas Service
+03-01-1470|Electric Service
+03-01-1480|Telephone Service
+03-01-1490|Other Utility Connections
+00-04-0239|Shoring
+00-04-3892|Earth Hauling
+00-07-3111|Labor Footings and Foundation
+00-08-0416|Concrete Blocks
+00-08-4068|Gravel
+00-08-7721|Sand
+00-09-1373|Rebar and Reinforcing Steel
+00-09-5026|Other Foundation Material
+00-09-8678|Labor Footings and Foundation
+00-10-9635|WATERPROOFING
+00-14-6159|TERMITE PROTECTION
+00-40-1830|STEEL
+00-40-5482|Stairs – Steel
+00-40-9135|Beams – Steel
+00-41-2787|Posts – Steel
+00-44-2006|Materials – Floor Framing
+00-44-5659|Materials – Wall Framing
+00-44-9311|Materials – Roof Framing
+00-45-2964|Materials – Trusses
+00-45-6616|Materials – Basement Framing
+00-46-0269|Framing Labor
+00-54-7927|CONCRETE
+00-55-1579|Concrete Formwork
+00-55-5232|Structural Slabs
+00-55-8884|Structural Frame
+00-56-2537|Concrete Stairs
+00-56-6189|Precast Decks and Walls
+00-56-9842|Garage or Carport Slab
+00-57-3494|Concrete Labor
+00-58-4451|ROUGH SHEET METAL
+00-58-8103|Gutters and Downspouts
+00-59-1756|Metal Edge and Flashing
+00-59-5408|Soffit and Gable Flashing
+00-62-0976|ROUGH PLUMBING
+00-62-4628|Rough Plumbing
+00-62-8281|Rough Plumbing Labor
+00-65-7500|ROUGH ELECTRICAL
+00-66-1152|Rough Electrical Material
+00-66-4805|Rough Electrical Labor
+00-69-4024|ROUGH HVAC
+00-69-7676|Rough HVAC Material
+00-70-1329|Rough HVAC Labor
+00-76-7074|ROOFING
+00-77-0726|Roofing Material
+00-77-4379|Roofing Labor
+00-80-3598|MASONRY
+00-80-7250|Chimney
+00-81-0903|Fireplace
+00-81-4555|Brick Veneer
+00-81-8208|Brick or Stone Wall
+00-82-1860|Masonry Flooring
+00-94-9695|WINDOWS AND DOORS
+00-95-3347|Windows
+00-95-7000|Skylights
+00-96-0652|Storm Windows and Doors
+00-96-4305|Exterior Doors
+00-96-7957|Interior Closet Doors
+00-97-1610|Sliding Glass Doors
+00-97-5262|Garage Doors
+00-97-8915|Window and Door Hardware
+00-98-2567|Window and Door Installation
+01-02-2743|INSULATION
+01-02-6395|Foundtn and Bsmt Insulation
+01-03-0048|Roof and Ceiling Insulation
+01-03-3700|Wall Insulation
+01-03-7353|Floor Insulation
+01-04-1005|Weatherstrp and Vapor Barrier
+01-04-4658|Insulation Labor
+01-05-9268|EXTERIOR TRIM
+01-06-2920|Posts and Columns
+01-06-6573|Siding
+01-07-0225|Shutters
+01-07-3878|Cornices and Rake Trim
+01-07-7530|Exterior Trim Hardware
+01-08-1183|Exterior Trim Labor
+01-09-5792|EXTERIOR PAINTING
+01-09-9444|Exterior Painting Material
+01-10-3097|Exterior Painting Labor
+01-13-2317|DRYWALL
+01-13-5969|Drywall Material
+01-13-9622|Drywall Labor
+01-14-3274|Drywall Hanging
+01-14-6927|Drywall Finishing
+01-16-8841|FLOORING
+01-17-2493|Resilient Flooring
+01-17-6146|Resilent Floor Installation
+01-17-9798|Carpeting
+01-18-3451|Carpet Installation
+01-18-7103|Hardwood Flooring
+01-19-0756|Hardwood Flooring Install
+01-20-5366|INTERIOR TRIM
+01-20-9018|Moulding
+01-21-2671|Paneling
+01-21-6323|Closet Shelving
+01-21-9976|Hardware – Interior Trim
+01-22-3628|Interior Trim Labor
+01-24-1890|CERAMIC TILE
+01-24-5542|Ceramic Trim
+01-24-9195|Ceramic Tile Installation
+01-27-8414|CABINETS
+01-28-2066|Kitchen Cabinets
+01-28-5719|Countertops
+01-28-9371|Bathroom Cabinets
+01-29-3024|Cabinet Hardware
+01-31-4938|APPLIANCES
+01-31-8590|Range
+01-32-2243|Range Hood
+01-32-5895|Disposal
+01-32-9548|Dishwasher
+01-33-3200|Refrigerator
+01-33-6853|Washer Dryer
+01-34-0505|Microwave
+01-34-4158|Vacuum
+01-34-7810|Others
+01-35-1463|FINISH PLUMBING
+01-35-5115|Finish Plumbing Material
+01-35-8768|Finish Plumbing Labor
+01-38-7987|FINISH ELECTRICAL
+01-39-1639|Finish Electrical Material
+01-39-5292|Finish Electrical Labor
+01-42-4511|FINISH HVAC
+01-42-8163|Finish HVAC Material
+01-43-1816|Finish HVAC Labor
+01-46-1035|INTERIOR DECORATION
+01-46-4687|Interior Painting Material
+01-46-8340|Interior Painting Labor
+01-47-1992|Wall Coverings
+01-49-7561|BUILDING CLEAN-UP
+01-50-1213|Building Clean-up
+01-53-4085|LANDSCAPING
+01-53-7737|Fill Dirt
+01-54-1390|Top Soil
+01-54-5042|Trees
+01-54-8695|Shrubs
+01-55-2347|Sod
+01-55-6000|Seed
+01-55-9652|Fertilizer
+01-56-3305|Irrigation System
+01-57-0609|DRIVEWAY
+01-57-4261|Driveway Materials
+01-57-7914|Driveway Labor
+01-60-7133|EXTERIOR STRUCTURES
+01-61-0785|Patio Materials
+01-61-4438|Patio Labor
+01-61-8090|Sidewalks Materials
+01-62-1743|Sidewalks Labor
+01-62-5395|Fences Materials
+01-62-9048|Fences Labor
+01-63-2700|Pads Materials
+01-63-6353|Pads Labor
+01-64-3658|WALK THROUGH INSPECTION COSTS
+01-86-6481|Single Family Sales
+01-87-0134|Condominium Sales
+01-87-3786|Townhome Sales
+01-90-3005|Interest Income
+01-90-6658|Prepaid Assessments
+01-91-0310|Insurance Premiums
+01-91-3963|Earnest Money Paid
+01-91-7615|Rent Credit
+01-93-9530|Buyer Concessions
+01-94-3183|Closing Costs
+01-97-6054|Commissions – In House
+01-97-9707|Commissions – Broker
+02-01-2578|Bank Processing Fees
+02-02-3536|Closing Fees to Company
+02-02-7188|Buyer Fees
+02-03-0841|HomeOwner Assoc. Fees
+02-03-8146|Transfer Tax
+02-04-1798|Title and Recording Fees
+02-04-9102|Construction Interest
+02-05-6407|Appraisals
+02-23-1754|Superintendents
+02-23-5407|Laborers
+02-23-9059|Architects/Drafters/Estimators
+02-24-2712|Wages and other
+02-24-6364|Lost Time
+02-26-0974|Other
+02-26-8278|Payroll Taxes
+02-27-1931|Workers Comp
+02-27-5583|Health Insurance
+02-27-9236|Retirement/Pension/Profit
+02-28-2888|Unions
+02-28-6541|Other Benefits
+02-30-4802|Rent
+02-30-8455|Maintenance and Repairs
+02-31-2107|Utilities
+02-31-5760|Telephone
+02-31-9412|Other Field Expense
+02-34-1326|Rent
+02-34-4979|Maintenance and Repair
+02-34-8631|Utilities
+02-35-2284|Telephone
+02-37-7851|Vehicle Lease Payments
+02-38-1504|Mileage Reimbursements
+02-38-5156|Maintenance and Repairs
+02-39-2461|Taxes
+02-39-6114|Cust Business Entertainment
+02-39-9766|Travel
+02-41-4375|Rent
+02-41-8028|Maintenance and Repairs
+02-42-1680|Operating Expenses
+02-42-5333|Taxes
+02-42-8985|Small Tools and Supplies
+02-45-0899|Heat
+02-45-4552|Electricity
+02-45-8204|Water and Sewer
+02-46-1857|Lawn Care
+02-46-5509|Utilities
+02-46-9162|Maintenance and Repairs
+02-47-2814|Security
+02-48-7423|Warranty Labor
+02-49-1076|Warranty Material
+02-49-4728|Warranty Subcontractor
+02-49-8381|Warranty Other
+02-52-3948|Model Home Costs
+02-52-7601|Sales Commissions
+02-53-1253|Sales Facilities
+02-53-4906|Semi-permanent Signage
+02-58-9692|Other Indirect Costs

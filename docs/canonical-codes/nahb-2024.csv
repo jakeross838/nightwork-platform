@@ -1,0 +1,355 @@
+spine,code,parent_code,level,category,name,full_path
+NAHB,NAHB-PD,,1,Product Definition,Product Definition,Product Definition
+NAHB,NAHB-LD,,1,Land Development,Land Development,Land Development
+NAHB,NAHB-DC,,1,Direct Construction,Direct Construction,Direct Construction
+NAHB,NAHB-FN,,1,Financing,Financing,Financing
+NAHB,NAHB-IC,,1,Indirect Construction,Indirect Construction,Indirect Construction
+NAHB,01-01-0110,NAHB-PD,2,Product Definition,Feasibility Study,Product Definition / Feasibility Study
+NAHB,01-01-0120,NAHB-PD,2,Product Definition,Environmental Impact Study,Product Definition / Environmental Impact Study
+NAHB,01-01-0130,NAHB-PD,2,Product Definition,Option Fees,Product Definition / Option Fees
+NAHB,01-01-0140,NAHB-PD,2,Product Definition,Professional Fees,Product Definition / Professional Fees
+NAHB,NAHB-LD-PREACQ,NAHB-LD,2,Land Development,Pre-Acquisition Costs,Land Development / Pre-Acquisition Costs
+NAHB,02-01-0101,NAHB-LD-PREACQ,3,Land Development,Appraisal Fees,Land Development / Pre-Acquisition Costs / Appraisal Fees
+NAHB,02-01-0102,NAHB-LD-PREACQ,3,Land Development,Attorney Fees,Land Development / Pre-Acquisition Costs / Attorney Fees
+NAHB,02-01-0103,NAHB-LD-PREACQ,3,Land Development,Environmental Reports,Land Development / Pre-Acquisition Costs / Environmental Reports
+NAHB,02-01-0104,NAHB-LD-PREACQ,3,Land Development,Extension Fees,Land Development / Pre-Acquisition Costs / Extension Fees
+NAHB,02-01-0105,NAHB-LD-PREACQ,3,Land Development,Option Fees,Land Development / Pre-Acquisition Costs / Option Fees
+NAHB,02-01-0110,NAHB-LD,2,Land Development,Land Acquisition Costs,Land Development / Land Acquisition Costs
+NAHB,02-01-0111,02-01-0110,3,Land Development,Attorney Fees,Land Development / Land Acquisition Costs / Attorney Fees
+NAHB,02-01-0112,02-01-0110,3,Land Development,Land Acquisition Expense,Land Development / Land Acquisition Costs / Land Acquisition Expense
+NAHB,02-01-0113,02-01-0110,3,Land Development,Settlement Charges,Land Development / Land Acquisition Costs / Settlement Charges
+NAHB,02-01-0114,02-01-0110,3,Land Development,Option Fees,Land Development / Land Acquisition Costs / Option Fees
+NAHB,02-01-0120,NAHB-LD,2,Land Development,Land Planning and Design,Land Development / Land Planning and Design
+NAHB,02-01-0121,02-01-0120,3,Land Development,Attorney Fees,Land Development / Land Planning and Design / Attorney Fees
+NAHB,02-01-0122,02-01-0120,3,Land Development,Engineering Fees,Land Development / Land Planning and Design / Engineering Fees
+NAHB,02-01-0123,02-01-0120,3,Land Development,Planning commission fees,Land Development / Land Planning and Design / Planning commission fees
+NAHB,02-01-0124,02-01-0120,3,Land Development,Planning review fees,Land Development / Land Planning and Design / Planning review fees
+NAHB,02-01-0130,NAHB-LD,2,Land Development,Engineering,Land Development / Engineering
+NAHB,02-01-0131,02-01-0130,3,Land Development,Onsite Engineering,Land Development / Engineering / Onsite Engineering
+NAHB,02-01-0132,02-01-0130,3,Land Development,Offsite Engineering,Land Development / Engineering / Offsite Engineering
+NAHB,02-01-0135,02-01-0130,3,Land Development,Restaking,Land Development / Engineering / Restaking
+NAHB,02-01-0140,NAHB-LD,2,Land Development,Earthwork,Land Development / Earthwork
+NAHB,02-01-0141,02-01-0140,3,Land Development,Clearing,Land Development / Earthwork / Clearing
+NAHB,02-01-0142,02-01-0140,3,Land Development,Compaction,Land Development / Earthwork / Compaction
+NAHB,02-01-0143,02-01-0140,3,Land Development,Erosion and Sedimentation Control,Land Development / Earthwork / Erosion and Sedimentation Control
+NAHB,02-01-0144,02-01-0140,3,Land Development,Fine Grading,Land Development / Earthwork / Fine Grading
+NAHB,02-01-0145,02-01-0140,3,Land Development,Gabon's,Land Development / Earthwork / Gabon's
+NAHB,02-01-0146,02-01-0140,3,Land Development,Haul Offsite,Land Development / Earthwork / Haul Offsite
+NAHB,02-01-0147,02-01-0140,3,Land Development,Miscellaneous,Land Development / Earthwork / Miscellaneous
+NAHB,02-01-0148,02-01-0140,3,Land Development,Replace Topsoil,Land Development / Earthwork / Replace Topsoil
+NAHB,02-01-0149,02-01-0140,3,Land Development,Retention Basins,Land Development / Earthwork / Retention Basins
+NAHB,02-01-0150,02-01-0140,3,Land Development,Rock Removal,Land Development / Earthwork / Rock Removal
+NAHB,02-01-0151,02-01-0140,3,Land Development,Site Excavation,Land Development / Earthwork / Site Excavation
+NAHB,02-01-0152,02-01-0140,3,Land Development,Strip Topsoil,Land Development / Earthwork / Strip Topsoil
+NAHB,02-01-0153,02-01-0140,3,Land Development,Trenching,Land Development / Earthwork / Trenching
+NAHB,02-01-0160,NAHB-LD,2,Land Development,Utilities,Land Development / Utilities
+NAHB,02-01-0161,02-01-0160,3,Land Development,Cable Offsite,Land Development / Utilities / Cable Offsite
+NAHB,02-01-0162,02-01-0160,3,Land Development,Cable Onsite,Land Development / Utilities / Cable Onsite
+NAHB,02-01-0163,02-01-0160,3,Land Development,Electric Offsite/Pole Relocation,Land Development / Utilities / Electric Offsite/Pole Relocation
+NAHB,02-01-0164,02-01-0160,3,Land Development,Electric Onsite,Land Development / Utilities / Electric Onsite
+NAHB,02-01-0165,02-01-0160,3,Land Development,Gas Line Offsite,Land Development / Utilities / Gas Line Offsite
+NAHB,02-01-0166,02-01-0160,3,Land Development,Gas Line Onsite,Land Development / Utilities / Gas Line Onsite
+NAHB,02-01-0167,02-01-0160,3,Land Development,Intent to Construct Fee,Land Development / Utilities / Intent to Construct Fee
+NAHB,02-01-0168,02-01-0160,3,Land Development,Miscellaneous,Land Development / Utilities / Miscellaneous
+NAHB,02-01-0169,02-01-0160,3,Land Development,Phone Offsite,Land Development / Utilities / Phone Offsite
+NAHB,02-01-0170,02-01-0160,3,Land Development,Phone Onsite,Land Development / Utilities / Phone Onsite
+NAHB,02-01-0171,02-01-0160,3,Land Development,Propane for Permanent Heat Source,Land Development / Utilities / Propane for Permanent Heat Source
+NAHB,02-01-0172,02-01-0160,3,Land Development,Propane for Temp Heat Source,Land Development / Utilities / Propane for Temp Heat Source
+NAHB,02-01-0173,02-01-0160,3,Land Development,Sanitary Sewer Offsite,Land Development / Utilities / Sanitary Sewer Offsite
+NAHB,02-01-0174,02-01-0160,3,Land Development,Sanitary Sewer Onsite,Land Development / Utilities / Sanitary Sewer Onsite
+NAHB,02-01-0175,02-01-0160,3,Land Development,Storm Sewer Offsite,Land Development / Utilities / Storm Sewer Offsite
+NAHB,02-01-0176,02-01-0160,3,Land Development,Storm Sewer Onsite,Land Development / Utilities / Storm Sewer Onsite
+NAHB,02-01-0177,02-01-0160,3,Land Development,Temporary Electric and Gas Services,Land Development / Utilities / Temporary Electric and Gas Services
+NAHB,02-01-0178,02-01-0160,3,Land Development,Water Line Offsite,Land Development / Utilities / Water Line Offsite
+NAHB,02-01-0179,02-01-0160,3,Land Development,Water Line Onsite,Land Development / Utilities / Water Line Onsite
+NAHB,02-01-0180,NAHB-LD,2,Land Development,Streets and Walks,Land Development / Streets and Walks
+NAHB,02-01-0181,02-01-0180,3,Land Development,Curbing,Land Development / Streets and Walks / Curbing
+NAHB,02-01-0182,02-01-0180,3,Land Development,Gates and Fencing,Land Development / Streets and Walks / Gates and Fencing
+NAHB,02-01-0183,02-01-0180,3,Land Development,Guard Rails,Land Development / Streets and Walks / Guard Rails
+NAHB,02-01-0184,02-01-0180,3,Land Development,Public Sidewalks,Land Development / Streets and Walks / Public Sidewalks
+NAHB,02-01-0185,02-01-0180,3,Land Development,Roadway Paving Onsite,Land Development / Streets and Walks / Roadway Paving Onsite
+NAHB,02-01-0186,02-01-0180,3,Land Development,Roadway work /widening Offsite,Land Development / Streets and Walks / Roadway work /widening Offsite
+NAHB,02-01-0187,02-01-0180,3,Land Development,Roadway work Onsite,Land Development / Streets and Walks / Roadway work Onsite
+NAHB,02-01-0188,02-01-0180,3,Land Development,Street Lights,Land Development / Streets and Walks / Street Lights
+NAHB,02-01-0189,02-01-0180,3,Land Development,Traffic Lights,Land Development / Streets and Walks / Traffic Lights
+NAHB,02-01-0190,02-01-0180,3,Land Development,Trails and Bike Paths,Land Development / Streets and Walks / Trails and Bike Paths
+NAHB,02-01-0200,NAHB-LD,2,Land Development,Signage,Land Development / Signage
+NAHB,02-01-0201,02-01-0200,3,Land Development,Directional Signs – Offsite,Land Development / Signage / Directional Signs – Offsite
+NAHB,02-01-0202,02-01-0200,3,Land Development,Entrance Signs,Land Development / Signage / Entrance Signs
+NAHB,02-01-0203,02-01-0200,3,Land Development,Road Painting and Directional Lines,Land Development / Signage / Road Painting and Directional Lines
+NAHB,02-01-0204,02-01-0200,3,Land Development,Street Signs,Land Development / Signage / Street Signs
+NAHB,02-01-0210,NAHB-LD,2,Land Development,Landscaping,Land Development / Landscaping
+NAHB,02-01-0211,02-01-0210,3,Land Development,Common Areas,Land Development / Landscaping / Common Areas
+NAHB,02-01-0212,02-01-0210,3,Land Development,Entrance Way,Land Development / Landscaping / Entrance Way
+NAHB,02-01-0213,02-01-0210,3,Land Development,Maintenance,Land Development / Landscaping / Maintenance
+NAHB,02-01-0214,02-01-0210,3,Land Development,Pavers and hardscaping,Land Development / Landscaping / Pavers and hardscaping
+NAHB,02-01-0215,02-01-0210,3,Land Development,Retaining walls/segmental retaining walls,Land Development / Landscaping / Retaining walls/segmental retaining walls
+NAHB,02-01-0216,02-01-0210,3,Land Development,Wells/Irrigation Systems,Land Development / Landscaping / Wells/Irrigation Systems
+NAHB,02-01-0220,NAHB-LD,2,Land Development,Amenities,Land Development / Amenities
+NAHB,02-01-0221,02-01-0220,3,Land Development,Flag Poles,Land Development / Amenities / Flag Poles
+NAHB,02-01-0222,02-01-0220,3,Land Development,Guard House,Land Development / Amenities / Guard House
+NAHB,02-01-0223,02-01-0220,3,Land Development,Miscellaneous,Land Development / Amenities / Miscellaneous
+NAHB,02-01-0224,02-01-0220,3,Land Development,Recreation Building,Land Development / Amenities / Recreation Building
+NAHB,02-01-0225,02-01-0220,3,Land Development,Swimming Pool,Land Development / Amenities / Swimming Pool
+NAHB,02-01-0226,02-01-0220,3,Land Development,Tennis Courts,Land Development / Amenities / Tennis Courts
+NAHB,02-01-0230,NAHB-LD,2,Land Development,Sample Costs,Land Development / Sample Costs
+NAHB,02-01-0231,02-01-0230,3,Land Development,Utilities,Land Development / Sample Costs / Utilities
+NAHB,02-01-0232,02-01-0230,3,Land Development,Wallpapering,Land Development / Sample Costs / Wallpapering
+NAHB,02-01-0233,02-01-0230,3,Land Development,Wall Treatments,Land Development / Sample Costs / Wall Treatments
+NAHB,02-01-0234,02-01-0230,3,Land Development,Temporary Furnishings,Land Development / Sample Costs / Temporary Furnishings
+NAHB,02-01-0235,02-01-0230,3,Land Development,Permanent Furnishings,Land Development / Sample Costs / Permanent Furnishings
+NAHB,02-01-0236,02-01-0230,3,Land Development,Installation Labor,Land Development / Sample Costs / Installation Labor
+NAHB,NAHB-DC-PERMITS,NAHB-DC,2,Direct Construction,"Permits, Site & Utility Connections","Direct Construction / Permits, Site & Utility Connections"
+NAHB,03-01-1010,NAHB-DC-PERMITS,3,Direct Construction,Building Permits,"Direct Construction / Permits, Site & Utility Connections / Building Permits"
+NAHB,03-01-1020,NAHB-DC-PERMITS,3,Direct Construction,HBA Assessments,"Direct Construction / Permits, Site & Utility Connections / HBA Assessments"
+NAHB,03-01-1030,NAHB-DC-PERMITS,3,Direct Construction,Warranty Fees,"Direct Construction / Permits, Site & Utility Connections / Warranty Fees"
+NAHB,03-01-1110,NAHB-DC-PERMITS,3,Direct Construction,Blueprints,"Direct Construction / Permits, Site & Utility Connections / Blueprints"
+NAHB,03-01-1120,NAHB-DC-PERMITS,3,Direct Construction,Surveys,"Direct Construction / Permits, Site & Utility Connections / Surveys"
+NAHB,03-01-1210,NAHB-DC-PERMITS,3,Direct Construction,Lot Clearing,"Direct Construction / Permits, Site & Utility Connections / Lot Clearing"
+NAHB,03-01-1220,NAHB-DC-PERMITS,3,Direct Construction,Fill Dirt and Material,"Direct Construction / Permits, Site & Utility Connections / Fill Dirt and Material"
+NAHB,03-01-1230,NAHB-DC-PERMITS,3,Direct Construction,Rough Grading,"Direct Construction / Permits, Site & Utility Connections / Rough Grading"
+NAHB,03-01-1410,NAHB-DC-PERMITS,3,Direct Construction,Temporary Electric,"Direct Construction / Permits, Site & Utility Connections / Temporary Electric"
+NAHB,03-01-1420,NAHB-DC-PERMITS,3,Direct Construction,Individual Wells,"Direct Construction / Permits, Site & Utility Connections / Individual Wells"
+NAHB,03-01-1430,NAHB-DC-PERMITS,3,Direct Construction,Water Service,"Direct Construction / Permits, Site & Utility Connections / Water Service"
+NAHB,03-01-1440,NAHB-DC-PERMITS,3,Direct Construction,Septic Systems,"Direct Construction / Permits, Site & Utility Connections / Septic Systems"
+NAHB,03-01-1450,NAHB-DC-PERMITS,3,Direct Construction,Sewer Service,"Direct Construction / Permits, Site & Utility Connections / Sewer Service"
+NAHB,03-01-1460,NAHB-DC-PERMITS,3,Direct Construction,Gas Service,"Direct Construction / Permits, Site & Utility Connections / Gas Service"
+NAHB,03-01-1470,NAHB-DC-PERMITS,3,Direct Construction,Electric Service,"Direct Construction / Permits, Site & Utility Connections / Electric Service"
+NAHB,03-01-1480,NAHB-DC-PERMITS,3,Direct Construction,Telephone Service,"Direct Construction / Permits, Site & Utility Connections / Telephone Service"
+NAHB,03-01-1490,NAHB-DC-PERMITS,3,Direct Construction,Other Utility Connections,"Direct Construction / Permits, Site & Utility Connections / Other Utility Connections"
+NAHB,NAHB-DC-EXCAV,NAHB-DC,2,Direct Construction,Excavation & Foundation,Direct Construction / Excavation & Foundation
+NAHB,00-04-0239,NAHB-DC-EXCAV,3,Direct Construction,Shoring,Direct Construction / Excavation & Foundation / Shoring
+NAHB,00-04-3892,NAHB-DC-EXCAV,3,Direct Construction,Earth Hauling,Direct Construction / Excavation & Foundation / Earth Hauling
+NAHB,00-07-3111,NAHB-DC-EXCAV,3,Direct Construction,Labor Footings and Foundation,Direct Construction / Excavation & Foundation / Labor Footings and Foundation
+NAHB,00-08-0416,NAHB-DC-EXCAV,3,Direct Construction,Concrete Blocks,Direct Construction / Excavation & Foundation / Concrete Blocks
+NAHB,00-08-4068,NAHB-DC-EXCAV,3,Direct Construction,Gravel,Direct Construction / Excavation & Foundation / Gravel
+NAHB,00-08-7721,NAHB-DC-EXCAV,3,Direct Construction,Sand,Direct Construction / Excavation & Foundation / Sand
+NAHB,00-09-1373,NAHB-DC-EXCAV,3,Direct Construction,Rebar and Reinforcing Steel,Direct Construction / Excavation & Foundation / Rebar and Reinforcing Steel
+NAHB,00-09-5026,NAHB-DC-EXCAV,3,Direct Construction,Other Foundation Material,Direct Construction / Excavation & Foundation / Other Foundation Material
+NAHB,00-09-8678,NAHB-DC-EXCAV,3,Direct Construction,Labor Footings and Foundation,Direct Construction / Excavation & Foundation / Labor Footings and Foundation
+NAHB,00-10-9635,NAHB-DC,2,Direct Construction,Waterproofing,Direct Construction / Waterproofing
+NAHB,00-14-6159,NAHB-DC,2,Direct Construction,Termite Protection,Direct Construction / Termite Protection
+NAHB,00-40-1830,NAHB-DC,2,Direct Construction,Steel,Direct Construction / Steel
+NAHB,00-40-5482,00-40-1830,3,Direct Construction,Stairs – Steel,Direct Construction / Steel / Stairs – Steel
+NAHB,00-40-9135,00-40-1830,3,Direct Construction,Beams – Steel,Direct Construction / Steel / Beams – Steel
+NAHB,00-41-2787,00-40-1830,3,Direct Construction,Posts – Steel,Direct Construction / Steel / Posts – Steel
+NAHB,NAHB-DC-FRAMING,NAHB-DC,2,Direct Construction,Framing,Direct Construction / Framing
+NAHB,00-44-2006,NAHB-DC-FRAMING,3,Direct Construction,Materials – Floor Framing,Direct Construction / Framing / Materials – Floor Framing
+NAHB,00-44-5659,NAHB-DC-FRAMING,3,Direct Construction,Materials – Wall Framing,Direct Construction / Framing / Materials – Wall Framing
+NAHB,00-44-9311,NAHB-DC-FRAMING,3,Direct Construction,Materials – Roof Framing,Direct Construction / Framing / Materials – Roof Framing
+NAHB,00-45-2964,NAHB-DC-FRAMING,3,Direct Construction,Materials – Trusses,Direct Construction / Framing / Materials – Trusses
+NAHB,00-45-6616,NAHB-DC-FRAMING,3,Direct Construction,Materials – Basement Framing,Direct Construction / Framing / Materials – Basement Framing
+NAHB,00-46-0269,NAHB-DC-FRAMING,3,Direct Construction,Framing Labor,Direct Construction / Framing / Framing Labor
+NAHB,00-54-7927,NAHB-DC,2,Direct Construction,Concrete,Direct Construction / Concrete
+NAHB,00-55-1579,00-54-7927,3,Direct Construction,Concrete Formwork,Direct Construction / Concrete / Concrete Formwork
+NAHB,00-55-5232,00-54-7927,3,Direct Construction,Structural Slabs,Direct Construction / Concrete / Structural Slabs
+NAHB,00-55-8884,00-54-7927,3,Direct Construction,Structural Frame,Direct Construction / Concrete / Structural Frame
+NAHB,00-56-2537,00-54-7927,3,Direct Construction,Concrete Stairs,Direct Construction / Concrete / Concrete Stairs
+NAHB,00-56-6189,00-54-7927,3,Direct Construction,Precast Decks and Walls,Direct Construction / Concrete / Precast Decks and Walls
+NAHB,00-56-9842,00-54-7927,3,Direct Construction,Garage or Carport Slab,Direct Construction / Concrete / Garage or Carport Slab
+NAHB,00-57-3494,00-54-7927,3,Direct Construction,Concrete Labor,Direct Construction / Concrete / Concrete Labor
+NAHB,00-58-4451,NAHB-DC,2,Direct Construction,Rough Sheet Metal,Direct Construction / Rough Sheet Metal
+NAHB,00-58-8103,00-58-4451,3,Direct Construction,Gutters and Downspouts,Direct Construction / Rough Sheet Metal / Gutters and Downspouts
+NAHB,00-59-1756,00-58-4451,3,Direct Construction,Metal Edge and Flashing,Direct Construction / Rough Sheet Metal / Metal Edge and Flashing
+NAHB,00-59-5408,00-58-4451,3,Direct Construction,Soffit and Gable Flashing,Direct Construction / Rough Sheet Metal / Soffit and Gable Flashing
+NAHB,00-62-0976,NAHB-DC,2,Direct Construction,Rough Plumbing,Direct Construction / Rough Plumbing
+NAHB,00-62-4628,00-62-0976,3,Direct Construction,Rough Plumbing,Direct Construction / Rough Plumbing / Rough Plumbing
+NAHB,00-62-8281,00-62-0976,3,Direct Construction,Rough Plumbing Labor,Direct Construction / Rough Plumbing / Rough Plumbing Labor
+NAHB,00-65-7500,NAHB-DC,2,Direct Construction,Rough Electrical,Direct Construction / Rough Electrical
+NAHB,00-66-1152,00-65-7500,3,Direct Construction,Rough Electrical Material,Direct Construction / Rough Electrical / Rough Electrical Material
+NAHB,00-66-4805,00-65-7500,3,Direct Construction,Rough Electrical Labor,Direct Construction / Rough Electrical / Rough Electrical Labor
+NAHB,00-69-4024,NAHB-DC,2,Direct Construction,Rough HVAC,Direct Construction / Rough HVAC
+NAHB,00-69-7676,00-69-4024,3,Direct Construction,Rough HVAC Material,Direct Construction / Rough HVAC / Rough HVAC Material
+NAHB,00-70-1329,00-69-4024,3,Direct Construction,Rough HVAC Labor,Direct Construction / Rough HVAC / Rough HVAC Labor
+NAHB,00-76-7074,NAHB-DC,2,Direct Construction,Roofing,Direct Construction / Roofing
+NAHB,00-77-0726,00-76-7074,3,Direct Construction,Roofing Material,Direct Construction / Roofing / Roofing Material
+NAHB,00-77-4379,00-76-7074,3,Direct Construction,Roofing Labor,Direct Construction / Roofing / Roofing Labor
+NAHB,00-80-3598,NAHB-DC,2,Direct Construction,Masonry,Direct Construction / Masonry
+NAHB,00-80-7250,00-80-3598,3,Direct Construction,Chimney,Direct Construction / Masonry / Chimney
+NAHB,00-81-0903,00-80-3598,3,Direct Construction,Fireplace,Direct Construction / Masonry / Fireplace
+NAHB,00-81-4555,00-80-3598,3,Direct Construction,Brick Veneer,Direct Construction / Masonry / Brick Veneer
+NAHB,00-81-8208,00-80-3598,3,Direct Construction,Brick or Stone Wall,Direct Construction / Masonry / Brick or Stone Wall
+NAHB,00-82-1860,00-80-3598,3,Direct Construction,Masonry Flooring,Direct Construction / Masonry / Masonry Flooring
+NAHB,00-94-9695,NAHB-DC,2,Direct Construction,Windows and Doors,Direct Construction / Windows and Doors
+NAHB,00-95-3347,00-94-9695,3,Direct Construction,Windows,Direct Construction / Windows and Doors / Windows
+NAHB,00-95-7000,00-94-9695,3,Direct Construction,Skylights,Direct Construction / Windows and Doors / Skylights
+NAHB,00-96-0652,00-94-9695,3,Direct Construction,Storm Windows and Doors,Direct Construction / Windows and Doors / Storm Windows and Doors
+NAHB,00-96-4305,00-94-9695,3,Direct Construction,Exterior Doors,Direct Construction / Windows and Doors / Exterior Doors
+NAHB,00-96-7957,00-94-9695,3,Direct Construction,Interior Closet Doors,Direct Construction / Windows and Doors / Interior Closet Doors
+NAHB,00-97-1610,00-94-9695,3,Direct Construction,Sliding Glass Doors,Direct Construction / Windows and Doors / Sliding Glass Doors
+NAHB,00-97-5262,00-94-9695,3,Direct Construction,Garage Doors,Direct Construction / Windows and Doors / Garage Doors
+NAHB,00-97-8915,00-94-9695,3,Direct Construction,Window and Door Hardware,Direct Construction / Windows and Doors / Window and Door Hardware
+NAHB,00-98-2567,00-94-9695,3,Direct Construction,Window and Door Installation,Direct Construction / Windows and Doors / Window and Door Installation
+NAHB,01-02-2743,NAHB-DC,2,Direct Construction,Insulation,Direct Construction / Insulation
+NAHB,01-02-6395,01-02-2743,3,Direct Construction,Foundtn and Bsmt Insulation,Direct Construction / Insulation / Foundtn and Bsmt Insulation
+NAHB,01-03-0048,01-02-2743,3,Direct Construction,Roof and Ceiling Insulation,Direct Construction / Insulation / Roof and Ceiling Insulation
+NAHB,01-03-3700,01-02-2743,3,Direct Construction,Wall Insulation,Direct Construction / Insulation / Wall Insulation
+NAHB,01-03-7353,01-02-2743,3,Direct Construction,Floor Insulation,Direct Construction / Insulation / Floor Insulation
+NAHB,01-04-1005,01-02-2743,3,Direct Construction,Weatherstrp and Vapor Barrier,Direct Construction / Insulation / Weatherstrp and Vapor Barrier
+NAHB,01-04-4658,01-02-2743,3,Direct Construction,Insulation Labor,Direct Construction / Insulation / Insulation Labor
+NAHB,01-05-9268,NAHB-DC,2,Direct Construction,Exterior Trim,Direct Construction / Exterior Trim
+NAHB,01-06-2920,01-05-9268,3,Direct Construction,Posts and Columns,Direct Construction / Exterior Trim / Posts and Columns
+NAHB,01-06-6573,01-05-9268,3,Direct Construction,Siding,Direct Construction / Exterior Trim / Siding
+NAHB,01-07-0225,01-05-9268,3,Direct Construction,Shutters,Direct Construction / Exterior Trim / Shutters
+NAHB,01-07-3878,01-05-9268,3,Direct Construction,Cornices and Rake Trim,Direct Construction / Exterior Trim / Cornices and Rake Trim
+NAHB,01-07-7530,01-05-9268,3,Direct Construction,Exterior Trim Hardware,Direct Construction / Exterior Trim / Exterior Trim Hardware
+NAHB,01-08-1183,01-05-9268,3,Direct Construction,Exterior Trim Labor,Direct Construction / Exterior Trim / Exterior Trim Labor
+NAHB,01-09-5792,NAHB-DC,2,Direct Construction,Exterior Painting,Direct Construction / Exterior Painting
+NAHB,01-09-9444,01-09-5792,3,Direct Construction,Exterior Painting Material,Direct Construction / Exterior Painting / Exterior Painting Material
+NAHB,01-10-3097,01-09-5792,3,Direct Construction,Exterior Painting Labor,Direct Construction / Exterior Painting / Exterior Painting Labor
+NAHB,01-13-2317,NAHB-DC,2,Direct Construction,Drywall,Direct Construction / Drywall
+NAHB,01-13-5969,01-13-2317,3,Direct Construction,Drywall Material,Direct Construction / Drywall / Drywall Material
+NAHB,01-13-9622,01-13-2317,3,Direct Construction,Drywall Labor,Direct Construction / Drywall / Drywall Labor
+NAHB,01-14-3274,01-13-2317,3,Direct Construction,Drywall Hanging,Direct Construction / Drywall / Drywall Hanging
+NAHB,01-14-6927,01-13-2317,3,Direct Construction,Drywall Finishing,Direct Construction / Drywall / Drywall Finishing
+NAHB,01-16-8841,NAHB-DC,2,Direct Construction,Flooring,Direct Construction / Flooring
+NAHB,01-17-2493,01-16-8841,3,Direct Construction,Resilient Flooring,Direct Construction / Flooring / Resilient Flooring
+NAHB,01-17-6146,01-16-8841,3,Direct Construction,Resilent Floor Installation,Direct Construction / Flooring / Resilent Floor Installation
+NAHB,01-17-9798,01-16-8841,3,Direct Construction,Carpeting,Direct Construction / Flooring / Carpeting
+NAHB,01-18-3451,01-16-8841,3,Direct Construction,Carpet Installation,Direct Construction / Flooring / Carpet Installation
+NAHB,01-18-7103,01-16-8841,3,Direct Construction,Hardwood Flooring,Direct Construction / Flooring / Hardwood Flooring
+NAHB,01-19-0756,01-16-8841,3,Direct Construction,Hardwood Flooring Install,Direct Construction / Flooring / Hardwood Flooring Install
+NAHB,01-20-5366,NAHB-DC,2,Direct Construction,Interior Trim,Direct Construction / Interior Trim
+NAHB,01-20-9018,01-20-5366,3,Direct Construction,Moulding,Direct Construction / Interior Trim / Moulding
+NAHB,01-21-2671,01-20-5366,3,Direct Construction,Paneling,Direct Construction / Interior Trim / Paneling
+NAHB,01-21-6323,01-20-5366,3,Direct Construction,Closet Shelving,Direct Construction / Interior Trim / Closet Shelving
+NAHB,01-21-9976,01-20-5366,3,Direct Construction,Hardware – Interior Trim,Direct Construction / Interior Trim / Hardware – Interior Trim
+NAHB,01-22-3628,01-20-5366,3,Direct Construction,Interior Trim Labor,Direct Construction / Interior Trim / Interior Trim Labor
+NAHB,01-24-1890,NAHB-DC,2,Direct Construction,Ceramic Tile,Direct Construction / Ceramic Tile
+NAHB,01-24-5542,01-24-1890,3,Direct Construction,Ceramic Trim,Direct Construction / Ceramic Tile / Ceramic Trim
+NAHB,01-24-9195,01-24-1890,3,Direct Construction,Ceramic Tile Installation,Direct Construction / Ceramic Tile / Ceramic Tile Installation
+NAHB,01-27-8414,NAHB-DC,2,Direct Construction,Cabinets,Direct Construction / Cabinets
+NAHB,01-28-2066,01-27-8414,3,Direct Construction,Kitchen Cabinets,Direct Construction / Cabinets / Kitchen Cabinets
+NAHB,01-28-5719,01-27-8414,3,Direct Construction,Countertops,Direct Construction / Cabinets / Countertops
+NAHB,01-28-9371,01-27-8414,3,Direct Construction,Bathroom Cabinets,Direct Construction / Cabinets / Bathroom Cabinets
+NAHB,01-29-3024,01-27-8414,3,Direct Construction,Cabinet Hardware,Direct Construction / Cabinets / Cabinet Hardware
+NAHB,01-31-4938,NAHB-DC,2,Direct Construction,Appliances,Direct Construction / Appliances
+NAHB,01-31-8590,01-31-4938,3,Direct Construction,Range,Direct Construction / Appliances / Range
+NAHB,01-32-2243,01-31-4938,3,Direct Construction,Range Hood,Direct Construction / Appliances / Range Hood
+NAHB,01-32-5895,01-31-4938,3,Direct Construction,Disposal,Direct Construction / Appliances / Disposal
+NAHB,01-32-9548,01-31-4938,3,Direct Construction,Dishwasher,Direct Construction / Appliances / Dishwasher
+NAHB,01-33-3200,01-31-4938,3,Direct Construction,Refrigerator,Direct Construction / Appliances / Refrigerator
+NAHB,01-33-6853,01-31-4938,3,Direct Construction,Washer Dryer,Direct Construction / Appliances / Washer Dryer
+NAHB,01-34-0505,01-31-4938,3,Direct Construction,Microwave,Direct Construction / Appliances / Microwave
+NAHB,01-34-4158,01-31-4938,3,Direct Construction,Vacuum,Direct Construction / Appliances / Vacuum
+NAHB,01-34-7810,01-31-4938,3,Direct Construction,Others,Direct Construction / Appliances / Others
+NAHB,01-35-1463,NAHB-DC,2,Direct Construction,Finish Plumbing,Direct Construction / Finish Plumbing
+NAHB,01-35-5115,01-35-1463,3,Direct Construction,Finish Plumbing Material,Direct Construction / Finish Plumbing / Finish Plumbing Material
+NAHB,01-35-8768,01-35-1463,3,Direct Construction,Finish Plumbing Labor,Direct Construction / Finish Plumbing / Finish Plumbing Labor
+NAHB,01-38-7987,NAHB-DC,2,Direct Construction,Finish Electrical,Direct Construction / Finish Electrical
+NAHB,01-39-1639,01-38-7987,3,Direct Construction,Finish Electrical Material,Direct Construction / Finish Electrical / Finish Electrical Material
+NAHB,01-39-5292,01-38-7987,3,Direct Construction,Finish Electrical Labor,Direct Construction / Finish Electrical / Finish Electrical Labor
+NAHB,01-42-4511,NAHB-DC,2,Direct Construction,Finish HVAC,Direct Construction / Finish HVAC
+NAHB,01-42-8163,01-42-4511,3,Direct Construction,Finish HVAC Material,Direct Construction / Finish HVAC / Finish HVAC Material
+NAHB,01-43-1816,01-42-4511,3,Direct Construction,Finish HVAC Labor,Direct Construction / Finish HVAC / Finish HVAC Labor
+NAHB,01-46-1035,NAHB-DC,2,Direct Construction,Interior Decoration,Direct Construction / Interior Decoration
+NAHB,01-46-4687,01-46-1035,3,Direct Construction,Interior Painting Material,Direct Construction / Interior Decoration / Interior Painting Material
+NAHB,01-46-8340,01-46-1035,3,Direct Construction,Interior Painting Labor,Direct Construction / Interior Decoration / Interior Painting Labor
+NAHB,01-47-1992,01-46-1035,3,Direct Construction,Wall Coverings,Direct Construction / Interior Decoration / Wall Coverings
+NAHB,01-49-7561,NAHB-DC,2,Direct Construction,Building Clean-Up,Direct Construction / Building Clean-Up
+NAHB,01-50-1213,01-49-7561,3,Direct Construction,Building Clean-up,Direct Construction / Building Clean-Up / Building Clean-up
+NAHB,01-53-4085,NAHB-DC,2,Direct Construction,Landscaping,Direct Construction / Landscaping
+NAHB,01-53-7737,01-53-4085,3,Direct Construction,Fill Dirt,Direct Construction / Landscaping / Fill Dirt
+NAHB,01-54-1390,01-53-4085,3,Direct Construction,Top Soil,Direct Construction / Landscaping / Top Soil
+NAHB,01-54-5042,01-53-4085,3,Direct Construction,Trees,Direct Construction / Landscaping / Trees
+NAHB,01-54-8695,01-53-4085,3,Direct Construction,Shrubs,Direct Construction / Landscaping / Shrubs
+NAHB,01-55-2347,01-53-4085,3,Direct Construction,Sod,Direct Construction / Landscaping / Sod
+NAHB,01-55-6000,01-53-4085,3,Direct Construction,Seed,Direct Construction / Landscaping / Seed
+NAHB,01-55-9652,01-53-4085,3,Direct Construction,Fertilizer,Direct Construction / Landscaping / Fertilizer
+NAHB,01-56-3305,01-53-4085,3,Direct Construction,Irrigation System,Direct Construction / Landscaping / Irrigation System
+NAHB,01-57-0609,NAHB-DC,2,Direct Construction,Driveway,Direct Construction / Driveway
+NAHB,01-57-4261,01-57-0609,3,Direct Construction,Driveway Materials,Direct Construction / Driveway / Driveway Materials
+NAHB,01-57-7914,01-57-0609,3,Direct Construction,Driveway Labor,Direct Construction / Driveway / Driveway Labor
+NAHB,01-60-7133,NAHB-DC,2,Direct Construction,Exterior Structures,Direct Construction / Exterior Structures
+NAHB,01-61-0785,01-60-7133,3,Direct Construction,Patio Materials,Direct Construction / Exterior Structures / Patio Materials
+NAHB,01-61-4438,01-60-7133,3,Direct Construction,Patio Labor,Direct Construction / Exterior Structures / Patio Labor
+NAHB,01-61-8090,01-60-7133,3,Direct Construction,Sidewalks Materials,Direct Construction / Exterior Structures / Sidewalks Materials
+NAHB,01-62-1743,01-60-7133,3,Direct Construction,Sidewalks Labor,Direct Construction / Exterior Structures / Sidewalks Labor
+NAHB,01-62-5395,01-60-7133,3,Direct Construction,Fences Materials,Direct Construction / Exterior Structures / Fences Materials
+NAHB,01-62-9048,01-60-7133,3,Direct Construction,Fences Labor,Direct Construction / Exterior Structures / Fences Labor
+NAHB,01-63-2700,01-60-7133,3,Direct Construction,Pads Materials,Direct Construction / Exterior Structures / Pads Materials
+NAHB,01-63-6353,01-60-7133,3,Direct Construction,Pads Labor,Direct Construction / Exterior Structures / Pads Labor
+NAHB,01-64-3658,NAHB-DC,2,Direct Construction,Walk Through Inspection Costs,Direct Construction / Walk Through Inspection Costs
+NAHB,NAHB-FN-SALES,NAHB-FN,2,Financing,Sales,Financing / Sales
+NAHB,01-86-6481,NAHB-FN-SALES,3,Financing,Single Family Sales,Financing / Sales / Single Family Sales
+NAHB,01-87-0134,NAHB-FN-SALES,3,Financing,Condominium Sales,Financing / Sales / Condominium Sales
+NAHB,01-87-3786,NAHB-FN-SALES,3,Financing,Townhome Sales,Financing / Sales / Townhome Sales
+NAHB,NAHB-FN-MISCREV,NAHB-FN,2,Financing,Miscellaneous Revenue,Financing / Miscellaneous Revenue
+NAHB,01-90-3005,NAHB-FN-MISCREV,3,Financing,Interest Income,Financing / Miscellaneous Revenue / Interest Income
+NAHB,01-90-6658,NAHB-FN-MISCREV,3,Financing,Prepaid Assessments,Financing / Miscellaneous Revenue / Prepaid Assessments
+NAHB,01-91-0310,NAHB-FN-MISCREV,3,Financing,Insurance Premiums,Financing / Miscellaneous Revenue / Insurance Premiums
+NAHB,01-91-3963,NAHB-FN-MISCREV,3,Financing,Earnest Money Paid,Financing / Miscellaneous Revenue / Earnest Money Paid
+NAHB,01-91-7615,NAHB-FN-MISCREV,3,Financing,Rent Credit,Financing / Miscellaneous Revenue / Rent Credit
+NAHB,NAHB-FN-MISCCOST,NAHB-FN,2,Financing,Miscellaneous Costs,Financing / Miscellaneous Costs
+NAHB,01-93-9530,NAHB-FN-MISCCOST,3,Financing,Buyer Concessions,Financing / Miscellaneous Costs / Buyer Concessions
+NAHB,01-94-3183,NAHB-FN-MISCCOST,3,Financing,Closing Costs,Financing / Miscellaneous Costs / Closing Costs
+NAHB,NAHB-FN-COMMISSIONS,NAHB-FN,2,Financing,Commissions,Financing / Commissions
+NAHB,01-97-6054,NAHB-FN-COMMISSIONS,3,Financing,Commissions – In House,Financing / Commissions / Commissions – In House
+NAHB,01-97-9707,NAHB-FN-COMMISSIONS,3,Financing,Commissions – Broker,Financing / Commissions / Commissions – Broker
+NAHB,NAHB-FN-FEES,NAHB-FN,2,Financing,Fees,Financing / Fees
+NAHB,02-01-2578,NAHB-FN-FEES,3,Financing,Bank Processing Fees,Financing / Fees / Bank Processing Fees
+NAHB,02-02-3536,NAHB-FN-FEES,3,Financing,Closing Fees to Company,Financing / Fees / Closing Fees to Company
+NAHB,02-02-7188,NAHB-FN-FEES,3,Financing,Buyer Fees,Financing / Fees / Buyer Fees
+NAHB,02-03-0841,NAHB-FN-FEES,3,Financing,HomeOwner Assoc. Fees,Financing / Fees / HomeOwner Assoc. Fees
+NAHB,02-03-8146,NAHB-FN-FEES,3,Financing,Transfer Tax,Financing / Fees / Transfer Tax
+NAHB,02-04-1798,NAHB-FN-FEES,3,Financing,Title and Recording Fees,Financing / Fees / Title and Recording Fees
+NAHB,NAHB-FN-CONSTFIN,NAHB-FN,2,Financing,Construction Finance Costs,Financing / Construction Finance Costs
+NAHB,02-04-9102,NAHB-FN-CONSTFIN,3,Financing,Construction Interest,Financing / Construction Finance Costs / Construction Interest
+NAHB,02-05-6407,NAHB-FN-CONSTFIN,3,Financing,Appraisals,Financing / Construction Finance Costs / Appraisals
+NAHB,NAHB-IC-SALARIES,NAHB-IC,2,Indirect Construction,Salaries and Wages,Indirect Construction / Salaries and Wages
+NAHB,02-23-1754,NAHB-IC-SALARIES,3,Indirect Construction,Superintendents,Indirect Construction / Salaries and Wages / Superintendents
+NAHB,02-23-5407,NAHB-IC-SALARIES,3,Indirect Construction,Laborers,Indirect Construction / Salaries and Wages / Laborers
+NAHB,02-23-9059,NAHB-IC-SALARIES,3,Indirect Construction,Architects/Drafters/Estimators,Indirect Construction / Salaries and Wages / Architects/Drafters/Estimators
+NAHB,02-24-2712,NAHB-IC-SALARIES,3,Indirect Construction,Wages and other,Indirect Construction / Salaries and Wages / Wages and other
+NAHB,02-24-6364,NAHB-IC-SALARIES,3,Indirect Construction,Lost Time,Indirect Construction / Salaries and Wages / Lost Time
+NAHB,02-26-0974,NAHB-IC-SALARIES,3,Indirect Construction,Other,Indirect Construction / Salaries and Wages / Other
+NAHB,NAHB-IC-PAYROLL,NAHB-IC,2,Indirect Construction,Payroll Taxes and Benefits,Indirect Construction / Payroll Taxes and Benefits
+NAHB,02-26-8278,NAHB-IC-PAYROLL,3,Indirect Construction,Payroll Taxes,Indirect Construction / Payroll Taxes and Benefits / Payroll Taxes
+NAHB,02-27-1931,NAHB-IC-PAYROLL,3,Indirect Construction,Workers Comp,Indirect Construction / Payroll Taxes and Benefits / Workers Comp
+NAHB,02-27-5583,NAHB-IC-PAYROLL,3,Indirect Construction,Health Insurance,Indirect Construction / Payroll Taxes and Benefits / Health Insurance
+NAHB,02-27-9236,NAHB-IC-PAYROLL,3,Indirect Construction,Retirement/Pension/Profit,Indirect Construction / Payroll Taxes and Benefits / Retirement/Pension/Profit
+NAHB,02-28-2888,NAHB-IC-PAYROLL,3,Indirect Construction,Unions,Indirect Construction / Payroll Taxes and Benefits / Unions
+NAHB,02-28-6541,NAHB-IC-PAYROLL,3,Indirect Construction,Other Benefits,Indirect Construction / Payroll Taxes and Benefits / Other Benefits
+NAHB,NAHB-IC-FIELDOFFICE,NAHB-IC,2,Indirect Construction,Field Office Expense,Indirect Construction / Field Office Expense
+NAHB,02-30-4802,NAHB-IC-FIELDOFFICE,3,Indirect Construction,Rent,Indirect Construction / Field Office Expense / Rent
+NAHB,02-30-8455,NAHB-IC-FIELDOFFICE,3,Indirect Construction,Maintenance and Repairs,Indirect Construction / Field Office Expense / Maintenance and Repairs
+NAHB,02-31-2107,NAHB-IC-FIELDOFFICE,3,Indirect Construction,Utilities,Indirect Construction / Field Office Expense / Utilities
+NAHB,02-31-5760,NAHB-IC-FIELDOFFICE,3,Indirect Construction,Telephone,Indirect Construction / Field Office Expense / Telephone
+NAHB,02-31-9412,NAHB-IC-FIELDOFFICE,3,Indirect Construction,Other Field Expense,Indirect Construction / Field Office Expense / Other Field Expense
+NAHB,NAHB-IC-WAREHOUSE,NAHB-IC,2,Indirect Construction,Field Warehouse and Storage,Indirect Construction / Field Warehouse and Storage
+NAHB,02-34-1326,NAHB-IC-WAREHOUSE,3,Indirect Construction,Rent,Indirect Construction / Field Warehouse and Storage / Rent
+NAHB,02-34-4979,NAHB-IC-WAREHOUSE,3,Indirect Construction,Maintenance and Repair,Indirect Construction / Field Warehouse and Storage / Maintenance and Repair
+NAHB,02-34-8631,NAHB-IC-WAREHOUSE,3,Indirect Construction,Utilities,Indirect Construction / Field Warehouse and Storage / Utilities
+NAHB,02-35-2284,NAHB-IC-WAREHOUSE,3,Indirect Construction,Telephone,Indirect Construction / Field Warehouse and Storage / Telephone
+NAHB,NAHB-IC-VEHICLES,NAHB-IC,2,Indirect Construction,Vehicles,Indirect Construction / Vehicles
+NAHB,02-37-7851,NAHB-IC-VEHICLES,3,Indirect Construction,Vehicle Lease Payments,Indirect Construction / Vehicles / Vehicle Lease Payments
+NAHB,02-38-1504,NAHB-IC-VEHICLES,3,Indirect Construction,Mileage Reimbursements,Indirect Construction / Vehicles / Mileage Reimbursements
+NAHB,02-38-5156,NAHB-IC-VEHICLES,3,Indirect Construction,Maintenance and Repairs,Indirect Construction / Vehicles / Maintenance and Repairs
+NAHB,02-39-2461,NAHB-IC-VEHICLES,3,Indirect Construction,Taxes,Indirect Construction / Vehicles / Taxes
+NAHB,02-39-6114,NAHB-IC-VEHICLES,3,Indirect Construction,Cust Business Entertainment,Indirect Construction / Vehicles / Cust Business Entertainment
+NAHB,02-39-9766,NAHB-IC-VEHICLES,3,Indirect Construction,Travel,Indirect Construction / Vehicles / Travel
+NAHB,NAHB-IC-EQUIPMENT,NAHB-IC,2,Indirect Construction,Field Equipment,Indirect Construction / Field Equipment
+NAHB,02-41-4375,NAHB-IC-EQUIPMENT,3,Indirect Construction,Rent,Indirect Construction / Field Equipment / Rent
+NAHB,02-41-8028,NAHB-IC-EQUIPMENT,3,Indirect Construction,Maintenance and Repairs,Indirect Construction / Field Equipment / Maintenance and Repairs
+NAHB,02-42-1680,NAHB-IC-EQUIPMENT,3,Indirect Construction,Operating Expenses,Indirect Construction / Field Equipment / Operating Expenses
+NAHB,02-42-5333,NAHB-IC-EQUIPMENT,3,Indirect Construction,Taxes,Indirect Construction / Field Equipment / Taxes
+NAHB,02-42-8985,NAHB-IC-EQUIPMENT,3,Indirect Construction,Small Tools and Supplies,Indirect Construction / Field Equipment / Small Tools and Supplies
+NAHB,NAHB-IC-UNSOLD,NAHB-IC,2,Indirect Construction,Maintenance — Unsold Units,Indirect Construction / Maintenance — Unsold Units
+NAHB,02-45-0899,NAHB-IC-UNSOLD,3,Indirect Construction,Heat,Indirect Construction / Maintenance — Unsold Units / Heat
+NAHB,02-45-4552,NAHB-IC-UNSOLD,3,Indirect Construction,Electricity,Indirect Construction / Maintenance — Unsold Units / Electricity
+NAHB,02-45-8204,NAHB-IC-UNSOLD,3,Indirect Construction,Water and Sewer,Indirect Construction / Maintenance — Unsold Units / Water and Sewer
+NAHB,02-46-1857,NAHB-IC-UNSOLD,3,Indirect Construction,Lawn Care,Indirect Construction / Maintenance — Unsold Units / Lawn Care
+NAHB,02-46-5509,NAHB-IC-UNSOLD,3,Indirect Construction,Utilities,Indirect Construction / Maintenance — Unsold Units / Utilities
+NAHB,02-46-9162,NAHB-IC-UNSOLD,3,Indirect Construction,Maintenance and Repairs,Indirect Construction / Maintenance — Unsold Units / Maintenance and Repairs
+NAHB,02-47-2814,NAHB-IC-UNSOLD,3,Indirect Construction,Security,Indirect Construction / Maintenance — Unsold Units / Security
+NAHB,NAHB-IC-WARRANTY,NAHB-IC,2,Indirect Construction,Warranty Costs,Indirect Construction / Warranty Costs
+NAHB,02-48-7423,NAHB-IC-WARRANTY,3,Indirect Construction,Warranty Labor,Indirect Construction / Warranty Costs / Warranty Labor
+NAHB,02-49-1076,NAHB-IC-WARRANTY,3,Indirect Construction,Warranty Material,Indirect Construction / Warranty Costs / Warranty Material
+NAHB,02-49-4728,NAHB-IC-WARRANTY,3,Indirect Construction,Warranty Subcontractor,Indirect Construction / Warranty Costs / Warranty Subcontractor
+NAHB,02-49-8381,NAHB-IC-WARRANTY,3,Indirect Construction,Warranty Other,Indirect Construction / Warranty Costs / Warranty Other
+NAHB,NAHB-IC-MARKETING,NAHB-IC,2,Indirect Construction,Marketing Costs,Indirect Construction / Marketing Costs
+NAHB,02-52-3948,NAHB-IC-MARKETING,3,Indirect Construction,Model Home Costs,Indirect Construction / Marketing Costs / Model Home Costs
+NAHB,02-52-7601,NAHB-IC-MARKETING,3,Indirect Construction,Sales Commissions,Indirect Construction / Marketing Costs / Sales Commissions
+NAHB,02-53-1253,NAHB-IC-MARKETING,3,Indirect Construction,Sales Facilities,Indirect Construction / Marketing Costs / Sales Facilities
+NAHB,02-53-4906,NAHB-IC-MARKETING,3,Indirect Construction,Semi-permanent Signage,Indirect Construction / Marketing Costs / Semi-permanent Signage
+NAHB,02-58-9692,NAHB-IC-MARKETING,3,Indirect Construction,Other Indirect Costs,Indirect Construction / Marketing Costs / Other Indirect Costs
