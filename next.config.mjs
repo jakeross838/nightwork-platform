@@ -2,6 +2,15 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // isomorphic-dompurify pulls in jsdom on the server side, and jsdom reads
+    // its bundled default-stylesheet.css via fs.readFileSync at module-load
+    // time. Webpack's bundling of jsdom rewrites that asset path so the file
+    // ends up missing at runtime ("ENOENT: api/browser/default-stylesheet.css").
+    // Externalizing the package keeps it as a runtime require from
+    // node_modules so jsdom's __dirname lookup resolves correctly.
+    serverComponentsExternalPackages: ["isomorphic-dompurify"],
+  },
   async redirects() {
     return [
       // Action-page-to-modal redirects (Tier 1).
