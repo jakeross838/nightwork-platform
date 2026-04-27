@@ -71,6 +71,12 @@ const TEN_CATEGORIES = [
 ] as const;
 type Category = (typeof TEN_CATEGORIES)[number];
 
+// Subdirectories under FIXTURE_ROOT that are NOT classifier categories.
+// Add entries here as needed (e.g., 'experiments', 'archive').
+// Skipped before the TEN_CATEGORIES assertion so they don't fail
+// "unknown category" but also don't get evaluated.
+const SKIPPED_DIRS = new Set<string>(["dogfood"]);
+
 type Row = {
   category: Category;
   filename: string;
@@ -103,6 +109,7 @@ function discoverCategories(root: string): Category[] {
   const subdirs = readdirSync(root, { withFileTypes: true })
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
+    .filter((name) => !SKIPPED_DIRS.has(name))
     .sort();
 
   const known = new Set<string>(TEN_CATEGORIES);
@@ -110,7 +117,7 @@ function discoverCategories(root: string): Category[] {
   assert.ok(
     unknown.length === 0,
     `fixture subfolder(s) not in TEN_CATEGORIES enum: ${unknown.join(", ")}. ` +
-      "Either rename to match an enum value or add the value to TEN_CATEGORIES + the classifier prompt."
+      "Either rename to match an enum value, add the value to TEN_CATEGORIES + the classifier prompt, or add it to SKIPPED_DIRS if it is intentionally not a classifier category."
   );
 
   return subdirs as Category[];
