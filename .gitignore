@@ -54,6 +54,9 @@ skills-lock.json
 # classifier test fixtures (local only — real Ross Built PDFs, never committed per preflight R8)
 /__tests__/fixtures/classifier/.local/
 
+# /gsd-map-codebase output, regenerable, kept local
+/.planning/
+
 # smoke + E2E runtime logs (ephemeral, regenerated each run)
 /e2e-state.json
 /e2e-*.log
