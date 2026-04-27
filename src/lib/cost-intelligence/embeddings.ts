@@ -393,29 +393,29 @@ export async function backfillItemEmbeddings(
 }
 
 /**
- * Build the string we embed for an item. Uses canonical_name as the
- * primary signal but adds category/subcategory and a flat list of
- * specs key:value pairs so two items with the same name but different
- * specs (e.g. "2x4 SPF" with different lengths) end up at different
- * points in the embedding space.
+ * Build the string we embed for an item.
  *
- * Exported so the seed script (Phase 3.3 commit 7) and Phase 3.4+
- * pipelines can produce identical inputs and avoid embedding drift.
+ * Per the Phase 3.3 A/B test (12 queries × 2 variants on the 50-item
+ * seed dataset, see QA report §"Embedding input shape"), the
+ * canonical_name-only form delivered:
+ *   - identical top-1 correctness (8/8) and disambiguation top-1 (2/2)
+ *   - higher avg similarity on correct positives (0.79 vs 0.75)
+ *   - larger disambiguation margin (right_sim − wrong_sim: 0.34 vs 0.30)
+ *   - identical negative discrimination (4/4 with top sim < 0.5)
+ * Verbose composition (name | category | subcategory | specs:k:v) added
+ * no measurable accuracy and produced lower absolute scores — Occam
+ * tips name-only.
+ *
+ * Item callers should make sure canonical_name itself encodes the
+ * relevant specs (e.g. "2x4 SPF stud KD 92-5/8" carries species + grade
+ * + treatment + length in the name). The structured specs JSONB on
+ * items.specs is preserved for filtering and display, just not for
+ * embedding text.
+ *
+ * Exported so the seed script (Phase 3.3 commit 7) and any future
+ * embedding-on-create wiring produce identical inputs and avoid
+ * embedding drift.
  */
-export function itemEmbeddingInput(item: {
-  canonical_name: string;
-  category?: string | null;
-  subcategory?: string | null;
-  specs?: Record<string, unknown> | null;
-}): string {
-  const parts: string[] = [item.canonical_name];
-  if (item.category) parts.push(`category: ${item.category}`);
-  if (item.subcategory) parts.push(`subcategory: ${item.subcategory}`);
-  if (item.specs && typeof item.specs === "object" && !Array.isArray(item.specs)) {
-    const specPairs = Object.entries(item.specs)
-      .filter(([, v]) => v != null && v !== "")
-      .map(([k, v]) => `${k}: ${String(v)}`);
-    if (specPairs.length > 0) parts.push(`specs: ${specPairs.join(", ")}`);
-  }
-  return parts.join(" | ");
+export function itemEmbeddingInput(item: { canonical_name: string }): string {
+  return item.canonical_name?.trim() ?? "";
 }

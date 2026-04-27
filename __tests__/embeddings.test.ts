@@ -66,28 +66,27 @@ test("vectorLiteral renders pgvector array literal '[a,b,c,...]'", async () => {
   assert.equal(out, "[0.1,-0.2,3.4]");
 });
 
-test("itemEmbeddingInput composes name + category + specs deterministically", async () => {
+test("itemEmbeddingInput returns canonical_name only (name-only shape, per A/B)", async () => {
+  // Per Phase 3.3 A/B (commit 7), name-only beat verbose
+  // ('name | category | subcategory | specs:k:v') on disambiguation
+  // margin and avg positive similarity at parity on top-1 correctness.
+  // Verbose composition added no accuracy; we ship name-only.
   const mod = await import("../src/lib/cost-intelligence/embeddings");
-  const out = mod.itemEmbeddingInput({
+  // Call with extra fields — they MUST be ignored, not appended.
+  const callable = mod.itemEmbeddingInput as unknown as (i: Record<string, unknown>) => string;
+  const out = callable({
     canonical_name: "2x4 SPF stud KD",
     category: "lumber",
     subcategory: "framing",
-    specs: { species: "SPF", grade: "stud", length_in: 92.625 },
+    specs: { species: "SPF", grade: "stud" },
   });
-  // Stable ordering: name first, then category, then subcategory, then specs.
-  assert.match(out, /^2x4 SPF stud KD\s\|\scategory: lumber\s\|\ssubcategory: framing\s\|\sspecs:/);
-  assert.match(out, /species: SPF/);
-  assert.match(out, /grade: stud/);
-  assert.match(out, /length_in: 92\.625/);
+  assert.equal(out, "2x4 SPF stud KD");
 });
 
-test("itemEmbeddingInput skips empty/null specs gracefully", async () => {
+test("itemEmbeddingInput trims whitespace and handles empty input", async () => {
   const mod = await import("../src/lib/cost-intelligence/embeddings");
-  const out = mod.itemEmbeddingInput({
-    canonical_name: "Simple item",
-    specs: null,
-  });
-  assert.equal(out, "Simple item");
+  assert.equal(mod.itemEmbeddingInput({ canonical_name: "  Simple item  " }), "Simple item");
+  assert.equal(mod.itemEmbeddingInput({ canonical_name: "" }), "");
 });
 
 test("assertOpenAIKey throws when OPENAI_API_KEY is missing", async () => {
