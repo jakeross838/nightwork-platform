@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
-import { getCurrentMembership } from "@/lib/org/session";
+import {
+ getCurrentMembership,
+ getMembershipFromRequest,
+} from "@/lib/org/session";
 import { logActivity } from "@/lib/activity-log";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +15,25 @@ interface MergeRequest {
 
 export async function POST(request: NextRequest) {
  try {
+ // Auth + role gate — must run BEFORE any DB access. Previously the
+ // handler executed all 3 destructive mutations before checking
+ // membership; any authenticated user could mass-reassign and soft-
+ // delete vendors across orgs. (audit backend H-1 / CRITICAL).
+ const membership =
+ getMembershipFromRequest(request) ?? (await getCurrentMembership());
+ if (!membership) {
+ return NextResponse.json(
+ { error: "Not authenticated" },
+ { status: 401 }
+ );
+ }
+ if (membership.role !== "admin" && membership.role !== "owner") {
+ return NextResponse.json(
+ { error: "Vendor merge requires admin or owner role" },
+ { status: 403 }
+ );
+ }
+
  const body: MergeRequest = await request.json();
  const { primary_id, merge_ids } = body;
 
@@ -33,11 +55,15 @@ export async function POST(request: NextRequest) {
 
  const supabase = createServerClient();
 
- // Verify the primary vendor exists and is not deleted
+ // Verify the primary vendor exists, is not deleted, and belongs to
+ // the caller's org. The org_id filter prevents cross-org primary
+ // traversal; combined with the org-scoped destructive ops below it
+ // makes the whole merge a no-op for any cross-org vendor IDs.
  const { data: primary, error: primaryErr } = await supabase
  .from("vendors")
  .select("id, name")
  .eq("id", primary_id)
+ .eq("org_id", membership.org_id)
  .is("deleted_at", null)
  .single();
 
@@ -52,7 +78,8 @@ export async function POST(request: NextRequest) {
  const { error: invoiceErr } = await supabase
  .from("invoices")
  .update({ vendor_id: primary_id, updated_at: new Date().toISOString() })
- .in("vendor_id", idsToMerge);
+ .in("vendor_id", idsToMerge)
+ .eq("org_id", membership.org_id);
 
  if (invoiceErr) {
  console.error("Failed to update invoices during vendor merge:", invoiceErr);
@@ -66,7 +93,8 @@ export async function POST(request: NextRequest) {
  const { error: poErr } = await supabase
  .from("purchase_orders")
  .update({ vendor_id: primary_id, updated_at: new Date().toISOString() })
- .in("vendor_id", idsToMerge);
+ .in("vendor_id", idsToMerge)
+ .eq("org_id", membership.org_id);
  if (poErr) {
  console.error("Failed to update POs during vendor merge:", poErr);
  return NextResponse.json(
@@ -79,7 +107,8 @@ export async function POST(request: NextRequest) {
  const { error: deleteErr } = await supabase
  .from("vendors")
  .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
- .in("id", idsToMerge);
+ .in("id", idsToMerge)
+ .eq("org_id", membership.org_id);
 
  if (deleteErr) {
  console.error("Failed to soft-delete merged vendors:", deleteErr);
@@ -90,9 +119,7 @@ export async function POST(request: NextRequest) {
  }
 
  // Activity log: one entry per merged vendor pointing at the surviving vendor_id.
- const membership = await getCurrentMembership();
  const { data: { user } } = await supabase.auth.getUser();
- if (membership) {
  for (const mergedId of idsToMerge) {
  await logActivity({
  org_id: membership.org_id,
@@ -102,7 +129,6 @@ export async function POST(request: NextRequest) {
  action: "merged",
  details: { into_vendor_id: primary_id, into_vendor_name: primary.name },
  });
- }
  }
 
  return NextResponse.json({

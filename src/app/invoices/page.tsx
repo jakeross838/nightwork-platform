@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatStatus, formatDate, statusBadgeOutline } from "@/lib/utils/format";
 import AppShell from "@/components/app-shell";
@@ -584,13 +585,16 @@ export default function AllInvoicesPage() {
  <tbody>
  {filtered.map((inv) => (
  <tr key={inv.id}
- className="group border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] cursor-pointer transition-colors"
- onClick={() => {
- const reviewable = ["pm_review", "ai_processed"].includes(inv.status);
- window.location.href = reviewable ? `/invoices/${inv.id}` : `/invoices/${inv.id}`;
- }}>
+ className="group border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] transition-colors">
  <td className="py-3 px-4 text-[var(--text-primary)] font-medium sticky left-0 bg-[var(--bg-card)] group-hover:bg-[var(--bg-muted)] z-[1]">
- <span className="inline-flex items-center gap-2">
+ {/* Vendor name is the row's link target. Replaces a tr onClick
+ that called window.location.href, restoring Cmd/Ctrl+click
+ (open in new tab), keyboard Tab+Enter, and screen-reader
+ link semantics. (audit ux U-2). */}
+ <Link
+ href={`/invoices/${inv.id}`}
+ className="inline-flex items-center gap-2 hover:underline focus-visible:underline focus-visible:outline-none"
+ >
  {inv.vendor_name_raw ?? "Unknown"}
  {inv.document_type === "receipt" && (
  <NwBadge variant="info" size="sm">Receipt</NwBadge>
@@ -598,7 +602,7 @@ export default function AllInvoicesPage() {
  {isUnknownVendor(inv) && (
  <NwBadge variant="danger" size="sm">Unknown Vendor</NwBadge>
  )}
- </span>
+ </Link>
  </td>
  <td className="py-3 px-4 text-[var(--text-secondary)] font-mono text-xs">
  {inv.invoice_number ?? (

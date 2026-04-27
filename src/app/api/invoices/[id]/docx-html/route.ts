@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import mammoth from "mammoth";
+import DOMPurify from "isomorphic-dompurify";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
 
@@ -51,8 +52,16 @@ export const GET = withApiError(
       }
     );
 
+    // XSS guard (defense in depth): even though every consumer also
+    // sanitizes on render, sanitizing here means the value persisted /
+    // logged / cached anywhere downstream is already safe. DOMPurify
+    // strips <script>, on*= handlers, and javascript: URLs.
+    const sanitized = DOMPurify.sanitize(result.value, {
+      USE_PROFILES: { html: true },
+    });
+
     return NextResponse.json({
-      html: result.value,
+      html: sanitized,
       warnings: result.messages
         .filter((m) => m.type === "warning")
         .map((m) => m.message),

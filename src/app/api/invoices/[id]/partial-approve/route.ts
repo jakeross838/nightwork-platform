@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
+import {
+  getCurrentMembership,
+  getMembershipFromRequest,
+} from "@/lib/org/session";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +15,14 @@ interface PartialApproveBody {
 
 export const POST = withApiError(
   async (request: NextRequest, { params }: { params: { id: string } }) => {
+    const membership =
+      getMembershipFromRequest(request) ?? (await getCurrentMembership());
+    if (!membership) throw new ApiError("Not authenticated", 401);
+
     const supabase = createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new ApiError("Not authenticated", 401);
 
     const body: PartialApproveBody = await request.json();
@@ -23,14 +33,22 @@ export const POST = withApiError(
       throw new ApiError("Select at least one line item to approve", 400);
     }
 
-    // Load parent invoice
+    // Load parent invoice (org-scoped — defense in depth alongside RLS).
     const { data: parent, error: parentErr } = await supabase
       .from("invoices")
       .select("*")
       .eq("id", params.id)
+      .eq("org_id", membership.org_id)
       .is("deleted_at", null)
       .single();
     if (parentErr || !parent) throw new ApiError("Invoice not found", 404);
+
+    // Sanity check — the org_id filter above should have already enforced
+    // this, but an explicit assertion here closes any future regression
+    // where the filter is accidentally dropped.
+    if (parent.org_id !== membership.org_id) {
+      throw new ApiError("Invoice not found", 404);
+    }
 
     if (!parent.job_id || !parent.cost_code_id) {
       throw new ApiError("Job and cost code must be assigned before partial approval", 422);
@@ -186,7 +204,8 @@ export const POST = withApiError(
           },
         ],
       })
-      .eq("id", parent.id);
+      .eq("id", parent.id)
+      .eq("org_id", membership.org_id);
 
     if (parentUpdateErr) {
       throw new ApiError(`Failed to update parent invoice: ${parentUpdateErr.message}`, 500);

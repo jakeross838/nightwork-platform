@@ -32,6 +32,7 @@ export const PATCH = withApiError(
       .from("budget_lines")
       .select("id, budget_id, original_estimate")
       .eq("id", params.id)
+      .eq("org_id", membership.org_id)
       .is("deleted_at", null)
       .single();
     if (!before) throw new ApiError("Budget line not found", 404);
@@ -52,7 +53,8 @@ export const PATCH = withApiError(
     const { error } = await supabase
       .from("budget_lines")
       .update(patch)
-      .eq("id", params.id);
+      .eq("id", params.id)
+      .eq("org_id", membership.org_id);
     if (error) throw new ApiError(error.message, 500);
 
     await recalcBudgetLine(params.id);
@@ -106,12 +108,14 @@ export const DELETE = withApiError(
       .from("budget_lines")
       .select("budget_id")
       .eq("id", params.id)
+      .eq("org_id", membership.org_id)
       .single();
 
     const { error } = await supabase
       .from("budget_lines")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", params.id);
+      .eq("id", params.id)
+      .eq("org_id", membership.org_id);
     if (error) throw new ApiError(error.message, 500);
 
     if ((before as { budget_id?: string | null } | null)?.budget_id) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import type { ParseResult, ParsedInvoice } from "@/lib/types/invoice";
 import {
  formatDollars, confidenceColor, confidenceLabel,
@@ -144,7 +145,13 @@ function FilePreview({ fileStatus }: { fileStatus: FileStatus }) {
  </div>
  <div className="max-h-[600px] overflow-auto p-6 text-sm text-[color:var(--text-primary)] leading-relaxed docx-html">
  {result?.docx_html ? (
- <div dangerouslySetInnerHTML={{ __html: result.docx_html }} />
+ // XSS guard: DOMPurify strips <script>, on*= handlers, and javascript: URLs.
+ // Mammoth output is otherwise treated as untrusted (vendor-supplied DOCX).
+ <div
+ dangerouslySetInnerHTML={{
+ __html: DOMPurify.sanitize(result.docx_html, { USE_PROFILES: { html: true } }),
+ }}
+ />
  ) : (
  <p className="text-[color:var(--text-secondary)] text-sm">
  DOCX preview will render after parsing completes.

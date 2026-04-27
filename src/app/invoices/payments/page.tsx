@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate } from "@/lib/utils/format";
 import AppShell from "@/components/app-shell";
@@ -469,8 +470,18 @@ export default function PaymentsPage() {
                             : 0;
                           const color = b === "90_plus" ? "text-[color:var(--nw-danger)]" : "text-[color:var(--nw-warn)]";
                           return (
-                            <tr key={inv.id} className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)] cursor-pointer" onClick={() => (window.location.href = `/invoices/${inv.id}`)}>
-                              <td className="py-3 px-4 text-[color:var(--text-primary)]">{inv.vendor_name_raw ?? "Unknown"}</td>
+                            <tr key={inv.id} className="border-t border-[var(--border-default)] hover:bg-[var(--bg-muted)]">
+                              <td className="py-3 px-4 text-[color:var(--text-primary)]">
+                                {/* Vendor name is the row's link target. Replaces a tr
+                                    onClick that called window.location.href, restoring
+                                    Cmd/Ctrl+click and keyboard activation. (audit ux U-2). */}
+                                <Link
+                                  href={`/invoices/${inv.id}`}
+                                  className="hover:underline focus-visible:underline focus-visible:outline-none"
+                                >
+                                  {inv.vendor_name_raw ?? "Unknown"}
+                                </Link>
+                              </td>
                               <td className="py-3 px-4 text-[color:var(--text-muted)] font-mono text-xs">{inv.invoice_number ?? "—"}</td>
                               <td className="py-3 px-4 text-[color:var(--text-muted)] text-xs">{formatDate(ref)}</td>
                               <td className={`py-3 px-4 ${color} text-xs font-medium`}>{days} days</td>

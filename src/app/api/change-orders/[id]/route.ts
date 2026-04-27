@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { ApiError, withApiError } from "@/lib/api/errors";
-import { getCurrentMembership } from "@/lib/org/session";
+import {
+  getCurrentMembership,
+  getMembershipFromRequest,
+} from "@/lib/org/session";
 import { recalcBudgetLine } from "@/lib/recalc";
 import { logActivity, logStatusChange } from "@/lib/activity-log";
 import { canVoidCO, formatBlockers } from "@/lib/deletion-guards";
@@ -26,10 +29,15 @@ const CO_TYPES = [
   "internal",
 ] as const;
 
-export const GET = withApiError(async (_req: NextRequest, { params }: { params: { id: string } }) => {
+export const GET = withApiError(async (req: NextRequest, { params }: { params: { id: string } }) => {
+  // Defense-in-depth: GET previously relied on RLS alone (audit backend C-1).
+  // Adopt the getCurrentMembership() + org_id filter pattern that the same
+  // file's PATCH already uses on its writes.
+  const membership =
+    getMembershipFromRequest(req) ?? (await getCurrentMembership());
+  if (!membership) throw new ApiError("Not authenticated", 401);
+
   const supabase = createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new ApiError("Not authenticated", 401);
 
   const { data, error } = await supabase
     .from("change_orders")
@@ -41,6 +49,7 @@ export const GET = withApiError(async (_req: NextRequest, { params }: { params: 
       jobs:job_id(id, name, original_contract_amount, current_contract_amount)
     `)
     .eq("id", params.id)
+    .eq("org_id", membership.org_id)
     .is("deleted_at", null)
     .single();
   if (error || !data) throw new ApiError("Change order not found", 404);
@@ -52,6 +61,7 @@ export const GET = withApiError(async (_req: NextRequest, { params }: { params: 
       budget_lines:budget_line_id(id, cost_codes:cost_code_id(code, description))
     `)
     .eq("co_id", params.id)
+    .eq("org_id", membership.org_id)
     .is("deleted_at", null)
     .order("sort_order");
 
