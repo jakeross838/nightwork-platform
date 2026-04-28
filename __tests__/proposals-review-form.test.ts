@@ -34,6 +34,13 @@ const REVIEW_PAGE = "src/app/proposals/review/[extraction_id]/page.tsx";
 const REVIEW_MANAGER = "src/app/proposals/review/[extraction_id]/ReviewManager.tsx";
 const SUGGESTIONS_PAGE = "src/app/cost-intelligence/suggestions/page.tsx";
 const SUGGESTIONS_MANAGER = "src/app/cost-intelligence/suggestions/SuggestionsManager.tsx";
+// Phase 3.4 Issue 2 — concerns extracted out of ReviewManager into
+// dedicated section components. Fences below read from the file that
+// owns each concern after the orchestrator refactor.
+const LINE_ITEM_ROW = "src/components/proposals/ProposalLineItemRow.tsx";
+const DETAILS_PANEL = "src/components/proposals/ProposalDetailsPanel.tsx";
+const PAYMENT_TERMS_SECTION =
+  "src/components/proposals/ProposalPaymentTermsSection.tsx";
 
 type Case = { name: string; fn: () => void };
 const cases: Case[] = [];
@@ -62,6 +69,15 @@ const suggestionsPage = existsSync(SUGGESTIONS_PAGE)
   : "";
 const suggestionsManager = existsSync(SUGGESTIONS_MANAGER)
   ? readFileSync(SUGGESTIONS_MANAGER, "utf8")
+  : "";
+const lineItemRow = existsSync(LINE_ITEM_ROW)
+  ? readFileSync(LINE_ITEM_ROW, "utf8")
+  : "";
+const detailsPanel = existsSync(DETAILS_PANEL)
+  ? readFileSync(DETAILS_PANEL, "utf8")
+  : "";
+const paymentTermsSection = existsSync(PAYMENT_TERMS_SECTION)
+  ? readFileSync(PAYMENT_TERMS_SECTION, "utf8")
   : "";
 
 // ── Review page: auth + org scoping ───────────────────────────
@@ -156,23 +172,25 @@ test("Reject posts to /api/proposals/extract/[id]/reject", () => {
 
 // ── Cost-code dropdown: three optgroups ───────────────────────
 test("cost-code dropdown labels include [New], [Legacy], [Pending]", () => {
-  assert.match(reviewManager, /\[New\][^"']*Org codes/);
-  assert.match(reviewManager, /\[Legacy\][^"']*Cost codes/);
-  assert.match(reviewManager, /\[Pending\]/);
+  // Phase 3.4 Issue 2 commit 4: extracted to ProposalLineItemRow.
+  assert.match(lineItemRow, /\[New\][^"']*Org codes/);
+  assert.match(lineItemRow, /\[Legacy\][^"']*Cost codes/);
+  assert.match(lineItemRow, /\[Pending\]/);
 });
 
 test("cost-code pick is namespaced by source (org/legacy/pending)", () => {
   // The dropdown values use the form `<kind>:<id>` so Step 5 commit can
   // route to the right FK column. The TS discriminated-union has these
-  // three "kind" cases.
-  // Template literals: `org:${...}`. Regex tolerates backtick or quote.
-  assert.match(reviewManager, /[`'"]org:\$\{[^}]+\}[`'"]/);
-  assert.match(reviewManager, /[`'"]legacy:\$\{[^}]+\}[`'"]/);
-  assert.match(reviewManager, /[`'"]pending:\$\{[^}]+\}[`'"]/);
+  // three "kind" cases. After Issue 2 refactor, lives in the row file +
+  // the orchestrator's pickCostCodeFromValue / pickToValue helpers.
+  assert.match(lineItemRow, /[`'"]org:\$\{[^}]+\}[`'"]/);
+  assert.match(lineItemRow, /[`'"]legacy:\$\{[^}]+\}[`'"]/);
+  assert.match(lineItemRow, /[`'"]pending:\$\{[^}]+\}[`'"]/);
 });
 
 test('pending pick renders a "Pending: <code>" badge on the line', () => {
-  assert.match(reviewManager, /Pending:\s*\{?[^"']*suggested_code/);
+  // Phase 3.4 Issue 2 commit 4: extracted to ProposalLineItemRow.
+  assert.match(lineItemRow, /Pending:\s*\{?[^"']*suggested_code/);
 });
 
 // ── Suggest-new-code modal ─────────────────────────────────────
@@ -253,8 +271,11 @@ test("commit POST body forwards Step 5j/5k job_address", () => {
 
 test("review manager loads + edits job_address from extract response", () => {
   assert.match(reviewManager, /job_address:\s*ed\.job_address/);
-  // Editable input field present with the user-facing label
-  assert.match(reviewManager, /Job address \(extracted from proposal\)/);
+  // Phase 3.4 Issue 2 commit 10: editable input lives in
+  // ProposalDetailsPanel; the user-facing label is "Job address
+  // (extracted)" — moved into the right rail with the rest of the
+  // document-identity content.
+  assert.match(detailsPanel, /Job address \(extracted\)/);
 });
 
 test("review manager loads the 3 fields from the extract API response", () => {
@@ -284,8 +305,12 @@ test("review manager loads Step 5f/5g schedule + signature fields", () => {
 });
 
 test("PaymentTermsSection collapses to null when all sub-fields cleared", () => {
+  // Phase 3.4 Issue 2 commit 8: extracted to ProposalPaymentTermsSection.
   // Confirms the "all-null → null at top level" rule is preserved end-to-end.
-  assert.match(reviewManager, /allNull[\s\S]{0,200}?onChange\(allNull\s*\?\s*null\s*:\s*merged\)/);
+  assert.match(
+    paymentTermsSection,
+    /allNull[\s\S]{0,200}?onChange\(allNull\s*\?\s*null\s*:\s*merged\)/
+  );
 });
 
 // ── Hot-path boundary (Addendum-B) ─────────────────────────────
