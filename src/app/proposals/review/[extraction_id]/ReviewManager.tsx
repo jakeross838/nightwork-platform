@@ -70,6 +70,18 @@ interface PaymentTermsForm {
   other_terms_text: string | null;
 }
 
+interface ScheduleItemForm {
+  scope_item: string;
+  linked_line_number: number | null;
+  estimated_start_date: string | null;
+  estimated_duration_days: number | null;
+  sequence_position: number | null;
+  depends_on: number[];
+  responsibility: string | null;
+  deliverables: string[];
+  trigger: string | null;
+}
+
 interface ProposalForm {
   vendor_name: string;
   vendor_id: string | null;
@@ -90,6 +102,14 @@ interface ProposalForm {
   additional_fee_schedule: FeeScheduleEntryForm[] | null;
   payment_schedule: PaymentScheduleEntryForm[] | null;
   payment_terms: PaymentTermsForm | null;
+  // Phase 3.4 Step 5f/5g — schedule_items + acceptance signature.
+  // No editable UI surface in Phase 3.4; carried through commit so the
+  // JSONB column gets the structured data the extractor produced.
+  // Phase 3.5 PO detail tab will surface schedule_items.
+  schedule_items: ScheduleItemForm[] | null;
+  accepted_signature_present: boolean;
+  accepted_signature_name: string | null;
+  accepted_signature_date: string | null;
   line_items: ProposalLineItemForm[];
   confidence_score: number;
   confidence_details: Record<string, number>;
@@ -222,6 +242,20 @@ export default function ReviewManager(props: Props) {
               governing_law: string | null;
               other_terms_text: string | null;
             } | null;
+            schedule_items: Array<{
+              scope_item: string;
+              linked_line_number: number | null;
+              estimated_start_date: string | null;
+              estimated_duration_days: number | null;
+              sequence_position: number | null;
+              depends_on: number[];
+              responsibility: string | null;
+              deliverables: string[];
+              trigger: string | null;
+            }> | null;
+            accepted_signature_present: boolean;
+            accepted_signature_name: string | null;
+            accepted_signature_date: string | null;
             line_items: Array<{
               line_number: number;
               description: string;
@@ -266,6 +300,10 @@ export default function ReviewManager(props: Props) {
           additional_fee_schedule: ed.additional_fee_schedule,
           payment_schedule: ed.payment_schedule,
           payment_terms: ed.payment_terms,
+          schedule_items: ed.schedule_items,
+          accepted_signature_present: ed.accepted_signature_present,
+          accepted_signature_name: ed.accepted_signature_name,
+          accepted_signature_date: ed.accepted_signature_date,
           line_items: ed.line_items.map((li) => ({
             line_number: li.line_number,
             description: li.description,
@@ -424,6 +462,10 @@ export default function ReviewManager(props: Props) {
             additional_fee_schedule: form.additional_fee_schedule,
             payment_schedule: form.payment_schedule,
             payment_terms: form.payment_terms,
+            schedule_items: form.schedule_items,
+            accepted_signature_present: form.accepted_signature_present,
+            accepted_signature_name: form.accepted_signature_name,
+            accepted_signature_date: form.accepted_signature_date,
             line_items: form.line_items,
             raw_extraction: form.raw_extraction,
             ai_confidence: form.confidence_score,

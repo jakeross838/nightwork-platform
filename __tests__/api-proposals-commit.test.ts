@@ -144,6 +144,17 @@ test("commit persists Step 5b/5c fee/payment schedule + terms columns", () => {
   assert.match(commit, /payment_terms:\s*form\.payment_terms/);
 });
 
+test("commit persists Step 5f/5g schedule_items + acceptance signature columns", () => {
+  // Migration 00089 columns must be written on the proposals INSERT.
+  assert.match(commit, /schedule_items:\s*form\.schedule_items/);
+  assert.match(
+    commit,
+    /accepted_signature_present:\s*form\.accepted_signature_present/
+  );
+  assert.match(commit, /accepted_signature_name:\s*form\.accepted_signature_name/);
+  assert.match(commit, /accepted_signature_date:\s*form\.accepted_signature_date/);
+});
+
 // ── Commit: cost-code dual-write per clarification 3 ──────────
 test("commit imports tryCreateServiceRoleClient for legacy auto-create", () => {
   assert.match(

@@ -231,6 +231,22 @@ test("commit POST body forwards additional_fee_schedule, payment_schedule, payme
   assert.match(reviewManager, /payment_terms:\s*form\.payment_terms/);
 });
 
+test("commit POST body forwards Step 5f/5g schedule + signature fields", () => {
+  assert.match(reviewManager, /schedule_items:\s*form\.schedule_items/);
+  assert.match(
+    reviewManager,
+    /accepted_signature_present:\s*form\.accepted_signature_present/
+  );
+  assert.match(
+    reviewManager,
+    /accepted_signature_name:\s*form\.accepted_signature_name/
+  );
+  assert.match(
+    reviewManager,
+    /accepted_signature_date:\s*form\.accepted_signature_date/
+  );
+});
+
 test("review manager loads the 3 fields from the extract API response", () => {
   // The setForm() call must populate all three from `ed.*`.
   assert.match(
@@ -239,6 +255,22 @@ test("review manager loads the 3 fields from the extract API response", () => {
   );
   assert.match(reviewManager, /payment_schedule:\s*ed\.payment_schedule/);
   assert.match(reviewManager, /payment_terms:\s*ed\.payment_terms/);
+});
+
+test("review manager loads Step 5f/5g schedule + signature fields", () => {
+  assert.match(reviewManager, /schedule_items:\s*ed\.schedule_items/);
+  assert.match(
+    reviewManager,
+    /accepted_signature_present:\s*ed\.accepted_signature_present/
+  );
+  assert.match(
+    reviewManager,
+    /accepted_signature_name:\s*ed\.accepted_signature_name/
+  );
+  assert.match(
+    reviewManager,
+    /accepted_signature_date:\s*ed\.accepted_signature_date/
+  );
 });
 
 test("PaymentTermsSection collapses to null when all sub-fields cleared", () => {

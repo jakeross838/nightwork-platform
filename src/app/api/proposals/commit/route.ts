@@ -119,6 +119,18 @@ interface PaymentTermsInput {
   other_terms_text: string | null;
 }
 
+interface ScheduleItemInput {
+  scope_item: string;
+  linked_line_number: number | null;
+  estimated_start_date: string | null;
+  estimated_duration_days: number | null;
+  sequence_position: number | null;
+  depends_on: number[];
+  responsibility: string | null;
+  deliverables: string[];
+  trigger: string | null;
+}
+
 interface FormInput {
   vendor_id: string;
   vendor_name: string;
@@ -139,6 +151,11 @@ interface FormInput {
   additional_fee_schedule: FeeScheduleInput[] | null;
   payment_schedule: PaymentScheduleInput[] | null;
   payment_terms: PaymentTermsInput | null;
+  // Phase 3.4 Step 5f/5g — schedule + acceptance signature
+  schedule_items: ScheduleItemInput[] | null;
+  accepted_signature_present: boolean;
+  accepted_signature_name: string | null;
+  accepted_signature_date: string | null;
   line_items: LineInput[];
   raw_extraction: unknown;
   ai_confidence: number;
@@ -480,6 +497,14 @@ export const POST = withApiError(async (request: NextRequest) => {
       additional_fee_schedule: form.additional_fee_schedule,
       payment_schedule: form.payment_schedule,
       payment_terms: form.payment_terms,
+      // Phase 3.4 Step 5f/5g — schedule_items JSONB + acceptance signature.
+      // schedule_items null when proposal had no schedulable structure;
+      // accepted_signature_present is the queryable boolean (NOT NULL,
+      // default false on the column — explicit pass-through here).
+      schedule_items: form.schedule_items,
+      accepted_signature_present: form.accepted_signature_present,
+      accepted_signature_name: form.accepted_signature_name,
+      accepted_signature_date: form.accepted_signature_date,
       raw_extraction: form.raw_extraction ?? {},
       extraction_confidence: form.ai_confidence,
       status_history: [initialHistoryEntry],
