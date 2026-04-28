@@ -49,6 +49,27 @@ interface ProposalLineItemForm {
   ai_cost_code_suggestion: string | null;
 }
 
+interface FeeScheduleEntryForm {
+  rate_type: string;
+  description: string | null;
+  rate_cents: number | null;
+  unit: string | null;
+}
+
+interface PaymentScheduleEntryForm {
+  milestone: string;
+  percentage_pct: number | null;
+  amount_cents: number | null;
+  trigger: string | null;
+}
+
+interface PaymentTermsForm {
+  net_days: number | null;
+  late_interest_rate_pct: number | null;
+  governing_law: string | null;
+  other_terms_text: string | null;
+}
+
 interface ProposalForm {
   vendor_name: string;
   vendor_id: string | null;
@@ -65,6 +86,10 @@ interface ProposalForm {
   notes: string | null;
   vendor_stated_start_date: string | null;
   vendor_stated_duration_days: number | null;
+  // Phase 3.4 Step 5b/5c — structured billing data
+  additional_fee_schedule: FeeScheduleEntryForm[] | null;
+  payment_schedule: PaymentScheduleEntryForm[] | null;
+  payment_terms: PaymentTermsForm | null;
   line_items: ProposalLineItemForm[];
   confidence_score: number;
   confidence_details: Record<string, number>;
@@ -179,6 +204,24 @@ export default function ReviewManager(props: Props) {
             notes: string | null;
             vendor_stated_start_date: string | null;
             vendor_stated_duration_days: number | null;
+            additional_fee_schedule: Array<{
+              rate_type: string;
+              description: string | null;
+              rate_cents: number | null;
+              unit: string | null;
+            }> | null;
+            payment_schedule: Array<{
+              milestone: string;
+              percentage_pct: number | null;
+              amount_cents: number | null;
+              trigger: string | null;
+            }> | null;
+            payment_terms: {
+              net_days: number | null;
+              late_interest_rate_pct: number | null;
+              governing_law: string | null;
+              other_terms_text: string | null;
+            } | null;
             line_items: Array<{
               line_number: number;
               description: string;
@@ -220,6 +263,9 @@ export default function ReviewManager(props: Props) {
           notes: ed.notes,
           vendor_stated_start_date: ed.vendor_stated_start_date,
           vendor_stated_duration_days: ed.vendor_stated_duration_days,
+          additional_fee_schedule: ed.additional_fee_schedule,
+          payment_schedule: ed.payment_schedule,
+          payment_terms: ed.payment_terms,
           line_items: ed.line_items.map((li) => ({
             line_number: li.line_number,
             description: li.description,
@@ -375,6 +421,9 @@ export default function ReviewManager(props: Props) {
             notes: form.notes,
             vendor_stated_start_date: form.vendor_stated_start_date,
             vendor_stated_duration_days: form.vendor_stated_duration_days,
+            additional_fee_schedule: form.additional_fee_schedule,
+            payment_schedule: form.payment_schedule,
+            payment_terms: form.payment_terms,
             line_items: form.line_items,
             raw_extraction: form.raw_extraction,
             ai_confidence: form.confidence_score,
@@ -719,6 +768,21 @@ export default function ReviewManager(props: Props) {
               </FormField>
             </section>
 
+            <FeeScheduleSection
+              entries={form.additional_fee_schedule}
+              onChange={(next) => updateForm({ additional_fee_schedule: next })}
+            />
+
+            <PaymentScheduleSection
+              entries={form.payment_schedule}
+              onChange={(next) => updateForm({ payment_schedule: next })}
+            />
+
+            <PaymentTermsSection
+              terms={form.payment_terms}
+              onChange={(next) => updateForm({ payment_terms: next })}
+            />
+
             <section className="rounded border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-[color:var(--text-primary)]">
@@ -834,6 +898,342 @@ export default function ReviewManager(props: Props) {
 }
 
 // ── helpers ─────────────────────────────────────────────────────
+
+// Phase 3.4 Step 5e — collapsible fee schedule editor. Mirrors the
+// extractor: null = "no fee table on this proposal", non-null array
+// = explicit hourly/blended rate rows.
+function FeeScheduleSection({
+  entries,
+  onChange,
+}: {
+  entries: FeeScheduleEntryForm[] | null;
+  onChange: (next: FeeScheduleEntryForm[] | null) => void;
+}) {
+  const [open, setOpen] = useState(entries !== null && entries.length > 0);
+  const list = entries ?? [];
+  const addRow = () =>
+    onChange([
+      ...list,
+      { rate_type: "", description: null, rate_cents: null, unit: null },
+    ]);
+  const removeRow = (idx: number) => {
+    const next = list.slice();
+    next.splice(idx, 1);
+    onChange(next.length === 0 ? null : next);
+  };
+  const updateRow = (idx: number, patch: Partial<FeeScheduleEntryForm>) => {
+    const next = list.slice();
+    next[idx] = { ...next[idx], ...patch };
+    onChange(next);
+  };
+
+  return (
+    <section className="rounded border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setOpen((s) => !s)}
+          className="text-sm font-semibold text-[color:var(--text-primary)] hover:underline"
+        >
+          {open ? "▼" : "▶"} Additional fee schedule ({list.length})
+        </button>
+        {open && (
+          <NwButton variant="ghost" size="sm" onClick={addRow}>
+            + Add rate
+          </NwButton>
+        )}
+      </div>
+      {open && (
+        <>
+          {list.length === 0 ? (
+            <p className="text-xs text-[color:var(--text-tertiary)]">
+              No rate table extracted. Add a row if the proposal lists hourly or
+              blended rates the vendor will bill at for additional services.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {list.map((row, idx) => (
+                <div
+                  key={idx}
+                  className="grid grid-cols-12 gap-2 rounded border border-[var(--border-default)] p-2"
+                >
+                  <div className="col-span-3">
+                    <FormField label="Type">
+                      <input
+                        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                        value={row.rate_type}
+                        onChange={(e) =>
+                          updateRow(idx, { rate_type: e.target.value })
+                        }
+                        placeholder="hourly"
+                      />
+                    </FormField>
+                  </div>
+                  <div className="col-span-4">
+                    <FormField label="Description">
+                      <input
+                        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                        value={row.description ?? ""}
+                        onChange={(e) =>
+                          updateRow(idx, { description: e.target.value || null })
+                        }
+                      />
+                    </FormField>
+                  </div>
+                  <div className="col-span-2">
+                    <FormField label="Rate">
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                        value={centsToDollars(row.rate_cents)}
+                        onChange={(e) =>
+                          updateRow(idx, {
+                            rate_cents: dollarsToCents(e.target.value),
+                          })
+                        }
+                      />
+                    </FormField>
+                  </div>
+                  <div className="col-span-2">
+                    <FormField label="Unit">
+                      <input
+                        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                        value={row.unit ?? ""}
+                        onChange={(e) =>
+                          updateRow(idx, { unit: e.target.value || null })
+                        }
+                        placeholder="hr"
+                      />
+                    </FormField>
+                  </div>
+                  <div className="col-span-1 flex items-end">
+                    <NwButton variant="ghost" size="sm" onClick={() => removeRow(idx)}>
+                      ✕
+                    </NwButton>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+// Phase 3.4 Step 5e — collapsible payment schedule editor. Mirrors
+// extractor: null = "single payment / no milestones", non-null = list
+// of milestone entries with percentage_pct OR amount_cents (or both).
+function PaymentScheduleSection({
+  entries,
+  onChange,
+}: {
+  entries: PaymentScheduleEntryForm[] | null;
+  onChange: (next: PaymentScheduleEntryForm[] | null) => void;
+}) {
+  const [open, setOpen] = useState(entries !== null && entries.length > 0);
+  const list = entries ?? [];
+  const addRow = () =>
+    onChange([
+      ...list,
+      { milestone: "", percentage_pct: null, amount_cents: null, trigger: null },
+    ]);
+  const removeRow = (idx: number) => {
+    const next = list.slice();
+    next.splice(idx, 1);
+    onChange(next.length === 0 ? null : next);
+  };
+  const updateRow = (idx: number, patch: Partial<PaymentScheduleEntryForm>) => {
+    const next = list.slice();
+    next[idx] = { ...next[idx], ...patch };
+    onChange(next);
+  };
+
+  return (
+    <section className="rounded border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setOpen((s) => !s)}
+          className="text-sm font-semibold text-[color:var(--text-primary)] hover:underline"
+        >
+          {open ? "▼" : "▶"} Payment schedule ({list.length})
+        </button>
+        {open && (
+          <NwButton variant="ghost" size="sm" onClick={addRow}>
+            + Add milestone
+          </NwButton>
+        )}
+      </div>
+      {open && (
+        <>
+          {list.length === 0 ? (
+            <p className="text-xs text-[color:var(--text-tertiary)]">
+              No milestones extracted. Add a row if the proposal specifies
+              multi-step billing (e.g., 50% deposit + 50% on completion).
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {list.map((row, idx) => (
+                <div
+                  key={idx}
+                  className="grid grid-cols-12 gap-2 rounded border border-[var(--border-default)] p-2"
+                >
+                  <div className="col-span-3">
+                    <FormField label="Milestone">
+                      <input
+                        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                        value={row.milestone}
+                        onChange={(e) =>
+                          updateRow(idx, { milestone: e.target.value })
+                        }
+                        placeholder="deposit"
+                      />
+                    </FormField>
+                  </div>
+                  <div className="col-span-2">
+                    <FormField label="%">
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                        value={row.percentage_pct ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value === "" ? null : Number(e.target.value);
+                          updateRow(idx, {
+                            percentage_pct: Number.isFinite(v) ? (v as number) : null,
+                          });
+                        }}
+                      />
+                    </FormField>
+                  </div>
+                  <div className="col-span-2">
+                    <FormField label="Amount">
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                        value={centsToDollars(row.amount_cents)}
+                        onChange={(e) =>
+                          updateRow(idx, {
+                            amount_cents: dollarsToCents(e.target.value),
+                          })
+                        }
+                      />
+                    </FormField>
+                  </div>
+                  <div className="col-span-4">
+                    <FormField label="Trigger">
+                      <input
+                        className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                        value={row.trigger ?? ""}
+                        onChange={(e) =>
+                          updateRow(idx, { trigger: e.target.value || null })
+                        }
+                        placeholder="upon contract signing"
+                      />
+                    </FormField>
+                  </div>
+                  <div className="col-span-1 flex items-end">
+                    <NwButton variant="ghost" size="sm" onClick={() => removeRow(idx)}>
+                      ✕
+                    </NwButton>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+// Phase 3.4 Step 5e — payment terms key-value display. Single object
+// (not a list). Null = "no terms section on the proposal". Form
+// initializes from extracted terms; PMs can fill in any sub-field.
+function PaymentTermsSection({
+  terms,
+  onChange,
+}: {
+  terms: PaymentTermsForm | null;
+  onChange: (next: PaymentTermsForm | null) => void;
+}) {
+  const t = terms ?? {
+    net_days: null,
+    late_interest_rate_pct: null,
+    governing_law: null,
+    other_terms_text: null,
+  };
+  const updateField = (patch: Partial<PaymentTermsForm>) => {
+    const merged = { ...t, ...patch };
+    const allNull =
+      merged.net_days === null &&
+      merged.late_interest_rate_pct === null &&
+      merged.governing_law === null &&
+      merged.other_terms_text === null;
+    onChange(allNull ? null : merged);
+  };
+
+  return (
+    <section className="rounded border border-[var(--border-default)] bg-[var(--bg-card)] p-4 space-y-3">
+      <h2 className="text-sm font-semibold text-[color:var(--text-primary)]">
+        Payment terms
+      </h2>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Net days">
+          <input
+            type="number"
+            className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+            value={t.net_days ?? ""}
+            onChange={(e) => {
+              const v = e.target.value === "" ? null : Number(e.target.value);
+              updateField({ net_days: Number.isFinite(v) ? (v as number) : null });
+            }}
+            placeholder="30"
+          />
+        </FormField>
+        <FormField label="Late interest rate (%)">
+          <input
+            type="number"
+            step="0.01"
+            className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+            value={t.late_interest_rate_pct ?? ""}
+            onChange={(e) => {
+              const v = e.target.value === "" ? null : Number(e.target.value);
+              updateField({
+                late_interest_rate_pct: Number.isFinite(v) ? (v as number) : null,
+              });
+            }}
+            placeholder="1.5"
+          />
+        </FormField>
+      </div>
+      <FormField label="Governing law">
+        <input
+          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+          value={t.governing_law ?? ""}
+          onChange={(e) =>
+            updateField({ governing_law: e.target.value || null })
+          }
+          placeholder="Florida law"
+        />
+      </FormField>
+      <FormField label="Other terms text">
+        <textarea
+          rows={3}
+          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+          value={t.other_terms_text ?? ""}
+          onChange={(e) =>
+            updateField({ other_terms_text: e.target.value || null })
+          }
+          placeholder="Retainage, lien-release requirements, deposit refundability..."
+        />
+      </FormField>
+    </section>
+  );
+}
 
 function FormField({
   label,

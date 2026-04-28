@@ -214,6 +214,38 @@ test("suggestions manager posts resolve to /api/cost-code-suggestions/[id]/resol
   );
 });
 
+// ── Step 5b/5c structured billing sections ─────────────────────
+test("review manager renders fee schedule, payment schedule, payment terms sections", () => {
+  assert.match(reviewManager, /FeeScheduleSection/);
+  assert.match(reviewManager, /PaymentScheduleSection/);
+  assert.match(reviewManager, /PaymentTermsSection/);
+});
+
+test("commit POST body forwards additional_fee_schedule, payment_schedule, payment_terms", () => {
+  // Each must appear inside the JSON.stringify body shape sent to /commit.
+  assert.match(
+    reviewManager,
+    /additional_fee_schedule:\s*form\.additional_fee_schedule/
+  );
+  assert.match(reviewManager, /payment_schedule:\s*form\.payment_schedule/);
+  assert.match(reviewManager, /payment_terms:\s*form\.payment_terms/);
+});
+
+test("review manager loads the 3 fields from the extract API response", () => {
+  // The setForm() call must populate all three from `ed.*`.
+  assert.match(
+    reviewManager,
+    /additional_fee_schedule:\s*ed\.additional_fee_schedule/
+  );
+  assert.match(reviewManager, /payment_schedule:\s*ed\.payment_schedule/);
+  assert.match(reviewManager, /payment_terms:\s*ed\.payment_terms/);
+});
+
+test("PaymentTermsSection collapses to null when all sub-fields cleared", () => {
+  // Confirms the "all-null → null at top level" rule is preserved end-to-end.
+  assert.match(reviewManager, /allNull[\s\S]{0,200}?onChange\(allNull\s*\?\s*null\s*:\s*merged\)/);
+});
+
 // ── Hot-path boundary (Addendum-B) ─────────────────────────────
 test("review files do NOT import hot-path matcher modules", () => {
   for (const src of [reviewPage, reviewManager, suggestionsPage, suggestionsManager]) {
