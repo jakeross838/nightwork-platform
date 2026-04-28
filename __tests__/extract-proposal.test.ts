@@ -86,19 +86,35 @@ test("system prompt covers schedule_items + acceptance signature (Step 5f/5g)", 
   assert.match(source, /accepted_signature_date/);
 });
 
-test("system prompt — Step 5g bug fixes for net_days, valid_through, inclusions", () => {
-  // Bug 1 (net_days conflated with collection-cost timeline) — prompt
-  // must distinguish past-due window from collection threshold.
-  assert.match(source, /past due/i);
-  assert.match(source, /interest accrues|interest will be charged/i);
+test("system prompt — Step 5k iteration: net_days hardened, cost_code null on tax/notes, implied UoM, job_address", () => {
+  // Cross-fixture iteration per prompt 192.
+  // 1. net_days hardened — explicit Net-N keyword required, list of bad cases
+  assert.match(source, /due 30 days from invoice date/i);
+  assert.match(source, /quote good for 30 days/i);
+  assert.match(source, /due on the 10th of the month/i);
+  // 2. cost_code_suggestion null on tax/note/condition lines
+  assert.match(source, /set cost_code_suggestion to null on lines that are taxes/i);
+  // 3. Implied UoM extraction with qty_from_description flag
+  assert.match(source, /IMPLIED UoM EXTRACTION/);
+  assert.match(source, /qty_from_description/);
+  assert.match(source, /attributes\.qty_from_description\s*=\s*true/);
+  // 4. job_address section
+  assert.match(source, /JOB ADDRESS/);
+  assert.match(source, /Project Address|Job Address|Install Address|Site Address/);
+});
+
+test("system prompt — Step 5g/5k bug fixes for net_days, valid_through, inclusions", () => {
+  // Bug 1 (net_days fabricated from non-billing day-counts) — after the
+  // 5k iteration, prompt requires explicit Net-N keyword pattern tied to
+  // invoice payment due date. The 5k test above asserts the new bad-case
+  // examples; this test confirms the HARD RULE wording is in place.
+  assert.match(source, /net_days:\s*HARD RULE/);
   // Bug 2 (valid_through inferred from "valid for 30 days" + proposal_date) —
-  // prompt must explicitly disallow that compute. After prompt 187, the
-  // wording is stricter: only literal month/day/year expiration dates.
+  // must require literal month/day/year expiration dates.
   assert.match(source, /HARD RULE/);
   assert.match(source, /Do not compute date arithmetic/);
   // The previous DO-populate example "Quote good for 30 days from 2026-02-15"
-  // was the source of the generalization bug — it must be REMOVED, replaced
-  // by listing "quote good for 30 days" as a return-null phrasing.
+  // was the source of the generalization bug — must be REMOVED.
   assert.ok(
     !/Quote good for 30 days from 2026-02-15/.test(source),
     "the DO-populate example was the source of the bug — it must be removed per prompt 187"
@@ -304,6 +320,39 @@ test("normalizeProposal keeps all six breakdown *_cents null when proposal is lu
   assert.equal(out.accepted_signature_present, false);
   assert.equal(out.accepted_signature_name, null);
   assert.equal(out.accepted_signature_date, null);
+  // Step 5j/5k addition absent → null
+  assert.equal(out.job_address, null);
+});
+
+// ── normalizeProposal — job_address (Step 5j/5k) ────────────────
+test("normalizeProposal: job_address preserved when AI provides it", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    job_address: "501 74th Street, Holmes Beach, FL 34217",
+  });
+  assert.equal(out.job_address, "501 74th Street, Holmes Beach, FL 34217");
+});
+
+test("normalizeProposal: job_address coerces empty/non-string → null", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  assert.equal(
+    mod.normalizeProposal({
+      vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+      line_items: [{ description: "a", amount: 100 }],
+      job_address: "",
+    }).job_address,
+    null
+  );
+  assert.equal(
+    mod.normalizeProposal({
+      vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+      line_items: [{ description: "a", amount: 100 }],
+      job_address: 42,
+    }).job_address,
+    null
+  );
 });
 
 // ── normalizeProposal — schedule_items (Step 5f/5g) ─────────────

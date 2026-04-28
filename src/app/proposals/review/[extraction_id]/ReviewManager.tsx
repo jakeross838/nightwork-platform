@@ -110,6 +110,8 @@ interface ProposalForm {
   accepted_signature_present: boolean;
   accepted_signature_name: string | null;
   accepted_signature_date: string | null;
+  // Phase 3.4 Step 5j/5k — project/install address. Editable in form.
+  job_address: string | null;
   line_items: ProposalLineItemForm[];
   confidence_score: number;
   confidence_details: Record<string, number>;
@@ -256,6 +258,7 @@ export default function ReviewManager(props: Props) {
             accepted_signature_present: boolean;
             accepted_signature_name: string | null;
             accepted_signature_date: string | null;
+            job_address: string | null;
             line_items: Array<{
               line_number: number;
               description: string;
@@ -304,6 +307,7 @@ export default function ReviewManager(props: Props) {
           accepted_signature_present: ed.accepted_signature_present,
           accepted_signature_name: ed.accepted_signature_name,
           accepted_signature_date: ed.accepted_signature_date,
+          job_address: ed.job_address,
           line_items: ed.line_items.map((li) => ({
             line_number: li.line_number,
             description: li.description,
@@ -466,6 +470,7 @@ export default function ReviewManager(props: Props) {
             accepted_signature_present: form.accepted_signature_present,
             accepted_signature_name: form.accepted_signature_name,
             accepted_signature_date: form.accepted_signature_date,
+            job_address: form.job_address,
             line_items: form.line_items,
             raw_extraction: form.raw_extraction,
             ai_confidence: form.confidence_score,
@@ -693,6 +698,17 @@ export default function ReviewManager(props: Props) {
                     </option>
                   ))}
                 </select>
+              </FormField>
+
+              <FormField label="Job address (extracted from proposal)">
+                <input
+                  className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+                  value={form.job_address ?? ""}
+                  onChange={(e) =>
+                    updateForm({ job_address: e.target.value || null })
+                  }
+                  placeholder="(none extracted — vendor proposal had no project address)"
+                />
               </FormField>
 
               <div className="grid grid-cols-2 gap-3">

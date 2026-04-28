@@ -156,6 +156,8 @@ interface FormInput {
   accepted_signature_present: boolean;
   accepted_signature_name: string | null;
   accepted_signature_date: string | null;
+  // Phase 3.4 Step 5j/5k — project/install address
+  job_address: string | null;
   line_items: LineInput[];
   raw_extraction: unknown;
   ai_confidence: number;
@@ -505,6 +507,9 @@ export const POST = withApiError(async (request: NextRequest) => {
       accepted_signature_present: form.accepted_signature_present,
       accepted_signature_name: form.accepted_signature_name,
       accepted_signature_date: form.accepted_signature_date,
+      // Phase 3.4 Step 5j/5k — project/install address. Null when
+      // proposal didn't state a site address.
+      job_address: form.job_address,
       raw_extraction: form.raw_extraction ?? {},
       extraction_confidence: form.ai_confidence,
       status_history: [initialHistoryEntry],

@@ -155,6 +155,11 @@ test("commit persists Step 5f/5g schedule_items + acceptance signature columns",
   assert.match(commit, /accepted_signature_date:\s*form\.accepted_signature_date/);
 });
 
+test("commit persists Step 5j/5k job_address column", () => {
+  // Migration 00090 column must be written on the proposals INSERT.
+  assert.match(commit, /job_address:\s*form\.job_address/);
+});
+
 // ── Commit: cost-code dual-write per clarification 3 ──────────
 test("commit imports tryCreateServiceRoleClient for legacy auto-create", () => {
   assert.match(

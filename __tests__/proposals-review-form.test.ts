@@ -247,6 +247,16 @@ test("commit POST body forwards Step 5f/5g schedule + signature fields", () => {
   );
 });
 
+test("commit POST body forwards Step 5j/5k job_address", () => {
+  assert.match(reviewManager, /job_address:\s*form\.job_address/);
+});
+
+test("review manager loads + edits job_address from extract response", () => {
+  assert.match(reviewManager, /job_address:\s*ed\.job_address/);
+  // Editable input field present with the user-facing label
+  assert.match(reviewManager, /Job address \(extracted from proposal\)/);
+});
+
 test("review manager loads the 3 fields from the extract API response", () => {
   // The setForm() call must populate all three from `ed.*`.
   assert.match(

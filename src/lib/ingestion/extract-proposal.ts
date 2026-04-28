@@ -159,6 +159,10 @@ export type ParsedProposal = {
   accepted_signature_name: string | null;
   accepted_signature_date: string | null;
 
+  // Project/install/site address (Phase 3.4 Step 5j/5k). Null when
+  // proposal doesn't state a site address.
+  job_address: string | null;
+
   // Confidence
   confidence_score: number; // [0, 1]
   confidence_details: Record<string, number>;
@@ -244,7 +248,20 @@ For every line in the proposal, return an object in line_items:
 - unit_of_measure: short form — EA, LF, SF, CY, CF, hr, day, lot, etc. Null if not stated.
 - unit_price: per-unit price in DOLLARS. Null when the proposal is lump-sum (no unit price, only a total).
 - amount: line total in DOLLARS. Always present.
-- cost_code_suggestion: a free-text trade label your best guess based on description (e.g. "Concrete - foundation", "Stucco - exterior", "Plumbing - rough", "Electrical - finish"). Null if the trade is genuinely unclear. Be specific where you can — "Concrete - foundation" beats "Concrete".
+
+IMPLIED UoM EXTRACTION FROM DESCRIPTION
+
+When a line description contains EXPLICIT measurement language ("approx 2300 sq ft", "~2000 SF of wall space", "440 LF of foundation", "10 windows", "3 doors", "200 LF of crown trim", "800 sq ft total"), use that as the line's quantity + unit_of_measure even when the PDF's literal Qty/Hours column says "1" or another value. The cost intelligence layer learns from $/UoM rates; storing "1 EA at $17,750" instead of "2300 SF at $7.72/SF" makes a T&G install rate invisible to similarity search across vendors. Reading the description for the real measurement is critical.
+
+When you override the PDF's literal Qty column with a measurement extracted from the description, set attributes.qty_from_description = true on that line item. This signals to the PM that the qty/UoM came from description parsing rather than a structured Qty column — they can verify on review. Examples:
+
+- Description "install supplied T&G ~2300 sq ft" + PDF Qty column "1" → qty=2300, unit_of_measure="SF", attributes.qty_from_description=true
+- Description "install on 10 windows" + PDF Qty column "10" → qty=10, unit_of_measure="EA" (description and column agree, no flag needed — qty_from_description NOT set)
+- Description "440 LF of foundation" + PDF Qty column "1" → qty=440, unit_of_measure="LF", attributes.qty_from_description=true
+- Description "install baseboard trim" + PDF Qty column "180 LF" → qty=180, unit_of_measure="LF" (column was structured, no override needed)
+
+When the description has no explicit measurement OR is ambiguous ("install crown trim throughout", "supply doors as listed"), use the PDF's literal Qty column as-is. Do not invent measurements.
+- cost_code_suggestion: a free-text trade label your best guess based on description (e.g. "Concrete - foundation", "Stucco - exterior", "Plumbing - rough", "Electrical - finish"). Null if the trade is genuinely unclear. Be specific where you can — "Concrete - foundation" beats "Concrete". HARD RULE — set cost_code_suggestion to null on lines that are taxes, fees, project conditions, or general notes/conditions rather than billable trade work. Do NOT label these with synthetic cost-code-shaped strings like "Tax", "Materials - note", "Condition", or "Note". Lines that are notes/taxes/conditions get null here; the line itself can still exist (we mirror the PDF's table structure) but must not pretend to be cost-coded.
 
 COST BREAKDOWN — EXPLICIT ONLY, NEVER FABRICATE
 
@@ -325,7 +342,16 @@ PAYMENT TERMS — STRUCTURED EXTRACTION
 Capture top-level vendor billing terms as a single payment_terms object:
   {net_days, late_interest_rate_pct, governing_law, other_terms_text}
 
-- net_days: number of days BEFORE AN INVOICE IS PAST DUE — i.e., the credit window the vendor extends after invoice issuance before the invoice can accrue interest or trigger collection. Examples that populate: "Net 30" → 30, "Net 15" → 15, "Due upon receipt" → 0, "If payment is not received within thirty days of the invoice date, interest will be charged" → 30. Do NOT use a "ninety days" / "60 days" / "120 days" reference that describes a DIFFERENT concept like "you have 90 days to dispute" or "90 days to commence collection action" or "90 days for dispute resolution" — those are not net_days. The signal is specifically the past-due threshold for the invoice itself. If the proposal mentions multiple day-counts, pick the one tied to "past due" / "interest accrues" / "payment due"; null only if no past-due window is stated.
+- net_days: HARD RULE — only populate when the PDF contains explicit billing-credit language: "Net 30", "Net 15", "Net 60", "due 30 days from invoice date", "due within 30 days of invoice", "payment due within N days of invoice", "payment terms: 30 days", or "Due upon receipt" (= 0). The signal MUST be tied directly to the invoice payment due date.
+
+  Examples that MUST return null (preserve the literal language in other_terms_text — never coerce these to a Net-N integer):
+  - "due on the 10th of the month following invoicing" — month-end+10 billing convention, NOT Net-N
+  - "quote good for 30 days" / "estimate pricing held for 30 days" / "valid for 30 days" / "pricing held for 30 days" — quote validity, NOT billing terms
+  - "interest charged after thirty days" → use 30 ONLY if the context literally says "30 days from invoice" or equivalent past-due trigger; if the context is collection-action threshold, dispute resolution window, or general legal recourse timing, return null
+  - "ninety days to commence collection" / "60 days to dispute" — collection / dispute thresholds, NOT billing terms
+  - any "N days" reference NOT explicitly tied to invoice payment due date — when in doubt, return null
+
+  When in doubt: return null and preserve the original phrasing in other_terms_text. A human will not be confused by null + the literal text; a human WILL be misled by a fabricated Net-N value.
 - late_interest_rate_pct: number for late-payment interest (e.g., 1.5 for "1.5% per month" — convert annual rates to monthly if the proposal expresses them annually). Null if no late-interest clause.
 - governing_law: text identifying the legal jurisdiction, e.g., "Florida law", "State of Florida". Null if not stated.
 - other_terms_text: any other payment-related terms paragraph that doesn't fit above (retainage clauses, warranty payment conditions, lien-release requirements, deposit-non-refundable language, etc.). Use this for payment-adjacent text that previously would have ended up in the notes field. Null if none.
@@ -374,6 +400,19 @@ Many vendor proposals include an "Accepted By" / "Signed By" / "Approved By" / s
 Do NOT confuse the acceptance signature with the vendor's own signature on the proposal (the sender). The acceptance is the RECIPIENT's signature accepting the proposal — it's the contractor side of the block.
 
 If accepted_signature_present is FALSE, accepted_signature_name and accepted_signature_date should both be null.
+
+JOB ADDRESS — STRUCTURED EXTRACTION
+
+Most proposals reference an install/site/project address. Capture as job_address when the proposal explicitly states one, looking for any of:
+- "Project Address:" / "Job Address:" / "Install Address:" / "Site Address:"
+- The address line in a "Bill To:" / "Ship To:" / "Project:" block (when distinct from the contractor's office address)
+- An address embedded near the project name (e.g., "501 74th Street, Holmes Beach, FL 34217" labeled as the project location)
+
+Format: full address as written (street, city, state, zip — comma-separated as on the proposal). Preserve the vendor's literal text rather than canonicalizing.
+
+Set job_address to null when the proposal does not name a site address (e.g., service-only proposals where work happens at multiple locations or no fixed site).
+
+Do NOT use the vendor's own business/office address as job_address — that's vendor_address. job_address is the SITE where the work will be performed.
 
 CONFIDENCE
 
@@ -474,6 +513,7 @@ Return ONLY this JSON shape (dollars are numbers, not strings; no markdown fence
   "accepted_signature_present": false,
   "accepted_signature_name": "string | null",
   "accepted_signature_date": "YYYY-MM-DD | null",
+  "job_address": "string | null",
   "confidence_score": 0.0,
   "confidence_details": {},
   "flags": []
@@ -627,6 +667,7 @@ type RawProposal = {
   accepted_signature_present?: unknown;
   accepted_signature_name?: unknown;
   accepted_signature_date?: unknown;
+  job_address?: unknown;
   confidence_score?: unknown;
   confidence_details?: unknown;
   flags?: unknown;
@@ -842,6 +883,7 @@ export function normalizeProposal(raw: RawProposal): ParsedProposal {
         : false,
     accepted_signature_name: asStringOrNull(raw.accepted_signature_name),
     accepted_signature_date: asStringOrNull(raw.accepted_signature_date),
+    job_address: asStringOrNull(raw.job_address),
     confidence_score: clamp01(raw.confidence_score),
     confidence_details: cleanedConfidenceDetails,
     flags,
