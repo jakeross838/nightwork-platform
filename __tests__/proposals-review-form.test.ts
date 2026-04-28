@@ -18,8 +18,8 @@
  *   - ReviewManager has 4 action buttons: Save / Convert to PO /
  *     Convert to CO (disabled) / Reject
  *   - Convert to CO is disabled with the "Available after Phase 3.7" tooltip
- *   - Cost-code dropdown shows three optgroups labeled [New] / [Legacy] /
- *     [Pending]
+ *   - Cost-code dropdown shows three optgroups labeled Active codes /
+ *     Cost intelligence codes / Pending suggestions
  *   - Suggest-new-code modal posts to /api/cost-code-suggestions
  *   - Pending pick shows "Pending: <code>" badge
  *   - SuggestionsManager only shows approve/reject buttons for
@@ -171,11 +171,11 @@ test("Reject posts to /api/proposals/extract/[id]/reject", () => {
 });
 
 // ── Cost-code dropdown: three optgroups ───────────────────────
-test("cost-code dropdown labels include [New], [Legacy], [Pending]", () => {
+test("cost-code dropdown labels are PM-facing", () => {
   // Phase 3.4 Issue 2 commit 4: extracted to ProposalLineItemRow.
-  assert.match(lineItemRow, /\[New\][^"']*Org codes/);
-  assert.match(lineItemRow, /\[Legacy\][^"']*Cost codes/);
-  assert.match(lineItemRow, /\[Pending\]/);
+  assert.match(lineItemRow, /Active codes/);
+  assert.match(lineItemRow, /Cost intelligence codes/);
+  assert.match(lineItemRow, /Pending suggestions/);
 });
 
 test("cost-code pick is namespaced by source (org/legacy/pending)", () => {

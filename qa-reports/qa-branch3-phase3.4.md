@@ -50,7 +50,7 @@ Phase 3.4 ships proposal extraction end-to-end. Schema (4 migrations) + extracto
 | 11 | QA report generated with per-fixture per-field accuracy + cost intelligence verification | **PASS** | This document. Lightweight eval methodology documented in §6. |
 | 12 | Hot-path matcher byte-identical to main per addendum-B | **PASS** | `git diff main..HEAD -- src/lib/cost-intelligence/match-item.ts src/lib/cost-intelligence/commit-line-to-spine.ts src/lib/cost-intelligence/extract-invoice.ts src/lib/cost-intelligence/correct-line.ts` returns **0 lines**. |
 
-**10 of 12 PASS, 2 DEFERRED to Phase 3.5+ with documented rationale.**
+**9 of 12 PASS, 3 DEFERRED to Phase 3.5+ with documented rationale.**
 
 The 2 deferrals (#3 PM-corrected cost-code accuracy, #4 production-scale similarity matching, #7 history panel UI) are activation-pending — the wiring + data paths are shipped; the gates require production data or Phase 3.5 UI work that's out of scope.
 

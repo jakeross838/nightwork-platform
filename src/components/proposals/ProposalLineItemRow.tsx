@@ -173,7 +173,7 @@ export default function ProposalLineItemRow(props: ProposalLineItemRowProps) {
             >
               <option value="">— pick code —</option>
               {props.orgCostCodes.length > 0 && (
-                <optgroup label="[New] Org codes (Phase 3.3)">
+                <optgroup label="Active codes">
                   {props.orgCostCodes.map((c) => (
                     <option key={c.id} value={`org:${c.id}`}>
                       {c.code} — {c.name}
@@ -182,7 +182,7 @@ export default function ProposalLineItemRow(props: ProposalLineItemRowProps) {
                 </optgroup>
               )}
               {props.legacyCostCodes.length > 0 && (
-                <optgroup label="[Legacy] Cost codes (Phase 1)">
+                <optgroup label="Cost intelligence codes">
                   {props.legacyCostCodes.map((c) => (
                     <option key={c.id} value={`legacy:${c.id}`}>
                       {c.code} — {c.description}
@@ -191,7 +191,7 @@ export default function ProposalLineItemRow(props: ProposalLineItemRowProps) {
                 </optgroup>
               )}
               {props.pendingSuggestions.length > 0 && (
-                <optgroup label="[Pending] Suggested by you / your team">
+                <optgroup label="Pending suggestions">
                   {props.pendingSuggestions.map((s) => (
                     <option key={s.id} value={`pending:${s.id}`}>
                       {s.suggested_code} — {s.suggested_name}

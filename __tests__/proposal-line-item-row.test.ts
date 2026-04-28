@@ -53,16 +53,9 @@ test("imports option types from page route (single source of truth)", () => {
 });
 
 test("cost-code dropdown groups by source: org / legacy / pending", () => {
-  // Phase 3.4 Step 7 contract — the optgroup labels are PM-facing copy
-  // chosen specifically for this UI; the polish memo flagged a future
-  // relabel (project_phase3_4_polish_dropdown_labels). Locked in until
-  // that polish lands.
-  assert.match(source, /<optgroup\s+label="\[New\] Org codes \(Phase 3\.3\)"/);
-  assert.match(source, /<optgroup\s+label="\[Legacy\] Cost codes \(Phase 1\)"/);
-  assert.match(
-    source,
-    /<optgroup\s+label="\[Pending\] Suggested by you \/ your team"/
-  );
+  assert.match(source, /<optgroup\s+label="Active codes"/);
+  assert.match(source, /<optgroup\s+label="Cost intelligence codes"/);
+  assert.match(source, /<optgroup\s+label="Pending suggestions"/);
 });
 
 test("renders pending-suggestion badge when cost_code_pick.kind === 'pending'", () => {

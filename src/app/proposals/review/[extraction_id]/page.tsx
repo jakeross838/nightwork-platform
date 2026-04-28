@@ -11,10 +11,11 @@
  *     and target_entity_type='proposal' (extract has run)
  *   - Generate signed URL for PDF storage path so the iframe preview
  *     can render without leaking the storage URL
- *   - Load jobs, vendors, org_cost_codes (Phase 3.3 [New]),
- *     cost_codes (Phase 1 [Legacy]), and any pending_cost_code_suggestions
- *     for this PM (so suggested-but-not-resolved codes are still
- *     pickable per Jake's clarification 3 in prompt 176)
+ *   - Load jobs, vendors, org_cost_codes ("Active codes" optgroup),
+ *     cost_codes ("Cost intelligence codes" optgroup), and any
+ *     pending_cost_code_suggestions ("Pending suggestions" optgroup) for
+ *     this PM (so suggested-but-not-resolved codes are still pickable
+ *     per Jake's clarification 3 in prompt 176)
  *
  * Client-side responsibilities (ReviewManager):
  *   - useEffect: fetch /api/proposals/extract on mount → ParsedProposal
@@ -55,7 +56,7 @@ export type VendorOption = {
   name: string;
 };
 
-// org_cost_codes (Phase 3.3 namespace) — labeled "[New]" in the dropdown.
+// org_cost_codes (Phase 3.3 namespace) — "Active codes" optgroup.
 export type OrgCostCodeOption = {
   id: string;
   code: string;
@@ -63,8 +64,8 @@ export type OrgCostCodeOption = {
   is_active: boolean;
 };
 
-// cost_codes (Phase 1 legacy namespace) — labeled "[Legacy]" in the
-// dropdown. Per Jake's clarification 3 (prompt 176), proposal review
+// cost_codes (Phase 1 legacy namespace) — "Cost intelligence codes"
+// optgroup. Per Jake's clarification 3 (prompt 176), proposal review
 // must show both so PMs can pick whichever code their team uses today.
 export type LegacyCostCodeOption = {
   id: string;
