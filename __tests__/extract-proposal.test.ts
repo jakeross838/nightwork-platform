@@ -92,9 +92,18 @@ test("system prompt — Step 5g bug fixes for net_days, valid_through, inclusion
   assert.match(source, /past due/i);
   assert.match(source, /interest accrues|interest will be charged/i);
   // Bug 2 (valid_through inferred from "valid for 30 days" + proposal_date) —
-  // prompt must explicitly disallow that compute.
+  // prompt must explicitly disallow that compute. After prompt 187, the
+  // wording is stricter: only literal month/day/year expiration dates.
   assert.match(source, /HARD RULE/);
-  assert.match(source, /Do NOT compute proposal_date/);
+  assert.match(source, /Do not compute date arithmetic/);
+  // The previous DO-populate example "Quote good for 30 days from 2026-02-15"
+  // was the source of the generalization bug — it must be REMOVED, replaced
+  // by listing "quote good for 30 days" as a return-null phrasing.
+  assert.ok(
+    !/Quote good for 30 days from 2026-02-15/.test(source),
+    "the DO-populate example was the source of the bug — it must be removed per prompt 187"
+  );
+  assert.match(source, /quote good for 30 days/);
   // Bug 3 (inclusions/exclusions only triggered by literal section title) —
   // prompt must broaden the trigger.
   assert.match(source, /even if the section is not literally titled/i);

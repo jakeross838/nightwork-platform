@@ -204,7 +204,7 @@ Some proposals have a number ("Proposal #12345", "Quote No. Q-2024-118", "Estima
 DATES
 
 - proposal_date: when the vendor issued the proposal (sender's date). Format YYYY-MM-DD. If the proposal shows a date range, use the start. If no date is visible, set null.
-- valid_through: HARD RULE — populate ONLY when the proposal states a LITERAL expiration date. Examples that DO populate: "Valid until 2026-03-30", "Quote good for 30 days from 2026-02-15" (the FROM-date is literal — compute the +30 days = 2026-03-17). Examples that DO NOT populate (return null): "subject to revision within 30 days", "this proposal expires 30 days after acceptance", "valid for 30 days" without a literal base date — these are relative phrases without a literal target date. Do NOT compute proposal_date + N days unless the proposal text literally says "from {proposal_date}" or "from the date of this proposal" together with the proposal_date itself being explicit. When in doubt, return null. Vendors who want a hard expiration write a hard expiration; if they didn't, we don't fabricate one.
+- valid_through: HARD RULE — only populate when the PDF contains an explicit literal expiration date with month/day/year (e.g., "Valid through March 17, 2026", "Expires 03/17/2026", "Valid until 2026-03-30"). All other phrasings — "valid for X days", "subject to revision within X days", "good for X weeks", "expires 30 days after acceptance", "quote good for 30 days" — ALWAYS return null, regardless of whether a proposal_date is visible. Do not compute date arithmetic. Do not infer from context. If the proposal does not contain a literal expiration date, set null.
 
 VENDOR SCHEDULE — NEVER INFER
 
