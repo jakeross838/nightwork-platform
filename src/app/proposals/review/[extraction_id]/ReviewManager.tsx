@@ -531,9 +531,14 @@ export default function ReviewManager(props: Props) {
   if (loading) {
     return (
       <AppShell>
-        <div className="px-6 py-8">
-          <p className="text-sm text-[color:var(--text-secondary)]">
-            Loading proposal extraction...
+        <div className="px-6 py-8 space-y-2">
+          <p className="text-sm text-[color:var(--text-primary)]">
+            AI is reading the PDF — typically 20–40 seconds for multi-line
+            proposals.
+          </p>
+          <p className="text-xs text-[color:var(--text-tertiary)]">
+            Form fields will populate when extraction completes. Don&rsquo;t
+            navigate away.
           </p>
         </div>
       </AppShell>
