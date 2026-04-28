@@ -222,6 +222,118 @@ test("legacy /api/ingest route does NOT import extractProposal (pipeline boundar
   );
 });
 
+// ── Cache (Issue 1, migration 00091) ───────────────────────────
+test("migration 00091 exists and adds extracted_data JSONB column", () => {
+  const path = "supabase/migrations/00091_document_extractions_cache.sql";
+  assert.ok(existsSync(path), `${path} missing`);
+  const src = readFileSync(path, "utf8");
+  assert.match(
+    src,
+    /ALTER\s+TABLE\s+public\.document_extractions[\s\S]{0,200}?ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+extracted_data\s+JSONB/i,
+    "migration must ALTER TABLE public.document_extractions ADD COLUMN IF NOT EXISTS extracted_data JSONB"
+  );
+});
+
+test("migration 00091 has a rollback companion (.down.sql)", () => {
+  const path = "supabase/migrations/00091_document_extractions_cache.down.sql";
+  assert.ok(existsSync(path), `${path} missing`);
+  const src = readFileSync(path, "utf8");
+  assert.match(
+    src,
+    /DROP\s+COLUMN\s+IF\s+EXISTS\s+extracted_data/i,
+    "down migration must DROP COLUMN IF EXISTS extracted_data"
+  );
+});
+
+test("route loads extracted_data + extraction_prompt_version from the row", () => {
+  // Both columns must be in the SELECT so the cache-hit path can read
+  // them without a second round-trip.
+  assert.match(
+    source,
+    /\.select\(\s*[\s\S]{0,400}?extracted_data[\s\S]{0,200}?extraction_prompt_version/,
+    "route SELECT must include extracted_data and extraction_prompt_version"
+  );
+});
+
+test("route reads ?force=true query param to bypass cache", () => {
+  assert.match(
+    source,
+    /searchParams\.get\(\s*['"]force['"]\s*\)\s*===\s*['"]true['"]/,
+    "route must read ?force=true to support manual cache busting"
+  );
+});
+
+test("cache hit short-circuits before storage download + extractor call", () => {
+  // The cached return must appear textually BEFORE the storage download
+  // and the extractProposal() call. If a future refactor accidentally
+  // reorders these, the cache becomes a no-op.
+  const cachedReturnIdx = source.search(
+    /cache:\s*\{\s*hit:\s*true\s*\}/
+  );
+  const storageDownloadIdx = source.search(
+    /\.storage[\s\S]{0,80}?\.download\(/
+  );
+  const extractCallIdx = source.search(/await\s+extractProposal\(/);
+  assert.ok(cachedReturnIdx > 0, "cache hit return not found");
+  assert.ok(storageDownloadIdx > 0, "storage download not found");
+  assert.ok(extractCallIdx > 0, "extractProposal call not found");
+  assert.ok(
+    cachedReturnIdx < storageDownloadIdx,
+    "cache hit must short-circuit before the storage download"
+  );
+  assert.ok(
+    cachedReturnIdx < extractCallIdx,
+    "cache hit must short-circuit before extractProposal()"
+  );
+});
+
+test("cache hit guarded by extraction_prompt_version equality", () => {
+  // The cache-usable predicate must require the stored prompt version
+  // to match the current code-side version. Otherwise prompt iteration
+  // can return stale extractions.
+  assert.match(
+    source,
+    /cachedVersion\s*===\s*EXTRACTION_PROMPT_VERSION/,
+    "cache must compare stored extraction_prompt_version to current EXTRACTION_PROMPT_VERSION"
+  );
+});
+
+test("cache miss path persists extracted_data alongside metadata", () => {
+  // The post-extract update must include extracted_data: parsed so the
+  // next call can hit the cache. Without this write the cache is a
+  // permanent miss and the migration is dead weight.
+  assert.match(
+    source,
+    /\.update\(\s*\{[\s\S]{0,400}?extracted_data:\s*parsed/,
+    "post-extract update must persist extracted_data for the next read"
+  );
+});
+
+test("response includes cache: { hit: ... } discriminator", () => {
+  // The UI uses this to decide whether to log re-extract events and
+  // to suppress the loading copy on hits.
+  assert.match(
+    source,
+    /cache:\s*\{\s*hit:\s*true\s*\}/,
+    "cache hit response must include cache: { hit: true }"
+  );
+  assert.match(
+    source,
+    /cache:\s*\{\s*hit:\s*false[\s\S]{0,80}?reason:/,
+    "cache miss response must include cache: { hit: false, reason }"
+  );
+});
+
+test("prompt-version mismatch is logged for observability", () => {
+  // Without a log line, prompt-iteration churn becomes silent and
+  // expensive. The log must be emitted only on the mismatch path.
+  assert.match(
+    source,
+    /cache\s+bust[\s\S]{0,200}?prompt_version/i,
+    "prompt-version cache bust must console.log the mismatch"
+  );
+});
+
 // ── Runner ─────────────────────────────────────────────────────
 let failed = 0;
 for (const c of cases) {

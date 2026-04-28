@@ -186,6 +186,10 @@ export default function ReviewManager(props: Props) {
   const router = useRouter();
   const [form, setForm] = useState<ProposalForm | null>(null);
   const [loading, setLoading] = useState(true);
+  // Suppress the "AI is reading the PDF…" loading copy for the first 1s so
+  // cache hits (Issue 1, route returns <500ms) don't flash a scary
+  // 20–40s message. Times out: still loading after 1s → reveal copy.
+  const [showLoadingCopy, setShowLoadingCopy] = useState(false);
   const [actionBusy, setActionBusy] = useState<
     null | "save" | "convert_po" | "reject"
   >(null);
@@ -196,10 +200,16 @@ export default function ReviewManager(props: Props) {
     PendingSuggestionOption[]
   >(props.pendingSuggestions);
 
-  // Load extraction on mount. /api/proposals/extract is idempotent —
-  // re-running on refresh just re-fetches the cached AI response.
+  // Load extraction on mount. /api/proposals/extract is cache-aware
+  // (Issue 1, migration 00091): cache hits return <500ms so the loading
+  // copy stays hidden behind a 1s reveal timer. Cache misses (first
+  // extraction or prompt-version bump) take 20–40s and fall through to
+  // the loading state once the timer fires.
   useEffect(() => {
     let cancelled = false;
+    const revealTimer = setTimeout(() => {
+      if (!cancelled) setShowLoadingCopy(true);
+    }, 1000);
     (async () => {
       try {
         const res = await fetch("/api/proposals/extract", {
@@ -334,11 +344,13 @@ export default function ReviewManager(props: Props) {
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       } finally {
+        clearTimeout(revealTimer);
         if (!cancelled) setLoading(false);
       }
     })();
     return () => {
       cancelled = true;
+      clearTimeout(revealTimer);
     };
   }, [props.extraction.id]);
 
@@ -529,6 +541,13 @@ export default function ReviewManager(props: Props) {
   }
 
   if (loading) {
+    // Cache hit path: <1s response, so showLoadingCopy stays false and
+    // the user sees a brief blank shell instead of "20–40 second"
+    // language they shouldn't read. Cache miss path: timer fires at 1s
+    // and the copy below renders for the duration of the Claude call.
+    if (!showLoadingCopy) {
+      return <AppShell><div className="px-6 py-8" /></AppShell>;
+    }
     return (
       <AppShell>
         <div className="px-6 py-8 space-y-2">

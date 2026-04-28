@@ -12,7 +12,25 @@
  * /api/proposals/commit owns that, after PM review. The raw
  * extraction is returned in the response so the review UI can
  * carry it forward to commit. Re-running this endpoint on the
- * same extraction_id is idempotent (it overwrites the metadata).
+ * same extraction_id is idempotent.
+ *
+ * Caching (Phase 3.4 Issue 1, migration 00091):
+ *   - On hit (extracted_data present AND extraction_prompt_version
+ *     matches current EXTRACTION_PROMPT_VERSION), the cached
+ *     envelope is returned without calling Claude. Round-trip
+ *     drops from 25–40s to <500ms; no api_usage row is recorded
+ *     because no model call is made.
+ *   - On prompt-version mismatch, the cache is treated as a miss
+ *     and re-extracted automatically. The mismatch is logged so
+ *     prompt-iteration churn is observable.
+ *   - On `?force=true`, the cache is bypassed regardless of state.
+ *     Used by the UI's overflow-menu "Re-extract" action when the
+ *     PM wants a fresh pass (e.g. after the source PDF changes).
+ *
+ * Response always includes a `cache` field describing the path
+ * taken: { hit: boolean, reason?: "miss"|"prompt_version"|"force" }.
+ * The UI uses this to decide whether to log a re-extract event
+ * and to suppress the loading state on hits (<1s arrival).
  *
  * Auth/org scoping mirrors /api/ingest:
  *   - getCurrentMembership() (Phase A standard — gives us the role
@@ -33,7 +51,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentMembership } from "@/lib/org/session";
 import { ApiError, withApiError } from "@/lib/api/errors";
-import { extractProposal } from "@/lib/ingestion/extract-proposal";
+import {
+  extractProposal,
+  type ParsedProposal,
+} from "@/lib/ingestion/extract-proposal";
 import { PlanLimitError } from "@/lib/claude";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +75,10 @@ export const POST = withApiError(async (request: NextRequest) => {
     throw new ApiError("Missing or invalid extraction_id", 400);
   }
 
+  // Cache bust: ?force=true bypasses the cache and re-extracts. PM-driven
+  // path for "the source PDF changed" or prompt-iteration debugging.
+  const force = request.nextUrl.searchParams.get("force") === "true";
+
   const supabase = createServerClient();
   const {
     data: { user },
@@ -64,7 +89,7 @@ export const POST = withApiError(async (request: NextRequest) => {
   const { data: extractionRow, error: loadError } = await supabase
     .from("document_extractions")
     .select(
-      "id, org_id, raw_pdf_url, classified_type, target_entity_type, target_entity_id, classification_confidence, deleted_at"
+      "id, org_id, raw_pdf_url, classified_type, target_entity_type, target_entity_id, classification_confidence, extracted_data, extraction_prompt_version, deleted_at"
     )
     .eq("id", extractionId)
     .eq("org_id", membership.org_id)
@@ -93,6 +118,49 @@ export const POST = withApiError(async (request: NextRequest) => {
     throw new ApiError(
       `Extraction ${extractionId} has already been committed (target_entity_id is set) — re-extracting a committed proposal is not allowed`,
       409
+    );
+  }
+
+  // ── Cache hit path ────────────────────────────────────────────────
+  // Fast return when extracted_data is present AND the prompt version
+  // matches the current code-side version. Skips the storage download,
+  // the Claude call, and the api_usage write. Latency target: <500ms.
+  const cachedEnvelope = extractionRow.extracted_data as ParsedProposal | null;
+  const cachedVersion = extractionRow.extraction_prompt_version;
+  const cacheUsable =
+    cachedEnvelope !== null &&
+    cachedVersion !== null &&
+    cachedVersion === EXTRACTION_PROMPT_VERSION;
+
+  if (!force && cacheUsable) {
+    return NextResponse.json({
+      extraction_id: extractionId,
+      classified_type: "proposal",
+      classification_confidence: extractionRow.classification_confidence,
+      extracted_data: cachedEnvelope,
+      confidence_summary: {
+        overall: cachedEnvelope.confidence_score,
+        per_field: cachedEnvelope.confidence_details,
+        flags: cachedEnvelope.flags,
+      },
+      cache: { hit: true },
+    });
+  }
+
+  // Cache miss reason — logged so prompt-iteration churn (and forced
+  // re-extracts) are observable in production logs.
+  const cacheMissReason: "miss" | "prompt_version" | "force" = force
+    ? "force"
+    : cachedEnvelope === null
+      ? "miss"
+      : "prompt_version";
+  if (cacheMissReason === "prompt_version") {
+    console.log(
+      `[api/proposals/extract] cache bust on extraction_id=${extractionId}: stored prompt_version=${cachedVersion} != current=${EXTRACTION_PROMPT_VERSION}`
+    );
+  } else if (cacheMissReason === "force") {
+    console.log(
+      `[api/proposals/extract] forced re-extract on extraction_id=${extractionId} (?force=true)`
     );
   }
 
@@ -149,12 +217,9 @@ export const POST = withApiError(async (request: NextRequest) => {
     throw new ApiError(`Proposal extraction failed: ${message}`, 500);
   }
 
-  // Mark the row as extracted. Persists target_entity_type='proposal'
-  // (so /api/proposals/commit knows where this is headed) and the
-  // per-field confidence map. The raw extraction payload is NOT
-  // persisted on document_extractions — it returns to the UI in this
-  // response and the UI carries it forward to /api/proposals/commit.
-  // Re-extracting is idempotent.
+  // Persist the normalized envelope into extracted_data alongside the
+  // existing metadata. extraction_prompt_version is what the read-side
+  // compares against for auto-bust on prompt iteration.
   const fieldConfidences = {
     overall: parsed.confidence_score,
     ...parsed.confidence_details,
@@ -168,6 +233,7 @@ export const POST = withApiError(async (request: NextRequest) => {
       extraction_model: EXTRACTION_MODEL_TAG,
       extraction_prompt_version: EXTRACTION_PROMPT_VERSION,
       field_confidences: fieldConfidences,
+      extracted_data: parsed,
     })
     .eq("id", extractionId)
     .eq("org_id", membership.org_id);
@@ -190,5 +256,6 @@ export const POST = withApiError(async (request: NextRequest) => {
       per_field: parsed.confidence_details,
       flags: parsed.flags,
     },
+    cache: { hit: false, reason: cacheMissReason },
   });
 });
