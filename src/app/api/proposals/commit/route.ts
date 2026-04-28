@@ -98,6 +98,27 @@ interface LineInput {
   attributes: Record<string, unknown>;
 }
 
+interface FeeScheduleInput {
+  rate_type: string;
+  description: string | null;
+  rate_cents: number | null;
+  unit: string | null;
+}
+
+interface PaymentScheduleInput {
+  milestone: string;
+  percentage_pct: number | null;
+  amount_cents: number | null;
+  trigger: string | null;
+}
+
+interface PaymentTermsInput {
+  net_days: number | null;
+  late_interest_rate_pct: number | null;
+  governing_law: string | null;
+  other_terms_text: string | null;
+}
+
 interface FormInput {
   vendor_id: string;
   vendor_name: string;
@@ -114,6 +135,10 @@ interface FormInput {
   notes: string | null;
   vendor_stated_start_date: string | null;
   vendor_stated_duration_days: number | null;
+  // Phase 3.4 Step 5b/5c — structured fee + payment schedule + terms
+  additional_fee_schedule: FeeScheduleInput[] | null;
+  payment_schedule: PaymentScheduleInput[] | null;
+  payment_terms: PaymentTermsInput | null;
   line_items: LineInput[];
   raw_extraction: unknown;
   ai_confidence: number;
@@ -449,6 +474,12 @@ export const POST = withApiError(async (request: NextRequest) => {
       notes: form.notes,
       vendor_stated_start_date: form.vendor_stated_start_date,
       vendor_stated_duration_days: form.vendor_stated_duration_days,
+      // Phase 3.4 Step 5b/5c — structured fee + payment schedule + terms.
+      // Each is null when the proposal didn't include the structure;
+      // never inferred. Persisted directly as JSONB.
+      additional_fee_schedule: form.additional_fee_schedule,
+      payment_schedule: form.payment_schedule,
+      payment_terms: form.payment_terms,
       raw_extraction: form.raw_extraction ?? {},
       extraction_confidence: form.ai_confidence,
       status_history: [initialHistoryEntry],

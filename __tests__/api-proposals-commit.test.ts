@@ -136,6 +136,14 @@ test("commit writes total to legacy proposals.amount column (BIGINT cents)", () 
   assert.match(commit, /amount:\s*form\.total_cents/);
 });
 
+test("commit persists Step 5b/5c fee/payment schedule + terms columns", () => {
+  // The 3 JSONB columns from migration 00088 must be written on the
+  // proposals INSERT, sourced from form.* (review form passes them).
+  assert.match(commit, /additional_fee_schedule:\s*form\.additional_fee_schedule/);
+  assert.match(commit, /payment_schedule:\s*form\.payment_schedule/);
+  assert.match(commit, /payment_terms:\s*form\.payment_terms/);
+});
+
 // ── Commit: cost-code dual-write per clarification 3 ──────────
 test("commit imports tryCreateServiceRoleClient for legacy auto-create", () => {
   assert.match(
