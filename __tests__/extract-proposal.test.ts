@@ -67,6 +67,16 @@ test("system prompt covers vendor-attribution, breakdown-explicit-only, schedule
   assert.match(source, /VENDOR SCHEDULE/);
 });
 
+test("system prompt covers fee schedule + payment schedule + payment terms (Step 5b/5c)", () => {
+  // The 3 new structured sections must remain in the prompt.
+  assert.match(source, /ADDITIONAL FEE SCHEDULE/);
+  assert.match(source, /PAYMENT SCHEDULE/);
+  assert.match(source, /PAYMENT TERMS/);
+  // Each must reinforce the never-infer rule consistent with vendor schedule.
+  assert.match(source, /additional_fee_schedule[\s\S]{0,600}?never infer/i);
+  assert.match(source, /payment_schedule[\s\S]{0,600}?NEVER infer/i);
+});
+
 test("system prompt instructs title generation (proposals.title is NOT NULL)", () => {
   assert.match(source, /TITLE GENERATION/);
   assert.match(source, /never return an empty string/);
@@ -253,6 +263,154 @@ test("normalizeProposal keeps all six breakdown *_cents null when proposal is lu
   assert.equal(out.valid_through, null);
   assert.equal(out.vendor_stated_start_date, null);
   assert.equal(out.vendor_stated_duration_days, null);
+  // Step 5b/5c structures absent → null at top level
+  assert.equal(out.additional_fee_schedule, null);
+  assert.equal(out.payment_schedule, null);
+  assert.equal(out.payment_terms, null);
+});
+
+// ── normalizeProposal — fee schedule (Step 5b/5c) ───────────────
+test("normalizeProposal: additional_fee_schedule converts dollar rates to cents", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X",
+    title: "T",
+    scope_summary: "s",
+    total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    additional_fee_schedule: [
+      { rate_type: "principal_hour", description: "Principal architect", rate: 200, unit: "hr" },
+      { rate_type: "drafter_hour", description: "Drafter", rate: 90, unit: "hr" },
+      { rate_type: "site_visit_fee", description: "Site visit", rate: 750, unit: "visit" },
+    ],
+  });
+  assert.equal(out.additional_fee_schedule?.length, 3);
+  assert.equal(out.additional_fee_schedule?.[0].rate_cents, 20000);
+  assert.equal(out.additional_fee_schedule?.[1].rate_cents, 9000);
+  assert.equal(out.additional_fee_schedule?.[2].rate_cents, 75000);
+  assert.equal(out.additional_fee_schedule?.[0].unit, "hr");
+});
+
+test("normalizeProposal: additional_fee_schedule null/empty → null (don't expose [])", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const a = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    additional_fee_schedule: null,
+  });
+  assert.equal(a.additional_fee_schedule, null);
+  const b = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    additional_fee_schedule: [],
+  });
+  assert.equal(b.additional_fee_schedule, null);
+});
+
+test("normalizeProposal: additional_fee_schedule drops entries with non-string rate_type", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    additional_fee_schedule: [
+      { rate_type: "valid", description: "ok", rate: 100, unit: "hr" },
+      { rate_type: 42, description: "bad", rate: 50, unit: "hr" },
+      { rate_type: "", description: "empty", rate: 50, unit: "hr" },
+    ],
+  });
+  assert.equal(out.additional_fee_schedule?.length, 1);
+  assert.equal(out.additional_fee_schedule?.[0].rate_type, "valid");
+});
+
+// ── normalizeProposal — payment schedule (Step 5b/5c) ───────────
+test("normalizeProposal: payment_schedule converts amounts to cents, preserves percentage", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 1000,
+    line_items: [{ description: "a", amount: 1000 }],
+    payment_schedule: [
+      { milestone: "deposit", percentage_pct: 50, amount: 500, trigger: "upon contract signing" },
+      { milestone: "delivery", percentage_pct: 25, amount: null, trigger: "upon delivery" },
+      { milestone: "completion", percentage_pct: 25, amount: 250, trigger: "upon completion" },
+    ],
+  });
+  assert.equal(out.payment_schedule?.length, 3);
+  assert.equal(out.payment_schedule?.[0].amount_cents, 50000);
+  assert.equal(out.payment_schedule?.[0].percentage_pct, 50);
+  assert.equal(out.payment_schedule?.[1].amount_cents, null);
+  assert.equal(out.payment_schedule?.[1].percentage_pct, 25);
+  assert.equal(out.payment_schedule?.[2].amount_cents, 25000);
+  assert.equal(out.payment_schedule?.[0].trigger, "upon contract signing");
+});
+
+test("normalizeProposal: payment_schedule null/empty → null", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  assert.equal(
+    mod.normalizeProposal({
+      vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+      line_items: [{ description: "a", amount: 100 }],
+      payment_schedule: null,
+    }).payment_schedule,
+    null
+  );
+  assert.equal(
+    mod.normalizeProposal({
+      vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+      line_items: [{ description: "a", amount: 100 }],
+      payment_schedule: [],
+    }).payment_schedule,
+    null
+  );
+});
+
+// ── normalizeProposal — payment terms (Step 5b/5c) ──────────────
+test("normalizeProposal: payment_terms preserves all four sub-fields", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    payment_terms: {
+      net_days: 30,
+      late_interest_rate_pct: 1.5,
+      governing_law: "Florida law",
+      other_terms_text: "Retainage 10% held until final lien release.",
+    },
+  });
+  assert.equal(out.payment_terms?.net_days, 30);
+  assert.equal(out.payment_terms?.late_interest_rate_pct, 1.5);
+  assert.equal(out.payment_terms?.governing_law, "Florida law");
+  assert.equal(
+    out.payment_terms?.other_terms_text,
+    "Retainage 10% held until final lien release."
+  );
+});
+
+test("normalizeProposal: payment_terms with all-null sub-fields → null at top level", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    payment_terms: {
+      net_days: null,
+      late_interest_rate_pct: null,
+      governing_law: null,
+      other_terms_text: null,
+    },
+  });
+  assert.equal(out.payment_terms, null);
+});
+
+test("normalizeProposal: payment_terms with partial fields keeps the populated ones", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    payment_terms: { net_days: 30 },
+  });
+  assert.equal(out.payment_terms?.net_days, 30);
+  assert.equal(out.payment_terms?.late_interest_rate_pct, null);
+  assert.equal(out.payment_terms?.governing_law, null);
+  assert.equal(out.payment_terms?.other_terms_text, null);
 });
 
 // ── normalizeProposal — defaulting + cleanup ────────────────────

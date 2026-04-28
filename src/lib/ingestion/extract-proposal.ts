@@ -62,6 +62,42 @@ export type ParsedProposalLineItem = {
   attributes: Record<string, unknown>;
 };
 
+/**
+ * Fee schedule entry — one row from a proposal's separate hourly /
+ * blended rate table (common on professional-services proposals where
+ * the base scope is a fixed fee but additional time is billed per
+ * hour). Phase 3.4 Step 5b/5c.
+ */
+export type ParsedProposalFeeScheduleEntry = {
+  rate_type: string; // short slug, e.g. "hourly", "principal_hour"
+  description: string | null;
+  rate_cents: number | null;
+  unit: string | null; // "hr", "day", "visit", etc.
+};
+
+/**
+ * Payment schedule entry — one billing milestone with either a
+ * percentage of total, a dollar amount, or both. Phase 3.4 Step 5b/5c.
+ */
+export type ParsedProposalPaymentScheduleEntry = {
+  milestone: string; // short slug, e.g. "deposit", "delivery"
+  percentage_pct: number | null;
+  amount_cents: number | null;
+  trigger: string | null; // when the payment is owed
+};
+
+/**
+ * Payment terms object — top-level vendor billing terms. Each sub-field
+ * nullable; populate only fields explicitly stated on the proposal.
+ * Phase 3.4 Step 5b/5c.
+ */
+export type ParsedProposalPaymentTerms = {
+  net_days: number | null;
+  late_interest_rate_pct: number | null;
+  governing_law: string | null;
+  other_terms_text: string | null;
+};
+
 export type ParsedProposal = {
   // Header
   vendor_name: string;
@@ -88,6 +124,13 @@ export type ParsedProposal = {
 
   // Lines
   line_items: ParsedProposalLineItem[];
+
+  // Fee + payment structures (Phase 3.4 Step 5b/5c). Each is null when
+  // the proposal doesn't include the structure; never inferred. Mirror
+  // the migration 00088 column shape so commit can persist directly.
+  additional_fee_schedule: ParsedProposalFeeScheduleEntry[] | null;
+  payment_schedule: ParsedProposalPaymentScheduleEntry[] | null;
+  payment_terms: ParsedProposalPaymentTerms | null;
 
   // Confidence
   confidence_score: number; // [0, 1]
@@ -202,7 +245,60 @@ SCOPE FIELDS
 - scope_summary: 1-3 sentences describing what the vendor is offering. Always present.
 - inclusions: bulleted text of what's included — only if the proposal has an "Includes:", "Scope of Work:", or similar section. Otherwise null. Preserve original bullet style or convert to "- item 1\\n- item 2".
 - exclusions: bulleted text of what's excluded — only if the proposal has an "Excludes:", "Not Included:", "Allowance Excludes:", or similar section. Otherwise null.
-- notes: any other freeform notes the proposal calls out (warranty terms, payment terms, conditions, special handling). Null if none.
+- notes: any other freeform notes the proposal calls out (warranty terms, conditions, special handling). Null if none. NOTE: payment-related text belongs in payment_terms.other_terms_text, not here.
+
+ADDITIONAL FEE SCHEDULE — STRUCTURED EXTRACTION
+
+Many proposals (especially professional services like architecture, landscape design, engineering) include a SEPARATE table of hourly or blended rates for additional services beyond the base proposal scope. These are NOT base line items — they're rates the vendor will bill at if extra work is requested. Common forms:
+
+  "Principal architect ........... $200/hr"
+  "Drafter ......................... $90/hr"
+  "Site visit fee ................. $750/visit"
+  "Per diem expenses .............. $150/day"
+
+When the proposal contains such a fee/rate table, populate additional_fee_schedule as an array. Each entry:
+  {rate_type, description, rate, unit}
+
+- rate_type: a short slug describing the rate, e.g. "principal_hour", "drafter_hour", "site_visit_fee", "per_diem", "hourly", "blended". Use lowercase snake_case.
+- description: the literal label from the proposal, verbatim.
+- rate: number in DOLLARS (a float, no currency symbol).
+- unit: short form — "hr", "day", "visit", "ea", etc. Null if not stated.
+
+If the proposal has no separate fee/rate table, set additional_fee_schedule to null. NEVER infer rates from line items, NEVER fabricate from market knowledge of what trades typically charge. Only populate when the proposal lists explicit rates as a separate structure.
+
+PAYMENT SCHEDULE — STRUCTURED EXTRACTION
+
+When the proposal specifies WHEN money is owed (a milestone-based billing breakdown separate from the line-item totals), capture payment_schedule as an array. Common forms:
+
+  "50% deposit upon contract signing"
+  "25% upon delivery of materials"
+  "25% upon completion"
+
+  "Phase I billed upon completion of phase. Phase II billed upon completion of phase."
+
+  "$5,000 deposit. Balance due net 30 from completion."
+
+Each entry:
+  {milestone, percentage_pct, amount, trigger}
+
+- milestone: short slug like "deposit", "delivery", "phase_1", "phase_2", "completion", "balance". Use lowercase snake_case.
+- percentage_pct: 0-100 number (e.g., 50 for "50% deposit"). Null if proposal specifies a dollar amount instead.
+- amount: dollars (a number). Null if proposal specifies a percentage instead. Both percentage_pct AND amount may be populated when the proposal states both (e.g., "50% ($10,000) deposit").
+- trigger: text describing when the payment is owed — verbatim or close paraphrase, e.g., "upon contract signing", "upon delivery", "30 days from completion", "upon completion of Phase I".
+
+If the proposal has no milestone-based billing (single payment, lump-sum due upon completion only) → set payment_schedule to null. NEVER infer milestones from the line items themselves; line items are the work breakdown, not the payment schedule.
+
+PAYMENT TERMS — STRUCTURED EXTRACTION
+
+Capture top-level vendor billing terms as a single payment_terms object:
+  {net_days, late_interest_rate_pct, governing_law, other_terms_text}
+
+- net_days: integer days of "Net N" credit terms, e.g., "Net 30" → 30, "Net 15" → 15, "Due upon receipt" → 0. Null if no Net term stated.
+- late_interest_rate_pct: number for late-payment interest (e.g., 1.5 for "1.5% per month" — convert annual rates to monthly if the proposal expresses them annually). Null if no late-interest clause.
+- governing_law: text identifying the legal jurisdiction, e.g., "Florida law", "State of Florida". Null if not stated.
+- other_terms_text: any other payment-related terms paragraph that doesn't fit above (retainage clauses, warranty payment conditions, lien-release requirements, deposit-non-refundable language, etc.). Use this for payment-adjacent text that previously would have ended up in the notes field. Null if none.
+
+If the proposal has no terms section at all → set payment_terms to null at the top level. Don't return an object with all-null sub-fields. Same rule as everywhere: never infer; populate only fields explicitly stated on the proposal.
 
 CONFIDENCE
 
@@ -265,12 +361,36 @@ Return ONLY this JSON shape (dollars are numbers, not strings; no markdown fence
       "attributes": {}
     }
   ],
+  "additional_fee_schedule": [
+    {
+      "rate_type": "string",
+      "description": "string | null",
+      "rate": 0,
+      "unit": "string | null"
+    }
+  ],
+  "payment_schedule": [
+    {
+      "milestone": "string",
+      "percentage_pct": 0,
+      "amount": 0,
+      "trigger": "string | null"
+    }
+  ],
+  "payment_terms": {
+    "net_days": 0,
+    "late_interest_rate_pct": 0,
+    "governing_law": "string | null",
+    "other_terms_text": "string | null"
+  },
   "confidence_score": 0.0,
   "confidence_details": {},
   "flags": []
 }
 
-Numeric fields shown as 0 above accept null where the schema description says "Null if not stated" — emit literal null (not 0, not "null"). Other numeric fields are required (line_items[].amount, line_items[].line_number, total_amount).`;
+Numeric fields shown as 0 above accept null where the schema description says "Null if not stated" — emit literal null (not 0, not "null"). Other numeric fields are required (line_items[].amount, line_items[].line_number, total_amount).
+
+The arrays additional_fee_schedule, payment_schedule, and the object payment_terms are all top-level NULL when the proposal does not include those structures. Do NOT emit empty arrays or all-null objects when the proposal is silent — emit literal null at the top level.`;
 
 // ─────────────────────────────────────────────────────────────────
 // Helpers
@@ -361,6 +481,27 @@ type RawLineItem = {
   attributes?: unknown;
 };
 
+type RawFeeScheduleEntry = {
+  rate_type?: unknown;
+  description?: unknown;
+  rate?: unknown;
+  unit?: unknown;
+};
+
+type RawPaymentScheduleEntry = {
+  milestone?: unknown;
+  percentage_pct?: unknown;
+  amount?: unknown;
+  trigger?: unknown;
+};
+
+type RawPaymentTerms = {
+  net_days?: unknown;
+  late_interest_rate_pct?: unknown;
+  governing_law?: unknown;
+  other_terms_text?: unknown;
+};
+
 type RawProposal = {
   vendor_name?: unknown;
   vendor_address?: unknown;
@@ -376,10 +517,91 @@ type RawProposal = {
   vendor_stated_start_date?: unknown;
   vendor_stated_duration_days?: unknown;
   line_items?: unknown;
+  additional_fee_schedule?: unknown;
+  payment_schedule?: unknown;
+  payment_terms?: unknown;
   confidence_score?: unknown;
   confidence_details?: unknown;
   flags?: unknown;
 };
+
+/**
+ * Normalize an additional_fee_schedule array. Returns null when the AI
+ * emitted null (proposal had no fee table), or filters out invalid
+ * entries from any array. Entries with a non-string rate_type are
+ * dropped — that's the load-bearing identifier.
+ */
+function normalizeFeeSchedule(
+  v: unknown
+): ParsedProposalFeeScheduleEntry[] | null {
+  if (v === null || v === undefined) return null;
+  if (!Array.isArray(v)) return null;
+  const out: ParsedProposalFeeScheduleEntry[] = [];
+  for (const e of v as RawFeeScheduleEntry[]) {
+    if (!e || typeof e !== "object") continue;
+    if (typeof e.rate_type !== "string" || e.rate_type.length === 0) continue;
+    out.push({
+      rate_type: e.rate_type,
+      description: asStringOrNull(e.description),
+      rate_cents: dollarsToCents(e.rate),
+      unit: asStringOrNull(e.unit),
+    });
+  }
+  // If the array existed but every entry was invalid, return null
+  // rather than [] so downstream code can render "no fee schedule"
+  // consistently with the no-array case.
+  return out.length > 0 ? out : null;
+}
+
+/**
+ * Normalize a payment_schedule array. Same null/empty behavior as
+ * normalizeFeeSchedule. Entries with a non-string milestone are dropped.
+ */
+function normalizePaymentSchedule(
+  v: unknown
+): ParsedProposalPaymentScheduleEntry[] | null {
+  if (v === null || v === undefined) return null;
+  if (!Array.isArray(v)) return null;
+  const out: ParsedProposalPaymentScheduleEntry[] = [];
+  for (const e of v as RawPaymentScheduleEntry[]) {
+    if (!e || typeof e !== "object") continue;
+    if (typeof e.milestone !== "string" || e.milestone.length === 0) continue;
+    out.push({
+      milestone: e.milestone,
+      percentage_pct: asNumberOrNull(e.percentage_pct),
+      amount_cents: dollarsToCents(e.amount),
+      trigger: asStringOrNull(e.trigger),
+    });
+  }
+  return out.length > 0 ? out : null;
+}
+
+/**
+ * Normalize the payment_terms object. Returns null when the AI emitted
+ * null OR when every sub-field is null after coercion (a defensively
+ * empty object is treated the same as no terms — matches the prompt
+ * rule "don't return an object with all-null sub-fields").
+ */
+function normalizePaymentTerms(
+  v: unknown
+): ParsedProposalPaymentTerms | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v !== "object" || Array.isArray(v)) return null;
+  const r = v as RawPaymentTerms;
+  const net_days = asIntOrNull(r.net_days);
+  const late_interest_rate_pct = asNumberOrNull(r.late_interest_rate_pct);
+  const governing_law = asStringOrNull(r.governing_law);
+  const other_terms_text = asStringOrNull(r.other_terms_text);
+  if (
+    net_days === null &&
+    late_interest_rate_pct === null &&
+    governing_law === null &&
+    other_terms_text === null
+  ) {
+    return null;
+  }
+  return { net_days, late_interest_rate_pct, governing_law, other_terms_text };
+}
 
 /**
  * Convert the AI's dollars-shape payload into the cents-shape ParsedProposal.
@@ -463,6 +685,9 @@ export function normalizeProposal(raw: RawProposal): ParsedProposal {
     vendor_stated_start_date: asStringOrNull(raw.vendor_stated_start_date),
     vendor_stated_duration_days: asIntOrNull(raw.vendor_stated_duration_days),
     line_items,
+    additional_fee_schedule: normalizeFeeSchedule(raw.additional_fee_schedule),
+    payment_schedule: normalizePaymentSchedule(raw.payment_schedule),
+    payment_terms: normalizePaymentTerms(raw.payment_terms),
     confidence_score: clamp01(raw.confidence_score),
     confidence_details: cleanedConfidenceDetails,
     flags,
