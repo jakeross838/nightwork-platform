@@ -77,6 +77,29 @@ test("system prompt covers fee schedule + payment schedule + payment terms (Step
   assert.match(source, /payment_schedule[\s\S]{0,600}?NEVER infer/i);
 });
 
+test("system prompt covers schedule_items + acceptance signature (Step 5f/5g)", () => {
+  assert.match(source, /SCHEDULE ITEMS/);
+  assert.match(source, /ACCEPTANCE SIGNATURE/);
+  // Per prompt 186: explicit guidance for the 3 acceptance fields.
+  assert.match(source, /accepted_signature_present/);
+  assert.match(source, /accepted_signature_name/);
+  assert.match(source, /accepted_signature_date/);
+});
+
+test("system prompt — Step 5g bug fixes for net_days, valid_through, inclusions", () => {
+  // Bug 1 (net_days conflated with collection-cost timeline) — prompt
+  // must distinguish past-due window from collection threshold.
+  assert.match(source, /past due/i);
+  assert.match(source, /interest accrues|interest will be charged/i);
+  // Bug 2 (valid_through inferred from "valid for 30 days" + proposal_date) —
+  // prompt must explicitly disallow that compute.
+  assert.match(source, /HARD RULE/);
+  assert.match(source, /Do NOT compute proposal_date/);
+  // Bug 3 (inclusions/exclusions only triggered by literal section title) —
+  // prompt must broaden the trigger.
+  assert.match(source, /even if the section is not literally titled/i);
+});
+
 test("system prompt instructs title generation (proposals.title is NOT NULL)", () => {
   assert.match(source, /TITLE GENERATION/);
   assert.match(source, /never return an empty string/);
@@ -267,6 +290,124 @@ test("normalizeProposal keeps all six breakdown *_cents null when proposal is lu
   assert.equal(out.additional_fee_schedule, null);
   assert.equal(out.payment_schedule, null);
   assert.equal(out.payment_terms, null);
+  // Step 5f/5g additions absent → null / false defaults
+  assert.equal(out.schedule_items, null);
+  assert.equal(out.accepted_signature_present, false);
+  assert.equal(out.accepted_signature_name, null);
+  assert.equal(out.accepted_signature_date, null);
+});
+
+// ── normalizeProposal — schedule_items (Step 5f/5g) ─────────────
+test("normalizeProposal: schedule_items preserves all sub-fields, filters depends_on/deliverables", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    schedule_items: [
+      {
+        scope_item: "Phase I",
+        linked_line_number: 1,
+        estimated_start_date: "2026-04-15",
+        estimated_duration_days: 14,
+        sequence_position: 1,
+        depends_on: [], // first phase
+        responsibility: "vendor",
+        deliverables: ["schematic plan", "concept presentation"],
+        trigger: "upon receipt of design fee",
+      },
+      {
+        scope_item: "Phase II",
+        linked_line_number: 2,
+        estimated_start_date: null,
+        estimated_duration_days: null,
+        sequence_position: 2,
+        depends_on: [1, "bad", 3.5], // 3.5 → 4 via Math.round; "bad" filtered
+        responsibility: "vendor",
+        deliverables: ["material studies", 42, null, "graphic support"],
+        trigger: null,
+      },
+    ],
+  });
+  assert.equal(out.schedule_items?.length, 2);
+  assert.equal(out.schedule_items?.[0].scope_item, "Phase I");
+  assert.deepEqual(out.schedule_items?.[0].deliverables, [
+    "schematic plan",
+    "concept presentation",
+  ]);
+  assert.equal(out.schedule_items?.[0].depends_on.length, 0);
+  // Phase II: "bad" string dropped, 3.5 → 4
+  assert.deepEqual(out.schedule_items?.[1].depends_on, [1, 4]);
+  // 42 (number) and null filtered out of deliverables; only strings kept
+  assert.deepEqual(out.schedule_items?.[1].deliverables, [
+    "material studies",
+    "graphic support",
+  ]);
+});
+
+test("normalizeProposal: schedule_items null/empty → null", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  assert.equal(
+    mod.normalizeProposal({
+      vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+      line_items: [{ description: "a", amount: 100 }],
+      schedule_items: null,
+    }).schedule_items,
+    null
+  );
+  assert.equal(
+    mod.normalizeProposal({
+      vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+      line_items: [{ description: "a", amount: 100 }],
+      schedule_items: [],
+    }).schedule_items,
+    null
+  );
+});
+
+test("normalizeProposal: schedule_items drops entries with non-string scope_item", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    schedule_items: [
+      { scope_item: "valid", sequence_position: 1, depends_on: [], deliverables: [] },
+      { scope_item: "", sequence_position: 2, depends_on: [], deliverables: [] },
+      { scope_item: 42, sequence_position: 3, depends_on: [], deliverables: [] },
+    ],
+  });
+  assert.equal(out.schedule_items?.length, 1);
+  assert.equal(out.schedule_items?.[0].scope_item, "valid");
+});
+
+// ── normalizeProposal — acceptance signature (Step 5f/5g) ───────
+test("normalizeProposal: accepted_signature_* preserved when present=true with name+date", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  const out = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    accepted_signature_present: true,
+    accepted_signature_name: "Jason Szykulski",
+    accepted_signature_date: "2025-06-27",
+  });
+  assert.equal(out.accepted_signature_present, true);
+  assert.equal(out.accepted_signature_name, "Jason Szykulski");
+  assert.equal(out.accepted_signature_date, "2025-06-27");
+});
+
+test("normalizeProposal: accepted_signature_present coerces non-boolean → false", async () => {
+  const mod = await import("../src/lib/ingestion/extract-proposal");
+  // "true" (string), null, undefined all coerce to false.
+  const a = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+    accepted_signature_present: "true" as unknown as boolean,
+  });
+  assert.equal(a.accepted_signature_present, false);
+  const b = mod.normalizeProposal({
+    vendor_name: "X", title: "T", scope_summary: "s", total_amount: 100,
+    line_items: [{ description: "a", amount: 100 }],
+  });
+  assert.equal(b.accepted_signature_present, false);
 });
 
 // ── normalizeProposal — fee schedule (Step 5b/5c) ───────────────

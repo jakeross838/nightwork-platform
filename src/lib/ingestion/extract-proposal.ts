@@ -98,6 +98,24 @@ export type ParsedProposalPaymentTerms = {
   other_terms_text: string | null;
 };
 
+/**
+ * Schedule item — one structured chunk of a phased / sequenced proposal
+ * scope. Phase 4 schedule-intelligence foundation per amendment-1.
+ * Captured at proposal extract time (Step 5g); surfaced when Phase 3.5
+ * ships the PO detail tab. Phase 3.4 Step 5f/5g.
+ */
+export type ParsedProposalScheduleItem = {
+  scope_item: string;
+  linked_line_number: number | null;
+  estimated_start_date: string | null; // YYYY-MM-DD
+  estimated_duration_days: number | null;
+  sequence_position: number | null;
+  depends_on: number[];
+  responsibility: string | null; // "vendor" | "contractor" | "shared"
+  deliverables: string[];
+  trigger: string | null;
+};
+
 export type ParsedProposal = {
   // Header
   vendor_name: string;
@@ -131,6 +149,15 @@ export type ParsedProposal = {
   additional_fee_schedule: ParsedProposalFeeScheduleEntry[] | null;
   payment_schedule: ParsedProposalPaymentScheduleEntry[] | null;
   payment_terms: ParsedProposalPaymentTerms | null;
+
+  // Schedule intelligence + acceptance signature (Phase 3.4 Step 5f/5g).
+  // schedule_items: null when no schedulable structure on proposal.
+  // accepted_signature_*: name/date null when block blank or absent;
+  // present is the load-bearing boolean (NOT NULL on the column).
+  schedule_items: ParsedProposalScheduleItem[] | null;
+  accepted_signature_present: boolean;
+  accepted_signature_name: string | null;
+  accepted_signature_date: string | null;
 
   // Confidence
   confidence_score: number; // [0, 1]
@@ -177,7 +204,7 @@ Some proposals have a number ("Proposal #12345", "Quote No. Q-2024-118", "Estima
 DATES
 
 - proposal_date: when the vendor issued the proposal (sender's date). Format YYYY-MM-DD. If the proposal shows a date range, use the start. If no date is visible, set null.
-- valid_through: explicit expiration only. Examples: "Valid until 2026-03-30", "Quote good for 30 days from 2026-02-15" (compute valid_through). If the validity period is not stated, set null. Do NOT default to "30 days from proposal_date" — vendors set their own validity windows.
+- valid_through: HARD RULE — populate ONLY when the proposal states a LITERAL expiration date. Examples that DO populate: "Valid until 2026-03-30", "Quote good for 30 days from 2026-02-15" (the FROM-date is literal — compute the +30 days = 2026-03-17). Examples that DO NOT populate (return null): "subject to revision within 30 days", "this proposal expires 30 days after acceptance", "valid for 30 days" without a literal base date — these are relative phrases without a literal target date. Do NOT compute proposal_date + N days unless the proposal text literally says "from {proposal_date}" or "from the date of this proposal" together with the proposal_date itself being explicit. When in doubt, return null. Vendors who want a hard expiration write a hard expiration; if they didn't, we don't fabricate one.
 
 VENDOR SCHEDULE — NEVER INFER
 
@@ -243,8 +270,13 @@ Use lowercase snake_case keys. Numeric values stay numeric. If the line is servi
 SCOPE FIELDS
 
 - scope_summary: 1-3 sentences describing what the vendor is offering. Always present.
-- inclusions: bulleted text of what's included — only if the proposal has an "Includes:", "Scope of Work:", or similar section. Otherwise null. Preserve original bullet style or convert to "- item 1\\n- item 2".
-- exclusions: bulleted text of what's excluded — only if the proposal has an "Excludes:", "Not Included:", "Allowance Excludes:", or similar section. Otherwise null.
+- inclusions: bulleted text of what's included. Populate when the proposal lists an explicit set of scope items, EVEN IF the section is not literally titled "Inclusions:". Common forms that count:
+    * "Scope of Work:" with bulleted sub-items
+    * "The following services are included in our [Phase N / scope]:" followed by bullets
+    * Per-phase sub-bullets ("Phase I includes: Define Program, Site Inventory, Concept Plan")
+    * "Includes:" / "Included:" headings
+  Convert all of these to "- item 1\\n- item 2" form (one bullet per scope item). When the proposal has phased structure with per-phase inclusions, list ALL of them across phases, prefixing with the phase label (e.g. "- Phase I: Define Program"). Set null only when the proposal genuinely lists no scope items beyond the line-item descriptions themselves.
+- exclusions: bulleted text of what's excluded — same broadening rule as inclusions. Look for "Excludes:", "Not Included:", "Allowance Excludes:", "The following are NOT included:", or any negative-scope list. Set null only when none stated.
 - notes: any other freeform notes the proposal calls out (warranty terms, conditions, special handling). Null if none. NOTE: payment-related text belongs in payment_terms.other_terms_text, not here.
 
 ADDITIONAL FEE SCHEDULE — STRUCTURED EXTRACTION
@@ -293,12 +325,55 @@ PAYMENT TERMS — STRUCTURED EXTRACTION
 Capture top-level vendor billing terms as a single payment_terms object:
   {net_days, late_interest_rate_pct, governing_law, other_terms_text}
 
-- net_days: integer days of "Net N" credit terms, e.g., "Net 30" → 30, "Net 15" → 15, "Due upon receipt" → 0. Null if no Net term stated.
+- net_days: number of days BEFORE AN INVOICE IS PAST DUE — i.e., the credit window the vendor extends after invoice issuance before the invoice can accrue interest or trigger collection. Examples that populate: "Net 30" → 30, "Net 15" → 15, "Due upon receipt" → 0, "If payment is not received within thirty days of the invoice date, interest will be charged" → 30. Do NOT use a "ninety days" / "60 days" / "120 days" reference that describes a DIFFERENT concept like "you have 90 days to dispute" or "90 days to commence collection action" or "90 days for dispute resolution" — those are not net_days. The signal is specifically the past-due threshold for the invoice itself. If the proposal mentions multiple day-counts, pick the one tied to "past due" / "interest accrues" / "payment due"; null only if no past-due window is stated.
 - late_interest_rate_pct: number for late-payment interest (e.g., 1.5 for "1.5% per month" — convert annual rates to monthly if the proposal expresses them annually). Null if no late-interest clause.
 - governing_law: text identifying the legal jurisdiction, e.g., "Florida law", "State of Florida". Null if not stated.
 - other_terms_text: any other payment-related terms paragraph that doesn't fit above (retainage clauses, warranty payment conditions, lien-release requirements, deposit-non-refundable language, etc.). Use this for payment-adjacent text that previously would have ended up in the notes field. Null if none.
 
 If the proposal has no terms section at all → set payment_terms to null at the top level. Don't return an object with all-null sub-fields. Same rule as everywhere: never infer; populate only fields explicitly stated on the proposal.
+
+SCHEDULE ITEMS — STRUCTURED EXTRACTION (Phase 4 schedule intelligence)
+
+Many proposals have an implicit schedule structure embedded in their scope: phases, deliverables, sequencing, durations, triggers. Capture this as schedule_items, an array of structured schedule entries. Phase 4 (schedule intelligence) will use these to learn realistic durations per trade per vendor; for now we just capture them.
+
+Each entry shape:
+  {
+    "scope_item": "string",
+    "linked_line_number": 1,
+    "estimated_start_date": "YYYY-MM-DD | null",
+    "estimated_duration_days": 0,
+    "sequence_position": 1,
+    "depends_on": [],
+    "responsibility": "vendor | contractor | shared",
+    "deliverables": [],
+    "trigger": "string | null"
+  }
+
+- scope_item: short label for the scope chunk (e.g., "Phase I: Schematic Design", "Foundation pour", "Roof installation"). Use the proposal's own label.
+- linked_line_number: the matching line_items[].line_number when there's a clear 1:1 link (e.g., the phased proposal has a line per phase). Null when no clean link.
+- estimated_start_date: explicit start date if the proposal states one for this scope item. Most won't; null is common.
+- estimated_duration_days: explicit duration in days if stated for this item (convert weeks → ×7, months → ×30). Null otherwise.
+- sequence_position: 1-indexed position in the schedule (Phase I = 1, Phase II = 2, etc.). Use the proposal's own sequencing.
+- depends_on: array of sequence_position numbers this scope item depends on (commonly the previous phase). Empty array when no dependency stated. NEVER infer dependencies the proposal doesn't state — capture only explicit predecessor/successor language.
+- responsibility: "vendor" (the proposal sender does the work), "contractor" (Ross Built does it), or "shared". Most proposals are vendor-only. Use "shared" when the proposal explicitly calls out collaboration.
+- deliverables: array of short labels for what this scope item produces (e.g., ["schematic plan", "concept presentation"]). Empty array when no specific deliverables stated.
+- trigger: text describing when this scope item starts (e.g., "upon receipt of design fee", "after permit approval", "after foundation pour"). Null when no explicit trigger stated.
+
+If the proposal has no schedulable scope structure (e.g., a single lump-sum line for "drywall on whole house, $12,500"), set schedule_items to null. NEVER fabricate phases the proposal doesn't list. Most multi-phase or multi-scope proposals will have schedule_items populated; most simple lump-sum or single-trade proposals will not.
+
+ACCEPTANCE SIGNATURE — STRUCTURED EXTRACTION
+
+Many vendor proposals include an "Accepted By" / "Signed By" / "Approved By" / signature block at the bottom for the contractor (Ross Built) to sign. Sometimes blank, sometimes filled in. Capture all three fields:
+
+- accepted_signature_present: TRUE when the proposal PDF shows a signature block AND it has been filled in (a name and/or date have been written/typed in). FALSE when the block is blank, or no block exists at all. This is the load-bearing boolean — gates queries like "how many of our open proposals are signed?".
+
+- accepted_signature_name: the literal name written/typed in the "Accepted By" / "Signed By" line. Null when blank or no signature block.
+
+- accepted_signature_date: the date next to the acceptance signature, if present. Format YYYY-MM-DD. Null when blank, no signature block, or only the name is filled in but no date.
+
+Do NOT confuse the acceptance signature with the vendor's own signature on the proposal (the sender). The acceptance is the RECIPIENT's signature accepting the proposal — it's the contractor side of the block.
+
+If accepted_signature_present is FALSE, accepted_signature_name and accepted_signature_date should both be null.
 
 CONFIDENCE
 
@@ -383,6 +458,22 @@ Return ONLY this JSON shape (dollars are numbers, not strings; no markdown fence
     "governing_law": "string | null",
     "other_terms_text": "string | null"
   },
+  "schedule_items": [
+    {
+      "scope_item": "string",
+      "linked_line_number": 1,
+      "estimated_start_date": "YYYY-MM-DD | null",
+      "estimated_duration_days": 0,
+      "sequence_position": 1,
+      "depends_on": [],
+      "responsibility": "vendor | contractor | shared",
+      "deliverables": [],
+      "trigger": "string | null"
+    }
+  ],
+  "accepted_signature_present": false,
+  "accepted_signature_name": "string | null",
+  "accepted_signature_date": "YYYY-MM-DD | null",
   "confidence_score": 0.0,
   "confidence_details": {},
   "flags": []
@@ -390,7 +481,7 @@ Return ONLY this JSON shape (dollars are numbers, not strings; no markdown fence
 
 Numeric fields shown as 0 above accept null where the schema description says "Null if not stated" — emit literal null (not 0, not "null"). Other numeric fields are required (line_items[].amount, line_items[].line_number, total_amount).
 
-The arrays additional_fee_schedule, payment_schedule, and the object payment_terms are all top-level NULL when the proposal does not include those structures. Do NOT emit empty arrays or all-null objects when the proposal is silent — emit literal null at the top level.`;
+The arrays additional_fee_schedule, payment_schedule, schedule_items, and the object payment_terms are all top-level NULL when the proposal does not include those structures. Do NOT emit empty arrays or all-null objects when the proposal is silent — emit literal null at the top level. accepted_signature_present is the only boolean — default false when no signature block exists or block is blank.`;
 
 // ─────────────────────────────────────────────────────────────────
 // Helpers
@@ -502,6 +593,18 @@ type RawPaymentTerms = {
   other_terms_text?: unknown;
 };
 
+type RawScheduleItem = {
+  scope_item?: unknown;
+  linked_line_number?: unknown;
+  estimated_start_date?: unknown;
+  estimated_duration_days?: unknown;
+  sequence_position?: unknown;
+  depends_on?: unknown;
+  responsibility?: unknown;
+  deliverables?: unknown;
+  trigger?: unknown;
+};
+
 type RawProposal = {
   vendor_name?: unknown;
   vendor_address?: unknown;
@@ -520,6 +623,10 @@ type RawProposal = {
   additional_fee_schedule?: unknown;
   payment_schedule?: unknown;
   payment_terms?: unknown;
+  schedule_items?: unknown;
+  accepted_signature_present?: unknown;
+  accepted_signature_name?: unknown;
+  accepted_signature_date?: unknown;
   confidence_score?: unknown;
   confidence_details?: unknown;
   flags?: unknown;
@@ -570,6 +677,46 @@ function normalizePaymentSchedule(
       milestone: e.milestone,
       percentage_pct: asNumberOrNull(e.percentage_pct),
       amount_cents: dollarsToCents(e.amount),
+      trigger: asStringOrNull(e.trigger),
+    });
+  }
+  return out.length > 0 ? out : null;
+}
+
+/**
+ * Normalize a schedule_items array. Returns null when the AI emitted
+ * null OR every entry was invalid. Entries with a non-string scope_item
+ * are dropped. depends_on is filtered to integers only; deliverables
+ * to strings only.
+ */
+function normalizeScheduleItems(
+  v: unknown
+): ParsedProposalScheduleItem[] | null {
+  if (v === null || v === undefined) return null;
+  if (!Array.isArray(v)) return null;
+  const out: ParsedProposalScheduleItem[] = [];
+  for (const e of v as RawScheduleItem[]) {
+    if (!e || typeof e !== "object") continue;
+    if (typeof e.scope_item !== "string" || e.scope_item.length === 0) continue;
+    const depends_on = Array.isArray(e.depends_on)
+      ? (e.depends_on as unknown[])
+          .map((n) => (typeof n === "number" && Number.isFinite(n) ? Math.round(n) : null))
+          .filter((n): n is number => n !== null)
+      : [];
+    const deliverables = Array.isArray(e.deliverables)
+      ? (e.deliverables as unknown[]).filter(
+          (s): s is string => typeof s === "string" && s.length > 0
+        )
+      : [];
+    out.push({
+      scope_item: e.scope_item,
+      linked_line_number: asIntOrNull(e.linked_line_number),
+      estimated_start_date: asStringOrNull(e.estimated_start_date),
+      estimated_duration_days: asIntOrNull(e.estimated_duration_days),
+      sequence_position: asIntOrNull(e.sequence_position),
+      depends_on,
+      responsibility: asStringOrNull(e.responsibility),
+      deliverables,
       trigger: asStringOrNull(e.trigger),
     });
   }
@@ -688,6 +835,13 @@ export function normalizeProposal(raw: RawProposal): ParsedProposal {
     additional_fee_schedule: normalizeFeeSchedule(raw.additional_fee_schedule),
     payment_schedule: normalizePaymentSchedule(raw.payment_schedule),
     payment_terms: normalizePaymentTerms(raw.payment_terms),
+    schedule_items: normalizeScheduleItems(raw.schedule_items),
+    accepted_signature_present:
+      typeof raw.accepted_signature_present === "boolean"
+        ? raw.accepted_signature_present
+        : false,
+    accepted_signature_name: asStringOrNull(raw.accepted_signature_name),
+    accepted_signature_date: asStringOrNull(raw.accepted_signature_date),
     confidence_score: clamp01(raw.confidence_score),
     confidence_details: cleanedConfidenceDetails,
     flags,
