@@ -48,7 +48,7 @@ const FIXTURE_ROOT = "__tests__/fixtures/classifier/.local";
 const RESULTS_DIR = "qa-reports/.eval";
 const RESULTS_FILE = join(RESULTS_DIR, "phase3.2-v2-eval.md");
 const ORG_ID = "00000000-0000-0000-0000-000000000001";
-const CALL_TIMEOUT_MS = 15_000;
+const CALL_TIMEOUT_MS = 30_000;
 
 // Phase 3.2 v2 Path B exit-gate parameters
 const OVERALL_GATE = 0.9;
