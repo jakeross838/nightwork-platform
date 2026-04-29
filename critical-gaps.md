@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history.
+
 # Critical Gaps — Pre-Dogfood Smoke Test
 
 Gaps surfaced during smoke testing. These are *not* test failures — the feature

@@ -1,3 +1,5 @@
+> PART 5 (phase list, sections 3.3–3.8) SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md §9. Other parts (Reading guide, Part R, Part G, Parts 0–4, Part 6) remain canonical. Phase ordering for 3.3–3.10 follows docs/nightwork-rebuild-plan-amendment-1.md and addenda A and B.
+
 # Nightwork Rebuild Plan — The Full Build
 
 **Version:** v3 (2026-04-22)

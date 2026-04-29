@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history.
+
 # Cost Intelligence Diagnostic Report
 
 **Target:** Ross Built org on dev (`egxkffodxcefwpqmwrur`)

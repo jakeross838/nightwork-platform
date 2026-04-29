@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history.
+
 # Nightwork Comprehensive Review — 2026-04-20
 
 > **Comprehensive Fix Pass Status (2026-04-20):** Phases A–E, G, H, I

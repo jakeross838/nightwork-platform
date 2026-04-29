@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history.
+
 # QA Results — Phase 1-4 Sweep
 
 **Date:** 2026-04-15

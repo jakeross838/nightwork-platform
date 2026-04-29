@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history.
+
 # Diagnostic — source-line highlighting on the invoice PDF
 
 ## 1. What data exists today

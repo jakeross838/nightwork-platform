@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history. (Plan was approved 2026-04-18 but never executed; decision to execute or retire is tracked as Q12 in v1 §11.)
+
 # Nightwork Navigation Reorganization Plan
 
 **Created:** 2026-04-17
