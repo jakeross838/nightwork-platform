@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history.
+
 # Pre-Dogfood Smoke Test Results
 
 **Run date:** 2026-04-16

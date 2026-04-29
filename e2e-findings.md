@@ -1,3 +1,5 @@
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history.
+
 # E2E Findings — Dewberry Draw 9 Dogfood
 
 **Date:** 2026-04-16
