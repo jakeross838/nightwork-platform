@@ -1,8 +1,45 @@
 # Nightwork — GAP.md
 
-**Status:** Stage 1 architecture document. Last updated 2026-04-29.
-**Scope:** Where Nightwork is vs where it needs to be — the foundation work to bridge from `CURRENT-STATE.md` to `TARGET.md`. Concrete F1–F4 phase sequence with acceptance criteria, plus risks and assumptions for Strategic Checkpoint #1.
-**Inputs:** VISION.md, CURRENT-STATE.md, TARGET.md, MASTER-PLAN.md §8 default sequence, canonical §11 + §12.
+**Status:** Stage 1 architecture document. Last updated 2026-04-29 (CP1 close + Stage 1.6 build).
+**Scope:** Where Nightwork is vs where it needs to be — the foundation work to bridge from `CURRENT-STATE.md` to `TARGET.md`. Concrete F1–F4 phase sequence with acceptance criteria, plus risks and assumptions.
+**Inputs:** VISION.md, CURRENT-STATE.md, TARGET.md, MASTER-PLAN.md §8 default sequence, canonical §11 + §12, CP1-RESOLUTIONS.md (CLOSED 2026-04-29).
+
+---
+
+## ✱ CP1 CLOSE UPDATE (2026-04-29)
+
+This update supersedes specific sections below where noted. See `.planning/architecture/CP1-RESOLUTIONS.md` for full detail.
+
+**Phase sequence (resolved):**
+- **F0 prep is ABSORBED into F1** per D-035. F1's first-day tasks now include the prior F0 quick wins. F1 estimate becomes **6–8 days** (was 5–7).
+- F1, F2, F3, F4 sequence and scopes otherwise unchanged.
+- Total foundation estimate: **~30–43 calendar days** (was 31–44 — small reduction from F0 absorption overhead).
+
+**Assumption status (all resolved):**
+- A1 RESOLVED → D-019 (NAHB CoA seed; one non-blocking follow-up for Jake about QB Desktop CoA customization)
+- A2 RESOLVED → D-020 (cost-code wipe-and-reseed safe)
+- A3 RESOLVED → D-021 (drop `change_order_budget_lines` safe)
+- A4 RESOLVED → D-022 (Inngest Cloud)
+- A5 RESOLVED → D-023 (F2 before F3 confirmed)
+- A6 RESOLVED → D-024 (invoice as approval-framework guinea pig)
+- A7 RESOLVED → D-025 (Drummond back-import as F4 dogfood)
+- A8 RESOLVED → D-026 (CP3 between F4 and Wave 1)
+- A9 RESOLVED → D-027 (UCM concept retained, branding softened)
+- A10 RESOLVED → D-028 (reconciliation surface as own phase post-3.9)
+- A11 RESOLVED → D-029 (substitution-map approach)
+- A12 RESOLVED → D-030 (F3 estimate stands)
+- A13 RESOLVED → D-031 (F4 includes Drummond back-import)
+- NQ1 RESOLVED → D-032 (construction_address + billing_address split)
+- NQ2 RESOLVED → D-033 (`payments` first-class in F1)
+- NQ3 RESOLVED → D-034 (four-table invoice-line-shape documented, not consolidated)
+- NQ4 RESOLVED → D-035 (F0 absorbed into F1)
+- NQ5 RESOLVED → D-036 (reconciliation-surface mock-up added to Stage 1.5b)
+- A14 RESOLVED → D-018 (Stage 1.6 system built)
+
+**One open follow-up for Jake (non-blocking):**
+- A1 sub-question: stock vs customized QB Desktop CoA. Default = stock (NAHB only). If customized, Diane exports IIF and we layer Ross Built CoA in `org_gl_codes`. Answer when convenient; F1 starts either way.
+
+---
 
 ---
 
@@ -77,18 +114,10 @@ Total: ~1 day of work; reduces F1 scope and clears trivial debt.
 
 Per MASTER-PLAN.md §8 default, the foundation has 4 phases. The Stage 1 audit confirms the default ordering is correct: entity model → workflow framework → platform primitives → existing-code refactor. Detailed scopes follow. Each phase's acceptance criteria are falsifiable per D-015.
 
-### F0 (R.0 prep) — Quick wins
+### F0 (R.0 prep) — ABSORBED INTO F1 per D-035
 
-**Name:** Foundation prep — dead-code drop + R.7 closures
-**Why it matters:** Reduces F1 scope; clears two persistent rule violations (R.6/R.7); zero schema risk.
-**Dependencies:** None.
-**Estimated time:** 1 day.
-**Acceptance criteria:**
-- [ ] Migration drops `change_order_budget_lines`, `.down.sql` paired
-- [ ] Migration adds `lien_releases.status_history JSONB NOT NULL DEFAULT '[]'::jsonb`
-- [ ] `/api/invoices/[id]/docx-html` calls `getCurrentMembership()` + role check
-- [ ] `budgets` parent table — explicit decision recorded (deprecate or activate); if deprecate, dropped in this phase
-- [ ] All four changes verified via `EXPLAIN ANALYZE` (where applicable) + RLS policy-shape assertion
+**Status:** Absorbed into F1's first-day tasks. Kept here for traceability.
+**Tasks (now F1 day-1):** Drop `change_order_budget_lines`, add `lien_releases.status_history`, fix docx-html auth, decide `budgets` table fate.
 
 ### F1 — Unified entity model
 
