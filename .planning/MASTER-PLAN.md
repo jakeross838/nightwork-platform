@@ -144,8 +144,8 @@ The build path is divided into stages. Stages are coarser than phases — a stag
 
 ## 9. CURRENT POSITION
 
-- **Current stage:** Stage 1 — Vision + Audit complete. Awaiting Strategic Checkpoint #1 with Jake.
-- **Current phase:** Stage 1 architecture documents shipped; Stage 1.5a (design system documents) is next after CP1.
+- **Current stage:** Stage 1 + Stage 1.6 complete. CP1 closed (16/17 questions autonomously resolved + Jake's strategic answers; 1 non-blocking follow-up).
+- **Current phase:** Stage 1.5a (design system documents) is next.
 - **Current branch:** `nightwork-build-system-setup`.
 - **Last commit on branch:** Stage 1 commits added 2026-04-29 (VISION → CURRENT-STATE → DRUMMOND-FIXTURE-SUMMARY → TARGET → Drummond clarifications → GAP).
 - **Production deploy:** `https://nightwork-platform.vercel.app` (alias) backed by `dpl_pkesin29g` 2026-04-29 — healthy, CSP live with `worker-src 'self' blob:` for PDF.js, `frame-ancestors 'none'`, all required upstreams allowed.
@@ -155,8 +155,17 @@ The build path is divided into stages. Stages are coarser than phases — a stag
   - ✅ `.planning/architecture/CURRENT-STATE.md` — comprehensive diagnostic with 8 headline findings
   - ✅ `.planning/architecture/DRUMMOND-FIXTURE-SUMMARY.md` — sanitized count-only summary committed; raw fixtures gitignored
   - ✅ `.planning/architecture/TARGET.md` — ideal architecture with selective wipe-and-reseed migration strategy
-  - ✅ `.planning/architecture/GAP.md` — F0-F4 foundation phase sequence with falsifiable acceptance criteria
-- **Open MEDIUM/LOW/NOTE findings:** all deferred and tracked in §11. None blocking the foundation phases F0-F4.
+  - ✅ `.planning/architecture/GAP.md` — F1-F4 foundation phase sequence (F0 absorbed per D-035) with falsifiable acceptance criteria
+  - ✅ `.planning/architecture/CP1-RESOLUTIONS.md` — 17 questions resolved (16 fully + 1 non-blocking Jake follow-up)
+- **Stage 1.6 deliverables (committed):**
+  - ✅ `.claude/agents/nightwork-requirements-expander.md` — opinionated stated-scope-to-full-requirements agent
+  - ✅ `.claude/commands/nightwork-auto-setup.md` — AUTO/MANUAL infra orchestrator
+  - ✅ `.claude/skills/nightwork-preflight/SKILL.md` — 10-check execute gate
+  - ✅ `.claude/commands/nightwork-init-phase.md` — phase entry point: stated → expanded → setup
+  - ✅ `.claude/commands/np.md` — plan wrapper with EXPANDED-SCOPE awareness
+  - ✅ `.claude/commands/nx.md` — execute wrapper with preflight + QA gates
+- **One non-blocking follow-up for Jake (CP1-RESOLUTIONS A1 sub-question):** Has Diane customized QB Desktop's chart of accounts heavily, or is it mostly stock? A=stock (NAHB only), B=customized (export IIF + use as `org_gl_codes` overlay). Default to A; can be answered when convenient.
+- **Open MEDIUM/LOW/NOTE findings:** all deferred and tracked in §11. None blocking foundation F1-F4.
 
 ## 10. DECISIONS LOG
 
@@ -181,6 +190,25 @@ Major decisions made during planning. Each entry is point-in-time; do not retroa
 | **D-015** | 2026-04-29 | Anti-drift mechanisms via MASTER-PLAN.md + strengthened session-start hook + `nightwork-anti-drift` skill | Files were scattered across `.planning/`; no single doc captured the full picture; no hook guaranteed Claude Code read it; this triple closes that gap |
 | **D-016** | 2026-04-29 | Gitignore carve-outs added so build system + canonical planning docs sync via git. Transient outputs (`qa-runs`, `plan-reviews`, `drift-checks`, `e2e-runs`, `design-checks`, `custodian-runs`, `propagate`) and sensitive fixtures (`fixtures/`, `audits/`) remain local-only. | Resolves the meta-drift identified in nwrp4 final report — the anti-drift system itself was PC-local. Also fixed a false-positive in `nightwork-pre-commit.sh` that matched "BLOCKING" anywhere on the verdict line; now extracts only the leading bolded verdict token. |
 | **D-017** | 2026-04-29 | Stage 1 (Vision + Audit + Drummond fixture pull) complete. 4 architecture documents committed at `.planning/architecture/{VISION,CURRENT-STATE,DRUMMOND-FIXTURE-SUMMARY,TARGET,GAP}.md`. Drummond fixture pull from 3 sources (P-drive 408 files / Supabase 25 JSON exports of synthetic-stub data / Downloads 163 Tier-1+2 files) confirmed the data-ingestion gap as concrete: Supabase Drummond record uses synthetic placeholder data; real Drummond financial history (5 historical pay apps, 1 lien-release batch, recent budget XLSX, T&M and lump-sum reference invoices) exists only in P-drive folders + Downloads files. VISION introduced V.1 universal entity envelope, V.2 universal export/import contract, V.3 universal document provenance. TARGET recommends selective wipe-and-reseed (cost codes + dead `change_order_budget_lines`) with incremental migration elsewhere. GAP proposes F0 prep + F1 entity model + F2 workflow framework + F3 platform primitives + F4 refactor sequence (~31-44 days total). 8 architectural decisions and 13 assumptions flagged for Strategic Checkpoint #1 disposition. | The Stage 1 audit surfaced 4 CRITICAL gaps (no background jobs, no D-008 import/export framework, rate limiting absent, dashboard 503 from RLS policy-stack overhead — not missing indexes), 9 HIGH gaps, and 17 MEDIUM/LOW. Foundation sequence is locked-in pending CP1 confirmation; sequence-rationale documented in GAP §B. Drummond Supabase address+client_name confirmed synthetic per Jake mid-Stage-1; real homeowner data intentionally not committed. |
+| **D-018** | 2026-04-29 | Stage 1.6 — Requirements Expansion + Auto-Setup + Pre-Flight system. Every phase from F1 onward begins with `/nightwork-init-phase` (captures Jake's stated scope verbatim → invokes `nightwork-requirements-expander` agent → produces approved EXPANDED-SCOPE.md → invokes `/nightwork-auto-setup` → AUTO infra items execute, MANUAL items get a precise checklist for Jake → SETUP-COMPLETE.md). Then `/np` plans (with EXPANDED-SCOPE as input context). Then `/nx` runs `nightwork-preflight` skill (10 checks) before execute, then `/nightwork-qa` after. | Reduces zero-day rework from un-thought-of requirements. Each component lives at `.claude/{agents,commands,skills}/nightwork-*`. The contract: every phase has an APPROVED EXPANDED-SCOPE before plan, a passing SETUP-COMPLETE before execute, and a PASSING preflight before any gsd-execute-phase. Override is logged and surfaced at QA. |
+| **D-019** | 2026-04-29 | F1 seeds `canonical_gl_codes` table with NAHB Chart of Accounts (~400 line items, mirrors migration 00082 `canonical_cost_codes` pattern). Adds `org_gl_codes` per-tenant override table. `gl_code_id` FK columns added (NULLABLE day-1) to `cost_codes`, `org_cost_codes`, `invoices`. (Resolves CP1 A1.) | Industry standard for residential builders; NAHB outperforms QB Desktop default Contractor chart for builders Ross Built's size. Nullable until QBO sync wave (Phase 4) avoids onboarding friction with no Wave 1 business value. One follow-up question for Jake about CoA customization extent in QB Desktop — does NOT block F1 start. |
+| **D-020** | 2026-04-29 | F1 wipes legacy `cost_codes` table, re-seeds `org_cost_codes` for Ross Built from Drummond fixtures (`Drummond - Line Items Cost Coded.pdf` + `BUDGET_TEMPLATE.md`). Maps `canonical_code_id` to NAHB level-3 spine where obvious. (Resolves CP1 A2.) | No production data to preserve — current `org_cost_codes` (12 rows) is synthetic test data; real Ross Built codes are only in legacy `cost_codes`. Drummond fixture re-derivation is clean. |
+| **D-021** | 2026-04-29 | F1 (absorbing prior F0 prep — see D-035) drops `change_order_budget_lines` table. (Resolves CP1 A3.) | Verified: 0 rows, 0 src/ consumers (grep). Superseded by `change_order_lines`. `.down.sql` paired for emergency rollback. |
+| **D-022** | 2026-04-29 | F3 background-job framework: Inngest Cloud (managed offering) as primary; pg_cron complementary for periodic maintenance. Free tier sufficient for first 10 orgs; pay tier flips at first paid GA. Self-host fallback documented for compliance edge cases. (Resolves CP1 A4.) | Single managed-cloud-service-among-others (already using Vercel + Supabase + Anthropic + Stripe + Resend cloud-managed) — no compliance restriction. |
+| **D-023** | 2026-04-29 | F2 before F3 sequence confirmed. (Resolves CP1 A5.) | `transitionEntity` (F2) is the canonical activity_log writer; F3's `withAuditWrap` middleware piggybacks. Approval framework (F2) is referenced by background jobs (F3 — notify-step-approvers fan-out is the natural first Inngest function). Reverse order doubles audit-log middleware work and rebuilds approval-fan-out twice. |
+| **D-024** | 2026-04-29 | F2 wires `approval_chains` for invoice flow first (highest volume = fastest learning). CO follows as second consumer. Then propagates to draw, PO, proposal. (Resolves CP1 A6 — Jake's strategic answer.) | Invoice volume + existing PM/QA flow shape the framework's contract; CO/draw/PO/proposal inherit. |
+| **D-025** | 2026-04-29 | F4 includes Drummond historical back-import via V.2 portability framework as the dogfood pass — 5 pay apps (XLSX + PDF), Nov-2025 lien-release set, recent budget XLSX get parsed and ingested into Stage-1.6-cleaned schema. (Resolves CP1 A7 — Jake's strategic answer.) | Validates V.2 framework on real-shape data; closes data-ingestion gap concretely (CURRENT-STATE §F.4); gives Wave 1.1 polish work real Drummond data to exercise. |
+| **D-026** | 2026-04-29 | Strategic Checkpoint #3 falls between F4 and Wave 1, per D-012's "foundations close" milestone. (Resolves CP1 A8.) | D-012 enumerates 4 strategic checkpoints; CP3 = foundations close = post-F4. |
+| **D-027** | 2026-04-29 | UCM (Unified Commitment Model) — concept retained, brand name softened to working label. Going forward, references read "Commitment Schema Consolidation (working title: UCM)" until canonical Q3 locks the design. F1-F4 impact: zero. (Resolves CP1 A9.) | UCM origin traced to canonical-plan v1 commit `d5222a5` 2026-04-28 (Claude-coined during consolidation). Underlying architectural problem (cost-code dual registry, status_history JSONB no enforcement, target_entity_id bare UUID, status enum drift) is real and audit-supported. Brand name is ad-hoc but concept is sound. Keep §6 as architectural target; soften branding pending Q3 lock. |
+| **D-028** | 2026-04-29 | Reconciliation surface (canonical Q1) lands as its own phase post-Phase-3.9 (after constituent extractors land). VISION.md A10 position confirmed. (Resolves CP1 A10.) | Per-transition reconciliation is implicit in Phases 3.6/3.7/3.9; cross-entity drift detection surface is post-foundation. |
+| **D-029** | 2026-04-29 | Substitution-map approach for fixture sharing is sufficient. Workflow: when fixtures first need to be shared cross-org (likely first paid customer pilot), explicit migration step creates `.planning/fixtures/drummond/SUBSTITUTION-MAP.md` (gitignored), runs sed-style replacement on all fixture text, commits sanitized variant to a separate fixture share repo. Until then, all fixtures stay local. Real customer data NEVER committed to git. (Resolves CP1 A11.) | Per Jake mid-Stage-1 clarification + D-007 + D-008. |
+| **D-030** | 2026-04-29 | F3 estimate stands at 10-14 calendar days. Mid-phase checkpoint with Jake at 7-day mark to scope-cut if needed. RLS policy-stack collapse routes through `/nightwork-propagate` per its multi-table blast-radius nature. (Resolves CP1 A12.) | Twelve sub-tasks, four cross-cutting ~2-3 days each when done well; estimate has slack absorbed for review/checkpoint loops. |
+| **D-031** | 2026-04-29 | F4 final acceptance includes Drummond back-import (resolves CP1 A13 — derives from D-025). | Already in GAP §B F4 acceptance criteria. |
+| **D-032** | 2026-04-29 | F1 splits `jobs.address` into `construction_address` (NOT NULL — the build site) + `billing_address` (nullable — defaults to construction_address; populated when distinct, e.g., owner's primary residence or property manager). Onboarding wizard captures both. (Resolves CP1 NQ1 — Jake's strategic answer.) | Drummond example: construction_address="501 74th, Holmes Beach FL"; billing_address typically distinct. Both fields support cost-plus open-book communication and lien-release mailing. |
+| **D-033** | 2026-04-29 | F1 promotes `payments` to first-class table with `payment_invoices` junction (supports partial payments + one-payment-multiple-invoices). Existing `invoices.payment_date`/`check_number`/`picked_up` columns kept as legacy compat through F4, dropped in F4. (Resolves CP1 NQ2.) | Required precondition for QBO sync (Wave 5); supports partial-payment scenarios from day-1. |
+| **D-034** | 2026-04-29 | Four-table invoice-line-shape (`invoice_line_items`, `invoice_allocations`, `document_extraction_lines`, `line_cost_components`) is documented and lived-with for now. F1 adds explicit canonical documentation in `docs/nightwork-plan-canonical-v1.md` §5.6 + a `v_invoice_lines_full` view for unified queries. UCM (canonical Q3) consolidates later. (Resolves CP1 NQ3.) | F1 consolidating would be wasted work re-done by UCM. Document-and-live-with is lower-risk. |
+| **D-035** | 2026-04-29 | F0 prep absorbed into F1. F1 first-day tasks: drop `change_order_budget_lines`, add `lien_releases.status_history`, fix docx-html auth, decide `budgets` table fate. F1 estimate becomes 6-8 days (was 5-7 + 1). (Resolves CP1 NQ4 — Jake's strategic answer.) | F0 was 1 day of cleanup tightly coupled to F1; separate phase added orchestration overhead with no benefit. |
+| **D-036** | 2026-04-29 | Stage 1.5b prototype gallery scope grows by one prototype: a reconciliation-surface mock-up (alongside invoice review, draw assembly, budget dashboard, CO log, lien-release flow, settings, owner portal stub). Throwaway HTML on Drummond data; goal is design vocabulary, not commitment. Strategic Checkpoint #2 reviews the gallery including this addition. (Resolves CP1 NQ5.) | Reconciliation surface is the most architecturally novel UI Nightwork ships; design vocabulary should develop in parallel with extractor work. |
 
 ## 11. TECH DEBT REGISTRY
 
@@ -221,10 +249,20 @@ Updated continuously by `nightwork-custodian` after each `/gsd-ship`. Order is a
 - ✅ CURRENT-STATE.md — entity coherence (16 COMPLETE / 9 PARTIAL / 5 COEXISTING / 12 MISSING / 4 AMBIGUOUS), workflow consistency, platform primitives (4 CRITICAL gaps), code health, dashboard 503 root cause (RLS policy-stack overhead), ingestion gap.
 - ✅ DRUMMOND-FIXTURE-SUMMARY.md — sanitized count-only summary committed.
 - ✅ TARGET.md — ideal architecture with selective wipe-and-reseed migration strategy.
-- ✅ GAP.md — F0-F4 foundation phase sequence with falsifiable acceptance criteria; ~31-44 calendar days.
-- → **Strategic Checkpoint #1 with Jake** (next).
+- ✅ GAP.md — F1-F4 foundation phase sequence (F0 absorbed per D-035) with falsifiable acceptance criteria; ~30-43 calendar days.
 
-**Stage 1.5a — Design system documents (after CP1):**
+**Strategic Checkpoint #1 (CLOSED 2026-04-29):**
+- ✅ 17 questions resolved (16 fully, 1 non-blocking follow-up). Resolutions logged at `.planning/architecture/CP1-RESOLUTIONS.md` and DECISIONS LOG D-019 through D-036.
+
+**Stage 1.6 — Requirements Expansion + Auto-Setup + Pre-Flight (COMPLETE 2026-04-29):**
+- ✅ `nightwork-requirements-expander` agent — translates Jake's stated scope to comprehensive requirements
+- ✅ `/nightwork-auto-setup` command — AUTO infra items + MANUAL checklist for Jake
+- ✅ `nightwork-preflight` skill — 10-check execute gate
+- ✅ `/nightwork-init-phase` command — phase entry point
+- ✅ `/np` and `/nx` wrappers — chain GSD orchestrators with Nightwork gates
+- ✅ Demo on Wave 1.1 (`.planning/expansions/wave-1.1-invoice-approval-EXPANDED-SCOPE.md`).
+
+**Stage 1.5a — Design system documents (next):**
 - `.planning/design/PHILOSOPHY.md`, `SYSTEM.md`, `COMPONENTS.md`, `PATTERNS.md`.
 
 **Stage 1.5b — Prototype gallery (Strategic Checkpoint #2):**

@@ -29,11 +29,25 @@ Five deployment waves shape the roadmap. The build-system setup (`nwrp1.txt` 202
 
 ## Phases — next (active or imminent)
 
-Pulled from canonical §9; refresh when the canonical updates. The build system supports `/gsd-plan-phase`, `/nightwork-plan-review`, `/gsd-execute-phase`, `/nightwork-qa`, `/gsd-ship`, `/nightwork-end-to-end-test` for each.
+Pulled from canonical §9 + Stage 1 architecture (`.planning/architecture/{VISION,CURRENT-STATE,TARGET,GAP}.md`) + CP1 resolutions. The build system supports `/nightwork-init-phase`, `/np`, `/nx`, `/gsd-ship`, `/nightwork-end-to-end-test` for each foundation/wave phase. Per D-018, every phase begins with `/nightwork-init-phase`.
 
-- **3.5+** — completing Wave 1 invoicing/draw polish and remaining classifier work (CO, vendor, budget, historical draw extractors).
-- **Reconciliation thesis (TBD)** — canonical §2: AI-mediated reconciliation across proposal→contract→budget→PO→CO→invoice→draw boundaries. Open architectural questions to be answered before planning.
-- **Wave 2 — Project operations** — schedules, daily logs, punchlists. Schema fields for schedule intelligence (`estimated_start_date`, `estimated_duration_days`, etc.) ship in Phase 3.5+ so data accumulates passively (canonical §1.3 Pillar 3).
+**Stage 1.5 — Design system + prototype gallery + test infrastructure (next):**
+- 1.5a — `.planning/design/PHILOSOPHY.md`, `SYSTEM.md`, `COMPONENTS.md`, `PATTERNS.md`.
+- 1.5b — Prototype gallery on Drummond data: invoice review, draw assembly, budget dashboard, CO log, lien-release flow, settings, owner portal stub, **+ reconciliation-surface mock-up (per D-036)**. **Strategic Checkpoint #2** with Jake.
+- 1.5c — Drummond fixture loader + Playwright e2e harness + automated `/nightwork-end-to-end-test` runs in CI.
+
+**Stage 2 — Foundations F1–F4 (post-1.5; F0 absorbed into F1 per D-035):**
+- **F1 — Unified entity model** (~6–8 days): cost-code consolidation wipe-and-reseed, drop `public.users` + `change_order_budget_lines`, promote `payments`, add `gl_codes` (NAHB-seeded) + `approvals`, address split (`construction_address`/`billing_address`), universal envelope V.1 audit.
+- **F2 — Workflow framework** (~7–10 days): `transitionEntity` helper, approval framework wiring `approval_chains` (invoice first), `send_back` cascade fix, `withAuditWrap` middleware, embedding-on-create wiring.
+- **F3 — Platform primitives** (~10–14 days): Inngest Cloud + pg_cron, idempotency, rate limit, RLS policy-stack collapse via `/nightwork-propagate`, V.2 portability framework, structured logger, CI test gate.
+- **F4 — Refactor + Drummond back-import** (~8–12 days): `requireRole` adoption, `withOrg` wrapper, UI uniformity 4/4, audit-log coverage 95%+, **Drummond historical back-import via V.2 framework as dogfood (per D-025)**.
+- **Strategic Checkpoint #3** between F4 and Wave 1.
+
+**Stage 3 — Wave 1 polish + completion:**
+- **Wave 1.1 — Invoice approval polish + ship to Ross Built** (Strategic Checkpoint #4 / Wave 1 mini).
+- **Phases 3.5+** — completing Wave 1 classifier work (CO, vendor, budget, historical draw extractors). Reconciliation thesis (canonical §2) lands as own phase post-3.9 per D-028.
+
+**Stages 4+ — Wave 2 → 5 in canonical order.**
 
 ## Phases — future
 
@@ -41,21 +55,21 @@ Wave 2 (operations), Wave 3 (communication), Wave 4 (intelligence — reports + 
 
 ## Open architectural questions
 
-Canonical §11 lists open questions. Among them:
+Canonical §11 lists open questions. Most resolved at CP1 (2026-04-29) — see DECISIONS LOG D-018 through D-036. Remaining longer-term:
 
-- **Unified Commitment Model (UCM)** — target data model that unifies POs / COs / internal billings / change orders into one commitment graph (canonical §6).
-- **Reconciliation surface** — canonical UI for "the books and the field disagree" (canonical §2).
+- **Commitment Schema Consolidation** (working title: UCM, per D-027) — target data model that unifies commitment-shaped entities (proposal/contract/PO/CO/invoice/draw line) into one graph (canonical §6, Q3). Lands post-Phase-3.9.
+- **Reconciliation surface** — canonical UI for "the books and the field disagree" (canonical §2). Lands as own phase post-Phase-3.9 per D-028.
 - **Cross-org data sharing tier** — explicitly off today; architecture preserves the option (canonical §1.4).
 
-Resolve these via `/gsd-explore` or `/gsd-spec-phase` before adding phases that depend on them.
+Resolve via `/gsd-explore` or `/nightwork-init-phase` before phases that depend on them.
 
-## How to propose a new phase
+## How to start a new phase (post-D-018)
 
-1. Read the relevant section of `docs/nightwork-plan-canonical-v1.md`.
-2. `/gsd-add-phase` (adds a stub to the roadmap) OR `/gsd-spec-phase` (locks a spec first).
-3. `/gsd-discuss-phase --auto` — surfaces assumptions; mode set to `assumptions` in `.planning/config.json`.
-4. `/gsd-plan-phase` — produces PLAN.md.
-5. `/nightwork-plan-review` — auto-runs, blocks on critical findings.
-6. `/gsd-execute-phase` — produces code.
-7. `/nightwork-qa` — auto-runs, blocks on critical findings.
-8. `/gsd-ship` — auto-runs `/nightwork-qa` + `/nightwork-end-to-end-test` before opening PR.
+The canonical sequence per D-018:
+
+1. **`/nightwork-init-phase <phase-name>`** — captures Jake's stated scope verbatim, runs `nightwork-requirements-expander` agent, produces approved EXPANDED-SCOPE.md, then runs `/nightwork-auto-setup` (AUTO infra items + MANUAL checklist for Jake), and ends with SETUP-COMPLETE.md when fully ready.
+2. **`/np <phase-name>`** — chains `/gsd-discuss-phase` (with EXPANDED-SCOPE as input) → `/gsd-plan-phase` → `/nightwork-plan-review`. Critical findings block execute.
+3. **`/nx <phase-name>`** — runs `nightwork-preflight` (10 checks); on PASS chains `/gsd-execute-phase` → `/nightwork-qa`. Critical findings block ship.
+4. **`/gsd-ship <phase-name>`** — auto-runs `/nightwork-qa` + `/nightwork-end-to-end-test` before PR.
+
+`/gsd-add-phase` and `/gsd-spec-phase` remain available for spec-first or roadmap-stub workflows; integrate with `/nightwork-init-phase` rather than replacing it.
