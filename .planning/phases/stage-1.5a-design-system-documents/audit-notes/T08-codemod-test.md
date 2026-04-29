@@ -124,8 +124,11 @@ Re-running the codemod on already-rewritten output:
 
 - `scripts/shadcn-v3-codemod.ts` — the codemod (v2)
 - `audit-notes/T08-shadcn4-tailwind-v3-incompatibility.md` — original 17-pattern audit (still accurate; v2 just adds discovered patterns)
-- `audit-notes/T08-tooltip-shadcn4-output-incompatible.tsx` — input fixture (will be deleted post-T08.4 when real tooltip primitive lands)
-- `audit-notes/T08-tooltip-codemod-output.tsx` — verified output
+- `audit-notes/T08-tooltip-shadcn4-output-incompatible.tsx` and
+  `audit-notes/T08-tooltip-codemod-output.tsx` — DELETED at T08.4 commit
+  when the real `src/components/ui/tooltip.tsx` landed (codemod output verified
+  to match expected v3 form). Test outcomes documented above; this audit note
+  is preserved as the traceability record.
 - `node_modules/@base-ui/react/*/DataAttributes.d.ts` — Base UI's actual emitted data attributes (used to correct the v1 audit-note mapping)
 - SPEC A2.1 — Forbidden thresholds (oversized rounded corners)
 - SPEC C2 — `src/components/ui/` directory created with shadcn-generated primitives
