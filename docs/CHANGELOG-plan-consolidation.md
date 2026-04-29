@@ -61,7 +61,7 @@ Each retired file gets a one-line header at the top: `> SUPERSEDED 2026-04-29 by
 | `migration-preview.md` (2026-04-16, 69 LOC) | Pre-dogfood data + code fixes — all shipped. | All shipped; archived. |
 | `smoke-test-results.md` (2026-04-16, 119 LOC) | 52 PASS / 8 PARTIAL rollup is historical. Console errors mostly addressed. Anything remaining → v1 §12. | Superseded by per-phase QA reports in `qa-reports/`. |
 | `docs/QA-RESULTS.md` (2026-04-15, ~150 LOC) | Early-phase rollup → superseded entirely by `qa-reports/qa-branch{N}-phase{M}.md`. | All rolled up; archived. |
-| `docs/NAV_REORG_PLAN.md` (2026-04-18, ~180 LOC) | Approved but never executed. Decision deferred to v1 §11 Q12 (vestigial UI cleanup). | None — entire plan is open. |
+| `docs/NAV_REORG_PLAN.md` (2026-04-17 plan + post-execution notes, ~404 LOC) | All 6 phases were executed in a single session on 2026-04-17 (the audit's "approved but never executed" framing was wrong — the file's own Post-Execution Notes document the ship). Route count went 49→41 after action-pages-to-modals. Residual vestigial-UI cleanup → v1 §11 Q12 (re-framed to reflect post-execution reality). F-012 (sidebar client-side filtering) and F-013 (mobile drawer for sidebar) are deferred findings that live on. | The 6-phase reorg itself: all shipped. |
 | `docs/nightwork-rebuild-plan.md` Part 5 (phase list only, ~entire Part 5 sections 3.3–3.8) | Phase list superseded by amendment-1's re-scoped order, which is consolidated into v1 §9. **Part R and Part G of the same file remain canonical** (reproduced verbatim in v1 §3). | None — Part 5 is the superseded portion. The rest of the file (Parts R, G, 0, 1, 2, 3, 4, 6) remains alive. |
 
 ---

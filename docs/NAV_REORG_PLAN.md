@@ -1,4 +1,4 @@
-> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history. (Plan was approved 2026-04-18 but never executed; decision to execute or retire is tracked as Q12 in v1 §11.)
+> SUPERSEDED 2026-04-29 by docs/nightwork-plan-canonical-v1.md. Kept for history. (Plan was executed in a single session on 2026-04-17 — see "Post-Execution Notes (2026-04-17)" and "Action Pages — Tier 2 Decisions (2026-04-18)" further down this file. All 6 phases shipped; route count 49→41 after action-pages-to-modals; F-012 and F-013 filed as deferred findings. Residual vestigial-UI cleanup is tracked as Q12 in v1 §11.)
 
 # Nightwork Navigation Reorganization Plan
 

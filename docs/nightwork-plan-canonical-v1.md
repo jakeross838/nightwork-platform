@@ -559,7 +559,7 @@ Each item below names a decision that needs to be locked before the phase or fea
 
 **Q11. Ingest pipeline orphan-storage cleanup.** (a) Decision: schedule `cleanup_stale_import_errors()` (00047), or accept orphan accumulation. (b) Audit/codebase: function exists, never runs. (c) Unknown: cron scheduler choice. (d) Lock by: before paid GA.
 
-**Q12. Vestigial UI cleanup.** (a) Decision: delete the 32 vestigial pages (12 redirects + 20 stubs) or keep as nav placeholders. (b) Audit/codebase: half the navigable surface is placeholder. (c) Unknown: which placeholders correspond to in-flight phases vs dead ends. (d) Lock by: opportunistic; not blocking.
+**Q12. Residual vestigial UI cleanup post-NAV-REORG.** (a) Decision: which leftover stubs/placeholders should be deleted vs kept as planned-feature anchors. (b) Audit/codebase: NAV_REORG was executed in a single session 2026-04-17 (route count 49→41 after action-pages-to-modals; see `docs/NAV_REORG_PLAN.md` Post-Execution Notes). The audit's Deliverable 6 listed 32 "vestigial" pages (12 redirects + 20 stubs), but the 12 redirects are the planned 301 surface from NAV_REORG and several of the 20 stubs (`/operations`, `/jobs/[id]/activity`) are explicit placeholders shipped as part of the executed plan. The narrower question is which of the remaining stubs are genuine leftovers vs anchors waiting on Phase 3.5+ / Phase 4 features. F-012 (sidebar client-side filtering) and F-013 (mobile drawer) are deferred findings from the original execution and live on. (c) Unknown: per-page disposition for the residual stub set after subtracting planned placeholders. (d) Lock by: opportunistic; not blocking.
 
 ---
 
@@ -658,7 +658,7 @@ See `docs/CHANGELOG-plan-consolidation.md` for the full mapping. Marked SUPERSED
 - `migration-preview.md`
 - `smoke-test-results.md`
 - `docs/QA-RESULTS.md`
-- `docs/NAV_REORG_PLAN.md` (deprecated unless executed)
+- `docs/NAV_REORG_PLAN.md` (executed 2026-04-17; retired as a planning doc, post-execution notes preserved)
 - `docs/nightwork-rebuild-plan.md` Part 5 phase list only (Part R + Part G remain canonical; supersession is partial)
 
 ---
