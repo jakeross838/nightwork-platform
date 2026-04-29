@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import NwButton from "@/components/nw/Button";
 import NwBadge from "@/components/nw/Badge";
+import Money from "@/components/nw/Money";
 
 // ── Phase 3.4 Issue 2 component imports ───────────────────────────
 import ProposalReviewHeader from "@/components/proposals/ProposalReviewHeader";
@@ -541,7 +542,68 @@ export default function ReviewManager(props: Props) {
         signed={form.accepted_signature_present}
       />
 
-      <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 space-y-5 print:py-2">
+      <main className="print-area max-w-[1600px] mx-auto px-4 md:px-6 py-6 space-y-5 print:py-2">
+        {/* Print-only summary. globals.css `@media print` hides every
+            <input>/<select>/<textarea>, so the editable form below
+            collapses to bare labels in print. This block renders the
+            same values as static text so a printed proposal is useful.
+            Mirrors invoice review at src/app/invoices/[id]/page.tsx
+            (~L1010). Browser view ignores it via `hidden`; print view
+            reveals it via `print:block`. */}
+        <div className="hidden print:block mb-4 space-y-3">
+          <h1 className="text-xl font-semibold">
+            {form.vendor_name || "Proposal"}
+            {form.proposal_number ? ` — #${form.proposal_number}` : ""}
+          </h1>
+          <p className="text-sm">
+            Total: <Money cents={form.total_cents} /> · Date:{" "}
+            {form.proposal_date ?? "—"}
+            {form.valid_through ? ` · Valid through: ${form.valid_through}` : ""}
+            {form.job_address ? ` · Site: ${form.job_address}` : ""}
+          </p>
+          {form.scope_summary && (
+            <div>
+              <h2 className="text-sm font-semibold">Scope</h2>
+              <p className="text-sm whitespace-pre-line">{form.scope_summary}</p>
+            </div>
+          )}
+          {form.line_items.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold">
+                Line items ({form.line_items.length})
+              </h2>
+              <table className="w-full text-xs mt-1">
+                <thead>
+                  <tr>
+                    <th className="text-left">#</th>
+                    <th className="text-left">Description</th>
+                    <th className="text-right">Qty</th>
+                    <th className="text-left">UoM</th>
+                    <th className="text-right">Unit</th>
+                    <th className="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.line_items.map((li) => (
+                    <tr key={li.line_number}>
+                      <td>{li.line_number}</td>
+                      <td>{li.description}</td>
+                      <td className="text-right">{li.quantity ?? "—"}</td>
+                      <td>{li.unit_of_measure ?? "—"}</td>
+                      <td className="text-right">
+                        <Money cents={li.unit_price_cents} />
+                      </td>
+                      <td className="text-right">
+                        <Money cents={li.total_price_cents} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         {/* Action strip — h1 + buttons above the 50/50 hero. Mirrors the
             invoice review surface's action-strip pattern (per Q2). */}
         <header className="flex items-end justify-between gap-5 flex-wrap">
