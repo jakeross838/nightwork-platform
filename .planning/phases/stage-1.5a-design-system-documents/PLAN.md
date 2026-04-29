@@ -46,7 +46,7 @@ Lock the Nightwork design system as 6 canonical documents + a contrast-matrix ar
 | **T10c** | **NEW: Sample-data isolation hook** — extend `nightwork-post-edit.sh`: if file path matches `^src/app/design-system/.*\.(tsx?\|jsx?)$` AND imports `@/lib/(supabase\|org\|auth)/`, REJECT with explicit error. (Per CR2 / SPEC C6 / D9.) Note: distinguishes `from '@/lib/supabase/types'` (type-only — allowed) from `from '@/lib/supabase/server'` (module — rejected). Per R10 mitigation. | 45 min | Claude | T10a |
 | **T10d** | **NEW: Tenant-blind primitives hook** — extend `nightwork-post-edit.sh`: files under `src/components/ui/*.tsx` MUST NOT contain prop names `org_id`, `membership`, `vendor_id`, `orgId`, `membershipId`. REJECT. (Per H6 / SPEC C8 / A12.1.) | 30 min | Claude | T10a |
 | T11 | Verify `npm run build` passes after dep install (no regressions) | 10 min | Claude | T08, T08b, T09 |
-| **T11.5** | **NEW: `npm audit --audit-level=high`** — block on high/critical findings. (Per M-S2.) | 10 min | Claude | T08, T09 |
+| **T11.5** | **NEW: `npm audit`** — at first install, run `npm audit --audit-level=moderate` once and document any accepted-as-known moderates in `.planning/phases/stage-1.5a-design-system-documents/artifacts/npm-audit-baseline.json` (per security iteration-2 N3 — first-install gets stricter check; ongoing CI uses `--audit-level=high`). Block on high/critical findings. (Per M-S2 + N3.) | 15 min | Claude | T08, T09 |
 
 ### Wave 3 — Document drafting (parallel where dependencies allow)
 
@@ -60,7 +60,7 @@ Lock the Nightwork design system as 6 canonical documents + a contrast-matrix ar
 | T15 | Draft `.planning/design/PROPAGATION-RULES.md` — token-add, component-add, pattern-add workflows + propagate orchestrator integration + skill anchor section (A19.1) + shadcn-hybrid boundary rule + Storybook re-eval marker + audit-logging N/A note | 1.5 hr | Claude | T12, T13, T14 |
 | T16 | Draft `.impeccable.md` (root) — anchor frontend-design + impeccable skills to SYSTEM/COMPONENTS/PATTERNS | 30 min | Claude | T12, T13, T14 |
 | **T17a** | **SPLIT: PHILOSOPHY.md thesis** — 3 distinct directions, each with: name (distinct per Jake's hard rule), 2-3 paragraph thesis, would/wouldn't lists, distinctness self-review checklist (4 axes: reference benchmark / density / motion / typography weight) | 2 hr | Claude | T04 |
-| **T17b** | **SPLIT: PHILOSOPHY.md screen comparisons** — 9 concrete screen mockup descriptions (3 directions × invoice-review + dashboard + mobile-approval). Forbidden section lifted verbatim from Jake's brief. Locked-direction placeholder section (E5). | 4 hr | Claude | T17a, T12 |
+| **T17b** | **SPLIT: PHILOSOPHY.md screen comparisons** — 9 concrete screen mockup descriptions (3 directions × invoice-review + dashboard + mobile-approval). Forbidden section lifted verbatim from Jake's brief. Locked-direction placeholder section (E5). **Budget bumped from 4h to 4.5h** (per planner iteration-2 NEW-M1 — accounts for Forbidden lift + E5 placeholder + transitive distinctness check vs original 9-mockups-only budget). | 4.5 hr | Claude | T17a, T12 |
 
 ### Wave 4 — Components playground (parallel; T18-T26 after T13)
 
@@ -70,11 +70,11 @@ Lock the Nightwork design system as 6 canonical documents + a contrast-matrix ar
 | **T18.5** | **NEW: Middleware edit** — Add `/design-system/:path*` matcher to `src/middleware.ts`; in production, unconditional `isPlatformAdmin` check; non-admin returns `NextResponse.rewrite(new URL('/_not-found', req.url))` (404 not redirect). In dev, gate to authenticated users. NO env-var bypass. (Per CR1 / H12 / SPEC B7.) | 1 hr | Claude | T18 |
 | T19 | Create `src/app/design-system/page.tsx` — index of components + patterns + palette + typography + philosophy + forbidden | 1 hr | Claude | T18 |
 | **T19.5** | **NEW: Create `src/app/design-system/_fixtures/` directory** — sample-data constants (Button props, Vendor type, Invoice mock-data, etc.) — pure constants, no DB reads, no `getCurrentMembership()`. Hook (T10c) enforces no imports from `@/lib/supabase|org|auth/`. | 30 min | Claude | T18 |
-| **T20a** | **SCOPE-CUT (replaces T20 single page): `src/app/design-system/components/inputs/page.tsx`** — Button, Input, Select, Combobox, DatePicker, Form. Per-component: variants, 6 states, token bindings, sample data, ARIA notes, anti-patterns. | 60 min | Claude | T13, T18, T19.5 |
+| **T20a** | **SCOPE-CUT (replaces T20 single page): `src/app/design-system/components/inputs/page.tsx`** — Button, Input, Select, Combobox, DatePicker, Form. Per-component: variants, 6 states, token bindings, sample data (constants from `_fixtures/` only), ARIA notes, anti-patterns. **Do NOT refactor existing inline SVG icons in this phase** (per planner M-P2 carryover; SVG migration is deferred per scope §4). | 60 min | Claude | T13, T18, T19.5 |
 | **T20b** | **`/components/surfaces` page** — Card, Modal, Drawer, Sheet, Tabs | 60 min | Claude | T13, T18, T19.5 |
 | **T20c** | **`/components/feedback` page** — Toast, Banner, Empty State, Loading State, Error State, Skeleton | 60 min | Claude | T13, T18, T19.5 |
-| **T20d** | **`/components/navigation` page** — AppShell, Tabs-as-nav, Breadcrumb | 60 min | Claude | T13, T18, T19.5 |
-| **T20e** | **`/components/data-display` page** — Table, DataGrid, ConfidenceBadge | 60 min | Claude | T13, T18, T19.5 |
+| **T20d** | **`/components/navigation` page** — AppShell, Tabs-as-nav, Breadcrumb | **30 min** (rebalanced — fewer/simpler components per planner iteration-2 NEW-M2) | Claude | T13, T18, T19.5 |
+| **T20e** | **`/components/data-display` page** — Table, DataGrid, ConfidenceBadge | **90 min** (rebalanced — DataGrid is the riskiest single component; budget moves from T20d to here per planner iteration-2 NEW-M2) | Claude | T13, T18, T19.5 |
 | **T20f** | **`/components/overlays` page** — Tooltip, Popover, Confirm, HoverCard | 60 min | Claude | T13, T18, T19.5 |
 | **T20g** | **NEW: error.tsx boundary on each category page** (per M-E4 / SPEC B10) — 6 boundaries, "this component preview failed; check console" fallback + Sentry tag | 30 min | Claude | T20a-T20f |
 | T21 | Create `src/app/design-system/palette/page.tsx` — Q1 side-by-side palette comparison + per-token contrast labels | 1 hr | Claude | T03, T18 |
