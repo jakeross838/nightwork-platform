@@ -104,7 +104,7 @@ Filetype mix at top level: ~85% PDF, ~5% XLSX/XLS, ~3% DOCX, ~5% JPG/PNG/JPEG, p
 
 **Vendors referenced in Drummond filenames:** ~17+ distinct trade vendors (electrical, plumbing, drywall, framing/carpentry, foundation, lumber, drainage, paint, tile, roofing, utilities, big-box hardware, framing-specialty, drywall-specialty). Most of these are not in Supabase.
 
-**Address pattern coherence:** Filenames use the construction-site address (501 74th St) consistently. Zero hits on the homeowner residence address. Confirms the Source 2 jobs.address ("712 North Shore Dr") is the homeowner residence/billing address, not the construction site.
+**Address pattern coherence:** Filenames use the construction-site address (501 74th, Holmes Beach FL) consistently. Per Jake's clarification 2026-04-29, the Source 2 (Supabase) `jobs.address` and `client_name` for the Drummond record are synthetic placeholder values — not real homeowner data. The real Drummond data has not been ingested into Supabase.
 
 ---
 
@@ -112,8 +112,8 @@ Filetype mix at top level: ~85% PDF, ~5% XLSX/XLS, ~3% DOCX, ~5% JPG/PNG/JPEG, p
 
 | Fact | Source coherence |
 |---|---|
-| Construction site address | Source 1 + Source 3 corroborate (501 74th St) |
-| Homeowner residence address | Source 2 only (712 North Shore Dr) |
+| Construction site address | Source 1 + Source 3 corroborate (501 74th, Holmes Beach FL — real per Jake 2026-04-29) |
+| Source 2 (Supabase) Drummond `jobs.address` and `client_name` | **Synthetic placeholder data, not real**. Real Drummond data has not been ingested. |
 | Vendor count on Drummond invoices | Source 2: 1 / Source 3: 17+ — **massive divergence** (Source 3 reflects real history; Source 2 has only one synthetic test invoice) |
 | Pay app count | Source 2: 0 draws / Source 3: ~5 historical pay apps (Drs 1–5) — divergence reflects un-ingested historical data |
 | Budget | Source 2: 0 budget_lines / Source 3: at least 1 recent budget XLSX |
