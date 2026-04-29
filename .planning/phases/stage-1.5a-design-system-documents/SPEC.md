@@ -1,12 +1,18 @@
 # Spec — stage-1.5a-design-system-documents
 
-**Status:** LOCKED v2 2026-04-29 (post plan-review iteration 1; addresses CR1-CR7 + 14 HIGH + 13 MEDIUM-inline)
+**Status:** LOCKED v2.1 2026-04-29 (post plan-review iteration 1 + post-T07 cleanup amendments per nwrp12)
 **Phase:** Stage 1.5a (per MASTER-PLAN.md §12, D-009)
 **Dependencies:** EXPANDED-SCOPE.md APPROVED, SETUP-COMPLETE.md exists, DISCUSSION.md (v2) resolved
 
 This spec is the contract between PLAN.md (what gets built) and the verifier (`nightwork-spec-checker` at `/nightwork-qa` time). Every acceptance criterion is falsifiable. Per D-015 — acceptance criteria are required.
 
 **v2 changelog:** New criteria A2.1-A2.2 (Forbidden quantification), A3.1 (contrast matrix artifact), A11.1-A11.7 (brand-customization contract), A12.1 (tenant-blind primitives), A14 expanded (12 patterns), A16.1 (reconciliation rejection criteria), A18.1 (mobile density mapping), B2 scope-cut (6 category pages), B7 upgraded (middleware enforcement), C1 expanded (specific package list with versions), D5.1 (Forbidden hook), D6.1 (axe-core artifact), D9 (sample-data isolation), E4 (CP2 pick-affordance UI), E5 (locked-direction placeholder).
+
+**v2.1 changelog (post-T07 cleanup amendments):**
+- **Amendment 1 — A12.2** rewritten to add the "Icon Library Boundary": `lucide-react` (transitive of shadcn) is contained inside `src/components/ui/*.tsx` only; Nightwork-authored UI uses `@heroicons/react` exclusively.
+- **Amendment 2 — A13** rewritten to reflect installation reality: `@base-ui/react` (the Radix-team's newer library) is what shadcn 4.x ships with; no `@radix-ui/*` packages installed.
+- **Amendment 3 — C1** expanded: full installed dependency list with versions, `tw-animate-css` swap to `tailwindcss-animate` (Tailwind v3 compatibility — see audit-notes/T07-twanimate-evaluation.md), `shadcn` CLI moved to `devDependencies`, `isomorphic-dompurify` already installed acknowledged.
+- **NEW C9** — Slate-aware shadcn token remap. `--background`/`--foreground`/etc. shadcn token names alias to Slate values from `colors_and_type.css`. `--radius: 0` per A2.1.
 
 ---
 
@@ -64,9 +70,9 @@ Lock the Nightwork design system as a set of canonical documents + a live compon
 - [ ] **A11.7.** One logo per org, one accent per org. Override write requires owner/admin role. Every mutation audit-logs to `activity_log` with `action='branding.logo_updated'` or `branding.accent_updated`.
 - [ ] **A12.** `.planning/design/COMPONENTS.md` inventory has every component from Jake's list (Button, Input, Select, Combobox, DatePicker, Table, DataGrid, Card, Modal, Drawer, Sheet, Tabs, Toast, Banner, Empty State, Loading State, Error State, Skeleton, Tooltip, Popover, Form) plus implicit extensions (FileDropzone, ConfidenceBadge, NwEyebrow + NwButton existing-codification, AppShell). Columns: Component | Source (custom/shadcn/tanstack) | Variants | Required props | Token bindings | Snapshot states (default/hover/focus/disabled/loading/error) | Accessibility notes | Mobile behavior | Anti-patterns.
 - [ ] **A12.1.** COMPONENTS.md "Tenant-blind primitives" rule — primitives in `src/components/ui/` (shadcn output) MUST NOT accept tenant-identifying props (no `org_id`, no `membership`, no `vendor_id`). Tenant-aware composition lives in `src/components/<domain>/` only. Enforced by post-edit hook (per H6).
-- [ ] **A12.2.** COMPONENTS.md "Iconography" subsection — semantic icon→use mapping. Heroicons outline (stroke 1.5) for: status, action, navigation, file-type, progress, alert. Specific icon names enumerated per use (per M-DP4).
+- [ ] **A12.2.** COMPONENTS.md "Iconography" subsection — All new Nightwork-authored icon usage MUST use `@heroicons/react` (outline, stroke 1.5). Lucide ships internally with shadcn primitives in `src/components/ui/` and is allowed ONLY inside those primitive components — never imported directly into Nightwork-authored UI in `src/components/<domain>/` or `src/app/`. Icon→use mapping (semantic) per Heroicons: status, action, navigation, file-type, progress, alert. Specific Heroicons names enumerated per use (per M-DP4). **"Icon Library Boundary" section** in COMPONENTS.md formalizes the rule: lucide-react is a transitive dep of shadcn and is contained inside `src/components/ui/*.tsx` only.
 - [ ] **A12.3.** COMPONENTS.md "Brand Customization" section — restates the A11.1-A11.7 contract from the COMPONENTS perspective (which components consume `--brand-accent` / `--brand-logo`; how the override flows through to button/header/loading-state surfaces).
-- [ ] **A13.** COMPONENTS.md DataGrid entry uses TanStack Table v8 (per Q8=A); Combobox uses cmdk; DatePicker uses react-day-picker; Drawer uses Vaul; Tooltip + Popover use Radix.
+- [ ] **A13.** COMPONENTS.md DataGrid entry uses TanStack Table v8 (per Q8=A); Combobox uses cmdk; DatePicker uses react-day-picker; Drawer uses Vaul; **Tooltip + Popover + HoverCard use `@base-ui/react` (the Radix-team's newer library; shadcn 4.x registry default).** No `@radix-ui/*` packages installed — `@base-ui/react@1.4.1` is the single primitives surface.
 - [ ] **A14.** `.planning/design/PATTERNS.md` has all 12 patterns: 9 Jake-named (Document Review, Dashboard, Settings, List+Detail, Wizard, Empty Workspace, Print View, Mobile Approval, Reconciliation) + AppShell + Audit Timeline (per H3) + File Uploader (per H4 partial). Each entry: when to use / when NOT, required regions + responsive behavior, data shape contract, example states, reference implementation (if exists), print behavior, mobile behavior.
 - [ ] **A15.** PATTERNS.md "Document Review" entry treats `src/app/invoices/[id]/page.tsx` as the reference implementation. Lifts the existing `nightwork-ui-template` skill's contract verbatim and elaborates with explicit data-shape + example-state details.
 - [ ] **A16.** PATTERNS.md "Reconciliation" defines required regions (header, left rail, right rail, center, bottom, audit timeline), data shape contract, **4 candidate visualization models** (side-by-side delta / inline diff / timeline overlay / hybrid: header-level timeline + line-level inline diff per H2) with no model picked yet — 1.5b mock-up will pick (per D5 + Q12=B).
@@ -93,18 +99,24 @@ Lock the Nightwork design system as a set of canonical documents + a live compon
 
 ### Group C — Dependencies + integration
 
-- [ ] **C1.** `package.json` adds (specific versions pinned at first install — exact pinned versions captured in T07/T08 commit):
-  - `@radix-ui/react-popover` (latest stable)
-  - `@radix-ui/react-tooltip` (latest stable)
-  - `cmdk` (latest stable)
-  - `react-day-picker` (latest stable)
-  - `vaul` (latest stable)
-  - `class-variance-authority` (latest stable; auto-installed by shadcn init)
-  - `tailwind-merge` (latest stable; auto-installed by shadcn init)
-  - `@heroicons/react` (latest stable, v2.x)
-  - `@tanstack/react-table` (v8.x)
+- [ ] **C1.** `package.json` adds (specific versions pinned at first install — actual pinned versions captured at install time):
+  - `@base-ui/react@^1.4.1` (Radix-team's newer library; shadcn 4.x registry default; replaces `@radix-ui/react-popover` and `@radix-ui/react-tooltip` from v1 SPEC)
+  - `class-variance-authority@^0.7.1` (auto-installed by shadcn init)
+  - `clsx@^2.1.1` (auto-installed by shadcn init)
+  - `tailwind-merge@^3.5.0` (auto-installed by shadcn init)
+  - `lucide-react@^1.14.0` (auto-installed by shadcn init; SCOPED to `src/components/ui/` per A12.2 Icon Library Boundary — NOT a direct Nightwork-authored icon source)
+  - `tailwindcss-animate@^1.0.7` (Tailwind v3-compatible motion utilities; replaces `tw-animate-css` which is Tailwind v4 only — see Amendment 3 + T07 evaluation)
+  - `cmdk` (added at T08 alongside combobox install)
+  - `react-day-picker` (added at T08 alongside calendar/datepicker install)
+  - `vaul` (added at T08 alongside drawer install)
+  - `@heroicons/react@^2.2.0` (T09 — Nightwork-authored icon library per A12.2)
+  - `@tanstack/react-table@^8.21.3` (T09 — DataGrid base per Q8=A)
 
-  Existing custom components (NwButton, NwEyebrow, NwInput) NOT migrated to shadcn (per D1=C). `npm audit --audit-level=high` passes after install (per M-S2).
+  Notes:
+  - `shadcn@^4.6.0` CLI lives in `devDependencies` (it's a CLI invoked via `npx`, not runtime).
+  - `isomorphic-dompurify@^3.10.0` is **already** installed pre-1.5a — used by A11.5 SVG sanitization for brand-logo upload.
+  - Existing custom components (NwButton, NwEyebrow, NwInput) NOT migrated to shadcn (per D1=C).
+  - `npm audit --audit-level=high` baseline captured at `.planning/phases/stage-1.5a-design-system-documents/artifacts/npm-audit-baseline.{md,json}` per M-S2 + N3. **Pre-existing high findings** (Next.js 14, react-pdf 7, exceljs uuid, eslint-config-next 14, @xmldom in mammoth, tar/glob in build tooling) accepted-with-rationale — none introduced by Stage 1.5a's three new direct deps. Block on **new** high/critical findings only.
 
 - [ ] **C2.** `src/components/ui/` directory created with shadcn-generated primitives (Combobox, Calendar/DatePicker, Drawer, Tooltip, Popover, HoverCard) per `npx shadcn-ui@latest add`.
 - [ ] **C3.** CLAUDE.md "UI rules" section updated: SYSTEM.md is the single source of truth for tokens; CLAUDE.md links to it for reference. Calibri correction stands. Edit narrowly scoped to "UI rules" section only — Architecture Rules, Development Rules, and platform admin sections untouched (per M-S4).
@@ -113,6 +125,8 @@ Lock the Nightwork design system as a set of canonical documents + a live compon
 - [ ] **C6.** Post-edit hook extended with **sample-data isolation** (per CR2 / D9): if file path matches `^src/app/design-system/.*\.(tsx?|jsx?)$` AND imports `@/lib/(supabase|org|auth)/`, REJECT with explicit error message. Verified by attempting a test-import (positive test).
 - [ ] **C7.** Post-edit hook extended with **Forbidden-list enforcement** (per H7 / D5.1): regex check for `cubic-bezier\([^)]*,[^)]*,\s*[12]\.[0-9]` (bouncy easing) and `rounded-(lg|xl|2xl|3xl|full)` outside avatar/dot patterns (oversized rounded corners). REJECT with quantified error message referencing A2.1 thresholds.
 - [ ] **C8.** Post-edit hook extended with **tenant-blind primitives rule** (per H6 / A12.1): files under `src/components/ui/*.tsx` MUST NOT contain prop names `org_id`, `membership`, `vendor_id`, `orgId`, `membershipId`. REJECT with explicit error.
+
+- [ ] **C9.** **Slate-aware shadcn token remap** (NEW per Amendment / Stage 1.5a Wave 2 cleanup). Shadcn token names (`--background`, `--foreground`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`, `--card`, `--popover`, `--radius`, `--chart-{1..5}`, `--sidebar`, `--sidebar-*`) are aliased in `globals.css` to Slate token values from `colors_and_type.css` — NEVER replace Slate as source-of-truth. `--radius` overridden to `0` (per A2.1 Forbidden — except avatars + status dots use `--radius-dot: 999px` from colors_and_type.css). Both `:root[data-theme="light"]` (light) and `:root[data-theme="dark"]` / `[data-theme="dark"]` (dark) blocks honor this aliasing. No neutral OKLCH tokens persist; all shadcn primitives inherit Slate via the alias indirection. Verify by grep: `grep -c "oklch(" src/app/globals.css` returns 0 post-cleanup.
 
 ### Group D — Quality gates
 
@@ -182,4 +196,4 @@ The verifier (`nightwork-spec-checker` at `/nightwork-qa` time) verifies accepta
 
 If any criterion is MISSING or PARTIAL at QA time, the verdict is BLOCKING. Strategic Checkpoint #2 cannot happen until all are COVERED.
 
-**Total: 51 falsifiable acceptance criteria** (was 42 in v1; +9 net after consolidation).
+**Total: 52 falsifiable acceptance criteria** (was 42 in v1; +9 in v2; +1 in v2.1 for C9).
