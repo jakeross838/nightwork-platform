@@ -109,6 +109,11 @@ skills-lock.json
 # PCs because /np reads EXPANDED-SCOPE and /nx reads SETUP-COMPLETE. Per D-018.
 !/.planning/expansions/
 !/.planning/expansions/**
+# phases/ — phase artifacts (DISCUSSION.md, SPEC.md, PLAN.md, PLAN-REVIEW.md,
+# MANIFEST.md, STATE.md). These must sync across PCs because /np produces
+# them and /nx reads them. Per D-018 + GSD convention.
+!/.planning/phases/
+!/.planning/phases/**
 
 # smoke + E2E runtime logs (ephemeral, regenerated each run)
 /e2e-state.json
