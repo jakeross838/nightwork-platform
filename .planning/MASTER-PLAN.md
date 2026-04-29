@@ -144,19 +144,19 @@ The build path is divided into stages. Stages are coarser than phases — a stag
 
 ## 9. CURRENT POSITION
 
-- **Current stage:** Stage 0 → transitioning to Stage 1.
-- **Current phase:** build-system setup complete; vision + audit (Stage 1) is next.
+- **Current stage:** Stage 1 — Vision + Audit complete. Awaiting Strategic Checkpoint #1 with Jake.
+- **Current phase:** Stage 1 architecture documents shipped; Stage 1.5a (design system documents) is next after CP1.
 - **Current branch:** `nightwork-build-system-setup`.
-- **Last commit on branch:** `87706be chore: baseline security headers (CSP) for Vercel deploy` (2026-04-29).
+- **Last commit on branch:** Stage 1 commits added 2026-04-29 (VISION → CURRENT-STATE → DRUMMOND-FIXTURE-SUMMARY → TARGET → Drummond clarifications → GAP).
 - **Production deploy:** `https://nightwork-platform.vercel.app` (alias) backed by `dpl_pkesin29g` 2026-04-29 — healthy, CSP live with `worker-src 'self' blob:` for PDF.js, `frame-ancestors 'none'`, all required upstreams allowed.
-- **Last QA verdict:** WARNING (post-fix) — 0 BLOCKING / 0 CRITICAL / 0 HIGH / 3 MEDIUM (deferred) / 2 LOW (deferred) / 4 NOTE (deferred). Report: `.planning/qa-runs/2026-04-29-1020-qa-report.md`. The HIGH CSP finding from `.planning/qa-runs/2026-04-29-1012-qa-report.md` was resolved in-loop.
-- **Outstanding before Stage 1:**
-  - ✅ HIGH CSP — resolved.
-  - ✅ `NEXT_PUBLIC_APP_URL` — fixed in both Production and Preview (now `https://nightwork-platform.vercel.app`).
-  - ✅ Tech debt registry — see §11.
-  - ✅ Anti-drift mechanisms — MASTER-PLAN.md (this file), strengthened session-start hook, `nightwork-anti-drift` skill installed.
-  - ✅ Gitignore carve-outs — build system + canonical planning docs now sync via git (D-016). Transient outputs and sensitive fixtures remain local.
-- **Open MEDIUM/LOW/NOTE findings:** all deferred and tracked in §11. None blocking Stage 1.
+- **Last QA verdict:** WARNING (post-fix) — 0 BLOCKING / 0 CRITICAL / 0 HIGH / 3 MEDIUM (deferred) / 2 LOW (deferred) / 4 NOTE (deferred). Report: `.planning/qa-runs/2026-04-29-1020-qa-report.md`. Stage 1 is documentation-only; no QA run required.
+- **Stage 1 deliverables (committed):**
+  - ✅ `.planning/architecture/VISION.md` — full construction OS target across all 5 waves
+  - ✅ `.planning/architecture/CURRENT-STATE.md` — comprehensive diagnostic with 8 headline findings
+  - ✅ `.planning/architecture/DRUMMOND-FIXTURE-SUMMARY.md` — sanitized count-only summary committed; raw fixtures gitignored
+  - ✅ `.planning/architecture/TARGET.md` — ideal architecture with selective wipe-and-reseed migration strategy
+  - ✅ `.planning/architecture/GAP.md` — F0-F4 foundation phase sequence with falsifiable acceptance criteria
+- **Open MEDIUM/LOW/NOTE findings:** all deferred and tracked in §11. None blocking the foundation phases F0-F4.
 
 ## 10. DECISIONS LOG
 
@@ -180,6 +180,7 @@ Major decisions made during planning. Each entry is point-in-time; do not retroa
 | **D-014** | 2026-04 | AgentShield baseline scan — 3 critical findings are false positives, deferred | The flagged patterns are guarded elsewhere; full re-audit on Stage 1 close |
 | **D-015** | 2026-04-29 | Anti-drift mechanisms via MASTER-PLAN.md + strengthened session-start hook + `nightwork-anti-drift` skill | Files were scattered across `.planning/`; no single doc captured the full picture; no hook guaranteed Claude Code read it; this triple closes that gap |
 | **D-016** | 2026-04-29 | Gitignore carve-outs added so build system + canonical planning docs sync via git. Transient outputs (`qa-runs`, `plan-reviews`, `drift-checks`, `e2e-runs`, `design-checks`, `custodian-runs`, `propagate`) and sensitive fixtures (`fixtures/`, `audits/`) remain local-only. | Resolves the meta-drift identified in nwrp4 final report — the anti-drift system itself was PC-local. Also fixed a false-positive in `nightwork-pre-commit.sh` that matched "BLOCKING" anywhere on the verdict line; now extracts only the leading bolded verdict token. |
+| **D-017** | 2026-04-29 | Stage 1 (Vision + Audit + Drummond fixture pull) complete. 4 architecture documents committed at `.planning/architecture/{VISION,CURRENT-STATE,DRUMMOND-FIXTURE-SUMMARY,TARGET,GAP}.md`. Drummond fixture pull from 3 sources (P-drive 408 files / Supabase 25 JSON exports of synthetic-stub data / Downloads 163 Tier-1+2 files) confirmed the data-ingestion gap as concrete: Supabase Drummond record uses synthetic placeholder data; real Drummond financial history (5 historical pay apps, 1 lien-release batch, recent budget XLSX, T&M and lump-sum reference invoices) exists only in P-drive folders + Downloads files. VISION introduced V.1 universal entity envelope, V.2 universal export/import contract, V.3 universal document provenance. TARGET recommends selective wipe-and-reseed (cost codes + dead `change_order_budget_lines`) with incremental migration elsewhere. GAP proposes F0 prep + F1 entity model + F2 workflow framework + F3 platform primitives + F4 refactor sequence (~31-44 days total). 8 architectural decisions and 13 assumptions flagged for Strategic Checkpoint #1 disposition. | The Stage 1 audit surfaced 4 CRITICAL gaps (no background jobs, no D-008 import/export framework, rate limiting absent, dashboard 503 from RLS policy-stack overhead — not missing indexes), 9 HIGH gaps, and 17 MEDIUM/LOW. Foundation sequence is locked-in pending CP1 confirmation; sequence-rationale documented in GAP §B. Drummond Supabase address+client_name confirmed synthetic per Jake mid-Stage-1; real homeowner data intentionally not committed. |
 
 ## 11. TECH DEBT REGISTRY
 
@@ -212,13 +213,18 @@ Updated continuously by `nightwork-custodian` after each `/gsd-ship`. Order is a
 - ✅ Fix `NEXT_PUBLIC_APP_URL` (resolved 2026-04-29).
 - ✅ Establish anti-drift (MASTER-PLAN.md + session-start hook + anti-drift skill — this session).
 
-**Stage 1 — Vision + Audit:**
-- Drummond P-drive scan: walk the file system, catalogue every artifact relevant to the platform.
-- Vision pass on canonical mission: re-read `docs/nightwork-plan-canonical-v1.md` §1, §2, §11 with fresh eyes; surface contradictions or missing pieces.
-- Audit existing surfaces: invoice review, proposals review, dashboards, settings — score against design system, design tokens, multi-tenant rules, financial-audit rules.
-- Output: a written vision doc + a numbered audit-findings list. **Strategic Checkpoint #1** with Jake.
+**Stage 1 — Vision + Audit (COMPLETE 2026-04-29):**
+- ✅ Drummond P-drive scan — 408 files / 1.06 GB across 17 categories inventoried.
+- ✅ Drummond Supabase pull — 25 table JSONs exported; revealed Supabase Drummond record is synthetic placeholder data, not real.
+- ✅ Drummond Downloads filename hunt — 163 Tier-1+2 files (~160 MB) including 5 historical pay apps, 1 lien-release batch, recent budget, T&M + lump-sum reference invoices.
+- ✅ VISION.md — full construction OS target across all 5 waves, 40 entities, V.1/V.2/V.3 architectural principles added on top of canonical R.1-R.23.
+- ✅ CURRENT-STATE.md — entity coherence (16 COMPLETE / 9 PARTIAL / 5 COEXISTING / 12 MISSING / 4 AMBIGUOUS), workflow consistency, platform primitives (4 CRITICAL gaps), code health, dashboard 503 root cause (RLS policy-stack overhead), ingestion gap.
+- ✅ DRUMMOND-FIXTURE-SUMMARY.md — sanitized count-only summary committed.
+- ✅ TARGET.md — ideal architecture with selective wipe-and-reseed migration strategy.
+- ✅ GAP.md — F0-F4 foundation phase sequence with falsifiable acceptance criteria; ~31-44 calendar days.
+- → **Strategic Checkpoint #1 with Jake** (next).
 
-**Stage 1.5a — Design system documents:**
+**Stage 1.5a — Design system documents (after CP1):**
 - `.planning/design/PHILOSOPHY.md`, `SYSTEM.md`, `COMPONENTS.md`, `PATTERNS.md`.
 
 **Stage 1.5b — Prototype gallery (Strategic Checkpoint #2):**
