@@ -301,15 +301,58 @@ const REWRITES: Rewrite[] = [
     replacement: (_match, n: string) => `calc(0.25rem * ${n})`,
   },
 
+  // 11b. supports-WORD:Y → supports-[WORD]:Y (v4 shorthand)
+  // Tailwind v4 added bare-word `supports-feature:` sugar (e.g. `supports-grid:`,
+  // `supports-backdrop-filter:`). v3 requires the explicit arbitrary-value form.
+  // Match `supports-(name):` where name is a CSS feature query identifier
+  // (alphanum + hyphens; not a `[` since that's already v3-valid).
+  {
+    id: "v4-supports-bare",
+    label: "supports-FEATURE: → supports-[FEATURE]: (CSS @supports query)",
+    pattern: /\bsupports-([a-z][a-z0-9-]+):/g,
+    replacement: (_match, feature: string) => {
+      // Skip if the captured feature is already a known v3-config value
+      // (extremely unlikely without theme.supports config). Always rewrite
+      // — v3 resolves `supports-[name]:` correctly.
+      return `supports-[${feature}]:`;
+    },
+  },
+
+  // 11c. backdrop-blur-xs → backdrop-blur-[2px] (v4-only utility)
+  // Tailwind v4 added `xs: 2px` to the blur scale; v3 default scale starts at
+  // `sm: 4px`. Use arbitrary value to preserve the slight-blur intent.
+  {
+    id: "v4-backdrop-blur-xs",
+    label: "backdrop-blur-xs → backdrop-blur-[2px] (v3 has no xs)",
+    pattern: /\bbackdrop-blur-xs\b/g,
+    replacement: "backdrop-blur-[2px]",
+  },
+
+  // 11d. blur-xs → blur-[2px] (same v4-only addition for non-backdrop blur)
+  {
+    id: "v4-blur-xs",
+    label: "blur-xs → blur-[2px] (v3 has no xs)",
+    pattern: /\bblur-xs\b/g,
+    replacement: "blur-[2px]",
+  },
+
   // 12. SPEC A2.1 — rounded variants on rectangular elements → rounded-none
   // Avatar/dot exceptions are NOT in the 6 primitives this phase installs;
   // sweep all rounded → rounded-none. Spot-check each primitive flags
   // any unintended cases.
+  //
+  // Includes directional rounded utilities: rounded-t-xl, rounded-r-md,
+  // rounded-b-lg, rounded-l-xl, rounded-tl-md, rounded-tr-lg, rounded-bl-xl,
+  // rounded-br-2xl, etc. The directional infix is one of:
+  //   t (top), r (right), b (bottom), l (left)
+  //   tl/tr/bl/br (corners)
+  //   ts/te/bs/be (logical: top-start, top-end, bottom-start, bottom-end —
+  //                Tailwind v4 added these for RTL support)
   {
     id: "spec-a2.1-rounded-rectangle",
-    label: "rounded-{md,sm,lg,xl,2xl,3xl,full,[Npx]} → rounded-none (SPEC A2.1)",
+    label: "rounded-{,t,r,b,l,tl,tr,bl,br,ts,te,bs,be}-{md,sm,lg,xl,2xl,3xl,full,[Npx]} → rounded-none",
     pattern:
-      /\brounded-(?:md|sm|lg|xl|2xl|3xl|full|\[(?!0(?:px)?\])\d+(?:\.\d+)?px?\])/g,
+      /\brounded(?:-(?:t|r|b|l|tl|tr|bl|br|ts|te|bs|be|s|e|ss|se|es|ee))?-(?:md|sm|lg|xl|2xl|3xl|full|\[(?!0(?:px)?\])\d+(?:\.\d+)?px?\])/g,
     replacement: "rounded-none",
   },
 ];
@@ -396,13 +439,31 @@ const V4_SANITY_PATTERNS: Array<{ id: string; pattern: RegExp; label: string }> 
     pattern: /--spacing\(/,
     label: "--spacing(…)",
   },
+  {
+    id: "v4-supports-bare",
+    // Match supports-WORD: but NOT supports-[WORD]: (already v3) and NOT
+    // mid-class. Allow alphanum identifiers with hyphens.
+    pattern: /(?<![a-z0-9-])supports-[a-z][a-z0-9-]+:/,
+    label: "supports-FEATURE: (bare-word @supports shorthand)",
+  },
+  {
+    id: "v4-backdrop-blur-xs",
+    pattern: /\bbackdrop-blur-xs\b/,
+    label: "backdrop-blur-xs (v4-only utility)",
+  },
+  {
+    id: "v4-blur-xs",
+    pattern: /\bblur-xs\b/,
+    label: "blur-xs (v4-only utility)",
+  },
 ];
 
 const A2_1_SANITY_PATTERNS: Array<{ id: string; pattern: RegExp; label: string }> = [
   {
     id: "spec-rounded",
-    pattern: /\brounded-(?:md|sm|lg|xl|2xl|3xl|full)\b/,
-    label: "rounded-{md,sm,lg,xl,2xl,3xl,full} (SPEC A2.1 violation)",
+    // Match rounded-{md,sm,lg,xl,2xl,3xl,full} OR directional rounded-{t,r,b,l,…}-{md,…}
+    pattern: /\brounded(?:-(?:t|r|b|l|tl|tr|bl|br|ts|te|bs|be|s|e|ss|se|es|ee))?-(?:md|sm|lg|xl|2xl|3xl|full)\b/,
+    label: "rounded-{,t,r,b,l,tl,tr,bl,br}-{md,sm,lg,xl,2xl,3xl,full} (SPEC A2.1 violation)",
   },
 ];
 
