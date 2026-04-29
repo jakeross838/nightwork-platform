@@ -17,7 +17,7 @@
 | T04 — Audit skills + invoice review template | 2026-04-29 | 2026-04-29 | `.planning/phases/stage-1.5a-design-system-documents/audit-notes/T04-skills-and-template.md` | COMPLETE |
 | T05 — Audit existing custom components | 2026-04-29 | 2026-04-29 | `.planning/phases/stage-1.5a-design-system-documents/audit-notes/T05-custom-components.md` | COMPLETE |
 | T06 — Inventory existing icons | 2026-04-29 | 2026-04-29 | `.planning/phases/stage-1.5a-design-system-documents/audit-notes/T06-icon-inventory.md` | COMPLETE |
-| PRE-T07 — Backup config files | 2026-04-29 | _pending_ | `.planning/phases/stage-1.5a-design-system-documents/_backups/` | RUNNING |
+| PRE-T07 — Backup config files | 2026-04-29 | 2026-04-29 | `.planning/phases/stage-1.5a-design-system-documents/_backups/` (5 files + README) | COMPLETE |
 | T07 — `npx shadcn-ui@latest init` | n/a | n/a | n/a | HALTED — Jake-interactive |
 
 ---

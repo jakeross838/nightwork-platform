@@ -1,0 +1,165 @@
+/* Nightwork Design System — Slate palette tokens (additive only).
+   Full reference: .claude/skills/nightwork-design/colors_and_type.css
+
+   This file adds ONLY new --nw-* brand tokens and design-system variables.
+   It does NOT override any existing semantic tokens (--bg-page, --text-primary,
+   --border-default, etc.) or element defaults. Those overrides happen later
+   when components are restyled to use the Slate palette.
+
+   Fonts loaded via next/font in layout.tsx, not Google Fonts @import. */
+
+:root {
+  /* -- Raw brand tokens (Slate palette) -- */
+  --nw-slate-tile:   #3B5864;
+  --nw-slate-deep:   #1A2830;
+  --nw-slate-deeper: #132028;
+  --nw-stone-blue:   #5B8699;
+  --nw-gulf-blue:    #4E7A8C;
+  --nw-oceanside:    #CBD8DB;
+  --nw-white-sand:   #F7F5EC;
+  --nw-warn:         #C98A3B;
+  --nw-success:      #4A8A6F;
+  --nw-danger:       #B0554E;
+
+  /* -- Font families (available, not applied globally yet) -- */
+  --font-display: var(--font-space-grotesk, "Space Grotesk"), system-ui, sans-serif;
+  --font-body:    var(--font-inter, "Inter"), system-ui, -apple-system, sans-serif;
+  --font-mono:    var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* -- Type scale -- */
+  --fs-label:    10px;
+  --fs-label-sm: 11px;
+  --fs-meta:     12px;
+  --fs-sm:       13px;
+  --fs-body:     14px;
+  --fs-md:       15px;
+  --fs-lg:       17px;
+  --fs-xl:       20px;
+  --fs-h3:       22px;
+  --fs-h2:       30px;
+  --fs-h1:       38px;
+  --fs-display:  48px;
+  --fs-hero:     60px;
+
+  /* -- Tracking -- */
+  --tracking-eyebrow: 0.14em;
+  --tracking-button:  0.12em;
+  --tracking-tight:  -0.02em;
+  --tracking-wordmark: -0.03em;
+
+  /* -- Spacing (4px grid) -- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+
+  /* -- Radii (square is the rule; only avatars + status dots round) -- */
+  --radius-none: 0;
+  --radius-dot:  999px;
+
+  /* -- Shadows (used sparingly) -- */
+  --shadow-hover: 0 4px 6px -1px rgba(26, 40, 48, 0.08);
+  --shadow-panel: 0 8px 24px -12px rgba(26, 40, 48, 0.18);
+
+  /* -- Status dots -- */
+  --dot-active:    var(--nw-success);
+  --dot-warranty:  var(--nw-warn);
+  --dot-complete:  rgba(59, 88, 100, 0.55);
+}
+
+/* Light theme — explicit re-declaration so that a nested
+   `<div data-theme="light">` always resolves light values, even when the
+   page-level <html> element is in dark mode. Without this, the nested div
+   would inherit the dark vars from html. Used by the side-by-side preview
+   on /nw-test.
+
+   Selector list pairs `:root[data-theme="light"]` (specificity (0,2,0) —
+   matches the dark block's pattern so it beats globals.css's
+   `@layer base { :root { … } }` which otherwise re-declares the same
+   tokens and wins on equal specificity by being declared later) with the
+   bare `:root` and `[data-theme="light"]` so the defaults apply before
+   the theme cookie loads and so nested divs scope correctly. */
+:root,
+:root[data-theme="light"],
+[data-theme="light"] {
+  --bg-page:          var(--nw-white-sand);
+  --bg-card:          #FFFFFF;
+  --bg-subtle:        rgba(91, 134, 153, 0.06);
+  --bg-muted:         rgba(59, 88, 100, 0.08);
+  --bg-inverse:       var(--nw-slate-deep);
+  --bg-inverse-hover: var(--nw-slate-deeper);
+
+  --text-primary:   var(--nw-slate-tile);
+  --text-secondary: rgba(59, 88, 100, 0.70);
+  --text-tertiary:  rgba(59, 88, 100, 0.55);
+  --text-muted:     rgba(59, 88, 100, 0.40);
+  --text-inverse:   var(--nw-white-sand);
+  --text-accent:    var(--nw-gulf-blue);
+
+  --border-default: rgba(59, 88, 100, 0.15);
+  --border-subtle:  rgba(59, 88, 100, 0.08);
+  --border-strong:  rgba(59, 88, 100, 0.30);
+  --border-brand:   var(--nw-stone-blue);
+
+  --color-success: var(--nw-success);
+  --color-warning: var(--nw-warn);
+  --color-error:   var(--nw-danger);
+  --color-money:   var(--nw-slate-tile);
+
+  /* Part 2c — bridge legacy aliases so dark mode adapts.
+     bg-brand-card (Tailwind) → var(--color-white). text-cream-muted →
+     var(--text-body). Both were hardcoded in globals.css with no dark
+     override; route them through values that adapt per theme. */
+  --color-white: #FFFFFF;
+  --text-body:   var(--text-primary);
+}
+
+/* Dark theme — applied when <html data-theme="dark">. Inherits all raw
+   --nw-* tokens from :root above; only re-maps the semantic surface roles.
+   Derived to match the dark Slate reference screens (Invoice Detail, Draw
+   Wizard, Immersive Build) which use slate-deep as page bg, slate-deeper
+   for elevated surfaces, and white-sand text.
+
+   Selector list pairs `:root[data-theme="dark"]` (specificity (0,2,0) —
+   needed to beat the `:root` block in globals.css's `@layer base`, which
+   otherwise re-declares the same tokens with light values and wins on
+   equal specificity by being declared later) with `[data-theme="dark"]`
+   so the same overrides also apply to nested `<div data-theme="dark">` —
+   used by the side-by-side preview on /nw-test. */
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-page:          var(--nw-slate-deep);     /* #1A2830 */
+  --bg-card:          var(--nw-slate-deeper);   /* #132028 */
+  --bg-subtle:        rgba(247, 245, 236, 0.04);
+  --bg-muted:         rgba(247, 245, 236, 0.08);
+  --bg-inverse:       var(--nw-white-sand);     /* flipped — light surfaces in dark mode */
+  --bg-inverse-hover: rgba(247, 245, 236, 0.92);
+
+  /* Text */
+  --text-primary:   var(--nw-white-sand);
+  --text-secondary: rgba(247, 245, 236, 0.72);
+  --text-tertiary:  rgba(247, 245, 236, 0.55);
+  --text-muted:     rgba(247, 245, 236, 0.40);
+  --text-inverse:   var(--nw-slate-tile);
+  --text-accent:    var(--nw-oceanside);        /* lighter accent reads better on dark */
+
+  /* Borders */
+  --border-default: rgba(247, 245, 236, 0.08);
+  --border-subtle:  rgba(247, 245, 236, 0.04);
+  --border-strong:  rgba(247, 245, 236, 0.18);
+  --border-brand:   var(--nw-stone-blue);
+
+  /* Semantic — same hues read fine on both backgrounds (per Slate refs) */
+  --color-success: var(--nw-success);
+  --color-warning: var(--nw-warn);
+  --color-error:   var(--nw-danger);
+  --color-money:   var(--nw-white-sand);
+
+  /* Part 2c — bridge legacy aliases so dark mode adapts.
+     bg-brand-card (Tailwind) → var(--color-white). text-cream-muted →
+     var(--text-body). In dark, --color-white tracks --bg-card so
+     bg-brand-card surfaces resolve to the slate-deeper card color
+     instead of literal white. */
+  --color-white: var(--nw-slate-deeper);
+  --text-body:   var(--text-primary);
+}

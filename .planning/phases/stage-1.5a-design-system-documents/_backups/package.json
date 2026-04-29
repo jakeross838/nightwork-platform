@@ -1,0 +1,47 @@
+{
+  "name": "nightwork-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "dev:next": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "bulk-import": "npx tsx scripts/bulk-import.ts",
+    "backfill-cost-intelligence": "npx tsx scripts/backfill-cost-intelligence.ts",
+    "rematch-jobs": "npx tsx scripts/rematch-jobs.ts",
+    "rename-invoice-files": "npx tsx scripts/rename-invoice-files.ts",
+    "migrate-org-storage": "npx tsx scripts/migrate-org-scoped-storage.ts",
+    "reprocess-co-detection": "npx tsx scripts/reprocess-co-detection.ts",
+    "test": "npx tsx __tests__/_runner.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "@sentry/nextjs": "^10.49.0",
+    "@stripe/stripe-js": "^9.2.0",
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.103.0",
+    "exceljs": "^4.4.0",
+    "isomorphic-dompurify": "^3.10.0",
+    "mammoth": "^1.12.0",
+    "next": "14.2.35",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-pdf": "^7.7.3",
+    "stripe": "^22.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "dotenv": "^17.4.2",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "playwright": "^1.59.1",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

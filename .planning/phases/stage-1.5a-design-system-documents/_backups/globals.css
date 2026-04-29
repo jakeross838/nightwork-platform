@@ -1,0 +1,197 @@
+@import "./colors_and_type.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* All theme tokens live in colors_and_type.css (imported above).
+     Previous :root block here re-declared the same tokens with slightly
+     different light-mode values, creating subtle mismatches in dark mode.
+     Removed intentionally — colors_and_type.css is the single source. */
+
+  body {
+    background: var(--bg-page);
+    color: var(--text-body);
+    font-family: var(--font-body, "Inter"), system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+  ::selection { background: rgba(63, 88, 98, 0.2); color: var(--text-primary); }
+
+  /* Global disabled affordance for form controls. Browser defaults
+     were effectively invisible against our tinted backgrounds — the
+     allocations editor's locked fields looked editable to non-
+     privileged users on locked invoices (Phase 3a feedback). Tokens
+     flip automatically in dark theme. Tailwind's `disabled:opacity-*`
+     arbitrary variants still win (higher specificity) where
+     explicitly applied. */
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    background: var(--bg-muted);
+    color: var(--text-tertiary);
+    border-color: var(--border-subtle);
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  .grain::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    z-index: 9999;
+  }
+
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+
+  .card-hover { @apply transition-all duration-300; }
+  .card-hover:hover {
+    background: var(--bg-subtle);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  }
+
+  .focus-teal:focus-visible { outline: 2px solid var(--border-brand); outline-offset: 2px; }
+
+  .brass-underline { position: relative; }
+  .brass-underline::after {
+    content: "";
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 32px;
+    height: 1px;
+    background: var(--text-secondary);
+  }
+
+  /* DOCX preview — constrain whatever Mammoth generates to our palette */
+  .docx-html { font-size: 14px; color: var(--text-primary); }
+  .docx-html h1,
+  .docx-html h2,
+  .docx-html h3,
+  .docx-html h4 { font-weight: 500; color: var(--text-primary); margin: 1rem 0 0.5rem; }
+  .docx-html h2 { font-size: 18px; }
+  .docx-html h3 { font-size: 16px; }
+  .docx-html h4 { font-size: 14px; }
+  .docx-html p { margin: 0.4rem 0; line-height: 1.55; }
+  .docx-html ul, .docx-html ol { margin: 0.4rem 0 0.4rem 1.25rem; }
+  .docx-html li { margin: 0.15rem 0; }
+  .docx-html table { border-collapse: collapse; margin: 0.75rem 0; width: 100%; }
+  .docx-html th, .docx-html td {
+    border: 1px solid var(--border-default);
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .docx-html th { background: var(--bg-subtle); font-weight: 500; }
+  .docx-html strong { font-weight: 600; }
+
+  /* Nav link underline animation */
+  .nav-underline { position: relative; }
+  .nav-underline::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    background: white;
+    transition: width 0.25s ease, left 0.25s ease;
+  }
+  .nav-underline:hover::after,
+  .nav-underline.active::after {
+    width: 100%;
+    left: 0;
+  }
+
+  /* PDF line highlight — wraps text-layer substrings that match the
+     selected extraction line's raw_description. Translucent so the
+     canvas glyphs underneath stay legible. The react-pdf text layer
+     already sets color: transparent on descendants, so we inherit that
+     and just paint a background. */
+  .nw-highlight {
+    background: rgba(253, 224, 71, 0.55); /* yellow-300, alpha 55% */
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+  }
+  :root[data-theme="dark"] .nw-highlight,
+  [data-theme="dark"] .nw-highlight {
+    background: rgba(202, 138, 4, 0.5); /* amber-600, alpha 50% */
+    color: inherit;
+  }
+
+  /* Section header with rule */
+  .section-label {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: 16px;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+}
+
+/* Phase 8g — print stylesheets. Hide nav, sidebar, and interactive controls
+   when the user prints. Only the .print-area content remains. Per-page
+   layouts may add additional `print:hidden` class hints. */
+@media print {
+  /* Force light print background */
+  html, body { background: #ffffff !important; color: #000000 !important; }
+
+  /* Default: hide chrome that's not part of the printed content. Pages opt
+     content INTO the print view by wrapping it in `.print-area`. */
+  nav, header, footer, aside,
+  .nav-bar, .nav-area, .sidebar,
+  button, [role="button"],
+  input, select, textarea,
+  .no-print { display: none !important; }
+
+  /* Tight, readable type for printed pages */
+  body { font-size: 11pt; line-height: 1.4; }
+
+  /* Tables: visible borders, no row hover */
+  table { border-collapse: collapse !important; width: 100% !important; }
+  table th, table td {
+    border: 1px solid #999 !important;
+    padding: 4px 6px !important;
+    color: #000 !important;
+  }
+  table th { background: #f0f0f0 !important; font-weight: 600 !important; }
+
+  /* Avoid awkward page splits inside common layout blocks */
+  .print-area { max-width: 100% !important; padding: 0 !important; }
+  .print-page-break { page-break-after: always; }
+  .print-avoid-break { page-break-inside: avoid; }
+
+  /* Make links print as plain text (no underlines from theming) */
+  a, a:visited { color: #000 !important; text-decoration: none !important; }
+
+  /* Hide animated background grain */
+  .grain::after { display: none !important; }
+}
+
