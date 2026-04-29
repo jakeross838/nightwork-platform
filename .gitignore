@@ -114,6 +114,13 @@ skills-lock.json
 # them and /nx reads them. Per D-018 + GSD convention.
 !/.planning/phases/
 !/.planning/phases/**
+# design/ — canonical Nightwork design system documents (PHILOSOPHY.md,
+# SYSTEM.md, COMPONENTS.md, PATTERNS.md, PROPAGATION-RULES.md,
+# CONTRAST-MATRIX.md). Produced by stage-1.5a; consumed by every later UI
+# phase + by skills (nightwork-design, nightwork-design-tokens,
+# nightwork-ui-template). Must sync across PCs. Per D-018 + SPEC §2.
+!/.planning/design/
+!/.planning/design/**
 
 # smoke + E2E runtime logs (ephemeral, regenerated each run)
 /e2e-state.json
