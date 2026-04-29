@@ -127,6 +127,130 @@ if [[ "$FILE_NORM" =~ \.(ts|tsx)$ ]] && [[ ! "$FILE_NORM" =~ cost-codes/template
   fi
 fi
 
+# Stage 1.5a — T10a (existing token enforcement covers src/components/ui/)
+# The path filters above (src/* | */src/*) already include src/components/ui/.
+# The .tsx/.ts/.css block (block 1) already applies. T10a is satisfied
+# implicitly — no separate code needed; document for clarity.
+
+# Stage 1.5a — T10b: Forbidden-list enforcement (per SPEC A2.1 / D5.1).
+# Quantified violation criteria for tokens / motion / shadow / typography
+# that are universally banned by SPEC A2.1, regardless of token wrapper.
+# Hooks reject .tsx / .ts / .css edits that introduce any of:
+#
+#   - cubic-bezier with 4th arg >= 1.0   (bouncy easing — overshoot)
+#   - cubic-bezier with 2nd arg >= 1.0   (bouncy easing — early-spring)
+#   - rounded-{lg,xl,2xl,3xl,full} on non-avatar/dot files (oversized)
+#   - box-shadow with blur > 20px AND non-zero spread (dark glow)
+#   - HSL hue ∈ [270°, 320°]              (purple/pink — Notion/Slack-adjacent)
+if [[ "$FILE_NORM" =~ \.(tsx|ts|css|scss)$ ]]; then
+  # 4th arg ≥ 1.0 in cubic-bezier — explicit bounce overshoot
+  CB4_HITS=$(grep -nE "cubic-bezier\([^)]*,[^)]*,[^)]*,\s*[1-9]\.[0-9]" "$FILE" | head -3 || true)
+  if [ -n "$CB4_HITS" ]; then
+    echo "[forbidden-A2.1] Bouncy easing — cubic-bezier 4th arg >= 1.0 (overshoot/elastic forbidden per SPEC A2.1):" >> "$ISSUES_FILE"
+    echo "$CB4_HITS" >> "$ISSUES_FILE"
+    echo "" >> "$ISSUES_FILE"
+  fi
+
+  # 2nd arg ≥ 1.0 in cubic-bezier — early-spring overshoot
+  CB2_HITS=$(grep -nE "cubic-bezier\([^,]+,\s*[1-9]\.[0-9]" "$FILE" | head -3 || true)
+  if [ -n "$CB2_HITS" ]; then
+    echo "[forbidden-A2.1] Bouncy easing — cubic-bezier 2nd arg >= 1.0 (forbidden per SPEC A2.1):" >> "$ISSUES_FILE"
+    echo "$CB2_HITS" >> "$ISSUES_FILE"
+    echo "" >> "$ISSUES_FILE"
+  fi
+
+  # Oversized rounded — exempt avatar/dot files (filename hints)
+  case "$FILE_NORM" in
+    *avatar* | *Avatar* | *status-dot* | *StatusDot* | *radius-dot* )
+      ;; # avatar/dot exception per SPEC A2.1 (--radius-dot: 999px)
+    *)
+      ROUNDED_HITS=$(grep -nE "\brounded(-(t|r|b|l|tl|tr|bl|br|ts|te|bs|be|s|e))?-(lg|xl|2xl|3xl|full)\b" "$FILE" | head -3 || true)
+      if [ -n "$ROUNDED_HITS" ]; then
+        echo "[forbidden-A2.1] Oversized rounded corners — rounded-{,t,r,b,l,…}-{lg,xl,2xl,3xl,full} forbidden on rectangular elements (border-radius > 4px per SPEC A2.1; avatars/dots use --radius-dot: 999px exception):" >> "$ISSUES_FILE"
+        echo "$ROUNDED_HITS" >> "$ISSUES_FILE"
+        echo "" >> "$ISSUES_FILE"
+      fi
+      ;;
+  esac
+
+  # Dark glow — box-shadow with blur > 20px AND spread > 0
+  # Match: box-shadow: <Xoffset> <Yoffset> <blur≥21px> <spread≥1px>
+  SHADOW_HITS=$(grep -nE "box-shadow:\s*[^;]*\s+(2[1-9]|[3-9][0-9]|[1-9][0-9]{2,})px\s+[1-9][0-9]*px" "$FILE" | head -3 || true)
+  if [ -n "$SHADOW_HITS" ]; then
+    echo "[forbidden-A2.1] Dark glow — box-shadow with blur > 20px AND spread > 0 (forbidden per SPEC A2.1):" >> "$ISSUES_FILE"
+    echo "$SHADOW_HITS" >> "$ISSUES_FILE"
+    echo "" >> "$ISSUES_FILE"
+  fi
+
+  # Purple/pink — HSL hue ∈ [270°, 320°]
+  PURPLE_HITS=$(grep -nE "hsl\(\s*(2[7-9][0-9]|3[01][0-9]|320)\b" "$FILE" | head -3 || true)
+  if [ -n "$PURPLE_HITS" ]; then
+    echo "[forbidden-A2.1] Purple/pink HSL hue (270°-320° forbidden per SPEC A2.1 — anti-Notion/anti-Slack palette posture):" >> "$ISSUES_FILE"
+    echo "$PURPLE_HITS" >> "$ISSUES_FILE"
+    echo "" >> "$ISSUES_FILE"
+  fi
+fi
+
+# Stage 1.5a — T10c: Sample-data isolation in /design-system/ (per SPEC C6 / D9).
+# Files under src/app/design-system/ MUST NOT import from tenant-scoped
+# modules. They may import TYPES from @/lib/supabase/types/* (type-only).
+# Per CR2 / R10 mitigation — distinguish path-segment patterns.
+#
+# Note: grep -P (PCRE lookaheads) is unavailable in some Windows Git Bash
+# locales, so we do this in two passes — find all `from '@/lib/(supabase|
+# org|auth)…'` imports, then awk-filter out the allowed type-only paths.
+if [[ "$FILE_NORM" =~ ^(.*/)?src/app/design-system/.*\.(tsx|ts|jsx|js)$ ]]; then
+  # First pass: capture every import-from line that targets supabase/org/auth.
+  # Allowed forms (DO NOT REJECT):
+  #   from '@/lib/supabase/types'
+  #   from '@/lib/supabase/types/<anything>'
+  # Forbidden forms (REJECT):
+  #   from '@/lib/supabase'                 (bare module — per planner NEW-M3)
+  #   from '@/lib/supabase/server'
+  #   from '@/lib/supabase/<anything-else>'
+  #   from '@/lib/org/<anything>'
+  #   from '@/lib/auth/<anything>'
+  ALL_IMPORTS=$(grep -nE "from\s+['\"]@/lib/(supabase|org|auth)([/'\"])" "$FILE" 2>/dev/null || true)
+  if [ -n "$ALL_IMPORTS" ]; then
+    # Filter out allowed type-only paths. Lines that pass through the awk
+    # filter are forbidden imports.
+    SAMPLE_HITS=$(echo "$ALL_IMPORTS" | awk '
+      # Skip if the match is `@/lib/supabase/types`-something. We allow
+      # `@/lib/supabase/types` and `@/lib/supabase/types/<rest>`.
+      /from[[:space:]]+['\''"]@\/lib\/supabase\/types(['\''"]|\/)/ { next }
+      # Anything else that matched the broader regex is forbidden.
+      { print }
+    ' | head -3)
+    if [ -n "$SAMPLE_HITS" ]; then
+      echo "[design-system-isolation] Sample data in /design-system/ MUST come from constants in src/app/design-system/_fixtures/ — never tenant-scoped modules. Type-only imports from '@/lib/supabase/types' (and subpaths) are allowed; module imports from '@/lib/supabase/server', '@/lib/supabase' (bare), '@/lib/org/*', '@/lib/auth/*' are forbidden (per SPEC C6 / D9):" >> "$ISSUES_FILE"
+      echo "$SAMPLE_HITS" >> "$ISSUES_FILE"
+      echo "" >> "$ISSUES_FILE"
+    fi
+  fi
+fi
+
+# Stage 1.5a — T10d: Tenant-blind primitives in src/components/ui/ (per SPEC C8 / A12.1).
+# Primitives in src/components/ui/ MUST NOT accept tenant-identifying
+# props. Tenant-aware composition lives in src/components/<domain>/ only.
+# Per H6 / A12.1.
+if [[ "$FILE_NORM" =~ ^(.*/)?src/components/ui/.*\.(tsx|ts|jsx|js)$ ]]; then
+  # Match prop-name appearances in TypeScript prop signatures:
+  #   org_id?: string
+  #   orgId: string
+  #   membership: Membership
+  #   vendor_id: string
+  #   membershipId?: number
+  # The shape `WORD\s*[?:]\s*` catches both required and optional props. We
+  # also catch destructured prop usage like `{ org_id, ... }` (top of function
+  # signature) by allowing comma/{ as left context.
+  TENANT_HITS=$(grep -nE "\b(org_id|membership|vendor_id|orgId|membershipId)(\?)?\s*:" "$FILE" | head -3 || true)
+  if [ -n "$TENANT_HITS" ]; then
+    echo "[tenant-blind-primitives] Primitives in src/components/ui/ MUST be tenant-blind — no org_id/membership/vendor_id/orgId/membershipId props. Tenant-aware composition lives in src/components/<domain>/ only (per SPEC C8 / A12.1):" >> "$ISSUES_FILE"
+    echo "$TENANT_HITS" >> "$ISSUES_FILE"
+    echo "" >> "$ISSUES_FILE"
+  fi
+fi
+
 # Block if any issues were found
 if [ -s "$ISSUES_FILE" ]; then
   REASON=$(cat "$ISSUES_FILE")
