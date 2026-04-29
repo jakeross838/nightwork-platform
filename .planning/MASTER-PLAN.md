@@ -154,7 +154,8 @@ The build path is divided into stages. Stages are coarser than phases — a stag
   - ✅ HIGH CSP — resolved.
   - ✅ `NEXT_PUBLIC_APP_URL` — fixed in both Production and Preview (now `https://nightwork-platform.vercel.app`).
   - ✅ Tech debt registry — see §11.
-  - ✅ Anti-drift mechanisms — MASTER-PLAN.md (this file), strengthened session-start hook, `nightwork-anti-drift` skill installed in this session.
+  - ✅ Anti-drift mechanisms — MASTER-PLAN.md (this file), strengthened session-start hook, `nightwork-anti-drift` skill installed.
+  - ✅ Gitignore carve-outs — build system + canonical planning docs now sync via git (D-016). Transient outputs and sensitive fixtures remain local.
 - **Open MEDIUM/LOW/NOTE findings:** all deferred and tracked in §11. None blocking Stage 1.
 
 ## 10. DECISIONS LOG
@@ -178,6 +179,7 @@ Major decisions made during planning. Each entry is point-in-time; do not retroa
 | **D-013** | 2026-04 | GitHub auto-deploy preview on every PR (`vercel.json` `github.autoAlias: true`) | Every branch push surfaces a live URL for review |
 | **D-014** | 2026-04 | AgentShield baseline scan — 3 critical findings are false positives, deferred | The flagged patterns are guarded elsewhere; full re-audit on Stage 1 close |
 | **D-015** | 2026-04-29 | Anti-drift mechanisms via MASTER-PLAN.md + strengthened session-start hook + `nightwork-anti-drift` skill | Files were scattered across `.planning/`; no single doc captured the full picture; no hook guaranteed Claude Code read it; this triple closes that gap |
+| **D-016** | 2026-04-29 | Gitignore carve-outs added so build system + canonical planning docs sync via git. Transient outputs (`qa-runs`, `plan-reviews`, `drift-checks`, `e2e-runs`, `design-checks`, `custodian-runs`, `propagate`) and sensitive fixtures (`fixtures/`, `audits/`) remain local-only. | Resolves the meta-drift identified in nwrp4 final report — the anti-drift system itself was PC-local. Also fixed a false-positive in `nightwork-pre-commit.sh` that matched "BLOCKING" anywhere on the verdict line; now extracts only the leading bolded verdict token. |
 
 ## 11. TECH DEBT REGISTRY
 
@@ -198,7 +200,7 @@ Known issues, deferred deliberately. Each entry: severity, source (where it was 
 | GSD doesn't natively read `post_plan_hooks` etc. — wrappers `/np` `/nx` `/ns` are the workaround | LOW (architectural) | D-011 | Track upstream GSD; if/when first-class support lands, retire the wrappers. |
 | Embedding-on-create wiring gap (Pillar 2 cost intelligence) | MEDIUM (named blocker for Pillar 2) | Canonical §12 | Address before any Pillar 2 work ships. |
 | Dashboard 503s on aggregations | MEDIUM (architectural smell) | Canonical §4 | Every new aggregation query needs an index plan in the same migration; older aggregations need retroactive index audits. |
-| `.planning/` is gitignored — planning artifacts are PC-local only | OPEN-QUESTION | nwrp2 final report | Decide: leave gitignored (current), force-add selectively, or remove `/.planning/` from `.gitignore`. Affects whether MASTER-PLAN.md flows across PCs / GitHub. |
+| ~~`.planning/` is gitignored — planning artifacts are PC-local only~~ | RESOLVED 2026-04-29 (D-016) | nwrp2 final report → nwrp5 carve-outs | Resolved by precise gitignore carve-outs: canonical docs (`MASTER-PLAN.md`, `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, `STATE.md`, `deployment.md`, `config.json`, `lessons.md`, `architecture/`, `milestones/`) and Nightwork build system (`nightwork-*` skills/agents/commands/hooks + `settings.json`) now sync via git. Transient and sensitive content stays local. |
 | `nwrp1.txt` referenced in ROADMAP / STATE / PROJECT but not committed | NOTE | Custodian baseline 2026-04-29 | Commit when `nightwork-build-system-setup` branch merges. |
 
 ## 12. NEXT PLANNED WORK
