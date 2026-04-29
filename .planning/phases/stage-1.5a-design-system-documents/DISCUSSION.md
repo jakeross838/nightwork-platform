@@ -58,13 +58,15 @@
 
 ---
 
-## D3 — Components playground auth gate [PLAN-TIME CLARIFICATION]
+## D3 — Components playground auth gate [PLAN-TIME CLARIFICATION — v2 LOCKED]
 
 **Question:** EXPANDED-SCOPE Q6 = C (custom Next.js route at `/design-system`). Per the EXPANDED-SCOPE §4 cross-cutting, "components playground gating" was "Recommended: all authenticated users (educational); gate write actions on the playground (none expected)." But also raised: "platform-admin-only or available to all org members?"
 
-**Decision:** **Authenticated users (any role) in development; gated to `platform_admin` in production** via a feature flag check or env-var. The playground is educational documentation, but exposing component variants and AI confidence routing details to all org members in production has minor information-disclosure value. Easier path: dev-only via `NEXT_PUBLIC_NW_DESIGN_SYSTEM_ENABLED=true` env var, or `platform_admin`-only middleware check. Recommend the latter — consistent with the platform-admin gating pattern from CLAUDE.md.
+**Decision (v2 LOCKED per H13):** **`platform_admin`-only at middleware level in production. In development, gated to authenticated users at middleware level.** **NO env-var bypass.** Developers (Jake, Andrew) already have `platform_admin` per migration 00048, so the dev path is naturally gated to staff already. Adding `NEXT_PUBLIC_NW_DESIGN_SYSTEM_ENABLED` would bake the env-var name into the client bundle and leak the route's existence — explicitly rejected.
 
-**Implementation in PLAN.md:** middleware check on `/design-system/*` for `platform_admin` role; bypass via env var in development. Returns 404 (not 403) for non-admin users to avoid leaking that the route exists.
+**Implementation in PLAN.md (T18.5):** edit `src/middleware.ts` to add `/design-system/:path*` matcher; mirror the `/admin/platform` pattern at lines 65-79; for non-platform_admin in production, return `NextResponse.rewrite(new URL('/_not-found', req.url))` (404, not redirect — avoids leaking that the route exists per security review). In dev, the same middleware allows authenticated users (any role) to read the playground for educational reference.
+
+**Layout-level check (T18) stays as defense-in-depth, not the wall.** Future child routes / parallel routes / intercepting routes are all caught at middleware before reaching layout.
 
 ---
 
