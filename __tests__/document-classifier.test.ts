@@ -55,6 +55,45 @@ const OVERALL_GATE = 0.9;
 const FAT_CATEGORY_GATE = 0.8;
 const FAT_CATEGORY_MIN_FIXTURES = 3;
 
+// ── Known boundary flake allowlist ────────────────────────────────
+//
+// Documented variance — NOT "swept under rug." Each fixture in this
+// list has an open GitHub issue tracking the underlying classifier
+// boundary problem. Entries here are observed to misclassify on some
+// runs but reproducibly classify correctly on most runs.
+//
+// Phase 3.4 regression policy when one of these flakes hits:
+//   - 36/36 with no flakes: pass
+//   - 35/36 where the failure IS one of these allowlisted fixtures
+//     (with the documented misclassification): pass with a "known
+//     flake" note in the QA report
+//   - 35/36 where the failure is a DIFFERENT fixture: fail; investigate
+//   - 34/36 (both allowlisted flakes hit simultaneously): fail; the
+//     classifier prompt has likely regressed
+//
+// This is descriptive — the test gate logic still uses the OVERALL_GATE
+// + FAT_CATEGORY_GATE thresholds above. The allowlist is read by
+// reviewers + QA reports, not enforced by code.
+const KNOWN_BOUNDARY_FLAKES: Array<{
+  fixture: string;
+  expected: Category;
+  observed_misclassification: Category;
+  github_issue: number;
+}> = [
+  {
+    fixture: "10_Home_Depot_Receipts.pdf",
+    expected: "invoice",
+    observed_misclassification: "other",
+    github_issue: 28,
+  },
+  {
+    fixture: "Dewberry - Gilkey Landscaping 6-5-25 Q.pdf",
+    expected: "proposal",
+    observed_misclassification: "contract",
+    github_issue: 30,
+  },
+];
+
 // Full enum from src/lib/ingestion/classify.ts CLASSIFIED_TYPES.
 // Subfolder names must come from this list.
 const TEN_CATEGORIES = [
@@ -243,11 +282,21 @@ function writeMarkdownReport(args: {
   lines.push(`| Expected | Actual | Pass | Confidence | ms | Filename | Notes |`);
   lines.push(`|---|---|---|---|---|---|---|`);
   for (const r of rows) {
+    const knownFlake = !r.pass
+      ? KNOWN_BOUNDARY_FLAKES.find(
+          (f) =>
+            f.fixture === r.filename &&
+            f.expected === r.expected &&
+            f.observed_misclassification === r.actual
+        )
+      : undefined;
     const note = r.error
       ? escapePipe(`ERROR: ${r.error}`)
-      : !r.pass && catStats.find((s) => s.cat === r.category && !s.fat)
-        ? "INVESTIGATE — thin category miss"
-        : "";
+      : knownFlake
+        ? `KNOWN FLAKE — issue #${knownFlake.github_issue}`
+        : !r.pass && catStats.find((s) => s.cat === r.category && !s.fat)
+          ? "INVESTIGATE — thin category miss"
+          : "";
     lines.push(
       `| \`${r.expected}\` | \`${r.actual}\` | ${r.pass ? "PASS" : "FAIL"} | ${r.confidence.toFixed(2)} | ${r.ms} | ${escapePipe(r.filename)} | ${note} |`
     );
