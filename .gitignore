@@ -104,6 +104,11 @@ skills-lock.json
 !/.planning/architecture/**
 !/.planning/milestones/
 !/.planning/milestones/**
+# expansions/ — phase contracts (EXPANDED-SCOPE.md, MANUAL-CHECKLIST.md,
+# SETUP-COMPLETE.md, PREFLIGHT-PASS.md/FAIL.md). These must sync across
+# PCs because /np reads EXPANDED-SCOPE and /nx reads SETUP-COMPLETE. Per D-018.
+!/.planning/expansions/
+!/.planning/expansions/**
 
 # smoke + E2E runtime logs (ephemeral, regenerated each run)
 /e2e-state.json
