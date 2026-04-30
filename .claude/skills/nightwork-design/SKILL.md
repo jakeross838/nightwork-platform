@@ -8,6 +8,22 @@ user-invocable: true
 
 Serious construction financial software for custom home builders ($1.5M–$10M+ projects). Think Linear, Vercel, Stripe dashboard — not flashy, not playful. Mobile-responsive is critical (PMs use it on phones in the field).
 
+## Authoritative documents (Stage 1.5a — locked)
+
+The Stage 1.5a design system documents are now the SINGLE SOURCE OF TRUTH. When this skill conflicts with any of them, the documents win. Read these before opening this skill's `README.md`:
+
+- **`.planning/design/SYSTEM.md`** — token catalog (colors, type, spacing, radii, shadows, motion, density, touch targets, accessibility, brand-customization). Every CSS var + every Tailwind utility lives here.
+- **`.planning/design/COMPONENTS.md`** — component contract (every primitive: Button, Input, Combobox, DataGrid, etc. with variants / states / token bindings / a11y notes / anti-patterns). Includes the tenant-blind primitives rule (A12.1) and the Icon Library Boundary (A12.2: Heroicons-only outside `src/components/ui/`).
+- **`.planning/design/PATTERNS.md`** — page patterns catalogue (12 patterns: Document Review = gold standard, Dashboard, Settings, List+Detail, Wizard, Empty Workspace, Print View, Mobile Approval, Reconciliation with 4 candidate models, AppShell, Audit Timeline, File Uploader). Each entry: when to use / when NOT, regions, data shape, states, references.
+- **`.planning/design/PROPAGATION-RULES.md`** — workflow rules for changing the system (token-add, component-add, pattern-add, icon-add, versioning posture, shadcn-hybrid boundary).
+- **`.impeccable.md`** (root) — quality contract that anchors `frontend-design` + `impeccable` skills to the documents above.
+- **`.planning/design/PHILOSOPHY.md`** — 3 candidate directions (Helm + Brass / Specimen / Site Office) with concrete invoice-review + dashboard + mobile-approval renders. Locked DRAFT until Strategic Checkpoint #2 — Jake picks one direction at CP2 via the playground at `/design-system/philosophy` and the choice is written to `.planning/design/CHOSEN-DIRECTION.md`.
+- **`.planning/design/CONTRAST-MATRIX.md`** — full WCAG 2.2 AA contrast matrix for every text-token × bg-token in light + dark, both candidate palettes.
+
+**SYSTEM.md's "Skill anchor" section** lists this skill (and `nightwork-design-tokens`, `nightwork-ui-template`, `nightwork-design-system-reviewer`, `nightwork-ui-reviewer`) as dependents — when SYSTEM tokens change, those skills update too. Bidirectional cross-reference per SPEC A19.1.
+
+**The components playground at `/design-system`** (gated to platform_admin in production via middleware) renders every COMPONENTS.md entry live. Use it as the visual reference when this skill's text isn't enough.
+
 **When this skill is invoked, read `README.md` first.** It contains the full palette, type system, content rules, and visual foundations. The `Slate *.html` files at the root are the reference screens — open them to see any pattern in context before inventing new ones.
 
 ## Quick orientation

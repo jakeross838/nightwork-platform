@@ -7,13 +7,25 @@ description: Use this skill on every styling change in Nightwork — adding comp
 
 The design system is only as strong as the weakest hardcoded value. This skill documents the canonical token set, the rules for using them, and the violations that cause hooks/agents to reject the edit.
 
-## Token sources of truth
+## Authoritative document (Stage 1.5a — locked)
 
-- **CSS variables:** `src/app/globals.css` (`--bg-card`, `--bg-subtle`, `--text-primary`, `--text-secondary`, `--border-default`, `--nw-stone-blue`, etc.)
-- **Tailwind config:** `tailwind.config.ts` — extends `nw-*` color utilities (`nw-stone-blue`, `nw-slate-tile`, `nw-slate-deep`, etc.)
-- **Design skill:** `.claude/skills/nightwork-design/` — palette intent, type system, content rules.
+**`.planning/design/SYSTEM.md` is the single source of truth for every Nightwork design token.** When this skill's "Allowed shapes" table conflicts with SYSTEM.md, SYSTEM.md wins. Read SYSTEM.md before adding, changing, or rejecting a token:
 
-When in doubt, READ those three before guessing. Do not invent new token names; do not import a new color library.
+- **`.planning/design/SYSTEM.md`** — full token catalog. Every CSS variable (`--bg-page`, `--text-primary`, `--border-default`, `--nw-stone-blue`, `--radius-dot`, `--space-*`, `--fs-*`, `--tracking-*`, etc.) is enumerated with its light value, dark value, and contrast ratio. Includes Forbidden thresholds (A2.1 — quantified violation criteria for bouncy easing, gradients, dark glows, oversized rounded corners, purple/pink hues, marketing typography), density modes, touch targets (44px / 56px high-stakes), accessibility (WCAG 2.2 AA mandatory), and brand-customization contract (A11.1-A11.7 — `--brand-accent` and `--brand-logo` are the only tenant-customizable tokens).
+- **`.planning/design/CONTRAST-MATRIX.md`** — WCAG 2.2 AA pass/fail per cell for every text-token × bg-token in light + dark, both candidate palette sets.
+- **`.planning/design/PROPAGATION-RULES.md`** — when to add a token vs reuse, when a token change is "everywhere" (route through `/nightwork-propagate`).
+
+**SYSTEM.md's "Skill anchor" section** names this skill explicitly. When SYSTEM tokens change, this skill's "Allowed shapes" table updates too. Bidirectional cross-reference per SPEC A19.1.
+
+The post-edit hook in `.claude/hooks/nightwork-post-edit.sh` enforces SYSTEM.md mechanically — every Forbidden A2.1 threshold (bouncy easing, oversized rounded corners, purple/pink HSL, dark glow box-shadow) blocks at save time.
+
+## Token sources of truth (legacy entry-points — deferring to SYSTEM.md)
+
+- **CSS variables:** `src/app/globals.css` + `src/app/colors_and_type.css` — declared values; SYSTEM.md is the authoritative documentation.
+- **Tailwind config:** `tailwind.config.ts` — extends `nw-*` color utilities. SYSTEM.md enumerates which utilities map to which raw tokens.
+- **Design skill:** `.claude/skills/nightwork-design/` — palette intent, type system, content rules. Cross-references SYSTEM.md.
+
+When in doubt, READ SYSTEM.md before guessing. Do not invent new token names; do not import a new color library.
 
 ## Allowed shapes
 

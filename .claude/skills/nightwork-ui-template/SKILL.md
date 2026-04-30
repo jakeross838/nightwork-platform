@@ -7,6 +7,20 @@ description: Use this skill when designing or implementing any document review, 
 
 The invoice review screen is the gold standard for every document review / approval / right-rail surface in Nightwork. New surfaces extend this template; they do not invent their own layout. The `nightwork-ui-reviewer` agent will fail any review surface that diverges without justification.
 
+## Authoritative documents (Stage 1.5a — locked)
+
+The Stage 1.5a design documents codify this template's contract; this skill defers to them when they conflict:
+
+- **`.planning/design/PATTERNS.md` — "Document Review" entry is the gold-standard pattern.** Per SPEC A15, that entry treats `src/app/invoices/[id]/page.tsx` as the reference implementation and lifts THIS skill's contract verbatim with explicit data-shape + example-state details. Read PATTERNS.md "Document Review" before designing a new review surface — it has the canonical regions, states, responsive behavior, print behavior, and mobile behavior.
+- **`.planning/design/COMPONENTS.md`** — every right-rail panel component (Card / Eyebrow / DataRow / Money / StatusDot / Badge / Button), audit timeline component, and confidence badge is enumerated with variants + states + token bindings + a11y. Use COMPONENTS.md to find the right primitive instead of inventing one.
+- **`.planning/design/SYSTEM.md`** — design tokens for spacing, type, motion, density. The right-rail uses `nw-tablet+` 12-col grid layout; mobile (`nw-phone`) collapses to single-column with file preview on top per A18.1 information density mapping.
+- **`.planning/design/PROPAGATION-RULES.md`** — pattern-add workflow: PATTERNS.md → first surface → second surface validates contract. New review surfaces (proposals, change orders, lien releases, daily logs) must validate the Document Review contract end-to-end.
+- **`.impeccable.md`** (root) — quality contract that anchors `frontend-design` + `impeccable` skills. Document review is one of the four reference patterns called out.
+
+**Bidirectional cross-reference:** SYSTEM.md's "Skill anchor" section (per SPEC A19.1) names this skill as a dependent — when PATTERNS.md "Document Review" or SYSTEM.md tokens change, this skill updates too.
+
+**The components playground at `/design-system/patterns`** renders the Document Review pattern as a static layout. Use it as the visual reference when reading the pattern doc isn't enough.
+
 ## Canonical reference
 
 - **Page:** `src/app/invoices/[id]/page.tsx`
