@@ -589,7 +589,6 @@ function Pattern3Dashboard() {
 function Pattern4MobileApproval() {
   const inv = SAMPLE_INVOICES[0];
   const vendor = VENDOR_BY_ID[inv.vendor_id];
-  const job = JOB_BY_ID[inv.job_id];
   return (
     <div className="flex justify-center">
       <div
@@ -956,7 +955,7 @@ function Pattern7Wizard() {
         {/* Body */}
         <div className="p-5">
           <p className="text-[13px] mb-4" style={{ color: "var(--text-secondary)" }}>
-            Choose the cost code template to seed this job's budget. You can
+            Choose the cost code template to seed this job&rsquo;s budget. You can
             edit individual codes after.
           </p>
           <div className="space-y-2">

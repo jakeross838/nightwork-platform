@@ -436,7 +436,7 @@ export default function ForbiddenPage() {
         <ForbiddenItem
           index={7}
           title="Hardcoded hex literals in component code"
-          rationale="A hex literal in code (e.g., `style={{ color: " + HASH + "5B8699 }}` or `text-[" + HASH + "5B8699]`) bypasses the token system. Use --nw-* CSS vars or nw-* Tailwind utilities so theme + tenant overrides flow correctly."
+          rationale={"A hex literal in code (e.g., style={{ color: " + HASH + "5B8699 }} or text-[" + HASH + "5B8699]) bypasses the token system. Use --nw-* CSS vars or nw-* Tailwind utilities so theme + tenant overrides flow correctly."}
           hookEnforced={true}
           badExample={
             <div>

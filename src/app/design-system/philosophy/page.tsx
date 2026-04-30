@@ -33,7 +33,6 @@ import {
 import Card from "@/components/nw/Card";
 import Eyebrow from "@/components/nw/Eyebrow";
 import Badge from "@/components/nw/Badge";
-import Button from "@/components/nw/Button";
 import Money from "@/components/nw/Money";
 import StatusDot from "@/components/nw/StatusDot";
 

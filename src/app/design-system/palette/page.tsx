@@ -422,8 +422,8 @@ export default function PalettePage() {
       <footer className="mt-10 pt-6 border-t" style={{ borderColor: "var(--border-default)" }}>
         <Eyebrow tone="muted" className="mb-3">CP2 pick mechanics</Eyebrow>
         <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-          The palette pick is recorded outside this page (no per-set "Pick
-          this set" button on the palette route). Subordinate work that
+          The palette pick is recorded outside this page (no per-set &ldquo;Pick
+          this set&rdquo; button on the palette route). Subordinate work that
           locks the palette substitution lives in Stage 1.5b. Until pick:
           Set B is the live implementation. Picking Set A triggers a
           colors_and_type.css update + matrix re-verification.
