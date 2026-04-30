@@ -1,8 +1,12 @@
-// Design-system playground layout shell — Stage 1.5a Wave 4 (T18).
+// Design-system playground layout shell — Stage 1.5a Wave 4 (T18 + T26).
 //
 // This wrapper applies to every page under /design-system/*. It:
 //   - establishes the playground chrome (top nav, sidebar nav, content area)
-//   - mounts the dark-mode toggle (T26 wires it to the existing ThemeProvider)
+//   - mounts the dark-mode toggle in the top-right (T26 — wires to the
+//     existing ThemeProvider mounted in src/app/layout.tsx; toggling fires
+//     setTheme() which (a) updates <html data-theme> via the provider's
+//     useEffect and (b) POSTs to /api/users/theme to persist the nw_theme
+//     cookie. No new provider needed — context is inherited from root.)
 //   - exposes a "direction" switcher (Helm+Brass / Specimen / Site Office) for
 //     the philosophy / palette / patterns pages to read via ?dir=A|B|C
 //   - exposes a "palette" switcher (Set A / Set B) via ?palette=A|B
