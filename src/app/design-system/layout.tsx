@@ -202,25 +202,21 @@ function Wordmark() {
 
 export default function DesignSystemLayout({
   children,
-  searchParams,
 }: {
   children: ReactNode;
-  // Next.js layouts don't auto-receive searchParams — we read them
-  // client-side in pages and pass downstream. Layout-level direction/
-  // palette default is rendered by the toggle component reading the
-  // current URL via Link href deltas. Defaults: A (Helm+Brass) / B
-  // (current implementation).
-  searchParams?: { dir?: string; palette?: string };
 }) {
-  // Defaults per nwrp17 directive (dir=A) and SYSTEM.md (palette=B).
-  // Layouts in Next.js App Router don't receive searchParams in their
-  // props by default; the prop here is forward-looking for when
-  // Next exposes it. The toggle still highlights the right active key
-  // because each Link points at the explicit ?dir=X / ?palette=X URL.
-  const activeDir = (searchParams?.dir === "B" || searchParams?.dir === "C"
-    ? searchParams.dir
-    : "A") as "A" | "B" | "C";
-  const activePalette = (searchParams?.palette === "A" ? "A" : "B") as "A" | "B";
+  // Layouts in Next.js App Router do NOT receive searchParams as props —
+  // only pages do. The direction + palette switchers in this layout are
+  // rendered with default-active highlights (A / B). When the user clicks
+  // a different option, navigation pushes the new query param and the
+  // CONSUMER pages (philosophy/palette/patterns) read searchParams in
+  // their own page-level props to re-render content. The visual "active"
+  // state on the pill toggle in this layout doesn't track the URL — that
+  // would require a "use client" component reading useSearchParams. We
+  // accept that layout-level toggle highlight is fixed at default; the
+  // canonical active state lives in the consumer page.
+  const activeDir: "A" | "B" | "C" = "A"; // Helm + Brass per nwrp17
+  const activePalette: "A" | "B" = "B"; // current implementation per SYSTEM.md
 
   return (
     <div
