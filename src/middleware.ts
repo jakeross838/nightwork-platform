@@ -78,6 +78,44 @@ export async function middleware(request: NextRequest) {
     // Authorized — fall through to response.
   }
 
+  // Design-system playground gate (Stage 1.5a T18.5 / SPEC B7).
+  //
+  //   - Production: unconditional `isPlatformAdmin` check. Non-admins
+  //     get a 404 rewrite to `/_not-found`. We rewrite (not redirect)
+  //     because a redirect leaks the route's existence via HTTP 3xx;
+  //     a 404 makes the route indistinguishable from any other unknown
+  //     path. Explicit `status: 404` prevents `NextResponse.rewrite()`
+  //     from passing through the destination's status (which can be 200
+  //     in some build modes — N1 in security iteration-2).
+  //   - Development: gate to authenticated users only. Any authed user
+  //     in dev can browse the playground for design feedback; the
+  //     production wall stays platform_admin-only.
+  //   - No env-var bypass — per CR1 / H12 / SPEC B7. Adding a
+  //     BYPASS_DESIGN_SYSTEM_GATE=true escape hatch would defeat the
+  //     purpose; an attacker exploiting any leak (env-var injection,
+  //     misconfigured preview) would unlock the route. The wall is the
+  //     wall.
+  if (pathname === "/design-system" || pathname.startsWith("/design-system/")) {
+    const isProd = process.env.NODE_ENV === "production";
+    if (isProd) {
+      if (!isPlatformAdmin) {
+        const notFoundUrl = request.nextUrl.clone();
+        notFoundUrl.pathname = "/_not-found";
+        notFoundUrl.search = "";
+        return NextResponse.rewrite(notFoundUrl, { status: 404 });
+      }
+    } else {
+      // Dev — authenticated users only.
+      if (!user) {
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = "/login";
+        loginUrl.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+    // Authorized — fall through to response.
+  }
+
   // Platform admin API routes: return JSON 401 instead of redirecting.
   if (pathname.startsWith("/api/admin/platform")) {
     if (!user || !isPlatformAdmin) {
