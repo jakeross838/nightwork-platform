@@ -57,7 +57,7 @@ Each cell shows the ratio + a verdict label.
 | `--text-secondary` (`#73878d`)       | 3.45 ✓ A1  | 3.76 ✓ A2  | 3.23 ✓ A3 | 3.06 ✓ A4 | 4.01 ✓     |
 | `--text-tertiary` (`#909fa1`)        | 2.51 ✗ D1  | 2.74 ✗ D2  | 2.35 ✗ D3 | 2.23 ✗ D4 | 5.51 ✓✓     |
 | `--text-muted` (`#acb6b6`)           | 1.90 ✗ D5  | 2.07 ✗ D6  | 1.78 ✗ D7 | 1.69 ✗ D8 | 7.28 ✓✓✓    |
-| `--text-accent` (`#4E7A8C`)          | 4.29 ✓ A5  | 4.68 ✓✓    | 4.02 ✓ A6 | 3.80 ✓     | 3.23 ✓     |
+| `--text-accent` (`#436A7A`)          | 5.37 ✓✓    | 5.86 ✓✓    | 5.03 ✓✓   | 4.76 ✓✓    | 2.58 ✗ D54 |
 | `--text-inverse` (`#F7F5EC`)         | 1.00 — | 1.09 — | 1.07 — | 1.13 — | **13.83 ✓✓✓** |
 | `--color-success` (`#4A8A6F`)        | 3.73 ✓ A7  | 4.07 ✓ A8  | 3.49 ✓     | 3.31 ✓     | 3.71 ✓     |
 | `--color-warning` (`#C98A3B`)        | 2.68 ✗ D9  | 2.92 ✗ D10 | 2.51 ✗ D11 | 2.38 ✗ D12 | 5.17 ✓✓    |
@@ -80,16 +80,16 @@ A1–A10 = 10 candidate text-fails. Each must be triaged to one of: **fix** | **
 | A2 | secondary × bg-card   | 3.76 | **accept-with-rationale (signed)** | Same; bg-card pairing is the dominant case (right-rail panels). Jake-signed: ____ |
 | A3 | secondary × bg-subtle | 3.23 | **accept-with-rationale (signed)** | Rare pairing (audit timeline rows on tinted hover); use bumped weight when present. Jake-signed: ____ |
 | A4 | secondary × bg-muted  | 3.06 | non-text re-classify | bg-muted is decorative-only background (locked-form controls); secondary text on bg-muted occurs in disabled-form labels — `<input:disabled>` styling resolves color to `--text-tertiary` automatically per `globals.css`, so this exact pairing is not realized. **Re-classify as D.** |
-| A5 | accent × bg-page      | 4.29 | **fix in T12** | gulf-blue on page is the link/hover hue; bumping `--text-accent` to `#436A7A` raises ratio to ≥4.5. Track as SYSTEM.md fix. |
-| A6 | accent × bg-subtle    | 4.02 | **fix in T12** | Same fix raises bg-subtle pairing too. |
+| A5 | accent × bg-page      | 5.37 | **applied (2026-04-30)** | `--nw-gulf-blue` bumped `#4E7A8C` → `#436A7A`. New ratio 5.37 clears AA-normal 4.5; promoted to ✓✓. No accept-with-rationale entry needed. |
+| A6 | accent × bg-subtle    | 5.03 | **applied (2026-04-30)** | Same bump raises this pairing too — 4.02 → 5.03 (AA-normal PASS). Promoted to ✓✓. |
 | A7 | success × bg-page     | 3.73 | non-text re-classify | success on page only appears in `Badge variant="success"` (border + tint + icon, NOT raw text label). Re-classify as D. |
 | A8 | success × bg-card     | 4.07 | non-text re-classify | Same — Badge usage. Re-classify as D. |
 | A9 | error × bg-subtle     | 4.23 | non-text re-classify | error on bg-subtle only via Badge. Re-classify as D. |
 | A10 | error × bg-muted     | 4.01 | non-text re-classify | Same. Re-classify as D. |
 
 **Final accept-with-rationale text cells (LIGHT + Set B):** **3** (A1, A2, A3 — all `--text-secondary` pairings on neutral bgs). **WITHIN CAP.**
-**Fix items committed to T12:** 2 (`--text-accent` value bump from `#4E7A8C` → `#436A7A` or similar; recompute at T12 implementation).
-**Re-classified as decorative (no AA gate):** 5 cells.
+**Fix items committed to T12:** **APPLIED (2026-04-30)** — `--nw-gulf-blue` bumped `#4E7A8C` → `#436A7A`. A5 (accent × bg-page: 4.29 → 5.37) and A6 (accent × bg-subtle: 4.02 → 5.03) both clear AA-normal; removed from accept list. New cell `D54` (`--text-accent` × `bg-inverse` slate-deep `#1A2830`: 3.23 → 2.58, regression to fail) classified decorative — gulf-blue text on a slate-deep panel is not a real text use case in the design (slate-deep panels use `--text-inverse` = `#F7F5EC` for raw text). No accept-with-rationale entry needed.
+**Re-classified as decorative (no AA gate):** 6 cells (A4, A7, A8, A9, A10, D54).
 
 ---
 
@@ -136,7 +136,7 @@ A1–A10 = 10 candidate text-fails. Each must be triaged to one of: **fix** | **
 | `--text-secondary` (`#73878d`)       | 3.45 ✓ A17 | 3.76 ✓ A18 | 3.26 ✓ A19 | 3.06 ✓ D21 | 2.94 ✗ D22 |
 | `--text-tertiary` (`#909fa1`)        | 2.51 ✗ D23 | 2.74 ✗ D24 | 2.37 ✗ D25 | 2.23 ✗ D26 | 4.03 ✓ |
 | `--text-muted` (`#acb6b6`)           | 1.90 ✗ D27 | 2.07 ✗ D28 | 1.80 ✗ D29 | 1.69 ✗ D30 | 5.33 ✓✓ |
-| `--text-accent` (`#4E7A8C`)          | 4.29 ✓ A20 | 4.68 ✓✓ | 4.05 ✓ A21 | 3.80 ✓ D31 | 2.36 ✗ D32 |
+| `--text-accent` (`#436A7A`)          | 5.37 ✓✓    | 5.86 ✓✓ | 5.08 ✓✓    | 4.76 ✓✓ D31 | 1.89 ✗ D32 |
 | `--text-inverse` (`#F7F5EC`)         | 1.00 — | 1.09 — | 1.06 — | 1.13 — | **10.12 ✓✓✓** |
 | `--color-success` (`#4A8A6F`)        | 3.73 ✓ D33 | 4.07 ✓ D34 | 3.53 ✓ D35 | 3.31 ✓ D36 | 2.71 ✗ D37 |
 | `--color-warning` (`#C98A3B`)        | 2.68 ✗ D38 | 2.92 ✗ D39 | 2.53 ✗ D40 | 2.38 ✗ D41 | 3.78 ✓ |
@@ -156,12 +156,13 @@ This token has no current consumer; it would be added on CP2 pick.
 | A17 | secondary × bg-page | 3.45 | **accept-with-rationale (signed)** | Same as Set B / LIGHT A1. Jake-signed: ____ |
 | A18 | secondary × bg-card | 3.76 | **accept-with-rationale (signed)** | Same as Set B / LIGHT A2. Jake-signed: ____ |
 | A19 | secondary × bg-subtle | 3.26 | **accept-with-rationale (signed)** | Same as Set B / LIGHT A3 (slightly different bg-subtle hex). Jake-signed: ____ |
-| A20 | accent × bg-page    | 4.29 | **fix in T12** | Same as Set B / LIGHT A5 — bump gulf-blue. |
-| A21 | accent × bg-subtle  | 4.05 | **fix in T12** | Same as A20. |
+| A20 | accent × bg-page    | 5.37 | **applied (2026-04-30)** | Same fix as Set B / LIGHT A5 — `--nw-gulf-blue` bumped `#4E7A8C` → `#436A7A`. 4.29 → 5.37 (AA-normal PASS). Promoted to ✓✓. |
+| A21 | accent × bg-subtle  | 5.08 | **applied (2026-04-30)** | Same fix; 4.05 → 5.08 (AA-normal PASS). Promoted to ✓✓. |
 | A22 | error × bg-subtle   | 4.27 | non-text re-classify | Badge usage. Re-classify D. |
 | A23 | error × bg-muted    | 4.01 | non-text re-classify | Badge usage. Re-classify D. |
 
 **Final accept-with-rationale text cells (LIGHT + Set A):** **3** (A17, A18, A19). **WITHIN CAP.**
+**Fix items committed to T12:** **APPLIED (2026-04-30)** — `--nw-gulf-blue` bumped `#4E7A8C` → `#436A7A`. A20 (accent × bg-page: 4.29 → 5.37) and A21 (accent × bg-subtle: 4.05 → 5.08) both clear AA-normal; removed from accept list.
 
 ---
 
@@ -216,14 +217,16 @@ The matrix is **regenerated** by re-running the contrast computation script (sav
 | Metric | LIGHT + B | DARK + B | LIGHT + A | DARK + A | Cap |
 |---|---|---|---|---|---|
 | Total cells (text × bg)                  | 50 | 50 | 50 | 50 | — |
-| Pass AA normal (incl AAA)                | 9 / 50  | 25 / 50 | 9 / 50  | 18 / 50 | — |
-| Pass AA large/UI only                    | 14 / 50 | 9 / 50  | 13 / 50 | 13 / 50 | — |
-| Decorative (D-flagged, re-classified)    | 12      | 8       | 22      | 11      | — |
+| Pass AA normal (incl AAA)                | 12 / 50 | 25 / 50 | 12 / 50 | 18 / 50 | — |
+| Pass AA large/UI only                    | 10 / 50 | 9 / 50  | 9 / 50  | 13 / 50 | — |
+| Decorative (D-flagged, re-classified)    | 13      | 8       | 22      | 11      | — |
 | Accept-with-rationale (TEXT)             | **3**   | **3**   | **3**   | **3**   | ≤3 ✓ |
 | Out-of-scope inverse pairings (—)        | 5       | 5       | 5       | 5       | — |
-| Cells flagged for FIX in T12 (SYSTEM.md) | 2 (`--text-accent` bump for both sets) |
+| Cells flagged for FIX in T12 (SYSTEM.md) | **APPLIED 2026-04-30** — `--nw-gulf-blue` bumped `#4E7A8C` → `#436A7A`; A5/A6/A20/A21 cleared; D54 added (LIGHT+B accent × bg-inverse regression — decorative, not text use) |
 
 **All four matrices respect the ≤3 accept-with-rationale text-cell cap.** Each accept entry has a `Jake-signed: ____` line that must be filled at CP2 review (per design-pushback iteration-2 N1).
+
+**Post-T12 delta on LIGHT matrices:** the `--nw-gulf-blue` bump moved 4 cells per LIGHT matrix (accent row excluding bg-inverse) from large/UI → AA-normal. LIGHT+B and LIGHT+A AA-normal counts increased by 3 each (4 promotions − 1 fail-regression on bg-inverse cell, which is out-of-scope as a real text use). DARK matrices unaffected (dark-variant `--text-accent` resolves to `--nw-oceanside` `#CBD8DB`, unchanged).
 
 ---
 

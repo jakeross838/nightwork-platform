@@ -42,7 +42,7 @@ These are the literal hex sources. They flow into the semantic tokens below via 
 | `--nw-slate-deep`   | `#1A2830` | `nw-slate-deep`    | Deep-slate; page bg in dark                            |
 | `--nw-slate-deeper` | `#132028` | `nw-slate-deeper`  | Deepest-slate; card bg in dark                         |
 | `--nw-stone-blue`   | `#5B8699` | `nw-stone-blue`    | Stone-blue; brand accent / focus ring                  |
-| `--nw-gulf-blue`    | `#4E7A8C` | `nw-gulf-blue`     | Gulf-blue; link hover hue                              |
+| `--nw-gulf-blue`    | `#436A7A` | `nw-gulf-blue`     | Gulf-blue; link hover hue (bumped from `#4E7A8C` in T12 for WCAG AA-normal compliance — see §1i text tokens)  |
 | `--nw-oceanside`    | `#CBD8DB` | `nw-oceanside`     | Oceanside light; accent in dark mode                   |
 | `--nw-white-sand`   | `#F7F5EC` | `nw-white-sand`    | White-sand; page bg in light                           |
 | `--nw-warn`         | `#C98A3B` | `nw-warn`          | Warning amber                                          |
@@ -69,6 +69,8 @@ Per EXPANDED-SCOPE Q1=C, two palette sets are presented at CP2 for visual pick.
 > Set B is **measurably more accessible than Set A on dark surfaces**. Dark-mode AA-normal pass count drops from Set B's 8 to Set A's 5. Set A's slightly lighter `#2D3E4A` slate-deep produces a `#F7F5EC` text-primary contrast ratio of `10.12:1` vs Set B's `13.83:1` — both exceed WCAG AAA, but Set A loses headroom.
 
 The matrix flags that DARK + Set A is the single weakest matrix; if Set A is chosen at CP2, SYSTEM.md must add a rule "semantic colors render in `Badge` only on dark + Set A; raw text labels MUST switch to `--text-primary` color with a colored icon prefix."
+
+**If Set B is picked at CP2, this special-case rule is unnecessary and gets removed from §10 (Component variants) and §13 (Forbidden — semantic patterns).** Per nwrp14 directive 2026-04-30: Jake approved this special-case rule as the right mitigation IF Set A is chosen; it does not apply to Set B because DARK + Set B clears AA-normal on all four semantic-color × bg-page pairings.
 
 **Set B is the existing implementation; Set A requires `colors_and_type.css` update + matrix re-verification if picked.** Both sets are rendered side-by-side at `/design-system/palette` for the CP2 visual pick.
 
@@ -134,9 +136,18 @@ Light vs Dark — flip per `data-theme="light"` vs `data-theme="dark"`. The sele
 | `--text-tertiary`    | `rgba(59, 88, 100, 0.55)`                            | `rgba(247, 245, 236, 0.55)`                           | `text-[color:var(--text-tertiary)]`       |
 | `--text-muted`       | `rgba(59, 88, 100, 0.40)`                            | `rgba(247, 245, 236, 0.40)`                           | `text-[color:var(--text-muted)]`          |
 | `--text-inverse`     | `var(--nw-white-sand)` = `#F7F5EC`                   | `var(--nw-slate-tile)` = `#3B5864`                    | `text-[color:var(--text-inverse)]`        |
-| `--text-accent`      | `var(--nw-gulf-blue)` = `#4E7A8C`                    | `var(--nw-oceanside)` = `#CBD8DB`                     | `text-[color:var(--text-accent)]`         |
+| `--text-accent`      | `var(--nw-gulf-blue)` = `#436A7A`                    | `var(--nw-oceanside)` = `#CBD8DB`                     | `text-[color:var(--text-accent)]`         |
 
-**Pending fix from CONTRAST-MATRIX.md:** `--text-accent` is flagged for fix in T12 — bumping `#4E7A8C` → `#436A7A` (or similar) raises the bg-page contrast ratio from `4.29:1` to `≥4.5:1` (clears AA-normal). Currently fails AA-normal; passes AA-large/UI 3:1 minimum.
+**Applied fix (T12, 2026-04-30):** `--text-accent` light variant bumped from `#4E7A8C` → `#436A7A` to clear WCAG 2.2 AA-normal on `bg-page`. Measured contrast ratios for the new value (verified by the contrast script at T12 patch time):
+
+| Surface                  | Old (`#4E7A8C`) | New (`#436A7A`) | AA-normal (4.5:1) |
+|--------------------------|-----------------|-----------------|-------------------|
+| `bg-page` light (`#F7F5EC`)   | 4.29:1          | **5.37:1**      | PASS              |
+| `bg-card` light (`#FFFFFF`)   | 4.68:1          | **5.86:1**      | PASS              |
+| `bg-subtle` light (`#EEEEE7`) | 4.02:1          | **5.03:1**      | PASS              |
+| `bg-muted` light (`#E8E8E1`)  | 3.80:1          | **4.76:1**      | PASS              |
+
+The dark variant `--text-accent` = `var(--nw-oceanside)` = `#CBD8DB` is unchanged (already passes at 10.35:1 on dark `bg-page`). The hover-state side-effects (`hover:bg-nw-gulf-blue` button backgrounds, `text-nw-gulf-blue` link hovers) all see strict ratio improvements — see CONTRAST-MATRIX.md §3, §5 for the full re-verification.
 
 #### Border tokens (`--border-*`)
 
@@ -636,7 +647,7 @@ The full matrix (`.planning/design/CONTRAST-MATRIX.md`) lists every `--text-*` �
 
 ≤3 accept-with-rationale text cells per matrix per the design-pushback iteration-2 N1 cap. Each accept entry has a `Jake-signed: ____` line filled at CP2 review.
 
-**Pending T12 fix:** `--text-accent` value bump from `#4E7A8C` → `#436A7A` (or similar) to clear AA-normal on bg-page (currently `4.29:1` < `4.5:1`).
+**Applied T12 fix (2026-04-30):** `--nw-gulf-blue` value bumped `#4E7A8C` → `#436A7A`. New measured contrast ratio of `--text-accent` on `bg-page` light: **5.37:1** (clears AA-normal 4.5:1). See §1i for the full ratio table across all light surface backgrounds, and CONTRAST-MATRIX.md §3, §5 for re-verified Set B and Set A LIGHT matrices.
 
 ### 12b. Focus-visible standard
 
@@ -818,16 +829,26 @@ This document references back to:
 
 ---
 
-## 16. Pending T12 actions (carry-forward)
+## 16. T12 carry-forward — applied + deferred
 
-These are flagged in the matrix and SYSTEM.md but require value bumps in `colors_and_type.css`:
+### Applied at T12 patch (2026-04-30, per nwrp14)
 
-1. **`--text-accent` bump** from `#4E7A8C` → `#436A7A` (recompute exact hex at implementation; target AA-normal `≥4.5:1` on bg-page).
-2. **CP2 palette pick** — if Jake picks Set A at `/design-system/palette`, all `--nw-stone-blue` / `--nw-slate-deep` / `--nw-slate-tile` values shift; `colors_and_type.css` updates and the contrast matrix re-runs.
+1. **`--nw-gulf-blue` bump** from `#4E7A8C` → `#436A7A` — measured **5.37:1** on `bg-page` light (was 4.29:1, AA-normal FAIL → PASS). Applied to:
+   - `src/app/colors_and_type.css` — single source of truth (`--nw-gulf-blue` line 17).
+   - `.claude/skills/nightwork-design/colors_and_type.css` — skill copy.
+   - `.claude/skills/nightwork-design/README.md` — token docs table.
+   - `.planning/design/SYSTEM.md` — §1a raw token table, §1i text token table, §1i applied-fix block, §12a applied-fix annotation.
+   - `.planning/design/CONTRAST-MATRIX.md` — §3 LIGHT+B accent row, §5 LIGHT+A accent row, §3.5 disposition tables (A5/A6/A20/A21 → applied), §8 summary metrics.
+
+   Side-effects (all strict improvements): `hover:bg-nw-gulf-blue` button hover backgrounds, `text-nw-gulf-blue` link hovers, and `.nw-primary-btn:hover` styles all see contrast ratios increase from `4.68:1` to `5.86:1` (white text on hover bg).
+
+### Deferred (not blocking CP2)
+
+2. **CP2 palette pick** — if Jake picks Set A at `/design-system/palette`, all `--nw-stone-blue` / `--nw-slate-deep` / `--nw-slate-tile` values shift; `colors_and_type.css` updates and the contrast matrix re-runs. The §1b note in this document (added per nwrp14 directive 3) tracks the conditional removal of the DARK + Set A semantic-color special-case rule if Set B is picked instead.
 3. **Density CSS vars** — currently described in this document; need to be added to `colors_and_type.css` as `--density-compact-row` / `--density-compact-padding` / `--density-comfortable-row` / `--density-comfortable-padding` (deferred to first density-aware component implementation).
 
 These are tracked as deferred items within Stage 1.5a — none block CP2.
 
 ---
 
-**T12 status:** SYSTEM.md DRAFT COMPLETE. Subordinate documents (COMPONENTS.md, PATTERNS.md, PROPAGATION-RULES.md) and the components playground (T18-T26) reference this document as authoritative. Re-verification triggered by Q1 palette pick at CP2.
+**T12 status:** SYSTEM.md APPROVED + PATCHED (2026-04-30 per nwrp14 — text-accent contrast fix applied, Set B special-case-rule note added). Subordinate documents (COMPONENTS.md, PATTERNS.md, PROPAGATION-RULES.md) and the components playground (T18-T26) reference this document as authoritative. Re-verification triggered by Q1 palette pick at CP2.

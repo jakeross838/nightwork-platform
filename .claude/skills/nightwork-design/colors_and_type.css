@@ -14,7 +14,7 @@
   --nw-slate-deep:   #1A2830;  /* nav bar, inverse surfaces */
   --nw-slate-deeper: #132028;  /* hover on deep surfaces */
   --nw-stone-blue:   #5B8699;  /* primary action, accent */
-  --nw-gulf-blue:    #4E7A8C;  /* hover / links / hover accent */
+  --nw-gulf-blue:    #436A7A;  /* hover / links / hover accent — bumped from #4E7A8C in T12 to clear AA-normal 4.5:1 on bg-page */
   --nw-oceanside:    #CBD8DB;  /* tint / subtle accent */
   --nw-white-sand:   #F7F5EC;  /* page background — warm off-white */
   --nw-warn:         #C98A3B;  /* pending / warnings */
