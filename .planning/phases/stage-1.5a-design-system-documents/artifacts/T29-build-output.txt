@@ -1,0 +1,31 @@
+ ✓ Compiled successfully
+ ✓ Generating static pages (72/72)
+├ ƒ /api/design-system/pick-direction                           0 B                0 B
+├ ƒ /api/invoices/import/[batchId]/delete-errors                0 B                0 B
+├ ƒ /design-system                                              206 B           162 kB
+├ ƒ /design-system/components/data-display                      21.2 kB         197 kB
+├ ƒ /design-system/components/feedback                          9.2 kB          171 kB
+├ ƒ /design-system/components/inputs                            50.7 kB         264 kB
+├ ƒ /design-system/components/navigation                        4.81 kB         166 kB
+├ ƒ /design-system/components/overlays                          13.6 kB         227 kB
+├ ƒ /design-system/components/surfaces                          27.7 kB         203 kB
+├ ƒ /design-system/forbidden                                    855 B           160 kB
+├ ƒ /design-system/palette                                      855 B           160 kB
+├ ƒ /design-system/patterns                                     855 B           160 kB
+├ ƒ /design-system/philosophy                                   2.64 kB         162 kB
+├ ƒ /design-system/typography                                   163 B           159 kB
+===
+├ ƒ /api/design-system/pick-direction                           0 B                0 B
+├ ƒ /design-system                                              206 B           162 kB
+├ ƒ /design-system/components/data-display                      21.2 kB         197 kB
+├ ƒ /design-system/components/feedback                          9.2 kB          171 kB
+├ ƒ /design-system/components/inputs                            50.7 kB         264 kB
+├ ƒ /design-system/components/navigation                        4.81 kB         166 kB
+├ ƒ /design-system/components/overlays                          13.6 kB         227 kB
+├ ƒ /design-system/components/surfaces                          27.7 kB         203 kB
+├ ƒ /design-system/forbidden                                    855 B           160 kB
+├ ƒ /design-system/palette                                      855 B           160 kB
+├ ƒ /design-system/patterns                                     855 B           160 kB
+├ ƒ /design-system/philosophy                                   2.64 kB         162 kB
+├ ƒ /design-system/typography                                   163 B           159 kB
+BUILD STATUS: PASS
