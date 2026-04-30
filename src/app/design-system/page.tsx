@@ -224,7 +224,8 @@ export default function DesignSystemIndexPage() {
       >
         <p className="mb-1">
           Internal playground · Production access gated to platform admins ·
-          Sample data only — no Drummond, no real Ross Built records.
+          Sample data only — fictional vendors and jobs, no real Ross Built
+          records.
         </p>
         <p>
           Use the sidebar to jump between sections. The direction + palette
