@@ -1,0 +1,13 @@
+T35.6 — Drummond / SmartShield / Holmes Beach grep against src/app/design-system/
+Wave D — 2026-04-30
+
+$ rg -ni "drummond|smartshield|holmes beach" src/app/design-system/
+(no matches)
+
+VERDICT: PASS
+- No Drummond reference job names in design-system pages
+- No SmartShield Homes vendor name in design-system pages
+- No Holmes Beach reference address/job in design-system pages
+- All sample data is generic and isolated to src/app/design-system/_fixtures/
+- Per SPEC C7 / D9 — design system uses generic Drummond-shaped data
+  but does NOT contain literal Drummond fixtures
