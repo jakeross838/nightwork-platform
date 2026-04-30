@@ -21,10 +21,8 @@
 
 "use client";
 
-import { useState } from "react";
 import {
   CheckIcon,
-  XMarkIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 

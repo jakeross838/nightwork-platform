@@ -26,7 +26,6 @@
 import { useState } from "react";
 import {
   ChevronDownIcon,
-  MagnifyingGlassIcon,
   CalendarIcon,
   CheckIcon,
 } from "@heroicons/react/24/outline";

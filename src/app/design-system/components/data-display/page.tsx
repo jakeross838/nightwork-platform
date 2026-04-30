@@ -35,7 +35,6 @@ import {
   CheckIcon,
 } from "@heroicons/react/24/outline";
 
-import NwButton from "@/components/nw/Button";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwBadge from "@/components/nw/Badge";
 import NwCard from "@/components/nw/Card";
