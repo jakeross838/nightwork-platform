@@ -44,9 +44,10 @@ export const metadata: Metadata = {
     "Invoice approval, draws, budgets, and lien releases for custom home builders. Built by builders.",
   metadataBase: new URL("https://nightwork.build"),
   alternates: { canonical: "https://nightwork.build" },
-  icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-  },
+  // Favicon + manifest are auto-injected by Next.js 14 file-based icon
+  // conventions: src/app/icon.svg → <link rel="icon">, src/app/manifest.ts
+  // → <link rel="manifest">. No explicit icons: block needed here. See
+  // BRANDING.md §3, §7 for the file map.
   openGraph: {
     title: "Nightwork — construction back-office, on autopilot",
     description:
