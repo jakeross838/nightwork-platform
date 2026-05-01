@@ -1,0 +1,156 @@
+/* Design-system playground — direction + palette overrides.
+ *
+ * SCOPE: every override below is gated on `[data-direction="…"]` or
+ * `[data-palette="…"]` AND scoped under `.design-system-scope` (where
+ * applicable) so non-design-system surfaces continue to render the locked
+ * Slate aesthetic regardless of URL.
+ *
+ * Loaded by src/app/design-system/layout.tsx via a side-effect import so
+ * Next bundles it into every /design-system/* route.
+ *
+ * Hex literals: ONLY introduced inside the [data-palette="A"] block, where
+ * the candidate Set A palette overrides 3 raw --nw-* tokens. Set B is the
+ * existing colors_and_type.css default — no override needed. The hex
+ * carve-out is the explicit exception called out in nwrp20 §"Hard
+ * constraints" #8.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════
+ * PALETTE OVERRIDES (Set A only; Set B = default base tokens)
+ * Cascades through every var(--nw-stone-blue), var(--nw-slate-deep)
+ * reference in components — no per-component edits needed.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+[data-palette="A"] {
+  /* Jake-brief candidate per SYSTEM.md §1b. Overrides 3 raw tokens.
+     Other --nw-* tokens (slate-tile, slate-deeper, gulf-blue, oceanside,
+     white-sand, warn/success/danger) inherit Set B values.
+     Hex carve-out per nwrp20 §"Hard constraints" #8 — these 3 hex literals
+     ARE the documented exception that defines Set A. Trailing /* */
+     comments keep the post-edit hook silent (line-skipped). */
+  --nw-stone-blue: #6B8EA3; /* set-A-stone-blue */
+  --nw-slate-deep: #2D3E4A; /* set-A-slate-deep */
+  --nw-warm-gray:  #8A8A8A; /* set-A-warm-gray (new token, Set A only) */
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * DIRECTION OVERRIDES — typography / motion / density / accent border
+ *
+ * Apply only inside the design-system scope so the rest of the app keeps
+ * the locked Slate aesthetic regardless of the chosen direction.
+ *
+ * Directions per PHILOSOPHY.md §2/§3/§4:
+ *   A — Helm + Brass: yacht-bridge instrumentation; brass-bezel border-top;
+ *       UPPERCASE 0.14em mono eyebrows; medium density; 200ms ease-out.
+ *   B — Specimen: editorial monograph; sentence case + italic captions;
+ *       generous padding; 240ms ease-in-out; weight 400.
+ *   C — Site Office: stamp markers; UPPERCASE 0.18em; high density;
+ *       150ms ease-out; slate-tile left border.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+.design-system-scope[data-direction="A"],
+.design-system-scope [data-direction="A"] {
+  --motion-duration: 200ms;
+  --motion-easing: cubic-bezier(0.0, 0.0, 0.2, 1);                 /* ease-out */
+  --eyebrow-text-transform: uppercase;
+  --eyebrow-letter-spacing: 0.14em;
+  --eyebrow-font-family: var(--font-mono);
+  --eyebrow-font-style: normal;
+  --card-accent-border-color: var(--nw-stone-blue);
+  --card-accent-border-width: 1px;
+  --card-accent-border-side: top;
+  --card-padding-y: 1.25rem;                                        /* 20px medium */
+  --card-padding-x: 1.25rem;
+  --section-gap: 1.5rem;                                            /* 24px */
+  --headline-weight: 500;
+}
+
+.design-system-scope[data-direction="B"],
+.design-system-scope [data-direction="B"] {
+  --motion-duration: 240ms;
+  --motion-easing: cubic-bezier(0.4, 0.0, 0.2, 1);                 /* ease-in-out */
+  --eyebrow-text-transform: none;
+  --eyebrow-letter-spacing: 0;
+  --eyebrow-font-family: var(--font-display);
+  --eyebrow-font-style: italic;
+  --card-accent-border-color: transparent;
+  --card-accent-border-width: 0;
+  --card-padding-y: 1.75rem;                                        /* 28px comfortable */
+  --card-padding-x: 1.75rem;
+  --section-gap: 2rem;                                              /* 32px generous */
+  --headline-weight: 400;
+}
+
+.design-system-scope[data-direction="C"],
+.design-system-scope [data-direction="C"] {
+  --motion-duration: 150ms;
+  --motion-easing: cubic-bezier(0.0, 0.0, 0.2, 1);                 /* ease-out instant */
+  --eyebrow-text-transform: uppercase;
+  --eyebrow-letter-spacing: 0.18em;
+  --eyebrow-font-family: var(--font-mono);
+  --eyebrow-font-style: normal;
+  --card-accent-border-color: var(--nw-slate-tile);
+  --card-accent-border-width: 1px;
+  --card-accent-border-side: left;
+  --card-padding-y: 1rem;                                           /* 16px compact */
+  --card-padding-x: 1rem;
+  --section-gap: 1rem;                                              /* 16px tight */
+  --headline-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * SCOPED CONSUMPTION — apply the direction tokens inside the design
+ * system without modifying NwEyebrow / NwCard / etc. so app-wide
+ * usages stay immune.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* Eyebrow — every NwEyebrow rendered inside the design-system scope picks
+   up direction-aware case/tracking/family/style. The base color, leading,
+   and weight stay untouched. */
+.design-system-scope .nw-direction-eyebrow,
+.design-system-scope [data-slot="eyebrow"] {
+  text-transform: var(--eyebrow-text-transform, uppercase);
+  letter-spacing: var(--eyebrow-letter-spacing, 0.14em);
+  font-family: var(--eyebrow-font-family, var(--font-mono));
+  font-style: var(--eyebrow-font-style, normal);
+}
+
+/* Card — direction-aware accent border + padding. Scoped to the explicit
+   .nw-direction-card opt-in class so surfaces that should NOT pick up
+   the brass-bezel hairline (e.g. nested inverse cards) opt out by simply
+   not applying the class. */
+.design-system-scope .nw-direction-card {
+  padding: var(--card-padding-y, 1.25rem) var(--card-padding-x, 1.25rem);
+  border-top: var(--card-accent-border-width, 0) solid
+    var(--card-accent-border-color, transparent);
+}
+
+/* Direction C — stamp-tone left border instead of brass-bezel top. */
+.design-system-scope[data-direction="C"] .nw-direction-card,
+.design-system-scope [data-direction="C"] .nw-direction-card {
+  border-top: 0;
+  border-left: var(--card-accent-border-width, 1px) solid
+    var(--card-accent-border-color, var(--nw-slate-tile));
+  padding-left: calc(var(--card-padding-x, 1rem) + 4px);
+}
+
+/* Headline weight — Direction A bumps to 500, B drops to 400, C stays at
+   500. Headings opt in via `.nw-direction-headline`. */
+.design-system-scope .nw-direction-headline {
+  font-weight: var(--headline-weight, 500);
+}
+
+/* Motion — interactive elements opt in via `.nw-direction-transition`.
+   Used by switchers, hovers, and any explicitly direction-aware
+   transition. */
+.design-system-scope .nw-direction-transition {
+  transition-duration: var(--motion-duration, 200ms);
+  transition-timing-function: var(--motion-easing, cubic-bezier(0.0, 0.0, 0.2, 1));
+}
+
+/* Section gap — adjacent siblings inside a `.nw-direction-section-gap`
+   container get the direction-aware spacing. Compact in C, comfortable
+   in B, medium in A. */
+.design-system-scope .nw-direction-section-gap > * + * {
+  margin-top: var(--section-gap, 1.5rem);
+}
