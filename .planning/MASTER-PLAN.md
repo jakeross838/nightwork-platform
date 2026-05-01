@@ -144,12 +144,12 @@ The build path is divided into stages. Stages are coarser than phases — a stag
 
 ## 9. CURRENT POSITION
 
-- **Current stage:** Stage 1 + Stage 1.6 complete. CP1 closed (16/17 questions autonomously resolved + Jake's strategic answers; 1 non-blocking follow-up).
-- **Current phase:** Stage 1.5a (design system documents) is next.
-- **Current branch:** `nightwork-build-system-setup`.
-- **Last commit on branch:** Stage 1 commits added 2026-04-29 (VISION → CURRENT-STATE → DRUMMOND-FIXTURE-SUMMARY → TARGET → Drummond clarifications → GAP).
-- **Production deploy:** `https://nightwork-platform.vercel.app` (alias) backed by `dpl_pkesin29g` 2026-04-29 — healthy, CSP live with `worker-src 'self' blob:` for PDF.js, `frame-ancestors 'none'`, all required upstreams allowed.
-- **Last QA verdict:** WARNING (post-fix) — 0 BLOCKING / 0 CRITICAL / 0 HIGH / 3 MEDIUM (deferred) / 2 LOW (deferred) / 4 NOTE (deferred). Report: `.planning/qa-runs/2026-04-29-1020-qa-report.md`. Stage 1 is documentation-only; no QA run required.
+- **Current stage:** **Stage 1.5a SHIPPED to production 2026-05-01.** CP2 closed. Stage 1 + Stage 1.6 + Stage 1.5a complete. Site Office direction + Set B palette locked per D-037.
+- **Current phase:** Stage 1.5b prototype gallery (Drummond fixture data rendered in Site Office + Set B) is next.
+- **Current branch:** `main` (Stage 1.5a merged from `nightwork-build-system-setup`).
+- **Last commit on main:** Stage 1.5a ship merge 2026-05-01 (60+ commits across docs, playground, branding v0, switchers, CP2 lock).
+- **Production deploy:** `https://nightwork-platform.vercel.app` — healthy. `/design-system` route gated to `platform_admin` only via middleware (404 rewrite for non-admin in production); design tokens live; v0 wordmark live.
+- **Last QA verdict:** PASS — 0 CRITICAL / 0 HIGH / 1 MEDIUM (1.5a-followup-1 rgba drift, deferred per D-038) / 3 LOW (apple-icon.png deferred to v1, SVG file font fallback acceptable per BRANDING.md §8, hex carve-out in `src/lib/branding/constants.ts` for PWA manifest). Report: `.planning/phases/stage-1.5a-design-system-documents/artifacts/QA-verdict-branding.md`.
 - **Stage 1 deliverables (committed):**
   - ✅ `.planning/architecture/VISION.md` — full construction OS target across all 5 waves
   - ✅ `.planning/architecture/CURRENT-STATE.md` — comprehensive diagnostic with 8 headline findings
@@ -209,6 +209,9 @@ Major decisions made during planning. Each entry is point-in-time; do not retroa
 | **D-034** | 2026-04-29 | Four-table invoice-line-shape (`invoice_line_items`, `invoice_allocations`, `document_extraction_lines`, `line_cost_components`) is documented and lived-with for now. F1 adds explicit canonical documentation in `docs/nightwork-plan-canonical-v1.md` §5.6 + a `v_invoice_lines_full` view for unified queries. UCM (canonical Q3) consolidates later. (Resolves CP1 NQ3.) | F1 consolidating would be wasted work re-done by UCM. Document-and-live-with is lower-risk. |
 | **D-035** | 2026-04-29 | F0 prep absorbed into F1. F1 first-day tasks: drop `change_order_budget_lines`, add `lien_releases.status_history`, fix docx-html auth, decide `budgets` table fate. F1 estimate becomes 6-8 days (was 5-7 + 1). (Resolves CP1 NQ4 — Jake's strategic answer.) | F0 was 1 day of cleanup tightly coupled to F1; separate phase added orchestration overhead with no benefit. |
 | **D-036** | 2026-04-29 | Stage 1.5b prototype gallery scope grows by one prototype: a reconciliation-surface mock-up (alongside invoice review, draw assembly, budget dashboard, CO log, lien-release flow, settings, owner portal stub). Throwaway HTML on Drummond data; goal is design vocabulary, not commitment. Strategic Checkpoint #2 reviews the gallery including this addition. (Resolves CP1 NQ5.) | Reconciliation surface is the most architecturally novel UI Nightwork ships; design vocabulary should develop in parallel with extractor work. |
+| **D-037** | 2026-05-01 | CP2 picks locked — **Site Office direction** + **Set B palette** (`#5B8699` Stone Blue / `#1A2830` Slate Deep / `#3B5864` Slate Tile / `#F7F5EC` White Sand). DARK + Set A semantic-color special-case rule documented in SYSTEM.md §1b is **NOT applicable** since Set B was picked (Set B clears AA-normal on all four semantic-color × bg-page pairings without the special-case). Brand identity v0 locked per nwrp19; brand designer revisit planned post-Wave 1 when revenue justifies. Marker file: `.planning/design/CHOSEN-DIRECTION.md`. | Per Jake's CP2 review on Vercel preview (philosophy page rendered all 3 directions × 4 renders side-by-side; palette page rendered Set A vs Set B). Direction selection rationale: Site Office's stamped/forms/Telex-ticker vocabulary best fits Ross Built's audit-trail-heavy cost-plus-open-book workflow + most resilient to scaling beyond Florida coastal market. Palette Set B clears AA-normal across more cells (matrix-verified per CONTRAST-MATRIX.md §3-§6) and is the existing implementation, lowering risk. |
+| **D-038** | 2026-05-01 | `1.5a-followup-1` (rgba opacity drift across ~30 sites in 7 design-system pages) deferred to a polish phase per Wave D `/nightwork-qa` MEDIUM-1 finding. Hook extension to catch raw `rgba()` (currently catches only `#hex` literals) is a separate consideration. Logged in §11 tech debt. | Cosmetic drift, not a runtime defect. Polish-pass remediation paths available: `color-mix(in srgb, var(--nw-token), transparent N%)` OR new `--nw-tint-*` tokens. Out-of-scope for 1.5a ship. |
+| **D-039** | 2026-05-01 | `1.5a-followup-2` NEW: CP2 marker-file persistence is local-dev-only (Vercel filesystem read-only at runtime). The pick-direction route at `src/app/api/design-system/pick-direction/route.ts:18-26` documents the limitation. For future strategic picks (CP3, CP4), re-architect to GitHub API commit OR Supabase `org_settings` row OR commit-from-PR-comment. Logged in §11 tech debt; not blocking 1.5a ship. | Discovered when Jake clicked picks on Vercel preview at CP2 — the route's filesystem write succeeded against Vercel's ephemeral storage but didn't persist back to git. Per Option 2 of nwrp22 escalation, marker file written manually with Jake's verbatim picks. Audit footnote in `CHOSEN-DIRECTION.md` records the manual-transcribe path. |
 
 ## 11. TECH DEBT REGISTRY
 
@@ -237,6 +240,7 @@ Known issues, deferred deliberately. Each entry: severity, source (where it was 
 | Side-by-Side Compare pattern (proposal-vs-contract, budget-vs-draw) + Timeline/Gantt pattern (Wave 2 schedules) — NOT in Stage 1.5a PATTERNS.md | LOW (scoped elsewhere) | Stage 1.5a plan-review iteration 1 architect M-A5 deferred. | Side-by-Side Compare lands in Wave 1.1 polish work; Timeline/Gantt lands in Wave 2 schedules phase. PATTERNS.md picks them up there. |
 | 49 pre-existing typecheck errors in `__tests__/*.test.ts` files using regex `/d` flag (ES2018+ feature) — error TS1501 "regular expression flag is only available when targeting 'es2018' or later" | LOW (test-only, blocks `nightwork-stop.sh`) | Surfaced 2026-04-29 during Stage 1.5a Wave 1+T07 by stop hook; not caused by 1.5a. Files: `pricing-history.test.ts`, `proposals-schema.test.ts`, `approval-chains.test.ts`, `co-type-expansion.test.ts`, `cost-codes-hierarchy.test.ts`, `draw-adjustments.test.ts`, `job-milestones-pm-write-narrowing.test.ts`, `milestones-retainage.test.ts`. | Bump tsconfig.json `compilerOptions.target` from current ES2017/older to ES2018+. Should be done in its own cleanup phase (separate from 1.5a) so the diff is reviewable. Log NIGHTWORK_STOP_HOOK_DISABLE=1 workaround if needed mid-1.5a but real fix is the tsconfig bump. |
 | **1.5a-followup-1**: `rgba()` opacity tints across 7 design-system pages map to canonical Slate tokens by numeric coincidence (post-edit hook only catches `#hex` literals, not raw `rgba()` values) — ~30 sites across `forbidden`, `patterns`, `philosophy`, `palette`, `components/{data-display, inputs, feedback}` pages | MEDIUM (cosmetic drift, not a runtime defect) | Stage 1.5a Wave D QA verdict 2026-04-30 MEDIUM-1 finding (`.planning/phases/stage-1.5a-design-system-documents/artifacts/QA-verdict.md`) | Standardize via `color-mix(in srgb, var(--nw-token), transparent N%)` OR introduce new `--nw-tint-*` tokens for the common opacity bands (e.g. `--nw-tint-danger-06`, `--nw-tint-stone-06`). Defer to a polish phase before 1.5b ships. Hook extension to catch raw `rgba()` is a separate consideration. |
+| **1.5a-followup-2**: CP2 marker-file persistence is local-dev-only — Vercel filesystem is read-only at runtime, so clicking "Pick this direction" on a Vercel preview deploy doesn't persist back to git. Documented in `src/app/api/design-system/pick-direction/route.ts:18-26`. For 1.5a CP2 pick, marker file was written manually per nwrp22 Option 2; audit footnote in `CHOSEN-DIRECTION.md` records the path. | LOW (one-shot decision; manual workaround acceptable) | Discovered 2026-05-01 during nwrp21 ship (Jake's pick on Vercel preview didn't persist). | For future strategic checkpoints (CP3 between F4 and Wave 1, CP4 wherever D-012 places it), re-architect to one of: (a) GitHub API commit from server action with PAT, (b) Supabase `org_settings` row + read-from-marker-or-DB shim, (c) commit-from-PR-comment via GitHub Actions trigger. (a) is simplest if a deploy-time secret can hold a PAT scoped to single-repo single-file commits. Pick approach when CP3 lands. Logged D-039. |
 
 ## 12. NEXT PLANNED WORK
 
@@ -268,11 +272,18 @@ Updated continuously by `nightwork-custodian` after each `/gsd-ship`. Order is a
 - ✅ `/np` and `/nx` wrappers — chain GSD orchestrators with Nightwork gates
 - ✅ Demo on Wave 1.1 (`.planning/expansions/wave-1.1-invoice-approval-EXPANDED-SCOPE.md`).
 
-**Stage 1.5a — Design system documents (next):**
-- `.planning/design/PHILOSOPHY.md`, `SYSTEM.md`, `COMPONENTS.md`, `PATTERNS.md`.
+**Stage 1.5a — Design system documents (COMPLETE 2026-05-01, SHIPPED):**
+- ✅ `.planning/design/SYSTEM.md` (854 lines), `COMPONENTS.md` (1107 lines), `PATTERNS.md` (1829 lines), `PROPAGATION-RULES.md` (963 lines), `PHILOSOPHY.md` (2983 lines), `BRANDING.md` (270 lines), `.impeccable.md` (324 lines, repo root), `CONTRAST-MATRIX.md`.
+- ✅ Components playground at `/design-system/*` — 13 routes (index + 6 component category pages + palette + typography + patterns + philosophy + forbidden + middleware-gated).
+- ✅ NwWordmark + canonical SVG assets + favicon set + manifest.ts.
+- ✅ CP2 picks: Site Office direction + Set B palette (per D-037). Marker file at `.planning/design/CHOSEN-DIRECTION.md`.
+- ✅ Hook extensions (T10a-T10d sample-data isolation + Forbidden + tenant-blind primitives + wordmark integrity).
+- ✅ Skill cross-references (nightwork-design / nightwork-design-tokens / nightwork-ui-template anchored to new design docs).
+- ✅ CLAUDE.md UI rules section deferred to the 6 locked design docs.
 
-**Stage 1.5b — Prototype gallery (Strategic Checkpoint #2):**
-- Throwaway HTML prototypes built on Drummond data covering: invoice review, draw assembly, budget dashboard, CO log, lien-release flow, settings, owner portal stub.
+**Stage 1.5b — Prototype gallery (next; CP2 already closed):**
+- Throwaway HTML prototypes built on Drummond fixture data covering: invoice review, draw assembly, budget dashboard, CO log, lien-release flow, reconciliation surface (per D-036), settings, owner portal stub.
+- Rendered in **Site Office direction + Set B palette** (per D-037 lock) — UPPERCASE eyebrows + 0.18em tracking + JetBrains Mono, compact density, 1px slate-tile left-stamp on cards, 150ms ease-out motion.
 
 **Stage 1.5c — Real data + test infrastructure:**
 - Drummond fixture loader, end-to-end Playwright harness, automated `/nightwork-end-to-end-test` runs in CI.
