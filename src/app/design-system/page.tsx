@@ -103,7 +103,7 @@ export default function DesignSystemIndexPage() {
           Stage 1.5a · Strategic Checkpoint #2
         </Eyebrow>
         <h1
-          className="text-[34px] mb-3"
+          className="text-[34px] mb-3 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.02em",
@@ -162,7 +162,7 @@ export default function DesignSystemIndexPage() {
 
                 {/* Title — Space Grotesk, smaller than the page H1. */}
                 <h2
-                  className="text-[18px] mb-2"
+                  className="text-[18px] mb-2 nw-direction-headline"
                   style={{
                     fontFamily: "var(--font-space-grotesk)",
                     letterSpacing: "-0.01em",

@@ -105,7 +105,7 @@ function PatternSection({
         />
       </div>
       <h2
-        className="text-[26px] mb-3"
+        className="text-[26px] mb-3 nw-direction-headline"
         style={{
           fontFamily: "var(--font-space-grotesk)",
           letterSpacing: "-0.02em",
@@ -1401,7 +1401,7 @@ export default function PatternsPage() {
           Reference · 12 PATTERNS.md entries
         </Eyebrow>
         <h1
-          className="text-[34px] mb-3"
+          className="text-[34px] mb-3 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.02em",

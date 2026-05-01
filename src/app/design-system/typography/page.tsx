@@ -133,7 +133,7 @@ export default function TypographyPage() {
           Reference · Slate type system locked
         </Eyebrow>
         <h1
-          className="text-[34px] mb-3"
+          className="text-[34px] mb-3 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.02em",
@@ -158,7 +158,7 @@ export default function TypographyPage() {
       <section className="mb-14">
         <Eyebrow tone="muted" className="mb-3">Type scale · 13 tokens · SYSTEM.md §4b</Eyebrow>
         <h2
-          className="text-[22px] mb-4"
+          className="text-[22px] mb-4 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.01em",
@@ -227,7 +227,7 @@ export default function TypographyPage() {
       <section className="mb-14">
         <Eyebrow tone="muted" className="mb-3">Tracking · 4 tokens · SYSTEM.md §4c</Eyebrow>
         <h2
-          className="text-[22px] mb-4"
+          className="text-[22px] mb-4 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.01em",
@@ -296,7 +296,7 @@ export default function TypographyPage() {
       <section className="mb-14">
         <Eyebrow tone="muted" className="mb-3">Families · 3 faces · SYSTEM.md §4a · §4d</Eyebrow>
         <h2
-          className="text-[22px] mb-4"
+          className="text-[22px] mb-4 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.01em",
@@ -368,7 +368,7 @@ export default function TypographyPage() {
           Eyebrow render · 4 hierarchies · NwEyebrow primitive
         </Eyebrow>
         <h2
-          className="text-[22px] mb-4"
+          className="text-[22px] mb-4 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.01em",
@@ -409,7 +409,7 @@ export default function TypographyPage() {
           Money render · JetBrains Mono · tabular-nums · cents-precision
         </Eyebrow>
         <h2
-          className="text-[22px] mb-4"
+          className="text-[22px] mb-4 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.01em",
@@ -458,7 +458,7 @@ export default function TypographyPage() {
           Anti-patterns · Banned fonts per .impeccable.md §3
         </Eyebrow>
         <h2
-          className="text-[22px] mb-4"
+          className="text-[22px] mb-4 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.01em",

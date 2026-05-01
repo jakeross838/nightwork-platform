@@ -1143,7 +1143,7 @@ export default function ComponentsInputsPage() {
           Components · Inputs
         </NwEyebrow>
         <h1
-          className="text-[28px] mb-3"
+          className="text-[28px] mb-3 nw-direction-headline"
           style={{
             fontFamily: "var(--font-space-grotesk)",
             letterSpacing: "-0.02em",

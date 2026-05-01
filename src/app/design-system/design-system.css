@@ -26,7 +26,7 @@
      Other --nw-* tokens (slate-tile, slate-deeper, gulf-blue, oceanside,
      white-sand, warn/success/danger) inherit Set B values.
      Hex carve-out per nwrp20 §"Hard constraints" #8 — these 3 hex literals
-     ARE the documented exception that defines Set A. Trailing /* */
+     ARE the documented exception that defines Set A. Trailing line
      comments keep the post-edit hook silent (line-skipped). */
   --nw-stone-blue: #6B8EA3; /* set-A-stone-blue */
   --nw-slate-deep: #2D3E4A; /* set-A-slate-deep */
@@ -115,10 +115,13 @@
   font-style: var(--eyebrow-font-style, normal);
 }
 
-/* Card — direction-aware accent border + padding. Scoped to the explicit
-   .nw-direction-card opt-in class so surfaces that should NOT pick up
-   the brass-bezel hairline (e.g. nested inverse cards) opt out by simply
-   not applying the class. */
+/* Card — direction-aware accent border + padding. Two opt-in surfaces:
+     - `data-slot="card"` (NwCard, app-wide) — picks up tokens automatically
+       when rendered inside .design-system-scope.
+     - `.nw-direction-card` — explicit opt-in for non-NwCard surfaces.
+   Specificity (0,2,0) beats Tailwind's (0,1,0) so direction padding wins
+   over the Card's Tailwind p-3 / p-5 / p-6 classes. */
+.design-system-scope [data-slot="card"],
 .design-system-scope .nw-direction-card {
   padding: var(--card-padding-y, 1.25rem) var(--card-padding-x, 1.25rem);
   border-top: var(--card-accent-border-width, 0) solid
@@ -126,7 +129,9 @@
 }
 
 /* Direction C — stamp-tone left border instead of brass-bezel top. */
+.design-system-scope[data-direction="C"] [data-slot="card"],
 .design-system-scope[data-direction="C"] .nw-direction-card,
+.design-system-scope [data-direction="C"] [data-slot="card"],
 .design-system-scope [data-direction="C"] .nw-direction-card {
   border-top: 0;
   border-left: var(--card-accent-border-width, 1px) solid
@@ -135,9 +140,11 @@
 }
 
 /* Headline weight — Direction A bumps to 500, B drops to 400, C stays at
-   500. Headings opt in via `.nw-direction-headline`. */
+   500. Headings opt in via `.nw-direction-headline`. !important needed
+   because most playground headlines set `fontWeight: 500` inline (higher
+   specificity than a class selector); the direction override should win. */
 .design-system-scope .nw-direction-headline {
-  font-weight: var(--headline-weight, 500);
+  font-weight: var(--headline-weight, 500) !important;
 }
 
 /* Motion — interactive elements opt in via `.nw-direction-transition`.
