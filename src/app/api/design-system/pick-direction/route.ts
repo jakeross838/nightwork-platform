@@ -83,7 +83,14 @@ export async function POST(req: Request) {
 
   const label = DIRECTION_LABELS[direction];
   const anchor = DIRECTION_ANCHOR[direction];
-  const reasoning = (body.reasoning ?? "").trim() || "(no reasoning provided)";
+  // Sanitize reasoning: collapse newlines (prevents markdown-section injection
+  // into the marker file), trim, cap at 500 chars (prevents bloat). Bounded
+  // already by the platform_admin gate + hardcoded MARKER_PATH, but defense-
+  // in-depth — the marker is a permanent decision artifact. Per Wave D QA
+  // MEDIUM-2 finding, nwrp17 follow-up.
+  const reasoning =
+    (body.reasoning ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 500) ||
+    "(no reasoning provided)";
   const now = new Date();
   const isoDate = now.toISOString().slice(0, 10); // YYYY-MM-DD
   const isoTimestamp = now.toISOString();
