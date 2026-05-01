@@ -10,6 +10,99 @@
      different light-mode values, creating subtle mismatches in dark mode.
      Removed intentionally — colors_and_type.css is the single source. */
 
+  /* Stage 1.5a — Slate-aware shadcn token remap (per SPEC C9).
+     Shadcn primitives reference token names like --background / --foreground /
+     --primary / etc. Rather than introducing a parallel neutral OKLCH palette
+     (the shadcn baseColor=neutral default), we ALIAS each shadcn token name
+     to the existing Slate semantic value from colors_and_type.css. Single
+     source of truth: colors_and_type.css. The dark-mode block uses the same
+     alias names — colors_and_type.css already flips the underlying Slate vars
+     when [data-theme="dark"] is set, so the shadcn aliases flip for free.
+
+     --radius is hard-locked to 0 per SPEC A2.1 — square is the rule. The
+     explicit exception (--radius-dot: 999px) lives in colors_and_type.css
+     and is referenced by avatars and status dots only. */
+  :root,
+  :root[data-theme="light"],
+  [data-theme="light"] {
+    --background: var(--bg-page);
+    --foreground: var(--text-primary);
+    --card: var(--bg-card);
+    --card-foreground: var(--text-primary);
+    --popover: var(--bg-card);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--nw-stone-blue);
+    --primary-foreground: var(--nw-white-sand);
+    --secondary: var(--bg-subtle);
+    --secondary-foreground: var(--text-primary);
+    --muted: var(--bg-muted);
+    --muted-foreground: var(--text-secondary);
+    --accent: var(--nw-gulf-blue);
+    --accent-foreground: var(--nw-white-sand);
+    --destructive: var(--nw-danger);
+    --destructive-foreground: var(--nw-white-sand);
+    --border: var(--border-default);
+    --input: var(--border-default);
+    --ring: var(--nw-stone-blue);
+    --radius: 0;
+    /* Chart palette — alias to existing Slate semantics.
+       Charts are not yet in scope for Stage 1.5a; these values are placeholders
+       so any shadcn primitive that touches --chart-N renders in palette. */
+    --chart-1: var(--nw-stone-blue);
+    --chart-2: var(--nw-gulf-blue);
+    --chart-3: var(--nw-success);
+    --chart-4: var(--nw-warn);
+    --chart-5: var(--nw-danger);
+    /* Sidebar — same alias pattern; not actively used yet. */
+    --sidebar: var(--bg-card);
+    --sidebar-foreground: var(--text-primary);
+    --sidebar-primary: var(--nw-stone-blue);
+    --sidebar-primary-foreground: var(--nw-white-sand);
+    --sidebar-accent: var(--bg-subtle);
+    --sidebar-accent-foreground: var(--text-primary);
+    --sidebar-border: var(--border-default);
+    --sidebar-ring: var(--nw-stone-blue);
+  }
+
+  :root[data-theme="dark"],
+  [data-theme="dark"] {
+    /* Same alias structure — colors_and_type.css already flipped the
+       underlying Slate vars, so these track dark-mode automatically. */
+    --background: var(--bg-page);
+    --foreground: var(--text-primary);
+    --card: var(--bg-card);
+    --card-foreground: var(--text-primary);
+    --popover: var(--bg-card);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--nw-stone-blue);
+    --primary-foreground: var(--nw-white-sand);
+    --secondary: var(--bg-subtle);
+    --secondary-foreground: var(--text-primary);
+    --muted: var(--bg-muted);
+    --muted-foreground: var(--text-secondary);
+    --accent: var(--nw-oceanside);
+    --accent-foreground: var(--nw-slate-deep);
+    --destructive: var(--nw-danger);
+    --destructive-foreground: var(--nw-white-sand);
+    --border: var(--border-default);
+    --input: var(--border-default);
+    --ring: var(--nw-stone-blue);
+    --radius: 0;
+    --chart-1: var(--nw-stone-blue);
+    --chart-2: var(--nw-oceanside);
+    --chart-3: var(--nw-success);
+    --chart-4: var(--nw-warn);
+    --chart-5: var(--nw-danger);
+    --sidebar: var(--bg-card);
+    --sidebar-foreground: var(--text-primary);
+    --sidebar-primary: var(--nw-stone-blue);
+    --sidebar-primary-foreground: var(--nw-white-sand);
+    --sidebar-accent: var(--bg-subtle);
+    --sidebar-accent-foreground: var(--text-primary);
+    --sidebar-border: var(--border-default);
+    --sidebar-ring: var(--nw-stone-blue);
+  }
+
   body {
     background: var(--bg-page);
     color: var(--text-body);

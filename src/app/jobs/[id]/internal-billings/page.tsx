@@ -8,6 +8,7 @@ import JobFinancialBar from "@/components/job-financial-bar";
 import Breadcrumbs from "@/components/breadcrumbs";
 import EmptyState, { EmptyIcons } from "@/components/empty-state";
 import BudgetCostsSubTabs from "@/components/budget-costs-sub-tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { formatCents } from "@/lib/utils/format";
 import { supabase } from "@/lib/supabase/client";
 
@@ -790,13 +791,12 @@ export default function JobInternalBillingsPage({
                 <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                   Description
                 </span>
-                <textarea
-                  rows={2}
+                <Textarea
+                  minRows={2}
                   value={form.description}
                   onChange={(e) =>
                     setForm((p) => ({ ...p, description: e.target.value }))
                   }
-                  className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2 focus:outline-none focus:border-[var(--nw-stone-blue)]"
                   disabled={saving}
                 />
               </label>
@@ -836,13 +836,12 @@ export default function JobInternalBillingsPage({
                 <span className="block text-[11px] tracking-[0.08em] uppercase text-[color:var(--text-secondary)] mb-1">
                   Notes
                 </span>
-                <textarea
-                  rows={2}
+                <Textarea
+                  minRows={2}
                   value={form.notes}
                   onChange={(e) =>
                     setForm((p) => ({ ...p, notes: e.target.value }))
                   }
-                  className="w-full border border-[var(--border-default)] bg-[var(--bg-subtle)] text-[color:var(--text-primary)] text-sm px-3 py-2 focus:outline-none focus:border-[var(--nw-stone-blue)]"
                   disabled={saving}
                 />
               </label>
@@ -853,7 +852,7 @@ export default function JobInternalBillingsPage({
                 type="button"
                 onClick={handleSubmit}
                 disabled={saving || !form.billing_type_id}
-                className="px-4 py-2 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] text-white text-sm font-medium disabled:opacity-60 transition-colors"
+                className="px-4 py-2 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] text-nw-white-sand text-sm font-medium disabled:opacity-60 transition-colors"
               >
                 {saving
                   ? "Saving..."

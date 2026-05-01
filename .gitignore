@@ -37,11 +37,40 @@ yarn-error.log*
 next-env.d.ts
 
 # claude code / plugins
+# Default: ignore everything under .claude/. Carve out Nightwork-authored
+# build-system code (skills, agents, commands, hooks, settings) so the
+# anti-drift mechanism propagates via git. Third-party skills/agents/commands
+# (ECC, GSD, Superpowers, frontend-design, impeccable, shadcn-ui, etc.) stay
+# local because they are re-installable from upstream.
 .claude/*
+!.claude/settings.json
+
+# Skills: only nightwork-* skills are tracked
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/nightwork-design/
 !.claude/skills/nightwork-design/**
+!.claude/skills/nightwork-*/
+!.claude/skills/nightwork-*/**
+
+# Agents: only nightwork-* agents are tracked
+!.claude/agents/
+.claude/agents/*
+!.claude/agents/nightwork-*.md
+
+# Commands: nightwork-* + the np / nx / ns wrappers
+!.claude/commands/
+.claude/commands/*
+!.claude/commands/nightwork-*.md
+!.claude/commands/np.md
+!.claude/commands/nx.md
+!.claude/commands/ns.md
+
+# Hooks: only nightwork-* hooks are tracked
+!.claude/hooks/
+.claude/hooks/*
+!.claude/hooks/nightwork-*.sh
+
 .agents/
 skills-lock.json
 
@@ -57,8 +86,41 @@ skills-lock.json
 # classifier eval intermediate output (regenerable, varies per run — final results are pasted into qa-branch3-phase3.2-v2.md)
 /qa-reports/.eval/
 
-# /gsd-map-codebase output, regenerable, kept local
-/.planning/
+# /.planning/ — local planning artifacts; canonical docs are whitelisted below.
+# Transient outputs (qa-runs, plan-reviews, e2e-runs, design-checks,
+# custodian-runs, drift-checks, propagate) are regenerated each phase and
+# stay local. Sensitive scan output (audits) and business-data fixtures
+# (fixtures) also stay local.
+/.planning/*
+!/.planning/MASTER-PLAN.md
+!/.planning/PROJECT.md
+!/.planning/ROADMAP.md
+!/.planning/REQUIREMENTS.md
+!/.planning/STATE.md
+!/.planning/deployment.md
+!/.planning/config.json
+!/.planning/lessons.md
+!/.planning/architecture/
+!/.planning/architecture/**
+!/.planning/milestones/
+!/.planning/milestones/**
+# expansions/ — phase contracts (EXPANDED-SCOPE.md, MANUAL-CHECKLIST.md,
+# SETUP-COMPLETE.md, PREFLIGHT-PASS.md/FAIL.md). These must sync across
+# PCs because /np reads EXPANDED-SCOPE and /nx reads SETUP-COMPLETE. Per D-018.
+!/.planning/expansions/
+!/.planning/expansions/**
+# phases/ — phase artifacts (DISCUSSION.md, SPEC.md, PLAN.md, PLAN-REVIEW.md,
+# MANIFEST.md, STATE.md). These must sync across PCs because /np produces
+# them and /nx reads them. Per D-018 + GSD convention.
+!/.planning/phases/
+!/.planning/phases/**
+# design/ — canonical Nightwork design system documents (PHILOSOPHY.md,
+# SYSTEM.md, COMPONENTS.md, PATTERNS.md, PROPAGATION-RULES.md,
+# CONTRAST-MATRIX.md). Produced by stage-1.5a; consumed by every later UI
+# phase + by skills (nightwork-design, nightwork-design-tokens,
+# nightwork-ui-template). Must sync across PCs. Per D-018 + SPEC §2.
+!/.planning/design/
+!/.planning/design/**
 
 # smoke + E2E runtime logs (ephemeral, regenerated each run)
 /e2e-state.json

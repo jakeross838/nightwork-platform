@@ -10,6 +10,7 @@ import NwCard from "@/components/nw/Card";
 import NwEyebrow from "@/components/nw/Eyebrow";
 import NwButton from "@/components/nw/Button";
 import NwMoney from "@/components/nw/Money";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Job {
   id: string;
@@ -219,9 +220,8 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
 
           <div>
             <NwEyebrow tone="muted" className="mb-1.5 block">Description</NwEyebrow>
-            <textarea
-              className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
-              rows={2}
+            <Textarea
+              minRows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Framing labor — Phase 1"
@@ -352,9 +352,8 @@ export default function NewPurchaseOrderPage({ params }: { params: { id: string 
 
           <div>
             <NwEyebrow tone="muted" className="mb-1.5 block">Notes</NwEyebrow>
-            <textarea
-              className="w-full px-3 py-2 text-sm focus:outline-none nw-input"
-              rows={2}
+            <Textarea
+              minRows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />

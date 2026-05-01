@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
 import { PUBLIC_APP_NAME } from "@/lib/org/public";
+import { NwWordmark } from "@/components/branding/Wordmark";
 import SignupForm from "./SignupForm";
 
 export const dynamic = "force-dynamic";
@@ -24,13 +25,7 @@ export default async function SignupPage({
       <div className="w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block" aria-label={PUBLIC_APP_NAME}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/nightwork-logo-light.svg"
-              alt={PUBLIC_APP_NAME}
-              style={{ width: "auto" }}
-              className="mx-auto h-10 w-auto"
-            />
+            <NwWordmark size={200} className="mx-auto" />
           </Link>
           <h1
             className="m-0 mt-6"

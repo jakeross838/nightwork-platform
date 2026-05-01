@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Eyebrow from "@/components/nw/Eyebrow";
 import Button from "@/components/nw/Button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 
 type ToolCall = { name: string; input: Record<string, unknown> };
@@ -237,7 +238,7 @@ export default function SupportChatWidget({
           <button
             type="button"
             aria-label="Close"
-            className="sm:hidden absolute inset-0 bg-black/40 cursor-default"
+            className="sm:hidden absolute inset-0 bg-nw-slate-deep/40 cursor-default"
             onClick={() => setOpen(false)}
           />
           <aside
@@ -337,8 +338,8 @@ export default function SupportChatWidget({
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   <span className="inline-flex items-center gap-2">
-                    <span className="inline-block w-2 h-2 rounded-full animate-pulse"
-                      style={{ background: "var(--nw-stone-blue)" }}
+                    <span className="inline-block w-2 h-2 animate-pulse"
+                      style={{ background: "var(--nw-stone-blue)", borderRadius: "var(--radius-dot)" }}
                     />
                     Assistant is thinking…
                   </span>
@@ -364,20 +365,15 @@ export default function SupportChatWidget({
                   {error}
                 </div>
               )}
-              <textarea
+              <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={submitting}
-                rows={2}
+                minRows={2}
                 maxLength={MAX_MESSAGE_LEN}
                 placeholder="Ask a question or describe an issue…"
-                className="w-full p-2 text-sm resize-none border"
-                style={{
-                  color: "var(--text-primary)",
-                  borderColor: "var(--border-default)",
-                  background: "var(--bg-card)",
-                }}
+                className="resize-none"
               />
               <div className="flex items-center justify-between">
                 <span

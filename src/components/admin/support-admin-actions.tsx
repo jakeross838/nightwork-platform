@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/nw/Button";
 import Eyebrow from "@/components/nw/Eyebrow";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 
 const STATUSES = [
@@ -98,18 +99,13 @@ export default function SupportAdminActions({
 
       <div>
         <Eyebrow className="mb-1.5 block">INTERNAL NOTES</Eyebrow>
-        <textarea
+        <Textarea
           value={adminNotes}
           onChange={(e) => setAdminNotes(e.target.value)}
           disabled={submitting}
-          rows={4}
+          minRows={4}
           placeholder="What did we do? Why? Any follow-up for the customer?"
-          className="w-full p-3 text-sm border resize-none"
-          style={{
-            background: "var(--bg-card)",
-            color: "var(--text-primary)",
-            borderColor: "var(--border-strong)",
-          }}
+          className="resize-none border-[var(--border-strong)]"
         />
       </div>
 

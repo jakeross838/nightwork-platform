@@ -36,7 +36,7 @@ Cayman-Islands-inspired: slate-tile text, stone-blue action, white-sand page.
 | `--nw-slate-deep` | `#1A2830` | Top nav, inverse surfaces, primary button |
 | `--nw-slate-deeper` | `#132028` | Hover state on slate-deep |
 | `--nw-stone-blue` | `#5B8699` | Primary accent, progress bars, accent button |
-| `--nw-gulf-blue` | `#4E7A8C` | Links, hover on stone-blue |
+| `--nw-gulf-blue` | `#436A7A` | Links, hover on stone-blue (bumped from `#4E7A8C` in T12 for AA-normal compliance) |
 | `--nw-oceanside` | `#CBD8DB` | Tint, subtle accent |
 | `--nw-white-sand` | `#F7F5EC` | Page background (warm off-white — NOT pure white) |
 | `--nw-warn` | `#C98A3B` | Pending approvals, warnings, allowance overages |

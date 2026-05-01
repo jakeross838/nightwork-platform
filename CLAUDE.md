@@ -489,3 +489,66 @@ See `docs/platform-admin-runbook.md` for common scenarios.
 6. Only then report success to the user
 
 Do NOT skip this step. A build passing does not mean the feature works. "It compiles" is not the same as "it works." If Chrome DevTools MCP is connected, use it. Every time.
+
+## Nightwork standing rules
+
+These rules are non-negotiable. Custom Nightwork agents, hooks, and orchestrator commands will reject work that violates them. They sit on top of the more specific Architecture Rules and Development Rules above — when the two overlap, the Development Rules win on specifics; this section sets the global posture.
+
+### Architecture posture
+
+- **Multi-tenant RLS is non-negotiable.** Every tenant table has RLS enabled, every query filters on `org_id` from `getCurrentMembership()`. Tenant safety is built BY CONSTRUCTION, not by enforcement — design schemas and APIs so that a tenant cannot leak via this design even with a dropped RLS policy.
+- **Every aggregation needs proper indexes.** Dashboard 503s on aggregations (the current pain) are an architectural smell. Any new aggregation query has an index plan in the same migration. `EXPLAIN ANALYZE` runs on representative data before merging.
+- **Org-configurable, not hardcoded.** Cost code lists, fee rates, payment-schedule cutoffs, deposit %, draw revision rules, lien-release templates — anything a customer might want to change — lives in `org_settings` (or a per-org config table), not in code. Ross Built defaults seed the table; future tenants override.
+- **Data portability is first-class.** Every entity must be exportable to a stable JSON contract and importable from one. Imports are idempotent (re-running with the same payload is a no-op), validated against an explicit schema, and audit-logged on both sides. Data import is a triggering event for downstream workflows (a draw can be created from imported invoice data, a budget from imported PO data, etc.) — not a one-shot migration.
+
+### Code behavior
+
+- **Recalculate, don't increment.** All running totals — `total_to_date`, `previous_applications`, `current_payment_due`, `co_running_total`, vendor balance, etc. — are computed from source-of-truth rows on read. The only stored aggregates are the explicit trigger-maintained caches called out in Development Rules (`jobs.approved_cos_total` is the canonical example), each with a rationale comment.
+- **Never kill running processes.** Dev servers, watchers, queue workers, MCP browser sessions, and Vercel preview builds — never `kill -9`, never `taskkill /F`, never close a tab mid-flight to "reset state." Wait, signal politely, or open a new instance. Killing processes loses work and creates Heisenbugs.
+- **Financial calculations are auditable.** Every cents-level math step is reproducible from source rows. Status transitions append to `status_history` JSONB. PM/QA overrides log old/new values. Draws are locked on submit; revisions create Rev N rows, never overwrite. If an auditor asked "how did this number get here?", the system has to answer with row-level evidence.
+
+### UI rules
+
+- **Stage 1.5a design documents are the authoritative sources.** When this section conflicts with any of them, they win:
+  - **`.planning/design/SYSTEM.md`** — locked single source of truth for design tokens (colors, type scale, spacing, radii, shadows), motion contracts, density modes (compact / comfortable / print-forces-compact), touch target standards (44px minimum, 56px for high-stakes actions), accessibility contracts (WCAG 2.2 AA mandatory), and brand-customization (`--brand-accent` + `--brand-logo` only).
+  - **`.planning/design/COMPONENTS.md`** — locked component contract. Every primitive (Button, Input, Combobox, DatePicker, Card, Modal, Drawer, Tabs, Toast, Banner, Empty/Loading/Error states, Tooltip, Popover, Form, Table, DataGrid, ConfidenceBadge) with variants, states, token bindings, a11y notes, mobile behavior, and anti-patterns. Includes the tenant-blind primitives rule (`src/components/ui/` accepts NO `org_id`/`membership`/`vendor_id` props) and the Icon Library Boundary (Heroicons everywhere outside `src/components/ui/`; Lucide only inside shadcn primitives).
+  - **`.planning/design/PATTERNS.md`** — locked page-pattern catalogue (12 patterns). Document Review (file preview LEFT + right-rail panel + audit timeline BELOW) is the gold standard. Any review / approval / right-rail surface (proposals, draw approvals, lien releases, change orders, daily logs once they ship) extends Document Review — do not invent one-off layouts.
+  - **`.planning/design/PROPAGATION-RULES.md`** — workflow doc for changing the system: when to add a token vs reuse, component-add workflow, pattern-add workflow, icon-add workflow, versioning posture, shadcn-hybrid boundary rule. Cross-cutting design changes route through `/nightwork-propagate`.
+  - **`.impeccable.md`** (root) — quality contract for the `impeccable` and `frontend-design` skills. Anchors them to SYSTEM / COMPONENTS / PATTERNS plus the Forbidden list and the reference benchmarks (Procore, Linear, Stripe Dashboard).
+  - **`.planning/design/PHILOSOPHY.md`** — locked DRAFT until CP2. Presents 3 distinct directions (Helm + Brass / Specimen / Site Office) with concrete invoice-review + dashboard + mobile-approval renders. Jake picks one direction at Strategic Checkpoint #2 via the playground at `/design-system/philosophy`; the choice is written to `.planning/design/CHOSEN-DIRECTION.md` and locks every subsequent UI phase.
+- **Stone blue palette + Slate type system + logo top-right.** The Slate design tokens are the Nightwork product palette — Stone Blue accent, Dark Slate, Warm Gray, White Sand. Exact hex values are pending visual reconciliation at CP2 (per CP1-RESOLUTIONS Q1 — both candidate sets render side-by-side at `/design-system/palette`; Jake picks visually). The Slate type system is **Space Grotesk** (display/headings, weights 400/500), **Inter** (body, 14-15px), **JetBrains Mono** (eyebrows, money, audit trails — 10-11px UPPERCASE) — NOT Calibri. (Calibri appeared in earlier project notes as a paraphrase; corrected 2026-04-29 per Stage 1.5a Q2=B. The actual implementation across `tailwind.config.ts`, `colors_and_type.css`, and the existing nightwork-design skill has always been Space Grotesk + Inter + JetBrains Mono.) Ross Built logo sits in the top-right of every authenticated surface (collapses to icon-only at <360px viewport per Q13). Hardcoded color hex codes, ad-hoc font-family declarations, bouncy easing, oversized rounded corners, purple/pink hues, dark glows, and logo placement drift are all blocked by hooks (per SYSTEM.md §13 Forbidden thresholds, mechanically enforced via `.claude/hooks/nightwork-post-edit.sh`).
+- **Invoice review is the gold standard.** Any document review / approval / right-rail surface extends the invoice-review template — file preview LEFT, structured fields right-rail, audit timeline at the bottom. Do not invent one-off layouts when the template extends. The `nightwork-ui-template` skill codifies this contract; PATTERNS.md "Document Review" entry is the canonical doc; the components playground at `/design-system/patterns` renders it.
+- **Design tokens, always.** No hardcoded colors, spacing, or typography in components. Use bracket-value utilities with CSS vars (`bg-[var(--bg-card)]`, `text-[color:var(--text-primary)]`) or the raw `nw-*` utilities (`text-nw-slate-tile`, `bg-nw-stone-blue`). The legacy `cream/teal/brass/brand/status/nightwork` namespaces were removed in Phase E and must not return. The post-edit hook rejects hardcoded hex outside `globals.css` / `tailwind.config.*`.
+- **Components playground at `/design-system`.** Gated to platform_admin in production via middleware (404 to non-staff per Stage 1.5a SPEC B7). Sample data only — no Drummond, no real Ross Built records — so the playground is safe to share for design feedback. Use it as the visual reference whenever the docs aren't enough.
+
+### Domain rules
+
+- **Drummond is the reference job.** Every fixture, seed, end-to-end test, screenshot, and prototype uses Drummond data. When `nightwork-end-to-end-test` walks "create vendor → PO → invoice → approve → draw → G702/G703 → lien release → paid," it walks it on Drummond. Reference Drummond Pay App 8 for AIA G702/G703 layout truth.
+- **Field mistakes become permanent QC entries.** When a PM or supt records a mistake during a daily log, walk-through, or punchlist, the system creates a permanent QC entry tied to the job. Mistakes are not deleted on resolution — they are closed with a resolution note. Historical QC density is a metric the system surfaces.
+- **Draw requests link to punchlist.** Once schedules and punchlists ship (Wave 2), a draw request that includes a line item with an open punchlist item against it is flagged for the PM. Owner-facing draw approval shows the punchlist linkage. This relationship is stored in the draw schema from day one — not retrofitted.
+
+### Workflow posture
+
+- **Acceptance criteria are required.** Every phase produces explicit, falsifiable acceptance criteria during `/gsd-discuss-phase`. `nightwork-spec-checker` compares implementation to these criteria at the end of `/gsd-execute-phase`. No phase ships without them.
+- **Plan-level review precedes execute.** `/nightwork-plan-review` runs at the end of `/gsd-plan-phase` (architect, planner, enterprise-readiness, multi-tenant-architect, scalability, compliance, security, design-pushback). Critical findings block execute.
+- **QA review precedes ship.** `/nightwork-qa` runs at the end of `/gsd-execute-phase` (spec-checker, custodian, security, ai-logic-tester, plus UI/DB/API/financial-specific reviewers as applicable). Critical findings block ship.
+- **End-to-end test precedes ship.** `/nightwork-end-to-end-test` runs a full Drummond scenario through the system before `/gsd-ship`. Failures block ship.
+- **Cross-cutting changes go through `/nightwork-propagate`.** When a change is "everywhere," "all," "make X match Y," "every," — the propagate orchestrator builds a blast radius report, plans atomic chunks, executes with QA between each, smoke tests, and reports rollback steps. Do not perform cross-cutting changes ad-hoc.
+
+## Deployment
+
+Vercel + Next.js 14. Single region: **iad1** (N. Virginia). Full runbook in `.planning/deployment.md`.
+
+| Environment | URL | Trigger |
+|-------------|-----|---------|
+| Production  | _set after `vercel link` + first prod deploy_ | push to `main` |
+| Preview     | auto-generated per PR / branch                | every push to non-`main` |
+| Local dev   | http://localhost:3000                          | `npm run dev` |
+
+**Hard rule: verify against the Vercel preview URL before `/gsd-ship`.** A green typecheck on your laptop is not the same as a working deploy. The preview URL exercises the actual production build, env-var resolution, and edge runtime.
+
+Required env vars in BOTH Production and Preview environments (full list in `.planning/deployment.md`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, plus the Resend, Stripe-price, and `NEXT_PUBLIC_APP_URL` keys.
+
+For first-time setup (interactive — must run in your terminal, not a Claude tool call): `vercel login`, `vercel link`, add env vars via `vercel env add` or dashboard, `vercel --prod`. See `.planning/deployment.md` for the full step list.
+
+For rollback: prefer `vercel promote <previous-deploy-url> --prod` over redeploying. For schema-related rollbacks, follow `nightwork-rollback-planner`'s plan template — code revert does not undo destructive migrations.

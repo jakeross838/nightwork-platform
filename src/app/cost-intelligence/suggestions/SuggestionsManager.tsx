@@ -6,6 +6,7 @@ import AppShell from "@/components/app-shell";
 import NwButton from "@/components/nw/Button";
 import NwBadge from "@/components/nw/Badge";
 import NwEyebrow from "@/components/nw/Eyebrow";
+import { Textarea } from "@/components/ui/textarea";
 import type { PendingSuggestion, CanonicalCodeOption } from "./page";
 import type { OrgMemberRole } from "@/lib/org/session";
 
@@ -173,7 +174,7 @@ export default function SuggestionsManager({ pending, canonical, role }: Props) 
         )}
 
         {draft && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-nw-slate-deep/30 p-4">
             <div className="w-full max-w-md space-y-4 rounded border border-[var(--border-default)] bg-[var(--bg-card)] p-6">
               <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">
                 {draft.action === "approve" ? "Approve" : "Reject"} suggestion
@@ -183,9 +184,8 @@ export default function SuggestionsManager({ pending, canonical, role }: Props) 
                   ? "Approving will create an org_cost_codes row and link the suggestion. Optional note for the audit trail."
                   : "Rejecting closes the suggestion. A note is recommended so the suggestor knows why."}
               </p>
-              <textarea
-                className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[color:var(--text-primary)]"
-                rows={3}
+              <Textarea
+                minRows={3}
                 placeholder={
                   draft.action === "approve"
                     ? "Optional note (e.g., mapped to NAHB 01-13-2317)"

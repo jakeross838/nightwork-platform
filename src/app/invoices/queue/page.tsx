@@ -10,6 +10,7 @@ import { SkeletonList } from "@/components/loading-skeleton";
 import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
 import NwMoney from "@/components/nw/Money";
 import NwButton from "@/components/nw/Button";
+import { Textarea } from "@/components/ui/textarea";
 
 function confidenceVariant(score: number): BadgeVariant {
  if (score >= 0.85) return "success";
@@ -1390,7 +1391,7 @@ export default function QueuePage() {
  {/* Toast */}
  {toast && (
  <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] animate-fade-up">
- <div className={`px-5 py-3 border shadow-lg text-sm font-medium ${toast.kind === "ok" ? "bg-[var(--nw-success)] text-white border-[rgba(74,138,111,0.5)]" : "bg-[var(--nw-danger)] text-white border-[rgba(176,85,78,0.5)]"}`}>
+ <div className={`px-5 py-3 border shadow-lg text-sm font-medium ${toast.kind === "ok" ? "bg-[var(--nw-success)] text-nw-white-sand border-[rgba(74,138,111,0.5)]" : "bg-[var(--nw-danger)] text-nw-white-sand border-[rgba(176,85,78,0.5)]"}`}>
  {toast.text}
  </div>
  </div>
@@ -1398,17 +1399,18 @@ export default function QueuePage() {
 
  {/* Hold Note Modal */}
  {showHoldNoteModal && (
- <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+ <div className="fixed inset-0 z-[60] flex items-center justify-center bg-nw-slate-deep/60 backdrop-blur-sm px-4">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up">
  <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-1">Batch Hold</h3>
  <p className="text-sm text-[color:var(--text-secondary)] mb-4">
  Hold {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""}. Add a note explaining why.
  </p>
- <textarea
+ <Textarea
  value={holdNote}
  onChange={(e) => setHoldNote(e.target.value)}
  placeholder="Add a note (required)..."
- className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+ className="resize-none"
+ minRows={4}
  autoFocus
  />
  <div className="flex gap-2 mt-4">
@@ -1432,17 +1434,18 @@ export default function QueuePage() {
 
  {/* Deny Note Modal */}
  {showDenyNoteModal && (
- <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+ <div className="fixed inset-0 z-[60] flex items-center justify-center bg-nw-slate-deep/60 backdrop-blur-sm px-4">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up">
  <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-1">Batch Deny</h3>
  <p className="text-sm text-[color:var(--text-secondary)] mb-4">
  Deny {selectedIds.size} invoice{selectedIds.size !== 1 ? "s" : ""}. A reason is required and will apply to each.
  </p>
- <textarea
+ <Textarea
  value={denyNote}
  onChange={(e) => setDenyNote(e.target.value)}
  placeholder="Reason for denial (required)..."
- className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+ className="resize-none"
+ minRows={4}
  autoFocus
  />
  <div className="flex gap-2 mt-4">
@@ -1455,7 +1458,7 @@ export default function QueuePage() {
  <button
  onClick={handleBatchDeny}
  disabled={!denyNote.trim() || batchProcessing}
- className="flex-1 px-4 py-2.5 text-sm font-medium bg-[var(--nw-danger)] text-white hover:bg-[var(--nw-danger)]/90 transition-colors disabled:opacity-50"
+ className="flex-1 px-4 py-2.5 text-sm font-medium bg-[var(--nw-danger)] text-nw-white-sand hover:bg-[var(--nw-danger)]/90 transition-colors disabled:opacity-50"
  >
  Deny
  </button>
@@ -1466,7 +1469,7 @@ export default function QueuePage() {
 
  {/* Approve Confirmation Modal */}
  {showApproveConfirm && (
- <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+ <div className="fixed inset-0 z-[60] flex items-center justify-center bg-nw-slate-deep/60 backdrop-blur-sm px-4">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-xl animate-fade-up">
  <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-1">
  {approvalExcluded.length === 0
@@ -1532,7 +1535,7 @@ export default function QueuePage() {
  <button
  onClick={confirmBatchApprove}
  disabled={approvalEligible.length === 0 || batchProcessing}
- className="flex-1 px-4 py-2.5 text-sm font-medium bg-[var(--nw-success)] text-white hover:bg-[var(--nw-success)]/90 transition-colors disabled:opacity-50"
+ className="flex-1 px-4 py-2.5 text-sm font-medium bg-[var(--nw-success)] text-nw-white-sand hover:bg-[var(--nw-success)]/90 transition-colors disabled:opacity-50"
  >
  {batchProcessing
  ? "Processing..."

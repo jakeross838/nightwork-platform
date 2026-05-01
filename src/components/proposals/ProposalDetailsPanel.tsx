@@ -1,5 +1,6 @@
 "use client";
 
+import { Textarea } from "@/components/ui/textarea";
 import type {
   JobOption,
   VendorOption,
@@ -283,35 +284,31 @@ export default function ProposalDetailsPanel({
 
       <div className="space-y-3">
         <Field label="Summary" full>
-          <textarea
-            rows={4}
+          <Textarea
+            minRows={4}
             value={form.scope_summary}
             onChange={(e) => onChange({ scope_summary: e.target.value })}
-            className="w-full bg-[var(--bg-subtle)] border border-[var(--border-default)] px-2 py-1 text-[13px] text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
           />
         </Field>
         <Field label="Inclusions (only if explicit)" full>
-          <textarea
-            rows={3}
+          <Textarea
+            minRows={3}
             value={form.inclusions ?? ""}
             onChange={(e) => onChange({ inclusions: e.target.value || null })}
-            className="w-full bg-[var(--bg-subtle)] border border-[var(--border-default)] px-2 py-1 text-[13px] text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
           />
         </Field>
         <Field label="Exclusions (only if explicit)" full>
-          <textarea
-            rows={3}
+          <Textarea
+            minRows={3}
             value={form.exclusions ?? ""}
             onChange={(e) => onChange({ exclusions: e.target.value || null })}
-            className="w-full bg-[var(--bg-subtle)] border border-[var(--border-default)] px-2 py-1 text-[13px] text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
           />
         </Field>
         <Field label="Notes" full>
-          <textarea
-            rows={2}
+          <Textarea
+            minRows={2}
             value={form.notes ?? ""}
             onChange={(e) => onChange({ notes: e.target.value || null })}
-            className="w-full bg-[var(--bg-subtle)] border border-[var(--border-default)] px-2 py-1 text-[13px] text-[color:var(--text-primary)] focus:border-[var(--nw-stone-blue)] focus:outline-none"
           />
         </Field>
       </div>

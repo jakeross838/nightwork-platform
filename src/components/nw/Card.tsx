@@ -38,8 +38,13 @@ export default function Card({
   children,
   ...rest
 }: CardProps) {
+  // data-slot="card" is consumed by design-system.css inside the
+  // .design-system-scope wrapper to apply direction-aware padding +
+  // accent border tokens. Outside the scope (the rest of the app) the
+  // attribute is inert — Tailwind padding classes stay authoritative.
   return (
     <div
+      data-slot="card"
       className={[
         "border",
         PADDING_STYLES[padding],

@@ -31,17 +31,30 @@ export default function Eyebrow({
   children,
   ...rest
 }: EyebrowProps) {
+  // Inline styles use direction-aware CSS vars with non-direction fallbacks
+  // so NwEyebrow stays visually identical outside .design-system-scope (the
+  // fallback values match the historic UPPERCASE / 0.14em / mono / normal
+  // contract). Inside .design-system-scope, the layout's data-direction
+  // attribute resolves --eyebrow-* vars to per-direction values; the
+  // attribute-selector override in design-system.css is also applied as a
+  // safety net for `data-slot="eyebrow"`. Color stays driven by the tone.
   return (
     <span
+      data-slot="eyebrow"
       className={[
         "inline-flex items-center gap-1.5",
-        "uppercase font-medium leading-none",
+        "font-medium leading-none",
         "text-[10px]",
         className ?? "",
       ].join(" ")}
       style={{
-        fontFamily: "var(--font-jetbrains-mono)",
-        letterSpacing: "0.14em",
+        fontFamily: "var(--eyebrow-font-family, var(--font-jetbrains-mono))",
+        letterSpacing: "var(--eyebrow-letter-spacing, 0.14em)",
+        // CSS vars in textTransform / fontStyle aren't typed by React.
+        // Cast via `as` on the value rather than the property to keep the
+        // surrounding object well-typed.
+        textTransform: "var(--eyebrow-text-transform, uppercase)" as unknown as React.CSSProperties["textTransform"],
+        fontStyle: "var(--eyebrow-font-style, normal)" as unknown as React.CSSProperties["fontStyle"],
         color: TONE_COLORS[tone],
       }}
       {...rest}

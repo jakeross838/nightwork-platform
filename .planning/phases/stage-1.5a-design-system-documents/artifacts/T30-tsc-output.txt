@@ -1,0 +1,21 @@
+T30 — npx tsc --noEmit (strict mode) verification
+Wave D — 2026-04-30
+
+# Total errors raw output
+$ npx tsc --noEmit 2>&1 | wc -l
+49
+
+# Filter pre-existing ES2018 regex errors (TS1501)
+$ grep -v "TS1501" /tmp/tsc-full.txt
+(empty — all 49 errors are TS1501)
+
+# Search for any new errors in design-system / middleware / components/ui
+$ grep "design-system\|middleware\|components/ui" /tmp/tsc-full.txt
+(empty)
+
+VERDICT: PASS
+- 49 pre-existing TS1501 errors are all in __tests__/*.test.ts files
+- These are tracked tech debt per .planning/MASTER-PLAN.md DECISIONS LOG
+- ZERO new errors in src/app/design-system/*
+- ZERO new errors in src/middleware.ts
+- ZERO new errors in src/components/ui/*

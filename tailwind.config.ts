@@ -13,6 +13,16 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Stage 1.5a — semantic breakpoint aliases on top of Tailwind defaults
+      // (per SPEC A7 / Q4=B). Tailwind defaults (sm/md/lg/xl/2xl) remain
+      // available; nw-* aliases map to actual user devices: PM iPhone in
+      // field, iPad in office, large monitors at HQ.
+      screens: {
+        "nw-phone": { max: "480px" },
+        "nw-tablet": { min: "481px", max: "1023px" },
+        "nw-desktop": { min: "1024px" },
+        "nw-print": { raw: "print" },
+      },
       colors: {
         // Slate design-system tokens — the canonical Nightwork palette.
         // Legacy namespaces (brand.*, cream.*, teal.*, brass.*, nightwork.*,
@@ -57,14 +67,32 @@ const config: Config = {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(0)" },
         },
+        // Stage 1.5a — keyframes used by shadcn primitives (accordion,
+        // collapsible). Linear height transitions; no bouncy easing per
+        // SPEC A2.1.
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.4s ease-out forwards",
         "fade-in": "fade-in 0.3s ease-out forwards",
         "slide-in-left": "slide-in-left 0.2s ease-out",
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
-  plugins: [],
+  // Stage 1.5a — tailwindcss-animate plugin (Tailwind v3 compatible).
+  // Provides utilities (animate-in, animate-out, fade-in, slide-in-from-*,
+  // zoom-in, etc.) consumed by shadcn primitives. Replaces tw-animate-css
+  // which is Tailwind v4-only and incompatible with our v3.4 setup.
+  // See PRE-T07 evaluation notes (T07-twanimate-evaluation.md).
+  plugins: [require("tailwindcss-animate")],
 };
 export default config;
