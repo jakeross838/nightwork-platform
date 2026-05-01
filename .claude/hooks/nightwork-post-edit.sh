@@ -251,6 +251,58 @@ if [[ "$FILE_NORM" =~ ^(.*/)?src/components/ui/.*\.(tsx|ts|jsx|js)$ ]]; then
   fi
 fi
 
+# nwrp19 — T-nwrp19a + T-nwrp19b: Wordmark integrity (per BRANDING.md §3, §6).
+#
+# Best-effort enforcement; false positives are avoided by being conservative.
+# Two checks:
+#   a) <NwWordmark size={N}> with N outside the documented allow-list
+#      {80, 110, 140, 180, 200, 220, 240}.
+#   b) <NwWordmark> followed within 200 chars by a hex color override
+#      (style={{color:"#..."}} / style={{fill:"#..."}} / className="text-[#...]").
+#
+# Both checks run on .tsx files only (the wordmark is a React component).
+if [[ "$FILE_NORM" =~ \.tsx$ ]]; then
+  # (a) Size attribute literal-only match. Pattern: `<NwWordmark` followed
+  # within ~80 chars by `size={N}` where N is a numeric literal. Allow-list
+  # is exhaustive — anything else rejects. We deliberately skip cases where
+  # `size` is a JS expression (e.g., `size={someVar}`) because we can't
+  # statically verify those — false negatives acceptable per nwrp19.
+  WM_SIZE_HITS=$(grep -nE "<NwWordmark[^>]*\bsize=\{[0-9]+\}" "$FILE" | \
+    grep -vE "size=\{(80|110|140|180|200|220|240)\}" | head -3 || true)
+  if [ -n "$WM_SIZE_HITS" ]; then
+    echo "[branding-nwrp19a] <NwWordmark size={N}> with N outside the documented allow-list {80, 110, 140, 180, 200, 220, 240} (per BRANDING.md §3 sizing system):" >> "$ISSUES_FILE"
+    echo "$WM_SIZE_HITS" >> "$ISSUES_FILE"
+    echo "" >> "$ISSUES_FILE"
+  fi
+
+  # (b) Hex color override on a wordmark instance. Use awk to extract a window
+  # following each <NwWordmark line and check for hex color tokens within ~10
+  # lines. This is conservative — only flags hex inside style/className that's
+  # close to the component instance.
+  WM_HEX_HITS=$(awk '
+    /<NwWordmark/ {
+      win=10; nr=NR
+      buf=$0
+      next
+    }
+    win > 0 {
+      buf = buf "\n" $0
+      win--
+      if (win == 0) {
+        if (match(buf, /(style=\{\{[^}]*(color|fill)[^}]*#[0-9a-fA-F]{6}|text-\[#[0-9a-fA-F]{6}\]|fill-\[#[0-9a-fA-F]{6}\])/)) {
+          print nr ": " substr(buf, RSTART, RLENGTH)
+        }
+        buf=""
+      }
+    }
+  ' "$FILE" | head -3)
+  if [ -n "$WM_HEX_HITS" ]; then
+    echo "[branding-nwrp19b] Wordmark color override via hex literal forbidden — use the NwWordmark color prop ('auto' | 'inverse' | 'brand') or token-driven CSS vars (per BRANDING.md §6 Forbidden treatments):" >> "$ISSUES_FILE"
+    echo "$WM_HEX_HITS" >> "$ISSUES_FILE"
+    echo "" >> "$ISSUES_FILE"
+  fi
+fi
+
 # Block if any issues were found
 if [ -s "$ISSUES_FILE" ]; then
   REASON=$(cat "$ISSUES_FILE")
