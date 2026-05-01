@@ -46,6 +46,14 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NwWordmark } from "@/components/branding/Wordmark";
 
+// CP2 — design-system-scoped CSS overrides (palette Set A + direction
+// tokens for typography/motion/density/accent-border). Side-effect import
+// — Next bundles into every /design-system/* route.
+import "./design-system.css";
+
+import { DirectionPaletteShell } from "./_components/DirectionPaletteShell";
+import { DirectionPaletteSwitcher } from "./_components/DirectionPaletteSwitcher";
+
 // Sidebar entries map to the 6 sub-routes the playground exposes. Sibling
 // agents in Wave B build the destination pages; this layout just lists
 // them. Order matches the index page (T19) so navigation feels consistent.
@@ -60,24 +68,6 @@ const SIDEBAR_SECTIONS: Array<{
   { href: "/design-system/patterns", label: "Patterns", Icon: RectangleGroupIcon },
   { href: "/design-system/philosophy", label: "Philosophy", Icon: SparklesIcon },
   { href: "/design-system/forbidden", label: "Forbidden", Icon: NoSymbolIcon },
-];
-
-// Direction options for the philosophy/palette/patterns pages. The 3
-// directions come from PHILOSOPHY.md (Helm+Brass / Specimen / Site Office).
-// Default is A=Helm+Brass per nwrp17 directive.
-const DIRECTIONS: Array<{ key: "A" | "B" | "C"; label: string; short: string }> = [
-  { key: "A", label: "Helm + Brass", short: "Helm" },
-  { key: "B", label: "Specimen", short: "Specimen" },
-  { key: "C", label: "Site Office", short: "Site Office" },
-];
-
-// Palette set comparison from SYSTEM.md §1b. Set B is the existing
-// implementation (current colors_and_type.css resolution). Set A is Jake's
-// brief candidate — only rendered side-by-side at /design-system/palette
-// for the CP2 visual pick.
-const PALETTES: Array<{ key: "A" | "B"; label: string; note: string }> = [
-  { key: "A", label: "Set A", note: "Jake brief" },
-  { key: "B", label: "Set B", note: "current" },
 ];
 
 // Sidebar nav uses JetBrains Mono labels per the eyebrow motif (SYSTEM.md
@@ -114,53 +104,6 @@ function SidebarLink({
   );
 }
 
-// Pill toggle for direction (3-button) and palette (2-button) switchers.
-// Defaults are passed via `?dir=` and `?palette=` query params; consumer
-// pages read them with searchParams. We use anchor tags rather than client
-// state so direction/palette is shareable + SSR-safe.
-function PillToggle<TKey extends string>({
-  paramName,
-  options,
-  activeKey,
-}: {
-  paramName: string;
-  options: Array<{ key: TKey; label: string; short?: string; note?: string }>;
-  activeKey: TKey;
-}) {
-  return (
-    <div className="inline-flex border border-[var(--border-strong)]">
-      {options.map((opt, i) => {
-        const isActive = opt.key === activeKey;
-        const href = `?${paramName}=${opt.key}`;
-        return (
-          <Link
-            key={opt.key}
-            href={href}
-            className={[
-              "px-3 h-7 inline-flex items-center gap-1.5 text-[10px] uppercase font-medium",
-              "transition-colors duration-150",
-              i > 0 ? "border-l border-[var(--border-strong)]" : "",
-              isActive
-                ? "bg-[var(--nw-stone-blue)] text-[color:var(--nw-white-sand)]"
-                : "bg-transparent text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)]",
-            ].join(" ")}
-            style={{
-              fontFamily: "var(--font-jetbrains-mono)",
-              letterSpacing: "0.12em",
-            }}
-            aria-pressed={isActive}
-          >
-            <span>{opt.short ?? opt.label}</span>
-            {opt.note ? (
-              <span className="text-[9px] opacity-70 normal-case">· {opt.note}</span>
-            ) : null}
-          </Link>
-        );
-      })}
-    </div>
-  );
-}
-
 // Top-right wordmark + Design System eyebrow. Per nwrp19 lock — the canonical
 // NwWordmark replaces the prior text+dot rendering. Underline gradient is part
 // of the wordmark itself; the standalone dot was retired as of nwrp19. The
@@ -189,18 +132,17 @@ export default function DesignSystemLayout({
 }: {
   children: ReactNode;
 }) {
-  // Layouts in Next.js App Router do NOT receive searchParams as props —
-  // only pages do. The direction + palette switchers in this layout are
-  // rendered with default-active highlights (A / B). When the user clicks
-  // a different option, navigation pushes the new query param and the
-  // CONSUMER pages (philosophy/palette/patterns) read searchParams in
-  // their own page-level props to re-render content. The visual "active"
-  // state on the pill toggle in this layout doesn't track the URL — that
-  // would require a "use client" component reading useSearchParams. We
-  // accept that layout-level toggle highlight is fixed at default; the
-  // canonical active state lives in the consumer page.
-  const activeDir: "A" | "B" | "C" = "A"; // Helm + Brass per nwrp17
-  const activePalette: "A" | "B" = "B"; // current implementation per SYSTEM.md
+  // CP2 — direction + palette switchers + the wrapper that applies the
+  // resulting `data-direction` / `data-palette` attributes are extracted
+  // to Client Components (DirectionPaletteSwitcher + DirectionPaletteShell)
+  // so they can read useSearchParams() reactively. The switcher highlights
+  // the active option from the URL; the shell wraps children with the
+  // attributes that CSS attribute selectors in design-system.css consume.
+  //
+  // Per nwrp20 — clicking a switcher option swaps the rendered design
+  // (palette tokens + direction tokens for typography/motion/density/
+  // card-accent) across every /design-system/* page in real time without
+  // a full reload.
 
   return (
     <div
@@ -237,44 +179,10 @@ export default function DesignSystemLayout({
           </Link>
         </div>
 
-        {/* CENTER — direction + palette switchers. Stay flush left on
-            phone, center on tablet+. */}
-        <div className="flex-1 flex items-center justify-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-[9px] uppercase"
-              style={{
-                fontFamily: "var(--font-jetbrains-mono)",
-                letterSpacing: "0.14em",
-                color: "var(--text-tertiary)",
-              }}
-            >
-              Direction
-            </span>
-            <PillToggle
-              paramName="dir"
-              options={DIRECTIONS}
-              activeKey={activeDir}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className="text-[9px] uppercase"
-              style={{
-                fontFamily: "var(--font-jetbrains-mono)",
-                letterSpacing: "0.14em",
-                color: "var(--text-tertiary)",
-              }}
-            >
-              Palette
-            </span>
-            <PillToggle
-              paramName="palette"
-              options={PALETTES}
-              activeKey={activePalette}
-            />
-          </div>
-        </div>
+        {/* CENTER — direction + palette switchers (Client Component reads
+            useSearchParams() to highlight the active option + builds hrefs
+            that preserve the rest of the query string). */}
+        <DirectionPaletteSwitcher />
 
         {/* RIGHT — wordmark + theme toggle. Logo top-right per CLAUDE.md. */}
         <div className="flex items-center gap-4 shrink-0">
@@ -302,7 +210,10 @@ export default function DesignSystemLayout({
         </nav>
 
         <main className="flex-1 px-6 py-8 lg:px-10 lg:py-10">
-          {children}
+          {/* Client wrapper applies data-direction + data-palette + the
+              `.design-system-scope` class that gates all direction-aware
+              CSS overrides to ONLY hit children inside the playground. */}
+          <DirectionPaletteShell>{children}</DirectionPaletteShell>
         </main>
       </div>
     </div>
