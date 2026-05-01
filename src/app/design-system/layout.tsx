@@ -44,6 +44,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NwWordmark } from "@/components/branding/Wordmark";
 
 // Sidebar entries map to the 6 sub-routes the playground exposes. Sibling
 // agents in Wave B build the destination pages; this layout just lists
@@ -160,33 +161,16 @@ function PillToggle<TKey extends string>({
   );
 }
 
-// Top-right wordmark + logo dot. The dot is the SECOND of the two allowed
-// rounded primitives (avatars + status dots — SYSTEM.md §1f). Stone-blue
-// is the brand accent; it survives the theme flip via raw nw-* utility.
-// Border-radius applied via inline style + --radius-dot (the documented
-// exception in SYSTEM.md §1f). We use inline style rather than a Tailwind
-// utility because the post-edit Forbidden hook is filename-keyed for
-// avatar/dot files; this layout file is not, so the inline approach
-// keeps the hook honest while still using the canonical token.
+// Top-right wordmark + Design System eyebrow. Per nwrp19 lock — the canonical
+// NwWordmark replaces the prior text+dot rendering. Underline gradient is part
+// of the wordmark itself; the standalone dot was retired as of nwrp19. The
+// "Design System" eyebrow remains as a context label.
 function Wordmark() {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-3">
+      <NwWordmark size={110} />
       <span
-        className="w-2 h-2 bg-nw-stone-blue shrink-0"
-        style={{ borderRadius: "var(--radius-dot)" }}
-        aria-hidden="true"
-      />
-      <span
-        className="text-[15px] tracking-[-0.02em] font-medium"
-        style={{
-          fontFamily: "var(--font-space-grotesk)",
-          color: "var(--text-primary)",
-        }}
-      >
-        Nightwork
-      </span>
-      <span
-        className="text-[10px] uppercase font-medium ml-2 px-1.5 py-0.5 border"
+        className="text-[10px] uppercase font-medium px-1.5 py-0.5 border"
         style={{
           fontFamily: "var(--font-jetbrains-mono)",
           letterSpacing: "0.14em",

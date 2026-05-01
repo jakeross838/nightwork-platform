@@ -16,6 +16,8 @@ import NavDropdown, {
   type NavDropdownItem,
 } from "@/components/nav/nav-dropdown";
 import { useCurrentRole } from "@/hooks/use-current-role";
+import { NwWordmark } from "@/components/branding/Wordmark";
+import { NwIcon } from "@/components/branding/Icon";
 
 function NavThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -268,13 +270,23 @@ export default function NavBar({ onToggleSidebar }: { onToggleSidebar?: () => vo
       className="bg-nw-slate-deeper border-b border-[rgba(247,245,236,0.08)] sticky top-0 z-40"
     >
       <div className="max-w-[1600px] mx-auto px-8 h-[54px] flex items-center justify-between gap-[22px]">
-        <Link href="/" className="flex items-center gap-4 group shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/nightwork-wordmark.svg"
-            alt={PUBLIC_APP_NAME}
-            className="h-6 md:h-7 w-auto group-hover:opacity-85 transition-opacity"
-          />
+        <Link
+          href="/"
+          aria-label={PUBLIC_APP_NAME}
+          className="flex items-center gap-4 group shrink-0 group-hover:opacity-85 transition-opacity"
+        >
+          {/* Wordmark for >=360px viewports; collapses to icon at <360px per
+              CLAUDE.md UI rules Q13 / nwrp19 spec. Tailwind arbitrary
+              breakpoint max-[359px] handles the cutoff without adding a
+              named breakpoint to tailwind.config (per BRANDING.md §3
+              Mobile collapse). Nav bar sits on bg-nw-slate-deeper (dark)
+              so wordmark uses color="inverse" → --nw-white-sand. */}
+          <span className="hidden min-[360px]:inline-flex">
+            <NwWordmark size={110} color="inverse" />
+          </span>
+          <span className="inline-flex min-[360px]:hidden">
+            <NwIcon size={32} />
+          </span>
           {logoUrl && (
             <>
               <span
