@@ -1,8 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
-  <rect width="80" height="80" fill="#0F1E36" rx="14"/>
-  <g transform="translate(15, 13)">
-    <rect x="0" y="0" width="8" height="54" fill="#EDE3CE"/>
-    <polygon points="0,0 8,0 50,54 42,54" fill="#E89A2B"/>
-    <rect x="42" y="0" width="8" height="54" fill="#EDE3CE"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Nightwork">
+  <rect width="64" height="64" fill="#5B8699"/>
+  <text x="32" y="44" text-anchor="middle" font-family="'Space Grotesk', system-ui, sans-serif" font-weight="500" font-size="44" letter-spacing="-0.88" fill="#F7F5EC">n</text>
 </svg>
