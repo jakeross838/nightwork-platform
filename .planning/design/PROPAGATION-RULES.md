@@ -299,6 +299,25 @@ Reasoning:
 
 Before migrating: discuss in `/gsd-discuss-phase`, get phase decision, route through `/nightwork-propagate`.
 
+### 4c.1. Branding primitives — the third path (per nwrp19 / BRANDING.md)
+
+A small additional namespace exists at `src/components/branding/` for primitives that render the **Nightwork product brand identity itself** (not tenant brand customization, not generic UI). As of nwrp19 (2026-04-30) this contains:
+
+- `<NwWordmark>` — the canonical "nightwork" wordmark (Space Grotesk Medium + 2px gradient underscore)
+- `<NwIcon>` — the square icon variant (Stone Blue square + lowercase "n")
+
+These are NEITHER a `src/components/nw/*` Nw\* primitive (those consume tenant-customizable `--brand-accent` per A12.3) NOR a `src/components/ui/*` shadcn primitive (those are tenant-blind per A12.1 / C8). They are **product-brand-locked** — the Nightwork wordmark/icon never reflects tenant customization. Per BRANDING.md §9, tenant `logo_url` is a separate path that renders ALONGSIDE the Nightwork wordmark in the nav-bar (with a separator pipe between).
+
+**Adding a new branding primitive (rare — only when Jake's brand v1 designer adds new mark variants in 6–12 months):**
+
+1. Create at `src/components/branding/<Name>.tsx`. Follow the pattern from NwWordmark / NwIcon.
+2. Update `.planning/design/BRANDING.md` §7 file map.
+3. Update `.planning/design/BRANDING.md` §3 sizing system if a new size context arises.
+4. If a new color treatment ships, update §4.
+5. Atomic commit.
+
+**Hook coverage:** the post-edit hook (per §7) enforces wordmark integrity rules — size attribute must be in the documented allow-list, no hex literal recoloring on `<NwWordmark>` instances. See §7a wordmark-integrity row.
+
 ### 4d. Storybook re-evaluation marker (per SPEC A19 / M-E5)
 
 The components playground (`/design-system/components/<category>`) serves the inventory-render need today. **At 40+ catalogued components**, re-evaluate Storybook:
@@ -503,6 +522,8 @@ The Forbidden-list (per SYSTEM.md §13) is enforced by the post-edit hook (`.cla
 | Phone/desktop confusion | A2.1 (§13g) | (none — pattern-level) | — | None at hook |
 | Sample-data isolation in design-system/ | C6 / D9 | hook block T10c | `:202-230` | Strong — regex reject |
 | Tenant-blind primitives | C8 / A12.1 | hook block T10d | `:236-252` | Strong — regex reject |
+| Wordmark integrity — out-of-range sizes | nwrp19 / BRANDING.md §3 | hook block T-nwrp19a | `:255+` | Best-effort — regex reject |
+| Wordmark integrity — hex color override | nwrp19 / BRANDING.md §6 | hook block T-nwrp19b | `:255+` | Best-effort — regex reject |
 
 ### 7b. Forbidden-add workflow
 

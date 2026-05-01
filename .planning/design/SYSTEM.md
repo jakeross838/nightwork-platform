@@ -804,6 +804,7 @@ This document references back to:
 - `.planning/design/PATTERNS.md` (T14 — pending) — patterns built on these tokens
 - `.planning/design/PHILOSOPHY.md` (T17a/b — pending) — design directions that interpret these tokens
 - `.planning/design/PROPAGATION-RULES.md` (T15 — pending) — workflow for token changes
+- `.planning/design/BRANDING.md` (nwrp19 — 2026-04-30) — Nightwork wordmark + icon spec; authoritative for wordmark/icon usage. Tenant-customizable branding (`logo_url`, `--brand-accent`) remains in §2 of THIS document; the Nightwork mark itself is locked per BRANDING.md and non-customizable.
 
 ---
 
