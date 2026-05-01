@@ -37,6 +37,7 @@ import NwCard from "@/components/nw/Card";
 
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Input as ShadcnInput } from "@/components/ui/input";
+import { Textarea as ShadcnTextarea } from "@/components/ui/textarea";
 import {
   Combobox,
   ComboboxInput,
@@ -538,6 +539,136 @@ function InputSection() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// 2.5 Textarea section — shadcn Textarea (react-textarea-autosize)
+// Added per nwrp18-A — primitive upgraded to auto-grow with min/max bounds.
+// ─────────────────────────────────────────────────────────────────────────
+function TextareaSection() {
+  return (
+    <ComponentSection
+      title="Textarea"
+      source="shadcn (src/components/ui/textarea.tsx) wraps react-textarea-autosize per nwrp18-A"
+    >
+      <SubBlock label="Default — auto-grow from minRows=4 (~80px) to maxRows=12 (~240px)">
+        <div className="max-w-[680px]">
+          <ShadcnTextarea placeholder="Type a longer note. The textarea grows up to 12 rows; after that internal scroll kicks in." />
+        </div>
+      </SubBlock>
+
+      <SubBlock label="minRows=2 — compact form usage (line-item descriptions, chat input)">
+        <div className="max-w-[680px]">
+          <ShadcnTextarea
+            minRows={2}
+            placeholder="Compact 2-row default for inline rows."
+          />
+        </div>
+      </SubBlock>
+
+      <SubBlock label="minRows=6 — long-form input (cover letter, draw notes)">
+        <div className="max-w-[680px]">
+          <ShadcnTextarea
+            minRows={6}
+            placeholder="Larger surface for editorial / template content."
+            defaultValue={
+              "Project: Drummond residence\nDraw 8 cover letter — period 2026-04-01 to 2026-04-30.\n\nThis cover letter accompanies the AIA G702/G703 application for payment.\n\nAll line items reflect work completed and inspected per cost code allocation."
+            }
+          />
+        </div>
+      </SubBlock>
+
+      <SubBlock label="States (default / disabled / aria-invalid)">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-[680px]">
+          <div>
+            <ShadcnTextarea defaultValue="Default — focused state shows --nw-stone-blue border on focus" />
+            <p
+              className="text-[10px] mt-1"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.12em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              default
+            </p>
+          </div>
+          <div>
+            <ShadcnTextarea
+              disabled
+              defaultValue="Disabled — locked while saving / read-only"
+            />
+            <p
+              className="text-[10px] mt-1"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.12em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              disabled
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <ShadcnTextarea
+              aria-invalid="true"
+              defaultValue="Invalid — error state highlights border with --color-error"
+            />
+            <p
+              className="text-[10px] mt-1"
+              style={{
+                fontFamily: "var(--font-jetbrains-mono)",
+                letterSpacing: "0.12em",
+                color: "var(--nw-danger)",
+              }}
+            >
+              aria-invalid
+            </p>
+          </div>
+        </div>
+      </SubBlock>
+
+      <SubBlock label="Token bindings (per SYSTEM.md §1, §4, §6, §12b)">
+        <TokenList
+          bindings={[
+            { token: "--bg-subtle", role: "default bg" },
+            { token: "--bg-muted", role: "disabled bg" },
+            { token: "--border-default", role: "default border" },
+            { token: "--nw-stone-blue", role: "focus border" },
+            { token: "--color-error", role: "aria-invalid border" },
+            { token: "--text-primary", role: "value text" },
+            { token: "--text-secondary", role: "placeholder text" },
+            { token: "--radius 0", role: "square corners (SYSTEM §6)" },
+            { token: "13px text-size", role: "tighter than Input — matches proposal/invoice form density" },
+          ]}
+        />
+      </SubBlock>
+
+      <SubBlock label="ARIA / a11y">
+        <ARIANote>
+          Native <code>&lt;textarea&gt;</code> via{" "}
+          <code>react-textarea-autosize</code>. Auto-grow respects content
+          height with internal scroll past <code>maxRows</code>. Disabled
+          adds <code>cursor-not-allowed + opacity-60 + bg-muted</code>.{" "}
+          <code>aria-invalid=&quot;true&quot;</code> swaps border to{" "}
+          <code>--color-error</code>. Ref forwarding preserved via{" "}
+          <code>React.forwardRef</code> for <code>useRef&lt;HTMLTextAreaElement&gt;</code>{" "}
+          callers (autoFocus, scroll-into-view, etc.).
+        </ARIANote>
+      </SubBlock>
+
+      <SubBlock label="Anti-patterns">
+        <AntiPatterns
+          items={[
+            "use a raw <textarea> with rows={N} — silently truncates long content; the primitive auto-grows up to maxRows=12 then scrolls internally",
+            "set a fixed h-N height class (e.g. h-24) — disables auto-grow; pass minRows / maxRows props instead",
+            "hardcode bg / border / focus styles — primitive owns the token bindings; consumer-side overrides via className for site-specific contexts only",
+            "pass org_id / membership / vendor_id props (A12.1 violation; hook C8 rejects)",
+          ]}
+        />
+      </SubBlock>
+    </ComponentSection>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // 3. Select section — DOC-STUB (primitive not yet installed)
 // ─────────────────────────────────────────────────────────────────────────
 function SelectSection() {
@@ -1026,14 +1157,14 @@ export default function ComponentsInputsPage() {
           className="text-[14px] max-w-[680px] leading-relaxed"
           style={{ color: "var(--text-secondary)" }}
         >
-          The 6 input primitives from COMPONENTS.md §1: Button, Input, Select,
-          Combobox, DatePicker, Form. Each shows variants, states, token
+          The 7 input primitives from COMPONENTS.md §1: Button, Input, Textarea,
+          Select, Combobox, DatePicker, Form. Each shows variants, states, token
           bindings cited from SYSTEM.md, ARIA notes, and anti-patterns. Sample
           data flows from <code>_fixtures/</code> only — no <code>@/lib/</code> imports.
         </p>
         <div className="mt-3 flex items-center gap-2 flex-wrap">
           <NwBadge variant="info" size="sm">
-            6 components
+            7 components
           </NwBadge>
           <NwBadge variant="warning" size="sm">
             2 doc-stubs (Select, Form)
@@ -1051,6 +1182,7 @@ export default function ComponentsInputsPage() {
 
       <ButtonSection />
       <InputSection />
+      <TextareaSection />
       <SelectSection />
       <ComboboxSection />
       <DatePickerSection />
