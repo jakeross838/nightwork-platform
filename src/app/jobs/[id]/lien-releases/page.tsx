@@ -10,6 +10,7 @@ import DrawsSubTabs from "@/components/draws-sub-tabs";
 import NwBadge, { type BadgeVariant } from "@/components/nw/Badge";
 import NwMoney from "@/components/nw/Money";
 import NwButton from "@/components/nw/Button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface LienRelease {
   id: string;
@@ -386,7 +387,7 @@ function EditModal({
   });
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-nw-slate-deep/60 z-50 flex items-center justify-center px-4" onClick={onClose}>
       <div className="bg-[var(--bg-card)] border border-[var(--border-default)] max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
         <h3 className="font-display text-lg text-[color:var(--text-primary)] mb-1">Edit Lien Release</h3>
         <p className="text-sm text-[color:var(--text-secondary)] mb-4">
@@ -445,9 +446,8 @@ function EditModal({
             />
           </Field>
           <Field label="Notes">
-            <textarea
-              rows={3}
-              className="input"
+            <Textarea
+              minRows={3}
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
@@ -469,7 +469,7 @@ function EditModal({
               })
             }
             disabled={saving}
-            className="px-4 py-2 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-60 text-white text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-60 text-nw-white-sand text-sm font-medium transition-colors"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -479,14 +479,14 @@ function EditModal({
         .input {
           width: 100%;
           padding: 0.5rem 0.75rem;
-          background: var(--bg-subtle, #faf7f2);
-          border: 1px solid var(--border-default, #e8e0d0);
-          color: var(--text-primary, #2b3a42);
+          background: var(--bg-subtle);
+          border: 1px solid var(--border-default);
+          color: var(--text-primary);
           font-size: 14px;
         }
         .input:focus {
           outline: none;
-          border-color: var(--org-primary, #3f5862);
+          border-color: var(--org-primary);
         }
       `}</style>
     </div>

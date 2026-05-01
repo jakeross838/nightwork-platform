@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import AppShell from "@/components/app-shell";
 import Breadcrumbs from "@/components/breadcrumbs";
 import CostCodeCombobox, { CostCodeOption } from "@/components/cost-code-combobox";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase/client";
 import { formatCents, formatDate, formatStatus, statusBadgeOutline } from "@/lib/utils/format";
 
@@ -304,9 +305,8 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
               />
             </EditField>
             <EditField label="QB Mapping / Notes" full>
-              <textarea
-                className="input"
-                rows={3}
+              <Textarea
+                minRows={3}
                 value={form.notes ?? ""}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="e.g. Pays as 'Doug Naeher Drywall Inc.' in QB, mapped to Subcontractor account…"
@@ -400,8 +400,8 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
         .input {
           width: 100%;
           padding: 0.5rem 0.75rem;
-          background: var(--bg-subtle, #F5F5F5);
-          border: 1px solid var(--border-default, #E8E8E8);
+          background: var(--bg-subtle);
+          border: 1px solid var(--border-default);
           color: var(--text-primary);
           font-size: 14px;
         }

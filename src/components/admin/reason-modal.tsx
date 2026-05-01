@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
 
 export type ReasonModalProps = {
   open: boolean;
@@ -99,18 +100,13 @@ export default function ReasonModal({
           >
             REASON (REQUIRED)
           </label>
-          <textarea
+          <Textarea
             ref={inputRef}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            rows={3}
+            minRows={3}
             placeholder="What are you doing and why?"
-            className="w-full px-3 py-2 text-sm border resize-none"
-            style={{
-              background: "var(--bg-page)",
-              color: "var(--text-primary)",
-              borderColor: "var(--border-default)",
-            }}
+            className="resize-none bg-[var(--bg-page)]"
             disabled={busy}
           />
           {error ? (

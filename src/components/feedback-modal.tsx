@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Card from "@/components/nw/Card";
 import Eyebrow from "@/components/nw/Eyebrow";
 import Button from "@/components/nw/Button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/utils/toast";
 
 type Category = "bug" | "confusion" | "idea" | "other";
@@ -171,7 +172,7 @@ export default function FeedbackModal({
       <button
         type="button"
         aria-label="Close"
-        className="absolute inset-0 bg-black/40 cursor-default"
+        className="absolute inset-0 bg-nw-slate-deep/40 cursor-default"
         onClick={handleClose}
       />
       <Card
@@ -288,19 +289,14 @@ export default function FeedbackModal({
                 {charCount}/{MAX_NOTE_LEN}
               </span>
             </div>
-            <textarea
+            <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               disabled={submitting}
-              rows={5}
+              minRows={5}
               maxLength={MAX_NOTE_LEN}
               placeholder="Describe what you were doing and what went wrong (or what could be clearer)."
-              className="w-full p-3 text-sm border resize-none"
-              style={{
-                color: "var(--text-primary)",
-                borderColor: "var(--border-strong)",
-                background: "var(--bg-card)",
-              }}
+              className="resize-none border-[var(--border-strong)]"
             />
           </div>
 

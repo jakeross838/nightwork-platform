@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation";
 import Card from "@/components/nw/Card";
 import Eyebrow from "@/components/nw/Eyebrow";
 import Button from "@/components/nw/Button";
+import { Textarea } from "@/components/ui/textarea";
 import type { ChosenDirection } from "@/lib/design-system/chosen-direction";
 
 const DIRECTIONS = [
@@ -112,18 +113,12 @@ export default function PickDirectionPanel({
         }}>.planning/design/CHOSEN-DIRECTION.md</span>. The pick is
         gated to platform_admin; the API route returns 403 otherwise.
       </p>
-      <textarea
+      <Textarea
         value={reasoning}
         onChange={(e) => setReasoning(e.target.value)}
         placeholder="Optional reasoning (recorded in the marker file)…"
-        className="w-full text-[12px] p-3 mb-4 border"
-        style={{
-          fontFamily: "var(--font-inter)",
-          borderColor: "var(--border-default)",
-          background: "var(--bg-card)",
-          color: "var(--text-primary)",
-          minHeight: "80px",
-        }}
+        className="mb-4"
+        minRows={4}
       />
       <div className="flex flex-wrap gap-2">
         {DIRECTIONS.map((d) => (

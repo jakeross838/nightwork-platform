@@ -6,6 +6,7 @@ import AppShell from "@/components/app-shell";
 import NwButton from "@/components/nw/Button";
 import NwBadge from "@/components/nw/Badge";
 import Money from "@/components/nw/Money";
+import { Textarea } from "@/components/ui/textarea";
 
 // ── Phase 3.4 Issue 2 component imports ───────────────────────────
 import ProposalReviewHeader from "@/components/proposals/ProposalReviewHeader";
@@ -791,7 +792,7 @@ export default function ReviewManager(props: Props) {
       {/* Suggest-new-cost-code modal — kept inline, tightly coupled to
           line state + the suggestion submit handler. */}
       {suggestModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-nw-slate-deep/30 p-4">
           <div className="w-full max-w-md space-y-4 border border-[var(--border-default)] bg-[var(--bg-card)] p-6">
             <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">
               Suggest new cost code
@@ -826,9 +827,8 @@ export default function ReviewManager(props: Props) {
               />
             </SuggestField>
             <SuggestField label="Why is this code needed? (optional)">
-              <textarea
-                rows={2}
-                className="w-full border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+              <Textarea
+                minRows={2}
                 value={suggestModal.rationale}
                 onChange={(e) =>
                   setSuggestModal({

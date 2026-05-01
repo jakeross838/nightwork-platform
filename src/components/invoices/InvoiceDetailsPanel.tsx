@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatCents, formatDate, formatFlag, formatWho } from "@/lib/utils/format";
+import { Textarea } from "@/components/ui/textarea";
 import type { OrgMemberRole } from "@/lib/org/session";
 import {
   isInvoiceLocked,
@@ -225,12 +226,12 @@ export default function InvoiceDetailsPanel({
       {showQbNotes && onQbNotesChange && (
         <div className="mt-[14px]">
           <Eyebrow>QB mapping notes · bundled into QA Approve</Eyebrow>
-          <textarea
+          <Textarea
             value={qbNotes ?? ""}
             onChange={(e) => onQbNotesChange(e.target.value)}
-            rows={2}
+            minRows={2}
             placeholder="Optional notes for QuickBooks entry..."
-            className="w-full mt-1 bg-[var(--bg-subtle)] border border-[var(--border-default)] px-2 py-1.5 text-[13px] text-[color:var(--text-primary)] placeholder:text-[color:var(--text-tertiary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+            className="mt-1 resize-none"
           />
         </div>
       )}

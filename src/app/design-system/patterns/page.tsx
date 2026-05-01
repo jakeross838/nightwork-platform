@@ -37,6 +37,7 @@ import Button from "@/components/nw/Button";
 import Money from "@/components/nw/Money";
 import DataRow from "@/components/nw/DataRow";
 import StatusDot from "@/components/nw/StatusDot";
+import { Textarea } from "@/components/ui/textarea";
 
 import {
   SAMPLE_INVOICES,
@@ -1317,15 +1318,8 @@ function Pattern11Confirm() {
             sets a status_history entry. The original record is preserved
             (no hard delete). This action requires a reason.
           </p>
-          <textarea
-            className="w-full text-[12px] p-2 border"
-            style={{
-              fontFamily: "var(--font-inter)",
-              borderColor: "var(--border-default)",
-              background: "var(--bg-card)",
-              color: "var(--text-primary)",
-              minHeight: "60px",
-            }}
+          <Textarea
+            minRows={3}
             placeholder="Reason for void (required)…"
           />
         </div>

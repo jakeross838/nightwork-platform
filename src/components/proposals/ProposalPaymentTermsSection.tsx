@@ -1,5 +1,7 @@
 "use client";
 
+import { Textarea } from "@/components/ui/textarea";
+
 /**
  * Phase 3.4 Issue 2 — payment terms editor.
  *
@@ -89,9 +91,8 @@ export default function ProposalPaymentTermsSection({ terms, onChange }: Props) 
         />
       </FormField>
       <FormField label="Other terms text">
-        <textarea
-          rows={3}
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+        <Textarea
+          minRows={3}
           value={t.other_terms_text ?? ""}
           onChange={(e) =>
             updateField({ other_terms_text: e.target.value || null })

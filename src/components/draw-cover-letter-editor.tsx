@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function DrawCoverLetterEditor({
   drawId,
@@ -115,19 +116,20 @@ export default function DrawCoverLetterEditor({
           <button
             onClick={save}
             disabled={!dirty || saving || busy}
-            className="px-4 py-1.5 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 text-white text-sm font-medium"
+            className="px-4 py-1.5 bg-[var(--nw-stone-blue)] hover:bg-[var(--nw-gulf-blue)] disabled:opacity-50 text-nw-white-sand text-sm font-medium"
           >
             {saving ? "Saving…" : "Save"}
           </button>
         </div>
       </div>
 
-      <textarea
+      <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        rows={22}
+        minRows={6}
+        maxRows={22}
         spellCheck
-        className="w-full px-4 py-3 bg-[var(--bg-card)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] font-mono leading-relaxed focus:border-[var(--nw-stone-blue)] focus:outline-none whitespace-pre-wrap"
+        className="px-4 py-3 font-mono leading-relaxed whitespace-pre-wrap"
       />
 
       <p className="text-xs text-[color:var(--text-secondary)]">

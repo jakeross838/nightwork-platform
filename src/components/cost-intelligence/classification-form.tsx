@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import NwEyebrow from "@/components/nw/Eyebrow";
+import { Textarea } from "@/components/ui/textarea";
 import type { ItemType, ItemUnit } from "@/lib/cost-intelligence/types";
 import type { ClassificationDraft } from "./queue-types";
 
@@ -170,11 +171,11 @@ export default function ClassificationForm({ draft, onChange }: Props) {
                 </Field>
               </div>
               <Field label="Specs (JSON)">
-                <textarea
+                <Textarea
                   value={draft.specs_json}
                   onChange={(e) => onChange({ ...draft, specs_json: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-[var(--border-default)] bg-[var(--bg-card)] text-[12px] text-[var(--text-primary)]"
+                  minRows={3}
+                  className="text-[12px]"
                   style={{ fontFamily: "var(--font-jetbrains-mono)" }}
                 />
               </Field>

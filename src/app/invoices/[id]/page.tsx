@@ -16,6 +16,7 @@ import PaymentPanel from "@/components/invoices/PaymentPanel";
 import PaymentTrackingPanel from "@/components/invoices/PaymentTrackingPanel";
 import InvoiceHeader from "@/components/invoices/InvoiceHeader";
 import InvoiceDetailsPanel from "@/components/invoices/InvoiceDetailsPanel";
+import { Textarea } from "@/components/ui/textarea";
 import { useCurrentRole } from "@/hooks/use-current-role";
 import { isInvoiceLocked, canEditLockedFields } from "@/lib/invoice-permissions";
 
@@ -1573,7 +1574,7 @@ export default function InvoiceReviewPage() {
 
  {/* ── Approve Confirmation Modal ── */}
  {showApproveConfirm && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <h3 className="font-display text-xl text-[color:var(--text-primary)] mb-2">
  {isCreditMemo ? "Approve Credit Memo" : "Approve Invoice"}
@@ -1651,7 +1652,7 @@ export default function InvoiceReviewPage() {
  const hasRed = redRows.length > 0;
  const formatCc = (ccId: string) => costCodes.find(c => c.id === ccId)?.code ?? "???";
  return (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-[var(--bg-card)] border border-[rgba(176,85,78,0.35)] p-6 w-full max-w-lg animate-fade-up shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
  <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${hasRed ? "bg-[rgba(176,85,78,0.12)]" : "bg-[rgba(201,138,59,0.12)]"}`}>
@@ -1692,11 +1693,12 @@ export default function InvoiceReviewPage() {
  <label className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
  {hasRed ? "Overage Note (required if approving as overage)" : "Overage Note (required)"}
  </label>
- <textarea
+ <Textarea
  value={overBudgetNote}
  onChange={(e) => setOverBudgetNote(e.target.value)}
  placeholder={`Why is this going over? (e.g. "Client requested ${orangeRows.length > 0 && orangeRows[0].bi?.is_allowance ? "tile upgrade" : "additional scope"}"`}
- className="w-full h-20 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+ className="resize-none"
+ minRows={3}
  />
 
  <div className="flex flex-col gap-2 mt-5">
@@ -1742,7 +1744,7 @@ export default function InvoiceReviewPage() {
 
  {/* ── Amount Guard Modal (>10% over AI-parsed) ── */}
  {showAmountGuard && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-[var(--bg-card)] border border-[rgba(176,85,78,0.35)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
  <div className="w-10 h-10 bg-[rgba(176,85,78,0.12)] flex items-center justify-center flex-shrink-0">
@@ -1757,11 +1759,12 @@ export default function InvoiceReviewPage() {
  <span className="text-[color:var(--nw-danger)] font-medium">+{amountIncreasePct.toFixed(1)}%</span> over the AI-parsed total of{" "}
  <span className="text-[color:var(--text-primary)]">{formatCents(aiParsedTotal)}</span>. A note is required for any increase over 10%.
  </p>
- <textarea
+ <Textarea
  value={amountGuardNote}
  onChange={(e) => setAmountGuardNote(e.target.value)}
  placeholder="Reason for the amount change (required)..."
- className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+ className="resize-none"
+ minRows={4}
  />
  <div className="flex gap-3 mt-5">
  <NwButton
@@ -1788,7 +1791,7 @@ export default function InvoiceReviewPage() {
 
  {/* ── Missing CO Reference Modal ── */}
  {showMissingCoBlock && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
  <div className="w-10 h-10 bg-[rgba(176,85,78,0.12)] flex items-center justify-center flex-shrink-0">
@@ -1817,7 +1820,7 @@ export default function InvoiceReviewPage() {
 
  {/* ── Missing Fields Block Modal ── */}
  {showMissingFieldsBlock && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <div className="flex items-center gap-3 mb-4">
  <div className="w-10 h-10 bg-[rgba(176,85,78,0.12)] flex items-center justify-center flex-shrink-0">
@@ -1862,7 +1865,7 @@ export default function InvoiceReviewPage() {
 
  {/* ── Request Info Modal ── */}
  {showRequestInfoModal && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <h3 className="font-display text-xl text-[color:var(--text-primary)] mb-4">Request Information</h3>
  <div className="space-y-4">
@@ -1886,11 +1889,12 @@ export default function InvoiceReviewPage() {
  <label className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
  What do you need?
  </label>
- <textarea
+ <Textarea
  value={infoQuestion}
  onChange={(e) => setInfoQuestion(e.target.value)}
  placeholder="Describe the information you need..."
- className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+ className="resize-none"
+ minRows={4}
  />
  </div>
  </div>
@@ -1925,13 +1929,13 @@ export default function InvoiceReviewPage() {
 
  {/* ── Hold / Deny Note Modal ── */}
  {showNoteModal && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <h3 className="font-display text-xl text-[color:var(--text-primary)] mb-4">
  {showNoteModal === "hold" ? "Hold Invoice" : "Deny Invoice"}
  </h3>
- <textarea value={actionNote} onChange={(e) => setActionNote(e.target.value)} placeholder="Add a note (required)..."
- className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none" />
+ <Textarea value={actionNote} onChange={(e) => setActionNote(e.target.value)} placeholder="Add a note (required)..."
+ className="resize-none" minRows={4} />
  <div className="flex gap-3 mt-4">
  <NwButton
  variant={showNoteModal === "hold" ? "secondary" : "danger"}
@@ -1952,7 +1956,7 @@ export default function InvoiceReviewPage() {
 
  {/* ── Kick Back Modal (Phase 3b) ── */}
  {showKickBackModal && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-md animate-fade-up shadow-2xl">
  <h3 className="font-display text-xl text-[color:var(--text-primary)] mb-2">
  Kick Back to PM
@@ -1960,11 +1964,12 @@ export default function InvoiceReviewPage() {
  <p className="text-sm text-[color:var(--text-secondary)] mb-4">
  This invoice will be sent back to the PM queue with your note.
  </p>
- <textarea
+ <Textarea
  value={kickBackNote}
  onChange={(e) => setKickBackNote(e.target.value)}
  placeholder="Reason for kick back (required)..."
- className="w-full h-24 px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+ className="resize-none"
+ minRows={4}
  />
  <div className="flex gap-3 mt-4">
  <NwButton
@@ -1997,7 +2002,7 @@ export default function InvoiceReviewPage() {
 
  {/* ── Partial Approve Modal ── */}
  {showPartialModal && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+ <div className="fixed inset-0 bg-nw-slate-deep/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
  <div className="bg-[var(--bg-card)] border border-[var(--border-default)] p-6 w-full max-w-3xl max-h-[92vh] overflow-y-auto animate-fade-up shadow-2xl">
  <h3 className="font-display text-xl text-[color:var(--text-primary)] mb-2">Partial Approval</h3>
  <p className="text-sm text-[color:var(--text-secondary)] mb-5">
@@ -2085,12 +2090,12 @@ export default function InvoiceReviewPage() {
  <label className="text-[11px] font-medium text-[color:var(--text-secondary)] uppercase tracking-wider mb-1.5 block">
  Why is the rest held? (required)
  </label>
- <textarea
+ <Textarea
  value={partialNote}
  onChange={(e) => setPartialNote(e.target.value)}
- rows={3}
+ minRows={3}
  placeholder="e.g. Scope on lines 3-5 wasn't agreed — waiting on confirmation from vendor"
- className="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-secondary)] focus:border-[var(--nw-stone-blue)] focus:outline-none resize-none"
+ className="resize-none"
  />
  </div>
 

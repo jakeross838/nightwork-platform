@@ -3,6 +3,7 @@
 import { useState } from "react";
 import NwButton from "@/components/nw/Button";
 import NwBadge from "@/components/nw/Badge";
+import { Textarea } from "@/components/ui/textarea";
 import type {
   OrgCostCodeOption,
   LegacyCostCodeOption,
@@ -95,9 +96,8 @@ export default function ProposalLineItemRow(props: ProposalLineItemRowProps) {
         )}
       </div>
       <FormField label="Description (verbatim)">
-        <textarea
-          rows={2}
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-input)] px-2 py-1 text-sm text-[color:var(--text-primary)]"
+        <Textarea
+          minRows={2}
           value={line.description}
           onChange={(e) => props.onChange({ description: e.target.value })}
         />
@@ -275,8 +275,8 @@ function ConfidenceDot({
         : "var(--nw-danger)";
   return (
     <span
-      className="inline-block w-2 h-2 ml-1.5 rounded-full align-middle"
-      style={{ background: color }}
+      className="inline-block w-2 h-2 ml-1.5 align-middle"
+      style={{ background: color, borderRadius: "var(--radius-dot)" }}
       title={title ?? `Confidence ${Math.round(score * 100)}%`}
       aria-label={`Confidence ${Math.round(score * 100)}%`}
     />

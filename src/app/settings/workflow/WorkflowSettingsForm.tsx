@@ -8,6 +8,7 @@ import type {
 } from "@/lib/workflow-settings";
 import { toast } from "@/lib/utils/toast";
 import FirstUseTip from "@/components/first-use-tip";
+import { Textarea } from "@/components/ui/textarea";
 
 type Pm = { id: string; name: string };
 type Props = { settings: WorkflowSettings; pms: Pm[] };
@@ -265,12 +266,13 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
             <code className="text-[color:var(--nw-stone-blue)]">{"{{percent_complete}}"}</code>,{" "}
             <code className="text-[color:var(--nw-stone-blue)]">{"{{retainage}}"}</code>.
           </p>
-          <textarea
+          <Textarea
             value={form.cover_letter_template}
             onChange={(e) => patch("cover_letter_template", e.target.value)}
-            rows={10}
+            minRows={6}
+            maxRows={20}
             placeholder="Leave blank to use the built-in default template."
-            className="w-full px-3 py-2 bg-[var(--bg-subtle)] border border-[var(--border-default)] text-sm text-[color:var(--text-primary)] font-mono focus:border-[var(--nw-stone-blue)] focus:outline-none"
+            className="font-mono"
           />
         </div>
       </Section>
@@ -344,7 +346,7 @@ export default function WorkflowSettingsForm({ settings, pms }: Props) {
           type="button"
           onClick={onSave}
           disabled={saving || !dirty}
-          className="px-4 py-2 bg-[var(--nw-stone-blue)] text-white text-sm font-medium disabled:opacity-60"
+          className="px-4 py-2 bg-[var(--nw-stone-blue)] text-nw-white-sand text-sm font-medium disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save changes"}
         </button>
@@ -461,16 +463,20 @@ function Toggle({
       </span>
       <span
         aria-hidden="true"
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors border mt-0.5 ${
+        // Switch track — toggle pattern uses pill shape per HIG; --radius-dot
+        // is the documented avatars/dots exception per SYSTEM.md §1f / §6.
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center transition-colors border mt-0.5 ${
           checked
             ? "bg-[var(--nw-stone-blue)] border-[var(--nw-stone-blue)]"
             : "bg-[rgba(59,88,100,0.08)] border-[var(--border-default)]"
         }`}
+        style={{ borderRadius: "var(--radius-dot)" }}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+          className={`inline-block h-4 w-4 transform bg-nw-white-sand shadow transition-transform ${
             checked ? "translate-x-6" : "translate-x-1"
           }`}
+          style={{ borderRadius: "var(--radius-dot)" }}
         />
       </span>
     </button>
