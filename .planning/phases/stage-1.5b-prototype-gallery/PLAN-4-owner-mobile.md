@@ -50,7 +50,7 @@ must_haves:
 <objective>
 Render two surfaces that test Site Office direction's reach beyond the builder's dashboard:
 1. **Owner portal** — homeowner-facing dashboard + draw approval. Tests Site Office trust posture for non-builder audience (per Q8=B). Cost-plus open-book transparency: every line item visible, no builder jargon.
-2. **Mobile approval flow** — PM-in-field invoice approval on iPhone-sized viewport. Tests 56px high-stakes targets, compact density at 360px, glove-on operation. Real-phone test on Jake's actual phone gates ship (M3 PENDING per CONTEXT D-25).
+2. **Mobile approval flow** — PM-in-field invoice approval on iPhone-sized viewport. Tests 56px high-stakes targets, compact density at 360px, glove-on operation. Real-phone test on Jake's actual phone gates ship (M3 LOCKED per nwrp34 Part 4 — iPhone on Safari).
 
 Purpose:
 - Owner portal validates whether Site Office direction (UPPERCASE eyebrows + JetBrains Mono dominance) feels "too archival" for homeowner audience or hits the trust posture correctly.
@@ -516,7 +516,7 @@ Unlike the patterns/ playground entry which uses a 260px scaled-down iPhone-fram
 //
 // FULL-SCREEN page (NOT scaled-down container like patterns/). Tested at
 // real iPhone viewport (393px). Real-phone test on Jake's actual phone
-// gates ship per Q5=B + M3 PENDING (CONTEXT D-25 — phone device info to
+// gates ship per Q5=B + M3 LOCKED (CONTEXT D-31 — iPhone on Safari, per nwrp34 Part 4 — phone device info
 // be substituted before /nx execute completes).
 //
 // Touch target spec per SYSTEM.md §11 + Q10=A:
@@ -734,7 +734,7 @@ export default function MobileApprovalPage() {
 }
 ```
 
-**Per CONTEXT D-25 + Q5=B:** real-phone test on Jake's actual phone is REQUIRED before ship. The phone make/model/browser is the M3 PENDING placeholder — must be substituted in EXPANDED-SCOPE.md §0 + MANUAL-CHECKLIST.md M3 before `/nx` execute completes. This task does not block waiting for M3 — it builds the prototype that M3 tests against.
+**Per CONTEXT D-25 + D-31 + Q5=B:** real-phone test on Jake's actual phone is REQUIRED before ship. The phone make/model/browser is now LOCKED per nwrp34 Part 4: **iPhone on Safari** (current iPhone Jake has on hand; whatever current Safari version ships with iOS at walkthrough time). EXPANDED-SCOPE.md §0 + MANUAL-CHECKLIST.md M3 + SETUP-COMPLETE.md substituted. This task builds the prototype that the M3 walkthrough tests against.
 
 **Per acceptance criterion (per Q5=B + Jake's expanded acceptance):** "Jake walks every prototype on his actual phone before ship verdict. PM-in-field flow specifically tested with one-hand operation, gloves-on simulation, outdoor lighting. If any flow fails real-phone test, halt before ship." This prototype is the canonical surface for that test.
 

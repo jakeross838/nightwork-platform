@@ -49,7 +49,7 @@ All other recommendations approved as written: **Q1=A, Q3=C, Q4=A, Q5=B, Q6=A+B,
 
 1. **Schedule prototype acceptance:** Site Office direction renders Gantt with timeline density that doesn't break readability. Specifically test — 6+ month timeline, 20+ tasks, dependencies visible, today-marker clear. If readability fails, log as design-system polish requirement (does not halt phase).
 2. **Real-phone testing acceptance (Q5=B):** Jake walks every prototype on his actual phone before ship verdict. PM-in-field flow specifically tested with one-hand operation, gloves-on simulation, outdoor lighting. If any flow fails real-phone test, halt before ship.
-   - **Test device:** PENDING — directive nwrp27 left literal `[PHONE]` placeholder unsubstituted. Jake to specify make/model + browser (e.g., "iPhone 15 Pro, Safari 17" or "Pixel 8, Chrome 121") before ship-time gate. Update this line and `MANUAL-CHECKLIST.md` M3 once provided.
+   - **Test device:** LOCKED 2026-05-04 (per nwrp34 Part 4) — **iPhone on Safari** (current iPhone Jake has on hand; whatever current Safari version ships with iOS at walkthrough time). Gate is "Jake walks every prototype on his actual phone" — not version-specific compliance. The device specification is now concrete enough for QA spec-checker validation.
 
 **Operational follow-ups:**
 

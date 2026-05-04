@@ -719,6 +719,10 @@ function loadSubstitutionMap(): Map<string, string> {
 //    Street" replaces before "501" (prevents partial-match bugs).
 //    Case-INSENSITIVE matching per nwrp33 C4 #3 — catches "DRUMMOND" (uppercase
 //    from PDF extraction) as well as "Drummond" / "drummond".
+//    Note (per nwrp34 W-iter2-4): uppercase emphasis from raw PDF headers gets
+//    normalized to the SUBSTITUTION-MAP value's casing — DRUMMOND → Caldwell
+//    (not CALDWELL). Acceptable trade-off; sanitized output uses canonical
+//    sanitized casing regardless of source emphasis.
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -753,13 +757,19 @@ function grepGate(value: unknown, map: Map<string, string>, path: string[] = [])
   return violations;
 }
 
-// 3b. PII pattern check (per nwrp33 C4 #1) — detect free-text PII that the
-//     SUBSTITUTION-MAP doesn't cover (phone numbers, emails, multi-digit
-//     account fragments in invoice descriptions or vendor metadata).
+// 3b. PII pattern check (per nwrp33 C4 #1 + nwrp34 W-iter2-2 + W-iter2-3).
+//     IMPORTANT: run on RAW input data BEFORE substitution (per nwrp34 W-iter2-2).
+//     SUBSTITUTION-MAP mints contact@<sanitized>.com emails and 555-XXX-XXXX
+//     phone numbers — running piiCheck post-substitution would false-positive
+//     on every legitimate sanitized vendor row and halt the script.
+//     Catches: free-text PII the SUBSTITUTION-MAP doesn't enumerate (homeowner
+//     phone fragments, account numbers, SSN-shape values needing addition to
+//     the substitution map before the script proceeds).
 const PII_PATTERNS: Array<{ name: string; regex: RegExp }> = [
   { name: "us-phone", regex: /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g },
   { name: "email", regex: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g },
-  { name: "10+digit-account", regex: /\b\d{10,}\b/g },
+  { name: "ssn-shape", regex: /\b\d{3}-?\d{2}-?\d{4}\b/g },          // per nwrp34 W-iter2-3
+  { name: "account-fragment", regex: /\b\d{6,9}\b/g },                // per nwrp34 W-iter2-3
 ];
 
 function piiCheck(value: unknown, path: string[] = []): Array<{ path: string[]; piiType: string; matches: string[] }> {
@@ -781,55 +791,98 @@ function piiCheck(value: unknown, path: string[] = []): Array<{ path: string[]; 
   return hits;
 }
 
-// 3c. Substring-collision check (per nwrp33 C4 #2) — detect hybrid names where
-//     a SUBSTITUTION-MAP key was a prefix/substring of a longer real identifier.
-//     Example: "Holmes Beach Marina LLC" — "Holmes Beach" substitutes to
-//     "Anna Maria" but "Anna Maria Marina LLC" passes the grep gate as a
-//     hybrid that's NOT in the map.
-//     Strategy: after substitution, flag any 2+-word capitalized noun phrase
-//     that doesn't START with a known sanitized VALUE and isn't in the
-//     NO-SUB allowlist (national chains).
+// 3c. Substring-collision check (per nwrp33 C4 #2 + nwrp34 W-iter2-1 fix).
+//     Per-token predicate: is this token a leak?
+//     - If the token IS a sanitized value from the map → not a collision.
+//     - If the token CONTAINS any real identifier from the broadened denylist
+//       (the same 32-entry pattern shared with the CI / pre-commit / extractor
+//       grep gates) → collision detected.
+//     Walker calls this per noun-phrase candidate extracted from each string.
+function substringCollisionDetected(
+  token: string,
+  map: Map<string, string>,
+  denylist: string[],
+): boolean {
+  // Sanitized value (intended output) → not a collision.
+  if (Array.from(map.values()).includes(token)) return false;
+  const lowerToken = token.toLowerCase();
+  // Real identifier survived in this token (case mismatch / OCR variant /
+  // hybrid post-substitute) → collision.
+  for (const id of denylist) {
+    if (lowerToken.includes(id.toLowerCase())) return true;
+  }
+  return false;
+}
+
 function substringCollisionCheck(
   value: unknown,
-  sanitizedValues: Set<string>,
-  noSubAllowlist: Set<string>,
+  map: Map<string, string>,
+  denylist: string[],
   path: string[] = [],
-): Array<{ path: string[]; hybrid: string; value: string }> {
-  const hits: Array<{ path: string[]; hybrid: string; value: string }> = [];
+): Array<{ path: string[]; token: string; value: string }> {
+  const hits: Array<{ path: string[]; token: string; value: string }> = [];
   if (typeof value === "string") {
+    // Extract candidate tokens — capitalized 2+-word noun phrases (proper-noun
+    // shape worth checking against the denylist).
     const NOUN_PHRASE = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,}/g;
     const phrases = value.match(NOUN_PHRASE) || [];
     for (const phrase of phrases) {
-      const isSanitized = Array.from(sanitizedValues).some((s) => phrase.startsWith(s));
-      const isAllowlisted = Array.from(noSubAllowlist).some((s) => phrase.includes(s));
-      if (!isSanitized && !isAllowlisted) {
-        hits.push({ path, hybrid: phrase, value });
+      if (substringCollisionDetected(phrase, map, denylist)) {
+        hits.push({ path, token: phrase, value });
       }
     }
   } else if (Array.isArray(value)) {
-    value.forEach((v, i) => hits.push(...substringCollisionCheck(v, sanitizedValues, noSubAllowlist, [...path, String(i)])));
+    value.forEach((v, i) => hits.push(...substringCollisionCheck(v, map, denylist, [...path, String(i)])));
   } else if (value && typeof value === "object") {
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      hits.push(...substringCollisionCheck(v, sanitizedValues, noSubAllowlist, [...path, k]));
+      hits.push(...substringCollisionCheck(v, map, denylist, [...path, k]));
     }
   }
   return hits;
 }
 
-// Pipeline: after substitution, run all THREE gates (per nwrp33 C4). Halt on
-// ANY violations:
-//   const grepViolations = grepGate(sanitized, subMap);
-//   const piiHits = piiCheck(sanitized);
-//   const sanitizedValues = new Set([...subMap.values()].filter((v) => v !== "NO-SUB"));
-//   const noSubAllowlist = new Set([...subMap.entries()].filter(([_, v]) => v === "NO-SUB").map(([k]) => k));
-//   const collisionHits = substringCollisionCheck(sanitized, sanitizedValues, noSubAllowlist);
-//   if (grepViolations.length || piiHits.length || collisionHits.length) {
-//     console.error("[sanitize-drummond] FAIL — halt details:");
-//     if (grepViolations.length) console.error("  grep violations:", grepViolations);
-//     if (piiHits.length) console.error("  PII detected (free-text leak):", piiHits);
-//     if (collisionHits.length) console.error("  hybrid names (substring collision):", collisionHits);
+// Pipeline (per nwrp34 W-iter2-2 reordering — piiCheck on RAW data BEFORE
+// substitution). Halt on ANY gate violations:
+//
+//   const denylist: string[] = [
+//     // Mirrors the 32-entry pre-commit / .githooks / CI grep pattern. Hardcoded
+//     // here so an empty SUBSTITUTION-MAP doesn't silently disable this gate.
+//     "Drummond", "501 74th", "Holmes Beach",
+//     "SmartShield Homes", "Florida Sunshine Carpentry", "Doug Naeher Drywall",
+//     "Paradise Foam", "Banko Overhead Doors", "WG Drywall", "Loftin Plumbing",
+//     "Island Lumber", "CoatRite", "Ecosouth", "MJ Florida", "Rangel Tile",
+//     "TNT Painting", "Avery Roofing", "ML Concrete LLC",
+//     "Dewberry", "Pou", "Krauss", "Duncan", "Molinari", "Markgraf", "Harllee", "Fish", "Clark",
+//     "Lee Worthy", "Nelson Belanger", "Bob Mozine", "Jason Szykulski", "Martin Mannix",
+//   ];
+//
+//   // 1. Read raw fixture data (XLSX via exceljs, hand-curated JSON for PDFs).
+//   const rawData = readFixtures();
+//
+//   // 2. piiCheck on RAW input — catches unmapped PII before substitution.
+//   //    Halt instructs operator to add missing substitution map entries.
+//   const rawPiiHits = piiCheck(rawData);
+//   if (rawPiiHits.length > 0) {
+//     console.error("[sanitize-drummond] FAIL — raw PII detected; add to SUBSTITUTION-MAP:");
+//     console.error(rawPiiHits);
 //     process.exit(1);
 //   }
+//
+//   // 3. Apply substitutions (case-insensitive — see substitute()).
+//   const sanitized = substituteRecursive(rawData, subMap);
+//
+//   // 4 + 5. Run substringCollisionCheck and grepGate on sanitized output.
+//   const grepViolations = grepGate(sanitized, subMap);
+//   const collisionHits = substringCollisionCheck(sanitized, subMap, denylist);
+//   if (grepViolations.length || collisionHits.length) {
+//     console.error("[sanitize-drummond] FAIL — sanitized output has leaks:");
+//     if (grepViolations.length) console.error("  grep violations:", grepViolations);
+//     if (collisionHits.length) console.error("  substring collisions:", collisionHits);
+//     process.exit(1);
+//   }
+//
+//   // 6. Write sanitized fixture .ts files.
+//   writeFixtures(sanitized);
 
 // 4. Write a sanitized fixture file with consistent formatting.
 function writeFixtureFile(filename: string, typeName: string, constName: string, items: unknown[], sourceFile: string) {

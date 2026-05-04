@@ -1,6 +1,6 @@
 # Manual setup checklist — stage-1.5b-prototype-gallery
 
-**Status:** PENDING JAKE — 3 items
+**Status:** LOCKED 2026-05-04 — all 3 items resolved (M1 + M2 + M3)
 **Generated:** 2026-05-01 14:25
 
 After completing each item, run `/nightwork-auto-setup stage-1.5b-prototype-gallery` again to validate.
@@ -117,7 +117,7 @@ foreach ($i in $invs) { Copy-Item -Path "$src\split-invoices\$i" -Destination "$
 
 ## Item M3: Confirm mobile test device for Q5=B real-phone gate
 
-**Status (post-nwrp27): PENDING JAKE CHAT REPLY** — Jake's autonomy directive nwrp27 contained literal `[PHONE]` placeholder ("Phone: [PHONE]") that was not substituted with actual device info. SETUP-COMPLETE.md proceeds with M3 deferred to ship-time gate per the original "not setup-blocking" contract (AUTO-LOG.md MANUAL items table).
+**Status (post-nwrp34): LOCKED 2026-05-04** — Jake substituted the placeholder via nwrp34 Part 4. Device: **iPhone on Safari** (current iPhone Jake has on hand; whatever current Safari version ships with iOS at walkthrough time). The gate is "Jake walks every prototype on his actual phone" — not version-specific compliance. Original PENDING note (carried for context): nwrp27 left literal `[PHONE]` placeholder; nwrp34 resolved it.
 
 **Why:** EXPANDED-SCOPE Q5=B locks "Jake walks every prototype on his actual phone before ship verdict, including PM-in-field one-hand + gloves-on + outdoor lighting." Preflight at ship time needs to know which device + browser combo so the test acceptance line in PLAN.md is concrete.
 

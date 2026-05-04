@@ -1,6 +1,6 @@
 # Setup complete — stage-1.5b-prototype-gallery
 
-**Status:** READY FOR PLAN (with one ship-time-deferred MANUAL item — M3 phone device)
+**Status:** READY FOR EXECUTE — all 3 MANUAL items LOCKED (M1 + M2 + M3 phone device on iPhone Safari per nwrp34 Part 4)
 **Completed:** 2026-05-01 14:50
 
 ## AUTO items (executed)
@@ -22,7 +22,7 @@
 
 - [x] **M1.** 19 priority Drummond raw files staged into `.planning/fixtures/drummond/source3-downloads/` (+ `split-invoices/` subdir). 0 missing. All gitignored. Validated via `ls` + `git check-ignore -v`. Executed autonomously by Claude per Jake directive nwrp27.
 - [x] **M2.** SUBSTITUTION-MAP.md locked with all `??` markers resolved (verified by `grep -c "??" → 0`). 17 vendor mappings (14 fictional + 3 NO-SUB for Ferguson/FPL/Home Depot). Owner: Caldwell. Site: 712 Pine Ave, Anna Maria FL 34216. Job code: GC0501. Executed autonomously by Claude per Jake directive nwrp27 (RULE 1 NO-SUB for national/public; RULE 2 fake-but-realistic Florida coastal-builder names).
-- [ ] **M3.** ⚠️ **PENDING JAKE CHAT REPLY** — Phone for Q5=B real-phone gate. Directive nwrp27 contained literal `[PHONE]` placeholder unsubstituted. Recorded as PENDING in EXPANDED-SCOPE.md §0 and MANUAL-CHECKLIST.md M3. Per the original AUTO-LOG MANUAL items contract ("Not setup-blocking — ship-time gate"), M3 does not block SETUP-COMPLETE. Phone info MUST be locked before `/nx` execute completes.
+- [x] **M3.** ✅ **LOCKED 2026-05-04 (per nwrp34 Part 4)** — Phone for Q5=B real-phone gate: **iPhone on Safari** (current iPhone Jake has on hand; whatever current Safari version ships with iOS at walkthrough time). Gate is "Jake walks every prototype on his actual phone" — not version-specific compliance. EXPANDED-SCOPE.md §0 + MANUAL-CHECKLIST.md M3 substituted accordingly.
 
 ## Sanitized fixture sample (M2 verification)
 
@@ -75,6 +75,6 @@ Before `/nx`:
 - ✅ EXPANDED-SCOPE.md approved
 - ✅ SETUP-COMPLETE.md exists
 - ✅ M1 + M2 locked
-- ⚠️ **M3 phone info MUST be substituted** in EXPANDED-SCOPE.md §0 (currently `PENDING — placeholder [PHONE] not substituted in nwrp27`). Without it, the QA spec-checker has no concrete device to validate against and may flag the phase as ship-blocked.
+- ✅ **M3 phone info substituted** in EXPANDED-SCOPE.md §0 + MANUAL-CHECKLIST.md M3 + this file per nwrp34 Part 4 (LOCKED: iPhone on Safari, current versions). QA spec-checker has concrete device to validate against.
 
 If discovery during planning reveals EXPANDED-SCOPE.md needs revision (a prerequisite was missed), update EXPANDED-SCOPE.md and re-run `/nightwork-auto-setup stage-1.5b-prototype-gallery` to refresh setup.

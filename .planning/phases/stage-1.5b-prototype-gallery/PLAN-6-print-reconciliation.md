@@ -975,12 +975,21 @@ export default function ReconciliationStrawmanPage() {
   <files>.planning/phases/stage-1.5b-prototype-gallery/findings.md</files>
 
   <read_first>
+    **Aggregation reads happen in dependency order (per nwrp34 P2):** Wave 0 first → Wave 1 second → Wave 2 third. Each SUMMARY.md is consumed for its own observations; the aggregator preserves wave attribution in the findings.md output.
+
+    Wave 0 (read first):
     - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-1-SUMMARY.md (Wave 0 fixture extraction summary)
-    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-2-SUMMARY.md (PLAN-2 invoice/draw/vendors summary)
-    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-3-SUMMARY.md (PLAN-3 budget/documents summary)
-    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-4-SUMMARY.md (PLAN-4 owner/mobile summary)
-    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-5-SUMMARY.md (PLAN-5 schedule/Gantt summary)
-    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-6-SUMMARY.md (PLAN-6 print/reconciliation summary; this plan's own summary, written before this task runs)
+
+    Wave 1 (read second; 4 plans, parallel-completed by execute time):
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-2-SUMMARY.md (PLAN-2 invoice/draw/vendors)
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-3-SUMMARY.md (PLAN-3 budget/documents)
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-4-SUMMARY.md (PLAN-4 owner/mobile)
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-5-SUMMARY.md (PLAN-5 schedule/Gantt)
+
+    Wave 2 (read third; this plan's own summary IF available, else use working memory of Tasks 1-3):
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-6-SUMMARY.md (PLAN-6 print/reconciliation; if not yet written when Task 4 runs, fall back to manual aggregation from Task 1/2/3 working memory per the manual-aggregation escape clause in the action block)
+
+    Reference docs (any order):
     - .planning/expansions/stage-1.5b-prototype-gallery-EXPANDED-SCOPE.md (§7 acceptance criterion 12 — the spec for findings.md sections)
     - .planning/phases/stage-1.5b-prototype-gallery/CONTEXT.md (D-08 reconciliation strawman extension; reconciliation leading-candidate framing)
   </read_first>
@@ -1123,6 +1132,7 @@ The script that writes this file is straightforward — read the 6 SUMMARY.md fi
 - Phase 1B 1-day judgment encoded as explicit task structure with escape clause
 - Leading-candidate observation captured in plan summary (does NOT lock per Q3=C)
 - All routes pass build, T10c, and token discipline gates (rgba() exception documented for Candidate 2 backgrounds)
+- **Phase findings.md aggregator generated** at `.planning/phases/stage-1.5b-prototype-gallery/findings.md` with all 5 required sections per EXPANDED-SCOPE §7 acceptance criterion 12 (per nwrp34 P1)
 </success_criteria>
 
 <output>
