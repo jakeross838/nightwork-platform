@@ -199,7 +199,7 @@ export const SAMPLE_VENDORS: SampleVendor[] = [
 - `DrummondVendor` type (same shape as `SampleVendor`)
 - `DRUMMOND_VENDORS` array — 17 entries per AUTO-LOG (14 fictional + 3 NO-SUB for Ferguson/FPL/Home Depot per nwrp27 RULE 1)
 - Long names are the stress test (e.g., "Florida Sunshine Carpentry", "ML Concrete LLC") — verify this layout doesn't break List+Detail mobile rendering
-- IDs prefixed `v-drummond-` to avoid collision with playground `v-coastal-carpentry`
+- IDs prefixed `v-caldwell-` (per CONTEXT D-27 + nwrp31 #7) to avoid collision with playground `v-coastal-carpentry`
 
 ---
 
