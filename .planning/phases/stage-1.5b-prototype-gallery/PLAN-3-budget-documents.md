@@ -220,14 +220,18 @@ type BudgetRow = CaldwellBudgetLine & {
 
 export default function BudgetPrototypePage({ params }: { params: { id: string } }) {
   const job = CALDWELL_JOBS.find((j) => j.id === params.id);
-  if (!job) return notFound();
 
   // Identify "current draw" = the draw being prepared (or the latest paid).
   // For Caldwell fixture, Pay App 5 is canonical (per EXPANDED-SCOPE deliverable #3).
   const currentDraw = CALDWELL_DRAWS.find((d) => d.id === "d-caldwell-05") ?? CALDWELL_DRAWS[CALDWELL_DRAWS.length - 1];
 
+  // Hooks declared unconditionally above any early return (Rules of Hooks
+  // — useState/useMemo MUST run on every render). Bodies guard on `job`
+  // and return safe defaults; early-return below short-circuits render.
+
   // Per R.2 — compute on render from source-of-truth invoice fixture rows.
   const rows: BudgetRow[] = useMemo(() => {
+    if (!job) return [];
     return CALDWELL_BUDGET_LINES.filter((bl) => bl.job_id === job.id).map((bl) => {
       const cc = CALDWELL_COST_CODES.find((c) => c.id === bl.cost_code_id);
 
@@ -262,10 +266,11 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
         balance_to_finish,
       };
     });
-  }, [job.id, currentDraw.id]);
+  }, [job?.id, currentDraw.id]);
 
   // KPI summary — also derived on render per R.2.
   const kpis = useMemo(() => {
+    if (!job) return null;
     const originalSum = rows.reduce((s, r) => s + r.original_estimate, 0);
     const revisedSum = rows.reduce((s, r) => s + r.revised_estimate, 0);
     const totalToDateSum = rows.reduce((s, r) => s + r.total_to_date, 0);
@@ -275,7 +280,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
       .reduce((s, co) => s + co.total_with_fee, 0);
     const overUnderTotal = rows.filter((r) => r.balance_to_finish < 0).length;
     return { originalSum, revisedSum, totalToDateSum, balanceSum, approvedCOs, overUnderTotal };
-  }, [rows, job.id]);
+  }, [rows, job?.id]);
 
   // TanStack Table v8 setup — analog: data-display/page.tsx:388-460
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -349,6 +354,10 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
+  // All hooks above run unconditionally per Rules of Hooks. Now safe to
+  // early-return — JSX render below short-circuits if job/kpis are null.
+  if (!job || !kpis) return notFound();
 
   return (
     <div className="px-6 py-8 max-w-[1600px] mx-auto">

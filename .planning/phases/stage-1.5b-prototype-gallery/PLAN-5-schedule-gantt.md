@@ -106,7 +106,7 @@ Output:
   import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 
 <!-- Status → bar color mapping (Site Office tokens):
-     not_started → var(--nw-warm-gray) — neutral / pre-start
+     not_started → var(--text-tertiary, #5B6975) — neutral / pre-start
      in_progress → var(--nw-stone-blue) — active
      complete    → var(--nw-success) — done
      blocked     → var(--nw-danger) — needs attention
@@ -205,7 +205,7 @@ import Badge from "@/components/nw/Badge";
 // Status → CSS var color mapping (Site Office tokens).
 function statusColor(s: CaldwellScheduleStatus): string {
   switch (s) {
-    case "not_started": return "var(--nw-warm-gray)";
+    case "not_started": return "var(--text-tertiary, #5B6975)";
     case "in_progress": return "var(--nw-stone-blue)";
     case "complete":    return "var(--nw-success)";
     case "blocked":     return "var(--nw-danger)";
@@ -221,9 +221,11 @@ const STATUS_BADGE: Record<CaldwellScheduleStatus, { variant: "neutral" | "accen
 
 export default function SchedulePrototypePage({ params }: { params: { id: string } }) {
   const job = CALDWELL_JOBS.find((j) => j.id === params.id);
-  if (!job) return notFound();
 
-  const items = CALDWELL_SCHEDULE_ITEMS.filter((i) => i.job_id === job.id);
+  // Hooks declared unconditionally above any early return (Rules of Hooks).
+  // `items` is empty when job is missing; downstream useMemos handle empty
+  // input gracefully. Early-return below short-circuits render.
+  const items = job ? CALDWELL_SCHEDULE_ITEMS.filter((i) => i.job_id === job.id) : [];
 
   // Compute timeline date range from rendered items.
   const projectStart = useMemo(() => {
@@ -396,6 +398,9 @@ export default function SchedulePrototypePage({ params }: { params: { id: string
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // All hooks above run unconditionally per Rules of Hooks. Now safe to early-return.
+  if (!job) return notFound();
+
   return (
     <div className="px-6 py-8 max-w-[1800px] mx-auto">
       {/* Header band */}
@@ -481,7 +486,7 @@ export default function SchedulePrototypePage({ params }: { params: { id: string
       {/* Legend */}
       <div className="mt-4 flex items-center gap-4 text-[10px] flex-wrap" style={{ fontFamily: "var(--font-jetbrains-mono)", color: "var(--text-tertiary)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-2" style={{ background: "var(--nw-warm-gray)" }} /> Not started
+          <span className="inline-block w-3 h-2" style={{ background: "var(--text-tertiary, #5B6975)" }} /> Not started
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-2" style={{ background: "var(--nw-stone-blue)" }} /> In progress

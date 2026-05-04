@@ -8,6 +8,12 @@ git pull origin main
 npm install
 ```
 
+**One-time per checkout — enable project-shared git hooks:**
+```bash
+git config core.hooksPath .githooks
+```
+This activates `.githooks/pre-commit` (Drummond grep gate per nwrp33 C6 — closes the manual-commit bypass that 3 plan-review reviewers flagged in T-1.5b-W0-11). The Claude-Bash-tool hook at `.claude/hooks/nightwork-pre-commit.sh` runs only on Claude-initiated commits; this `.githooks/pre-commit` runs on all commits regardless of tool.
+
 **ALWAYS run these after finishing any work session or completing a feature:**
 ```bash
 git add -A && git commit -m "descriptive message"

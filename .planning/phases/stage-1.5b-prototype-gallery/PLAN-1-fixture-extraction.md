@@ -29,8 +29,8 @@ threat_model_severity: medium
 requirements: []
 must_haves:
   truths:
-    - "Sanitize script reads SUBSTITUTION-MAP.md, applies substitutions, writes 11 sanitized fixture files"
-    - "All 11 fixture files exist as static const exports under src/app/design-system/_fixtures/drummond/"
+    - "Sanitize script reads SUBSTITUTION-MAP.md, applies substitutions, writes 12 sanitized fixture files (plus types.ts + index.ts barrel = 14 .ts files in _fixtures/drummond/)"
+    - "All 12 entity fixture files exist as static const exports (plus types.ts + index.ts barrel = 14 .ts files) under src/app/design-system/_fixtures/drummond/"
     - "Build-time grep gate (extractor-side) rejects sanitized output if any real Drummond identifier survives"
     - "CI workflow grep-checks committed fixtures for ~17-20 high-risk identifiers"
     - "prototypes/layout.tsx forces data-direction=C and data-palette=B (Site Office + Set B locked)"
@@ -45,7 +45,7 @@ must_haves:
       provides: "CaldwellJob, CaldwellVendor, CaldwellCostCode, CaldwellInvoice, CaldwellDraw, CaldwellDrawLineItem, CaldwellChangeOrder, CaldwellBudgetLine, CaldwellLienRelease, CaldwellScheduleItem, CaldwellPayment, CaldwellReconciliationPair type exports"
       exports: ["CaldwellJob", "CaldwellVendor", "CaldwellCostCode", "CaldwellInvoice", "CaldwellDraw", "CaldwellDrawLineItem", "CaldwellChangeOrder", "CaldwellBudgetLine", "CaldwellLienRelease", "CaldwellScheduleItem", "CaldwellPayment", "CaldwellReconciliationPair"]
     - path: "src/app/design-system/_fixtures/drummond/index.ts"
-      provides: "Barrel re-export of all 11 fixture files"
+      provides: "Barrel re-export of all 12 fixture files"
       contains: "export *"
     - path: "src/app/design-system/_fixtures/drummond/jobs.ts"
       provides: "CALDWELL_JOBS const array (1 entry — Caldwell at 712 Pine Ave)"
@@ -108,7 +108,7 @@ must_haves:
 ---
 
 <objective>
-Caldwell fixture extraction (Wave 0). Build the sanitization pipeline + write all 11 sanitized fixture files + scaffold the prototypes/ route shell + add the CI grep gate. **HARD HALT after completion** — Jake reviews sanitized output before any prototype rendering begins (per D-23 / R1 hard halt rule).
+Caldwell fixture extraction (Wave 0). Build the sanitization pipeline + write all 12 sanitized fixture files + scaffold the prototypes/ route shell + add the CI grep gate. **HARD HALT after completion** — Jake reviews sanitized output before any prototype rendering begins (per D-23 / R1 hard halt rule).
 
 This plan is the foundation everything else depends on. Get it right.
 
@@ -116,7 +116,7 @@ Purpose: Every downstream prototype reads from `src/app/design-system/_fixtures/
 
 Output:
 - 1 sanitization script (`scripts/sanitize-drummond.ts`)
-- 11 fixture files + types.ts + index.ts barrel under `src/app/design-system/_fixtures/drummond/`
+- 12 fixture files + types.ts + index.ts barrel = 14 .ts files under `src/app/design-system/_fixtures/drummond/`
 - `prototypes/layout.tsx` forcing `data-direction="C" data-palette="B"`
 - `prototypes/page.tsx` index landing
 - `.github/workflows/drummond-grep-check.yml` (first GitHub Actions workflow in repo)
@@ -589,7 +589,7 @@ export type CaldwellReconciliationPair = {
 
 **Step B — Create `src/app/design-system/_fixtures/drummond/index.ts`:**
 
-Mirror the shape of `src/app/design-system/_fixtures/index.ts` exactly. Re-export all 11 fixture files + types:
+Mirror the shape of `src/app/design-system/_fixtures/index.ts` exactly. Re-export all 12 fixture files + types:
 
 ```typescript
 // Re-exports for the design-system Caldwell fixtures (Stage 1.5b).
@@ -717,22 +717,29 @@ function loadSubstitutionMap(): Map<string, string> {
 
 // 2. Apply substitutions to a string. Sort keys by length DESC so "501 74th
 //    Street" replaces before "501" (prevents partial-match bugs).
+//    Case-INSENSITIVE matching per nwrp33 C4 #3 — catches "DRUMMOND" (uppercase
+//    from PDF extraction) as well as "Drummond" / "drummond".
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function substitute(text: string, map: Map<string, string>): string {
   const keys = Array.from(map.keys()).sort((a, b) => b.length - a.length);
   let result = text;
   for (const k of keys) {
-    result = result.replaceAll(k, map.get(k)!);
+    result = result.replace(new RegExp(escapeRegex(k), "gi"), map.get(k)!);
   }
   return result;
 }
 
-// 3. Grep gate — scan a value (string or recursively object/array) for any
-//    real-name keys remaining. Returns array of violations.
+// 3. Grep gate — scan for any real-name keys remaining post-substitution.
+//    Case-INSENSITIVE per nwrp33 C4 #3.
 function grepGate(value: unknown, map: Map<string, string>, path: string[] = []): Array<{path: string[], real: string, value: string}> {
   const violations: Array<{path: string[], real: string, value: string}> = [];
   if (typeof value === "string") {
+    const lower = value.toLowerCase();
     for (const real of map.keys()) {
-      if (value.includes(real)) {
+      if (lower.includes(real.toLowerCase())) {
         violations.push({ path, real, value });
       }
     }
@@ -745,6 +752,84 @@ function grepGate(value: unknown, map: Map<string, string>, path: string[] = [])
   }
   return violations;
 }
+
+// 3b. PII pattern check (per nwrp33 C4 #1) — detect free-text PII that the
+//     SUBSTITUTION-MAP doesn't cover (phone numbers, emails, multi-digit
+//     account fragments in invoice descriptions or vendor metadata).
+const PII_PATTERNS: Array<{ name: string; regex: RegExp }> = [
+  { name: "us-phone", regex: /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g },
+  { name: "email", regex: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g },
+  { name: "10+digit-account", regex: /\b\d{10,}\b/g },
+];
+
+function piiCheck(value: unknown, path: string[] = []): Array<{ path: string[]; piiType: string; matches: string[] }> {
+  const hits: Array<{ path: string[]; piiType: string; matches: string[] }> = [];
+  if (typeof value === "string") {
+    for (const { name, regex } of PII_PATTERNS) {
+      const matches = value.match(regex);
+      if (matches && matches.length > 0) {
+        hits.push({ path, piiType: name, matches });
+      }
+    }
+  } else if (Array.isArray(value)) {
+    value.forEach((v, i) => hits.push(...piiCheck(v, [...path, String(i)])));
+  } else if (value && typeof value === "object") {
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      hits.push(...piiCheck(v, [...path, k]));
+    }
+  }
+  return hits;
+}
+
+// 3c. Substring-collision check (per nwrp33 C4 #2) — detect hybrid names where
+//     a SUBSTITUTION-MAP key was a prefix/substring of a longer real identifier.
+//     Example: "Holmes Beach Marina LLC" — "Holmes Beach" substitutes to
+//     "Anna Maria" but "Anna Maria Marina LLC" passes the grep gate as a
+//     hybrid that's NOT in the map.
+//     Strategy: after substitution, flag any 2+-word capitalized noun phrase
+//     that doesn't START with a known sanitized VALUE and isn't in the
+//     NO-SUB allowlist (national chains).
+function substringCollisionCheck(
+  value: unknown,
+  sanitizedValues: Set<string>,
+  noSubAllowlist: Set<string>,
+  path: string[] = [],
+): Array<{ path: string[]; hybrid: string; value: string }> {
+  const hits: Array<{ path: string[]; hybrid: string; value: string }> = [];
+  if (typeof value === "string") {
+    const NOUN_PHRASE = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,}/g;
+    const phrases = value.match(NOUN_PHRASE) || [];
+    for (const phrase of phrases) {
+      const isSanitized = Array.from(sanitizedValues).some((s) => phrase.startsWith(s));
+      const isAllowlisted = Array.from(noSubAllowlist).some((s) => phrase.includes(s));
+      if (!isSanitized && !isAllowlisted) {
+        hits.push({ path, hybrid: phrase, value });
+      }
+    }
+  } else if (Array.isArray(value)) {
+    value.forEach((v, i) => hits.push(...substringCollisionCheck(v, sanitizedValues, noSubAllowlist, [...path, String(i)])));
+  } else if (value && typeof value === "object") {
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      hits.push(...substringCollisionCheck(v, sanitizedValues, noSubAllowlist, [...path, k]));
+    }
+  }
+  return hits;
+}
+
+// Pipeline: after substitution, run all THREE gates (per nwrp33 C4). Halt on
+// ANY violations:
+//   const grepViolations = grepGate(sanitized, subMap);
+//   const piiHits = piiCheck(sanitized);
+//   const sanitizedValues = new Set([...subMap.values()].filter((v) => v !== "NO-SUB"));
+//   const noSubAllowlist = new Set([...subMap.entries()].filter(([_, v]) => v === "NO-SUB").map(([k]) => k));
+//   const collisionHits = substringCollisionCheck(sanitized, sanitizedValues, noSubAllowlist);
+//   if (grepViolations.length || piiHits.length || collisionHits.length) {
+//     console.error("[sanitize-drummond] FAIL — halt details:");
+//     if (grepViolations.length) console.error("  grep violations:", grepViolations);
+//     if (piiHits.length) console.error("  PII detected (free-text leak):", piiHits);
+//     if (collisionHits.length) console.error("  hybrid names (substring collision):", collisionHits);
+//     process.exit(1);
+//   }
 
 // 4. Write a sanitized fixture file with consistent formatting.
 function writeFixtureFile(filename: string, typeName: string, constName: string, items: unknown[], sourceFile: string) {
@@ -812,7 +897,7 @@ main().catch((e) => {
   <verify>
     <automated>npx tsc --noEmit src/app/design-system/_fixtures/drummond/types.ts src/app/design-system/_fixtures/drummond/index.ts</automated>
     Manual checks (executor confirms):
-    - `cat src/app/design-system/_fixtures/drummond/types.ts | grep -c "^export type Drummond"` returns >=12 (Job, Vendor, CostCode, Invoice + sub-types, Draw, DrawLineItem, ChangeOrder, BudgetLine, LienRelease, ScheduleItem, Payment, ReconciliationPair).
+    - `cat src/app/design-system/_fixtures/drummond/types.ts | grep -c "^export type Caldwell"` returns >=12 (Job, Vendor, CostCode, Invoice + sub-types, Draw, DrawLineItem, ChangeOrder, BudgetLine, LienRelease, ScheduleItem, Payment, ReconciliationPair).
     - `cat src/app/design-system/_fixtures/drummond/index.ts | grep -c '^export \\* from'` returns 13 (types + 12 fixture files; matches list in Step B above).
     - `npx tsx scripts/sanitize-drummond.ts --help` (or running with no args) prints usage + does not crash.
     - Hook T10c does not flag the new files (no @/lib/supabase imports — verify with `grep -E '@/lib/(supabase|org|auth)' src/app/design-system/_fixtures/drummond/types.ts src/app/design-system/_fixtures/drummond/index.ts | wc -l` returns 0).
@@ -1354,6 +1439,8 @@ jobs:
 **Per CONTEXT D-23 hard halt rule (R1).** Jake reviews sanitized output for privacy + accuracy + sufficiency BEFORE Wave 1 prototype rendering begins.
 
 **R1 escalation status:** if Wave 0 has taken >4 days from kickoff, halt and escalate per CONTEXT D-23. Fallback options: Q4=B compressed fixture (1-2 pay apps, 8-10 vendors) OR scope-cut another Wave 1 deliverable.
+
+**T-1.5b-W0-07 historical exposure re-acknowledgment (per nwrp33 W17):** Jake acknowledges historical substitution-pair exposure at commit 37c5a92 (per nwrp31 Option A: redact going forward, accept historical exposure on private repo). Reply "ack" or note any new concerns. This is a Wave 0 close requirement — Wave 1 launches only after Jake re-acknowledges.
 
 1. **Privacy verification (THE non-negotiable check).** Run from project root (pattern broadened per nwrp31 #3):
    ```bash

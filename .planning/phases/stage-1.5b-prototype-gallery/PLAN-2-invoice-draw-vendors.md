@@ -255,7 +255,7 @@ function buildTimeline(inv: typeof CALDWELL_INVOICES[number]) {
     steps.push({ when: `${r} · 10:06`, what: `AI PARSED (confidence ${(inv.confidence_score * 100).toFixed(0)}%)`, done: true });
   }
   if (["pm_review", "pm_approved", "qa_review", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(inv.status)) {
-    steps.push({ when: `${r} · 11:18`, what: "PM ASSIGNED Bob Mozine", done: true });
+    steps.push({ when: `${r} · 11:18`, what: "PM ASSIGNED Brent Mullins", done: true });
   }
   if (["pm_approved", "qa_review", "qa_approved", "pushed_to_qb", "in_draw", "paid"].includes(inv.status)) {
     steps.push({ when: `${r} · 14:22`, what: "PM APPROVED", done: true });

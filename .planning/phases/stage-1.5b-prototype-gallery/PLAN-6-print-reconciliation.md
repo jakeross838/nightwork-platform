@@ -762,10 +762,10 @@ function Candidate2InlineDiff({ pair }: { pair: CaldwellReconciliationPair }) {
             <div className="text-[9px] uppercase tracking-wider" style={{ color: "var(--text-tertiary)", letterSpacing: "0.08em" }}>
               {d.field.replaceAll("_", " ")}
             </div>
-            <div className="px-2 py-1" style={{ background: "rgba(220, 38, 38, 0.08)", color: "var(--nw-danger)" }}>
+            <div className="px-2 py-1" style={{ background: "rgba(176, 85, 78, 0.06)", color: "var(--nw-danger)" }}>
               − {val(d.imported_value)}
             </div>
-            <div className="px-2 py-1" style={{ background: "rgba(34, 197, 94, 0.08)", color: "var(--nw-success)" }}>
+            <div className="px-2 py-1" style={{ background: "rgba(74, 138, 111, 0.06)", color: "var(--nw-success)" }}>
               + {val(d.current_value)}
             </div>
           </div>
@@ -941,7 +941,7 @@ export default function ReconciliationStrawmanPage() {
     <automated>npm run build && grep -c "Candidate1SideBySide\|Candidate2InlineDiff\|Candidate3TimelineOverlay\|Candidate4Hybrid\|CALDWELL_RECONCILIATION_PAIRS" src/app/design-system/prototypes/reconciliation/page.tsx</automated>
     Expected: build exits 0; grep returns >=5.
 
-    Hex check: `grep -nE '#[0-9a-fA-F]{3,6}' src/app/design-system/prototypes/reconciliation/page.tsx` — ALLOWED only inside `rgba(220, 38, 38, ...)` / `rgba(34, 197, 94, ...)` calls (these are CSS rgba carve-outs for the candidate-2 inline diff backgrounds, mirror of the patterns/ analog). Any other hex MUST be 0.
+    Hex check: `grep -nE '#[0-9a-fA-F]{3,6}' src/app/design-system/prototypes/reconciliation/page.tsx` — ALLOWED only inside `rgba(176, 85, 78, ...)` / `rgba(74, 138, 111, ...)` calls (Slate analogs of --nw-danger / --nw-success per patterns/page.tsx:1206-1212; carve-outs for candidate-2 inline diff backgrounds). Any other hex MUST be 0.
 
     T10c check: returns 0 matches.
 
@@ -967,6 +967,120 @@ export default function ReconciliationStrawmanPage() {
     - 4 Candidate components mirror patterns/page.tsx:1168-1276 visual contracts
     - npm run build passes
     - Leading-candidate observation captured in summary (does NOT lock — final at reconciliation phase post-3.9)
+  </done>
+</task>
+
+<task type="auto">
+  <name>Task 4: Aggregate phase findings into canonical findings.md (per nwrp33 C3 + EXPANDED-SCOPE §7 acceptance criterion 12)</name>
+  <files>.planning/phases/stage-1.5b-prototype-gallery/findings.md</files>
+
+  <read_first>
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-1-SUMMARY.md (Wave 0 fixture extraction summary)
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-2-SUMMARY.md (PLAN-2 invoice/draw/vendors summary)
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-3-SUMMARY.md (PLAN-3 budget/documents summary)
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-4-SUMMARY.md (PLAN-4 owner/mobile summary)
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-5-SUMMARY.md (PLAN-5 schedule/Gantt summary)
+    - .planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-6-SUMMARY.md (PLAN-6 print/reconciliation summary; this plan's own summary, written before this task runs)
+    - .planning/expansions/stage-1.5b-prototype-gallery-EXPANDED-SCOPE.md (§7 acceptance criterion 12 — the spec for findings.md sections)
+    - .planning/phases/stage-1.5b-prototype-gallery/CONTEXT.md (D-08 reconciliation strawman extension; reconciliation leading-candidate framing)
+  </read_first>
+
+  <action>
+**Create `.planning/phases/stage-1.5b-prototype-gallery/findings.md` aggregating all 6 wave summaries into the canonical phase findings document required by EXPANDED-SCOPE §7 acceptance criterion 12.**
+
+The findings.md aggregator runs LAST in the phase — after all 6 SUMMARY.md files exist. It mechanically pulls observations from each plan's summary, classifies them into 3 sections, and writes the canonical aggregate.
+
+**Required structure (per EXPANDED-SCOPE §7 acceptance criterion 12):**
+
+```markdown
+# Phase 1.5b — Findings
+
+**Generated:** {execute-time ISO date}
+**Source plans:** PLAN-1 through PLAN-6 (Wave 0 → Wave 2)
+**Reference:** EXPANDED-SCOPE.md §7 acceptance criterion 12
+
+## 1. Polish requirements (non-blocking — feed Wave 1.1 backlog)
+
+UI issues surfaced during prototype walkthrough that did NOT halt phase but should be addressed in Wave 1.1 polish phase.
+
+{Aggregate from all 6 SUMMARY.md files. For each, capture:
+ - Surface name (which prototype)
+ - Issue (what surfaced)
+ - Severity (cosmetic / functional / accessibility)
+ - Recommendation (specific fix)}
+
+If no polish requirements surfaced: "None — all prototypes passed walkthrough cleanly."
+
+## 2. Critical findings (workflow failures — halt-and-decide)
+
+Issues that fundamentally broke a workflow on real-data Caldwell rendering. These would have triggered Q9=B halt criterion but were either resolved or escalated to Jake.
+
+{Aggregate from all 6 SUMMARY.md files. For each, capture:
+ - Surface name
+ - Workflow that failed (e.g., "PM cannot approve invoice on phone — 56px target hit but tap area overlapping")
+ - Resolution (fixed in flight | escalated to Jake | logged for Wave 1.1)
+ - Decision rationale}
+
+If no critical findings: "None — all 11 deliverables rendered without workflow breakage."
+
+## 3. Reconciliation leading-candidate recommendation (per CONTEXT Q3=C)
+
+Per CONTEXT Q3=C — render all 4 candidates, document a leading-candidate recommendation at end of 1.5b. Final lock at reconciliation phase post-3.9 per D-028. This is documentation-level, NOT a PATTERNS.md §11 commitment.
+
+**Leading candidate (after walkthrough):** {Candidate 1 / 2 / 3 / 4}
+**Rationale:** {2-3 paragraphs from PLAN-6 Task 3 summary — why this candidate visually surfaced as the obvious choice for Caldwell drift, what made other candidates less compelling}
+**Caveat:** This recommendation does NOT lock PATTERNS.md §11. The reconciliation phase post-Phase-3.9 makes the formal lock per D-028 + A16.1.
+
+If walkthrough was inconclusive: "All 4 candidates render comparably on Caldwell drift; recommend deferring leading-candidate selection to reconciliation phase per D-028 strict reading (Option B)."
+
+## 4. Wave-by-wave summary
+
+| Wave | Plan | Surface | Verdict |
+|------|------|---------|---------|
+| 0 | PLAN-1 | Fixture sanitization | {COMPLETE / PARTIAL with notes} |
+| 1 | PLAN-2 | Invoice/draw/vendor prototypes | {COMPLETE / etc.} |
+| 1 | PLAN-3 | Budget + document review | {...} |
+| 1 | PLAN-4 | Owner portal + mobile approval | {...} |
+| 1 | PLAN-5 | Schedule (Gantt) | {...} |
+| 2 | PLAN-6 | G702/G703 print + reconciliation | {...} |
+
+## 5. Gates passed
+
+- [{x}] Privacy 3-tier grep gate clean (extractor + Claude pre-commit + CI + .githooks/pre-commit)
+- [{x}] All 12 entity fixture files committed; types/index barrel correct
+- [{x}] Hook T10c silent on all prototype routes (no @/lib/supabase|org|auth imports)
+- [{x}] Token discipline gate (no hardcoded hex outside print-stylesheet carve-outs)
+- [{x}] Build passes (`npm run build`)
+- [{x}] R1 fixture extraction within 4-day budget
+- [{x}] G702 1-day judgment resolved (pixel-perfect | escape clause activated)
+- [{x}] M3 phone gate satisfied (Jake walked all prototypes on real device)
+- [{x}] Schedule prototype acceptance: ≥6-month timeline + ≥20 tasks + dependencies + today-marker (per Q2 override C)
+- [{x}] Reconciliation 4×2 matrix renders all 8 prototypes
+```
+
+The script that writes this file is straightforward — read the 6 SUMMARY.md files, parse their structure, classify observations into the three buckets, and write the aggregate. No external dependencies; standard fs.readFileSync + string manipulation.
+
+**Manual aggregation acceptable** if the SUMMARY.md format isn't consistent enough for a parser. Executor decides at the time. Either way, the canonical `findings.md` MUST exist before `/gsd-ship` per EXPANDED-SCOPE §7 acceptance criterion 12.
+  </action>
+
+  <verify>
+    <automated>test -f .planning/phases/stage-1.5b-prototype-gallery/findings.md && grep -cE "^## (1\. Polish requirements|2\. Critical findings|3\. Reconciliation leading-candidate|4\. Wave-by-wave summary|5\. Gates passed)" .planning/phases/stage-1.5b-prototype-gallery/findings.md</automated>
+    Expected: file exists; grep returns 5 (all required sections present).
+
+    Additional checks:
+    - Each section has at least one entry OR explicit "None — ..." disclaimer.
+    - Wave-by-wave summary table has 6 rows (one per plan).
+    - Gates passed checklist has 10 entries with status set.
+    - Reconciliation leading-candidate has either {Candidate N + rationale} OR explicit deferral text.
+  </verify>
+
+  <done>
+    - .planning/phases/stage-1.5b-prototype-gallery/findings.md exists with all 5 required sections
+    - Polish + critical findings aggregated from all 6 SUMMARY.md files
+    - Reconciliation leading-candidate either named with rationale OR explicitly deferred per D-028 Option B
+    - Wave-by-wave summary table covers all 6 plans
+    - Gates passed checklist resolved (each item ✓ or ✗ with note)
+    - EXPANDED-SCOPE §7 acceptance criterion 12 satisfied
   </done>
 </task>
 

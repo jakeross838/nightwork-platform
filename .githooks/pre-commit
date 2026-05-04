@@ -1,0 +1,20 @@
+#!/bin/bash
+# Project-shared pre-commit hook — Drummond grep gate (per nwrp33 C6).
+# Mirrors .claude/hooks/nightwork-pre-commit.sh + .github/workflows/drummond-grep-check.yml.
+# Activates regardless of which tool initiated `git commit` (closes T-1.5b-W0-11
+# manual-commit bypass surfaced by 3 plan-review reviewers).
+#
+# Activate: run `git config core.hooksPath .githooks` once per checkout.
+# Bypass: pass --no-verify (logged via shell; same convention as Claude hook).
+
+PATTERN='Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine Carpentry|Doug Naeher Drywall|Paradise Foam|Banko Overhead Doors|WG Drywall|Loftin Plumbing|Island Lumber|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|ML Concrete LLC|Dewberry|Pou|Krauss|Duncan|Molinari|Markgraf|Harllee|Fish|Clark|Lee Worthy|Nelson Belanger|Bob Mozine|Jason Szykulski|Martin Mannix'
+
+if HITS=$(git grep --cached -nE "$PATTERN" -- 'src/app/design-system/_fixtures/drummond/' 2>/dev/null) && [ -n "$HITS" ]; then
+  echo "[pre-commit] Real Drummond identifier in staged sanitized fixtures:" >&2
+  echo "$HITS" >&2
+  echo "" >&2
+  echo "Run scripts/sanitize-drummond.ts to regenerate, hand-fix, or pass --no-verify." >&2
+  exit 1
+fi
+
+exit 0
