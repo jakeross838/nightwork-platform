@@ -102,6 +102,9 @@ const DENYLIST: string[] = [
 // 1. Parse SUBSTITUTION-MAP.md → Map<real, sanitized>.
 //    Reads the markdown tables; each row "| Real | Sanitized | Notes |" with
 //    NO-SUB rows filtered out (keep real value, no substitution applied).
+//    Per nwrp34 follow-up: rows of shape "X (Y)" register BOTH "X (Y)" and
+//    "Y" as keys mapping to the same sanitized value — handles parenthetical
+//    full-name annotations like "Banko (Banko Overhead Doors)".
 function loadSubstitutionMap(): Map<string, string> {
   const md = fs.readFileSync(SUB_MAP_PATH, "utf-8");
   const map = new Map<string, string>();
@@ -117,6 +120,20 @@ function loadSubstitutionMap(): Map<string, string> {
     if (sanitized === "NO-SUB" || sanitized.startsWith("(")) continue;
     if (real.startsWith("(") || real === "") continue;
     map.set(real, sanitized);
+    // Handle parenthetical-annotation form: "Short (Long Form Name)" registers
+    // ALL THREE forms — "Short (Long Form Name)" full, "Short" outer alone,
+    // and "Long Form Name" inner alone — all map to the same sanitized value.
+    const parenMatch = real.match(/^([^(]+?)\s*\(([^)]+)\)\s*$/);
+    if (parenMatch) {
+      const outer = parenMatch[1].trim();
+      const inner = parenMatch[2].trim();
+      if (inner && !map.has(inner)) {
+        map.set(inner, sanitized);
+      }
+      if (outer && !map.has(outer)) {
+        map.set(outer, sanitized);
+      }
+    }
   }
   return map;
 }
@@ -137,7 +154,10 @@ function substitute(text: string, map: Map<string, string>): string {
   const keys = Array.from(map.keys()).sort((a, b) => b.length - a.length);
   let result = text;
   for (const k of keys) {
-    result = result.replace(new RegExp(escapeRegex(k), "gi"), map.get(k)!);
+    // Word-boundary match — prevents "501" from sub-replacing inside "5012"
+    // or "Pou" from sub-replacing inside "Pour". The escape applies only to
+    // the key itself; the \b anchors are appended outside the escape.
+    result = result.replace(new RegExp(`\\b${escapeRegex(k)}\\b`, "gi"), map.get(k)!);
   }
   return result;
 }
@@ -159,7 +179,8 @@ function substituteRecursive<T>(value: T, map: Map<string, string>): T {
 }
 
 // 3. Grep gate — scan for any real-name keys remaining post-substitution.
-//    Case-INSENSITIVE per nwrp33 C4 #3.
+//    Case-INSENSITIVE per nwrp33 C4 #3, word-boundary per nwrp34 follow-up
+//    (prevents "501" from false-positive on "5012" cents amounts).
 function grepGate(
   value: unknown,
   map: Map<string, string>,
@@ -167,9 +188,9 @@ function grepGate(
 ): Array<{ path: string[]; real: string; value: string }> {
   const violations: Array<{ path: string[]; real: string; value: string }> = [];
   if (typeof value === "string") {
-    const lower = value.toLowerCase();
     for (const real of map.keys()) {
-      if (lower.includes(real.toLowerCase())) {
+      const re = new RegExp(`\\b${escapeRegex(real)}\\b`, "i");
+      if (re.test(value)) {
         violations.push({ path: pathSegs, real, value });
       }
     }
@@ -229,6 +250,11 @@ function piiCheck(
 //       (the same 32-entry pattern shared with the CI / pre-commit / extractor
 //       grep gates) → collision detected.
 //     Walker calls this per noun-phrase candidate extracted from each string.
+//
+// Per nwrp34 follow-up: short denylist tokens (3-4 letters like "Pou", "Fish",
+// "Clark") use WORD-BOUNDARY matching to avoid false positives like
+// "Foundation Pour" matching "Pou". Longer tokens (>=5 letters) use substring
+// matching to catch OCR / partial-substitute drift.
 function substringCollisionDetected(
   token: string,
   map: Map<string, string>,
@@ -240,7 +266,17 @@ function substringCollisionDetected(
   // Real identifier survived in this token (case mismatch / OCR variant /
   // hybrid post-substitute) → collision.
   for (const id of denylist) {
-    if (lowerToken.includes(id.toLowerCase())) return true;
+    const lowerId = id.toLowerCase();
+    if (lowerId.length <= 4) {
+      // Word-boundary match for short tokens — prevents "pour"/"clarkson"/
+      // "fishing" false positives on "Pou"/"Clark"/"Fish".
+      const re = new RegExp(`\\b${escapeRegex(lowerId)}\\b`, "i");
+      if (re.test(lowerToken)) return true;
+    } else {
+      // Substring match for longer tokens — catches partial-substitute drift
+      // like "Drummondville" or "501 74th Street West".
+      if (lowerToken.includes(lowerId)) return true;
+    }
   }
   return false;
 }
@@ -1452,7 +1488,7 @@ async function main() {
       { id: "s-caldwell-003", job_id: "j-caldwell-1", name: "Pre-Construction Meeting", start_date: "2025-03-01", end_date: "2025-03-01", predecessor_ids: ["s-caldwell-002"], percent_complete: 1, status: "complete", is_milestone: true },
       // Site work + foundation
       { id: "s-caldwell-004", job_id: "j-caldwell-1", name: "Site Clearing + Grading", start_date: "2025-03-15", end_date: "2025-04-05", predecessor_ids: ["s-caldwell-003"], percent_complete: 1, status: "complete", is_milestone: false, assigned_vendor_id: "v-caldwell-bay-region-concrete" },
-      { id: "s-caldwell-005", job_id: "j-caldwell-1", name: "Foundation Pour", start_date: "2025-04-08", end_date: "2025-05-01", predecessor_ids: ["s-caldwell-004"], percent_complete: 1, status: "complete", is_milestone: false, assigned_vendor_id: "v-caldwell-bay-region-concrete" },
+      { id: "s-caldwell-005", job_id: "j-caldwell-1", name: "Foundation Casting", start_date: "2025-04-08", end_date: "2025-05-01", predecessor_ids: ["s-caldwell-004"], percent_complete: 1, status: "complete", is_milestone: false, assigned_vendor_id: "v-caldwell-bay-region-concrete" },
       { id: "s-caldwell-006", job_id: "j-caldwell-1", name: "Foundation Inspection", start_date: "2025-05-02", end_date: "2025-05-02", predecessor_ids: ["s-caldwell-005"], percent_complete: 1, status: "complete", is_milestone: true },
       // Framing
       { id: "s-caldwell-007", job_id: "j-caldwell-1", name: "First Floor Framing", start_date: "2025-05-05", end_date: "2025-06-10", predecessor_ids: ["s-caldwell-006"], percent_complete: 1, status: "complete", is_milestone: false, assigned_vendor_id: "v-caldwell-bay-region-carpentry" },
@@ -1722,16 +1758,19 @@ async function main() {
   }
 
   // ── Write all 12 fixture files. ──────────────────────────────────────
-  writeFixtureFile("jobs.ts", "CaldwellJob", "CALDWELL_JOBS", jobs, "Pay Application #5 + SUBSTITUTION-MAP");
-  writeFixtureFile("vendors.ts", "CaldwellVendor", "CALDWELL_VENDORS", vendors, "SUBSTITUTION-MAP vendor table + invoice JSON");
-  writeFixtureFile("cost-codes.ts", "CaldwellCostCode", "CALDWELL_COST_CODES", costCodes, "Drummond - Line Items Cost Coded.pdf + standard 5-digit AIA codes");
-  writeFixtureFile("invoices.ts", "CaldwellInvoice", "CALDWELL_INVOICES", invoices, "drummond-invoice-fields.json + November 2025 invoice batch");
-  writeFixtureFile("draws.ts", "CaldwellDraw", "CALDWELL_DRAWS", draws, "Pay Apps 1-5 (xlsx + Pay App 5 PDF)");
-  writeFixtureFile("draw-line-items.ts", "CaldwellDrawLineItem", "CALDWELL_DRAW_LINE_ITEMS", drawLineItems, "Pay App 5 G703 + earlier pay apps");
-  writeFixtureFile("change-orders.ts", "CaldwellChangeOrder", "CALDWELL_CHANGE_ORDERS", changeOrders, "Pay App 5 cover sheet PCCO log");
-  writeFixtureFile("budget.ts", "CaldwellBudgetLine", "CALDWELL_BUDGET_LINES", budget, "Drummond_Budget_2026-04-15.xlsx + cost code derived");
-  writeFixtureFile("lien-releases.ts", "CaldwellLienRelease", "CALDWELL_LIEN_RELEASES", lienReleases, "Drummond-Nov 2025 Lien Releases.pdf");
-  writeFixtureFile("schedule.ts", "CaldwellScheduleItem", "CALDWELL_SCHEDULE_ITEMS", schedule, "Schedule_List_Drummond-501 74th St.xlsx");
+  // Per CONTEXT D-26 / D-27 — source filenames are sanitized before being
+  // embedded in committed JSDoc headers. Real filename mappings live in
+  // SUBSTITUTION-MAP.md "Document filenames" section.
+  writeFixtureFile("jobs.ts", "CaldwellJob", "CALDWELL_JOBS", jobs, "pay-app-5-caldwell.pdf + SUBSTITUTION-MAP");
+  writeFixtureFile("vendors.ts", "CaldwellVendor", "CALDWELL_VENDORS", vendors, "SUBSTITUTION-MAP vendor table + invoices-batch-caldwell-2025-11.pdf");
+  writeFixtureFile("cost-codes.ts", "CaldwellCostCode", "CALDWELL_COST_CODES", costCodes, "Reference cost-codes PDF + standard 5-digit AIA codes");
+  writeFixtureFile("invoices.ts", "CaldwellInvoice", "CALDWELL_INVOICES", invoices, "drummond-invoice-fields.json (gitignored, sanitized) + invoices-batch-caldwell-2025-11.pdf");
+  writeFixtureFile("draws.ts", "CaldwellDraw", "CALDWELL_DRAWS", draws, "pay-app-1-caldwell-2025-jul.xlsx through pay-app-5-caldwell.pdf");
+  writeFixtureFile("draw-line-items.ts", "CaldwellDrawLineItem", "CALDWELL_DRAW_LINE_ITEMS", drawLineItems, "Pay App 5 G703 + earlier pay app G703 rows");
+  writeFixtureFile("change-orders.ts", "CaldwellChangeOrder", "CALDWELL_CHANGE_ORDERS", changeOrders, "pay-app-5-caldwell.pdf cover sheet PCCO log");
+  writeFixtureFile("budget.ts", "CaldwellBudgetLine", "CALDWELL_BUDGET_LINES", budget, "budget-caldwell-2026-04-15.xlsx + cost code derived");
+  writeFixtureFile("lien-releases.ts", "CaldwellLienRelease", "CALDWELL_LIEN_RELEASES", lienReleases, "lien-releases-caldwell-2025-11.pdf");
+  writeFixtureFile("schedule.ts", "CaldwellScheduleItem", "CALDWELL_SCHEDULE_ITEMS", schedule, "schedule-caldwell-712-pine-ave.xlsx");
   writeFixtureFile("payments.ts", "CaldwellPayment", "CALDWELL_PAYMENTS", payments, "Derived from CALDWELL_INVOICES (status='paid') via Ross Built payment-schedule rule");
   writeFixtureFile("reconciliation.ts", "CaldwellReconciliationPair", "CALDWELL_RECONCILIATION_PAIRS", reconciliation, "Derived from invoice/PO/budget drift across 4 candidates × 2 drift types");
 
