@@ -1,3 +1,17 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-05-04T17:52:45.191Z"
+progress:
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 6
+  completed_plans: 0
+  percent: 0
+---
+
 # Nightwork — State
 
 **Updated:** 2026-04-29.
