@@ -1,6 +1,6 @@
 // src/app/design-system/prototypes/vendors/page.tsx
 //
-// Vendors list — Drummond all 18 vendors in PATTERNS.md §7 List + Detail
+// Vendors list — all 18 Caldwell vendors in PATTERNS.md §7 List + Detail
 // layout. Per Stage 1.5b deliverable #6.
 //
 // Stress test: long names (Bay Region Carpentry Inc, Coastal Smart Systems

@@ -10,9 +10,9 @@
 // Per CONTEXT D-11: schedule_items shape is 1.5b proposed (NOT canonical
 // — F1 may revise based on real complexity discovered here).
 //
-// Per CONTEXT D-12: uses real Drummond Schedule_*.xlsx data extracted in
-// Wave 0 (CALDWELL_SCHEDULE_ITEMS, sanitized via SUBSTITUTION-MAP).
-// Not reconstructed dates.
+// Per CONTEXT D-12: uses real-shape Caldwell schedule data (extracted
+// from raw Schedule_*.xlsx fixtures in Wave 0 and sanitized via
+// SUBSTITUTION-MAP into CALDWELL_SCHEDULE_ITEMS). Not reconstructed dates.
 //
 // Per CONTEXT D-22 / iter-1 planner C2 + design-pushback C7 hardenings:
 //   - 5 useMemos declared unconditionally before the early-return at the
