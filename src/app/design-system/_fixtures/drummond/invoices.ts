@@ -329,5 +329,80 @@ export const CALDWELL_INVOICES: CaldwellInvoice[] = [
       "temp_construction_service"
     ],
     "original_file_url": null
+  },
+  {
+    "id": "inv-caldwell-007",
+    "vendor_id": "v-caldwell-bay-region-carpentry",
+    "job_id": "j-caldwell-1",
+    "cost_code_id": "cc-06101",
+    "po_id": null,
+    "co_id": null,
+    "invoice_number": "TM-2025-1114",
+    "invoice_date": "2025-11-14",
+    "description": "[SYNTHESIZED per nwrp38] Time and materials — framing labor + skid steer equipment for great room beam install, primary suite ceiling, and stair rough framing. Daily breakdown 5 days (Mon 2025-11-10 → Fri 2025-11-14). Crew: 1 lead carpenter @ $68/hr + 2-3 laborers @ $42/hr ea + skid steer operator + equipment @ $125/hr (variable hours per day).",
+    "invoice_type": "time_and_materials",
+    "total_amount": 837700,
+    "confidence_score": 0.84,
+    "confidence_details": {
+      "vendor_name": 0.94,
+      "invoice_number": 0.88,
+      "total_amount": 0.99,
+      "job_reference": 0.88,
+      "cost_code_suggestion": 0.86
+    },
+    "status": "pm_review",
+    "received_date": "2025-11-17",
+    "payment_date": null,
+    "draw_id": null,
+    "line_items": [
+      {
+        "description": "Mon 2025-11-10 — Layout + crane prep, headers for great room beam pocket. Crew: 1 lead carp (8h × $68 = $544) + 2 laborers (8h ea × $42 = $672) + skid steer + operator (6h × $125 = $750).",
+        "date": "2025-11-10",
+        "qty": 1,
+        "unit": "day",
+        "rate": 1966,
+        "amount": 196600
+      },
+      {
+        "description": "Tue 2025-11-11 — Set great room 32ft LVL beam, frame opening for 12ft bifold doors. Crew: 1 lead carp (8h × $68 = $544) + 2 laborers (8h ea × $42 = $672) + skid steer + operator (4h × $125 = $500).",
+        "date": "2025-11-11",
+        "qty": 1,
+        "unit": "day",
+        "rate": 1716,
+        "amount": 171600
+      },
+      {
+        "description": "Wed 2025-11-12 — Lift LVL beam to second floor, frame stair stringers. Crew: 1 lead carp (8h × $68 = $544) + 3 laborers (8h ea × $42 = $1,008). No equipment day.",
+        "date": "2025-11-12",
+        "qty": 1,
+        "unit": "day",
+        "rate": 1552,
+        "amount": 155200
+      },
+      {
+        "description": "Thu 2025-11-13 — Frame primary suite ceiling, install collar ties + ridge beam blocking. Crew: 1 lead carp (8h × $68 = $544) + 3 laborers (8h ea × $42 = $1,008) + skid steer + operator (3h × $125 = $375).",
+        "date": "2025-11-13",
+        "qty": 1,
+        "unit": "day",
+        "rate": 1927,
+        "amount": 192700
+      },
+      {
+        "description": "Fri 2025-11-14 — Punch list framing — closet shelves, soffit blocking, weather wrap repair. Crew: 1 lead carp (8h × $68 = $544) + 2 laborers (8h ea × $42 = $672). No equipment day.",
+        "date": "2025-11-14",
+        "qty": 1,
+        "unit": "day",
+        "rate": 1216,
+        "amount": 121600
+      }
+    ],
+    "flags": [
+      "synthesized",
+      "time_and_materials_format",
+      "daily_labor_entries",
+      "crew_mix_lead_lab_skid",
+      "fictional_per_nwrp38_option_b"
+    ],
+    "original_file_url": null
   }
 ];

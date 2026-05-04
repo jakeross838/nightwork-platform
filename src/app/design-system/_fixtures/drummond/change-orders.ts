@@ -49,5 +49,33 @@ export const CALDWELL_CHANGE_ORDERS: CaldwellChangeOrder[] = [
     "status": "approved",
     "approved_date": "2025-12-15",
     "draw_number": 5
+  },
+  {
+    "id": "co-caldwell-04",
+    "job_id": "j-caldwell-1",
+    "pcco_number": 4,
+    "description": "[SYNTHESIZED per nwrp38] Framing scope reduction — DEDUCTIVE. Owner-directed deletion of bonus room over garage (truss layout redesigned 2025-11-01; existing roof line carried as gable instead of bonus-room dormer). Net deduct: framing labor + materials for 320 sf bonus room scope. Vendor: Bay Region Carpentry Inc.",
+    "amount": -850000,
+    "gc_fee_amount": -170000,
+    "gc_fee_rate": 0.2,
+    "total_with_fee": -1020000,
+    "estimated_days_added": -3,
+    "status": "approved",
+    "approved_date": "2025-11-08",
+    "draw_number": 5
+  },
+  {
+    "id": "co-caldwell-05",
+    "job_id": "j-caldwell-1",
+    "pcco_number": 5,
+    "description": "[SYNTHESIZED per nwrp38] Drywall allowance reconciliation — ALLOWANCE_RECON. Original budget allowance $48,000; actual scope (Level 5 finish in primary suite + great room ceiling, Level 4 elsewhere) finalized at $52,400 after owner walkthrough. Net add to reflect true scope. Vendor: Sandhill Drywall Inc.",
+    "amount": 440000,
+    "gc_fee_amount": 79200,
+    "gc_fee_rate": 0.18,
+    "total_with_fee": 519200,
+    "estimated_days_added": 0,
+    "status": "approved",
+    "approved_date": "2025-12-10",
+    "draw_number": 5
   }
 ];
