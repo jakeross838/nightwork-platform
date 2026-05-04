@@ -12,7 +12,7 @@ threat_model_severity: low
 requirements: []
 must_haves:
   truths:
-    - "User can view Drummond budget at /design-system/prototypes/jobs/j-drummond/budget with KPI strip + 25+ line items"
+    - "User can view Drummond budget at /design-system/prototypes/jobs/j-caldwell-1/budget with KPI strip + 25+ line items"
     - "Computed fields (previous_applications, this_period, total_to_date, percent_complete, balance_to_finish) derived on render from DRUMMOND_INVOICES (per R.2 recalculate-don't-increment)"
     - "TanStack Table v8 renders 25+ budget line items in compact density without horizontal scroll on nw-tablet (≥768px)"
     - "User can view documents at /design-system/prototypes/documents/{id} for plans, contracts, and lien releases"
@@ -224,7 +224,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
 
   // Identify "current draw" = the draw being prepared (or the latest paid).
   // For Drummond fixture, Pay App 5 is canonical (per EXPANDED-SCOPE deliverable #3).
-  const currentDraw = DRUMMOND_DRAWS.find((d) => d.id === "d-drummond-05") ?? DRUMMOND_DRAWS[DRUMMOND_DRAWS.length - 1];
+  const currentDraw = DRUMMOND_DRAWS.find((d) => d.id === "d-caldwell-05") ?? DRUMMOND_DRAWS[DRUMMOND_DRAWS.length - 1];
 
   // Per R.2 — compute on render from source-of-truth invoice fixture rows.
   const rows: BudgetRow[] = useMemo(() => {
@@ -470,7 +470,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
     Hex + T10c checks return 0 matches.
 
     Manual visual checks (Chrome MCP):
-    - Visit `/design-system/prototypes/jobs/j-drummond/budget`. Page renders.
+    - Visit `/design-system/prototypes/jobs/j-caldwell-1/budget`. Page renders.
     - KPI strip shows 4 numbers (original, revised, invoiced, remaining).
     - DataGrid shows 25+ rows.
     - Click column header — sorting toggles (asc/desc indicators appear).
@@ -508,7 +508,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
 **Create `src/app/design-system/prototypes/documents/[id]/page.tsx`:**
 
 Discriminate document type by id prefix:
-- `lr-drummond-*` → lien release (resolve from `DRUMMOND_LIEN_RELEASES`)
+- `lr-caldwell-*` → lien release (resolve from `DRUMMOND_LIEN_RELEASES`)
 - `plan-drummond-*` → architectural plans (synthesize stub from job; sanitized plan PDF preview)
 - `contract-drummond-*` → construction contract (synthesize stub; sanitized contract DOCX preview)
 
@@ -523,7 +523,7 @@ Each renders the Document Review pattern (file preview LEFT + structured fields 
 //   - Lien releases (Florida 4-statute types — 713.20(2)(a)/(b)/(c)/(d))
 //
 // Document type discriminated via id prefix:
-//   lr-drummond-*       → DrummondLienRelease lookup
+//   lr-caldwell-*       → DrummondLienRelease lookup
 //   plan-drummond-*     → synthesized plan stub
 //   contract-drummond-* → synthesized contract stub
 //
@@ -794,7 +794,7 @@ function ContractDocument({ id }: { id: string }) {
 }
 
 export default function DocumentPrototypePage({ params }: { params: { id: string } }) {
-  if (params.id.startsWith("lr-drummond-")) return <LienReleaseDocument id={params.id} />;
+  if (params.id.startsWith("lr-caldwell-")) return <LienReleaseDocument id={params.id} />;
   if (params.id.startsWith("plan-drummond-")) return <PlanDocument id={params.id} />;
   if (params.id.startsWith("contract-drummond-")) return <ContractDocument id={params.id} />;
   // Default: try lien releases (most likely match if no prefix specified)
@@ -818,8 +818,8 @@ export default function DocumentPrototypePage({ params }: { params: { id: string
     Hex + T10c checks return 0 matches.
 
     Manual visual checks (Chrome MCP):
-    - Visit `/design-system/prototypes/documents/lr-drummond-001` (or actual lien release id from fixture). Lien release renders with statute label + status badge.
-    - Visit a `lr-drummond-*` for each of the 4 statute types — verify all 4 statute labels render distinctly (713.20(2)(a) through 713.20(2)(d)).
+    - Visit `/design-system/prototypes/documents/lr-caldwell-001` (or actual lien release id from fixture). Lien release renders with statute label + status badge.
+    - Visit a `lr-caldwell-*` for each of the 4 statute types — verify all 4 statute labels render distinctly (713.20(2)(a) through 713.20(2)(d)).
     - Visit `/design-system/prototypes/documents/plan-drummond-001`. Plan stub renders with sheet metadata Card.
     - Visit `/design-system/prototypes/documents/contract-drummond-001`. Contract stub renders with contract details (job amounts, GC fee, deposit).
     - Bottom timeline on lien release shows the explicit "F1 fixes the schema" disclaimer in JetBrains Mono.

@@ -49,6 +49,48 @@ if [ -n "$STAGED" ]; then
   fi
 fi
 
+# Drummond grep gate (per nwrp31 #2 — pre-commit defense for sanitized fixtures).
+# Mirrors .github/workflows/drummond-grep-check.yml. Blocks commits whose
+# staged content under src/app/design-system/_fixtures/drummond/ contains
+# high-risk Drummond identifiers — owner surname + site address + 17
+# vendors + Tier 2 customers + canonical PM names.
+#
+# Scoped to fixture path only — docs commits (.planning/, *.md) accept
+# real-name presence per CONTEXT D-21. CI workflow runs the same grep
+# post-merge as defense-in-depth; this hook catches drift pre-commit.
+#
+# Note: this hook only fires on Claude-initiated `git commit` via the
+# Bash tool. Manual `git commit` from terminal is NOT covered. For full
+# coverage add .git/hooks/pre-commit or .husky/pre-commit (future).
+DRUMMOND_PATTERN='Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine Carpentry|Doug Naeher Drywall|Paradise Foam|Banko Overhead Doors|WG Drywall|Loftin Plumbing|Island Lumber|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|ML Concrete LLC|Dewberry|Pou|Krauss|Duncan|Molinari|Markgraf|Harllee|Fish|Clark|Lee Worthy|Nelson Belanger|Bob Mozine|Jason Szykulski|Martin Mannix'
+
+DRUMMOND_HITS=$(git grep --cached -nE "$DRUMMOND_PATTERN" -- 'src/app/design-system/_fixtures/drummond/' 2>/dev/null || true)
+
+if [ -n "$DRUMMOND_HITS" ]; then
+  REASON="[nightwork-pre-commit] Real Drummond identifier detected in staged sanitized fixtures.
+
+Hits:
+$DRUMMOND_HITS
+
+Sanitized fixtures (src/app/design-system/_fixtures/drummond/) must use
+SUBSTITUTION-MAP.md substitutions (Caldwell, 712 Pine Ave, caldwell-* IDs).
+
+Options:
+  • Re-run scripts/sanitize-drummond.ts to regenerate from gitignored sources
+  • Hand-fix the offending file (then re-stage)
+  • Pass --no-verify ONLY if you have verified this is a false positive
+
+Mirrors .github/workflows/drummond-grep-check.yml — the CI gate would
+also block this commit if it landed on main."
+  NW_REASON="$REASON" node -e "
+  process.stdout.write(JSON.stringify({
+    decision: 'block',
+    reason: process.env.NW_REASON || ''
+  }));
+  " 2>/dev/null
+  exit 2
+fi
+
 # Find latest QA report
 LATEST_QA=$(ls -t .planning/qa-runs/*-qa-report.md 2>/dev/null | head -1 || true)
 

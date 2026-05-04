@@ -153,32 +153,18 @@ Output:
 @.claude/hooks/nightwork-post-edit.sh
 
 <interfaces>
-<!-- Locked substitutions from SUBSTITUTION-MAP.md (gitignored). The
-     extractor reads this map; the CI workflow has a hardcoded subset for
-     defense-in-depth. -->
+<!-- REDACTED 2026-05-04 per nwrp31. Substitutions are read at runtime by
+     scripts/sanitize-drummond.ts from .planning/fixtures/drummond/SUBSTITUTION-MAP.md
+     (gitignored). The extractor reads the map; the CI workflow has a hardcoded
+     subset for defense-in-depth. Future planning artifacts MUST NOT inline
+     substitution pairs (per CONTEXT D-26). See threat T-1.5b-W0-07 below for
+     residual exposure documented at commit 37c5a92.
 
-Owner surname:        Drummond  → Caldwell
-Site address:         501 74th Street, Holmes Beach FL 34217  → 712 Pine Ave, Anna Maria FL 34216
-Job code:             GC0525  → GC0501
-Vendor mappings (17 entries — 14 substituted + 3 NO-SUB):
-  SmartShield Homes              → Coastal Smart Systems LLC
-  Florida Sunshine Carpentry     → Bay Region Carpentry Inc
-  Doug Naeher Drywall            → Sandhill Drywall Inc
-  Paradise Foam                  → Coastline Foam LLC
-  Banko (Banko Overhead Doors)   → Bayside Doors Inc
-  WG Drywall                     → Coastal Finishes LLC
-  Loftin Plumbing                → Anchor Bay Plumbing Inc
-  Island Lumber                  → Sun Coast Lumber Co
-  Ferguson                       → NO-SUB (national chain)
-  CoatRite                       → Tide Mark Coatings LLC
-  Ecosouth                       → Manatee Eco Co
-  MJ Florida                     → MJ Bay Co
-  Rangel Tile                    → Sand Dollar Tile Co
-  TNT Painting                   → Bayside Painting LLC
-  FPL                            → NO-SUB (public utility)
-  Home Depot                     → NO-SUB (national chain)
-  Avery Roofing                  → (NEW SUB — read SUBSTITUTION-MAP.md for locked value)
-  ML Concrete LLC                → Bay Region Concrete Co
+     Sanitized identity convention (per nwrp31 #7): committed fixture IDs use
+     `caldwell-*` prefix (e.g., j-caldwell-1, v-caldwell-coastal-smart-systems).
+     The directory `_fixtures/drummond/` is documentation labeling (the
+     "Drummond reference job" per CLAUDE.md / MASTER-PLAN.md) — accepted leak
+     per D-21. -->
 
 <!-- Existing fixture type shapes (analogs in src/app/design-system/_fixtures/).
      Drummond types EXTEND these patterns — same fields, "Drummond*" prefix,
@@ -673,6 +659,7 @@ Build the extraction + substitution + grep-gate + write pipeline. Per CONTEXT D-
  */
 
 import ExcelJS from "exceljs";
+import { execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -681,6 +668,31 @@ const RAW_DIR = path.join(ROOT, ".planning/fixtures/drummond/source3-downloads")
 const SUB_MAP_PATH = path.join(ROOT, ".planning/fixtures/drummond/SUBSTITUTION-MAP.md");
 const INVOICE_JSON_PATH = path.join(ROOT, "scripts/drummond-invoice-fields.json");
 const OUT_DIR = path.join(ROOT, "src/app/design-system/_fixtures/drummond");
+
+// Per nwrp31 #5 — belt-and-braces against accidental cloud execution.
+// This script is local-only (reads gitignored raw fixtures + writes
+// sanitized output). Running it in CI/Vercel build would log filenames
+// containing real Drummond identifiers to build history.
+if (process.env.CI === "true" || process.env.VERCEL === "1") {
+  throw new Error(
+    "[sanitize-drummond] FAIL: this script is local-only. CI/Vercel execution would leak real names via build logs. Run locally only.",
+  );
+}
+
+// Per nwrp31 #4 — hard-fail if drummond-invoice-fields.json exists but
+// is NOT gitignored. This file contains pre-substitution real names; if
+// not gitignored, the next git add could commit it.
+if (fs.existsSync(INVOICE_JSON_PATH)) {
+  try {
+    execSync(`git check-ignore -v "${INVOICE_JSON_PATH}"`, { stdio: "ignore" });
+  } catch {
+    throw new Error(
+      `[sanitize-drummond] FAIL: ${INVOICE_JSON_PATH} exists but is NOT gitignored. ` +
+        `Add the path to .gitignore before running. This file contains pre-substitution ` +
+        `real Drummond names — if committed, real names leak.`,
+    );
+  }
+}
 
 // 1. Parse SUBSTITUTION-MAP.md → Map<real, sanitized>.
 //    Reads the markdown tables; each row "| Real | Sanitized | Notes |" with
@@ -959,23 +971,23 @@ Execute `npx tsx scripts/sanitize-drummond.ts` and verify it:
 
 **Per CONTEXT D-22:** any vendor list update here MUST also be reflected in the CI workflow hardcoded list (Task 3, `.github/workflows/drummond-grep-check.yml`).
 
-**ID prefixes** (avoid collision with playground fictional fixtures `j-pelican-bay`, `v-coastal-carpentry`, etc.):
-- Jobs: `j-drummond-` (or `j-caldwell-` since the substituted name is Caldwell)
-- Vendors: `v-drummond-<slug>` (e.g., `v-drummond-coastal-smart-systems`, `v-drummond-bay-region-carpentry`)
+**ID prefixes** (per nwrp31 #7 — `caldwell-*` everywhere; avoid collision with playground fictional fixtures `j-pelican-bay`, `v-coastal-carpentry`, etc.):
+- Jobs: `j-caldwell-1` (single Caldwell residence)
+- Vendors: `v-caldwell-<slug>` (e.g., `v-caldwell-coastal-smart-systems`, `v-caldwell-bay-region-carpentry`)
 - Cost codes: `cc-` (5-digit codes already unique)
-- Invoices: `inv-drummond-001` through `inv-drummond-NNN`
-- Draws: `d-drummond-01` through `d-drummond-05`
-- Change orders: `co-drummond-01` through `co-drummond-06`
-- Budget lines: `bl-drummond-<cost-code>`
-- Lien releases: `lr-drummond-<seq>`
-- Schedule: `s-drummond-<seq>`
-- Payments: `p-drummond-<seq>`
-- Reconciliation: `rec-drummond-<drift-type>-<candidate>` (e.g., `rec-drummond-invoice_po-1`)
+- Invoices: `inv-caldwell-001` through `inv-caldwell-NNN`
+- Draws: `d-caldwell-01` through `d-caldwell-05`
+- Change orders: `co-caldwell-01` through `co-caldwell-06`
+- Budget lines: `bl-caldwell-<cost-code>`
+- Lien releases: `lr-caldwell-<seq>`
+- Schedule: `s-caldwell-<seq>`
+- Payments: `p-caldwell-<seq>`
+- Reconciliation: `rec-caldwell-<drift-type>-<candidate>` (e.g., `rec-caldwell-invoice_po-1`)
   </action>
 
   <verify>
-    <automated>npx tsc --noEmit && grep -rE 'Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine|Doug Naeher|Loftin Plumbing|ML Concrete|Banko|Paradise Foam|WG Drywall|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|Island Lumber' src/app/design-system/_fixtures/drummond/ | grep -v '^Binary' | wc -l</automated>
-    The grep MUST return 0. If it returns nonzero, halt — real names leaked through the substitution.
+    <automated>npx tsc --noEmit && grep -rE 'Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine|Doug Naeher|Loftin Plumbing|ML Concrete|Banko|Paradise Foam|WG Drywall|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|Island Lumber|Dewberry|Pou|Krauss|Duncan|Molinari|Markgraf|Harllee|Fish|Clark|Lee Worthy|Nelson Belanger|Bob Mozine|Jason Szykulski|Martin Mannix' src/app/design-system/_fixtures/drummond/ | grep -v '^Binary' | wc -l</automated>
+    The grep MUST return 0. If it returns nonzero, halt — real names leaked through the substitution. Pattern broadened per nwrp31 #3 to include Tier 2 Ross Built customers + canonical PM names + the original Drummond surname (catches any leak even after caldwell-* substitution).
 
     Manual checks:
     - `wc -l src/app/design-system/_fixtures/drummond/*.ts` shows reasonable line counts (vendors 50+ lines, invoices 200+, draw-line-items 300+).
@@ -1104,35 +1116,35 @@ const SECTIONS: Array<{
   goal: string;
 }> = [
   {
-    href: "/design-system/prototypes/invoices/inv-drummond-001",
+    href: "/design-system/prototypes/invoices/inv-caldwell-001",
     label: "Invoice approval",
     Icon: DocumentTextIcon,
     blurb: "AI-parsed invoice review — clean PDF, T&M, lump-sum format types across 4 workflow statuses.",
     goal: "Validate Document Review (PATTERNS §2) at real-data confidence + status diversity.",
   },
   {
-    href: "/design-system/prototypes/draws/d-drummond-05",
+    href: "/design-system/prototypes/draws/d-caldwell-05",
     label: "Draw approval",
     Icon: CheckBadgeIcon,
     blurb: "Pay App 5 — G702 summary + G703 line items with full Drummond CO chain rolled in.",
     goal: "Validate Document Review extending to draw approval at 25+ G703 line item density.",
   },
   {
-    href: "/design-system/prototypes/draws/d-drummond-05/print",
+    href: "/design-system/prototypes/draws/d-caldwell-05/print",
     label: "Print preview (G702/G703)",
     Icon: PrinterIcon,
     blurb: "AIA G702 cover sheet + G703 detail page — pixel-perfect attempt on cover, 80% on detail.",
     goal: "Validate PATTERNS §10 Print View at AIA fidelity. Halt if pixel-perfect explodes (1-day judgment).",
   },
   {
-    href: "/design-system/prototypes/jobs/j-drummond/budget",
+    href: "/design-system/prototypes/jobs/j-caldwell-1/budget",
     label: "Budget view",
     Icon: ChartBarIcon,
     blurb: "Drummond budget — 25+ line items with computed previous/this-period/percent-complete derived on render.",
     goal: "Validate Pattern3Dashboard + DataGrid stress test at compact density.",
   },
   {
-    href: "/design-system/prototypes/jobs/j-drummond/schedule",
+    href: "/design-system/prototypes/jobs/j-caldwell-1/schedule",
     label: "Schedule (Gantt)",
     Icon: CalendarDaysIcon,
     blurb: "6+ month Gantt with 20+ tasks, dependencies, milestones for pay app dates. Wave 2 preview.",
@@ -1146,7 +1158,7 @@ const SECTIONS: Array<{
     goal: "Validate Pattern6ListDetail at real vendor name length + entity-type mix.",
   },
   {
-    href: "/design-system/prototypes/documents/doc-drummond-001",
+    href: "/design-system/prototypes/documents/lr-caldwell-001",
     label: "Documents",
     Icon: FolderOpenIcon,
     blurb: "Plans, contracts, lien releases — sub-prototypes per document type.",
@@ -1281,9 +1293,11 @@ jobs:
 
       - name: Check sanitized fixtures for real Drummond identifiers
         run: |
-          # Hardcoded list of high-risk Drummond identifiers (per D-21 narrow scope).
-          # Owner + site address + 17 vendor real names from SUBSTITUTION-MAP.md.
-          PATTERN='Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine Carpentry|Doug Naeher Drywall|Paradise Foam|Banko Overhead Doors|WG Drywall|Loftin Plumbing|Island Lumber|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|ML Concrete LLC'
+          # Hardcoded list of high-risk Drummond identifiers (per D-21 narrow scope + nwrp31 #3 broadening).
+          # Original 17: owner + site address + 14 vendor real names from SUBSTITUTION-MAP.md.
+          # Tier 2 customers (per nwrp31): Dewberry, Pou, Krauss, Duncan, Molinari, Markgraf, Harllee, Fish, Clark.
+          # Canonical PM names (per CLAUDE.md): Lee Worthy, Nelson Belanger, Bob Mozine, Jason Szykulski, Martin Mannix.
+          PATTERN='Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine Carpentry|Doug Naeher Drywall|Paradise Foam|Banko Overhead Doors|WG Drywall|Loftin Plumbing|Island Lumber|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|ML Concrete LLC|Dewberry|Pou|Krauss|Duncan|Molinari|Markgraf|Harllee|Fish|Clark|Lee Worthy|Nelson Belanger|Bob Mozine|Jason Szykulski|Martin Mannix'
 
           if git grep -nE "$PATTERN" -- 'src/app/design-system/_fixtures/drummond/'; then
             echo ""
@@ -1341,9 +1355,9 @@ jobs:
 
 **R1 escalation status:** if Wave 0 has taken >4 days from kickoff, halt and escalate per CONTEXT D-23. Fallback options: Q4=B compressed fixture (1-2 pay apps, 8-10 vendors) OR scope-cut another Wave 1 deliverable.
 
-1. **Privacy verification (THE non-negotiable check).** Run from project root:
+1. **Privacy verification (THE non-negotiable check).** Run from project root (pattern broadened per nwrp31 #3):
    ```bash
-   grep -rnE 'Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine|Doug Naeher|Loftin Plumbing|ML Concrete|Banko|Paradise Foam|WG Drywall|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|Island Lumber' src/app/design-system/_fixtures/drummond/ | grep -v '^Binary'
+   grep -rnE 'Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine|Doug Naeher|Loftin Plumbing|ML Concrete|Banko|Paradise Foam|WG Drywall|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|Island Lumber|Dewberry|Pou|Krauss|Duncan|Molinari|Markgraf|Harllee|Fish|Clark|Lee Worthy|Nelson Belanger|Bob Mozine|Jason Szykulski|Martin Mannix' src/app/design-system/_fixtures/drummond/ | grep -v '^Binary'
    ```
    Expected output: NOTHING (empty result). If ANY match → HALT immediately, fix the substitution, re-run.
 
@@ -1419,6 +1433,11 @@ Or describe issues — common rework reasons:
 | T-1.5b-W0-04 | T (Tampering) | Sanitized fixtures could be hand-edited to bypass extractor | mitigate | Tier 2 CI grep gate runs on every push to main, catches drift. JSDoc header on each fixture file says "DO NOT HAND-EDIT. Re-run `npx tsx scripts/sanitize-drummond.ts` to regenerate." |
 | T-1.5b-W0-05 | I (Information disclosure) | Prototype reachable in production without platform_admin gating | mitigate (existing) | `src/middleware.ts:98` `pathname.startsWith("/design-system/")` covers `prototypes/*` via prefix match. Inherited gating; no new middleware code needed. Verified at execute time by visiting prototypes route as non-platform-admin → expected: `/_not-found` rewrite. |
 | T-1.5b-W0-06 | E (Elevation of privilege) | Prototype accidentally imports tenant module → bypasses RLS | mitigate (existing) | Hook T10c `nightwork-post-edit.sh:194-230` rejects `@/lib/(supabase|org|auth)` imports in `src/app/design-system/*`. Verified at execute time on each new file (no T10c violations).  |
+| T-1.5b-W0-07 | I (Information disclosure, RESIDUAL) | Substitution pairs visible in git history at commit 37c5a92 (`<interfaces>` block of PLAN-1 inlined the full real → sanitized map). | accept (residual) | Repo is private; exposure bounded to repo collaborators with git log access. Redaction commit on top (post-37c5a92) replaces the inline table with a reference to gitignored SUBSTITUTION-MAP.md (per nwrp31). Future planning artifacts MUST NOT inline substitution pairs (per CONTEXT D-26). Historical commit 37c5a92 retains the exposure; force-push avoided per nwrp31. |
+| T-1.5b-W0-08 | I (Information disclosure, RESIDUAL ACCEPTED) | Source maps + Next.js build artifacts disclose `_fixtures/drummond/` directory path in webpack chunk URLs visible to authenticated platform_admin sessions. | accept (residual) | Acceptable per D-21 (repo private; directory name is documentation labeling, not data). Inherits prototype's platform_admin gating (only staff see route + chunks). Low risk. |
+| T-1.5b-W0-09 | I (Information disclosure) | `scripts/sanitize-drummond.ts` accidentally executed in CI/Vercel build → real filenames + raw fixture paths leak to build logs. | mitigate (new per nwrp31 #5) | Script throws at startup if `process.env.CI === "true"` or `process.env.VERCEL === "1"`. Belt-and-braces; intent is local-only. |
+| T-1.5b-W0-10 | I (Information disclosure) | `scripts/drummond-invoice-fields.json` (hand-curated raw JSON) accidentally committed without gitignore coverage. | mitigate (new per nwrp31 #4) | `scripts/sanitize-drummond.ts` runs `git check-ignore -v` against the JSON path at startup; throws if file exists but is not gitignored. Hard-fail prevents script execution if gitignore is bypassed. |
+| T-1.5b-W0-11 | I (Information disclosure) | Hand-edited fixture file or accidental staging of debug dump committed via Claude Code's git commit, bypassing the CI grep gate (which fires after commit hits main). | mitigate (new per nwrp31 #2) | `.claude/hooks/nightwork-pre-commit.sh` extended with grep gate scoped to `src/app/design-system/_fixtures/drummond/` paths in staged set. Blocks commit before it lands in git history (CI gate is post-commit). Note: this hook only fires on Claude-initiated `git commit` via Bash tool — manual `git commit` from terminal is NOT covered. Future hardening: add `.git/hooks/pre-commit` or `.husky/pre-commit` for full coverage. |
 </threat_model>
 
 <verification>
@@ -1426,9 +1445,9 @@ Or describe issues — common rework reasons:
 
 1. **Privacy gate (HARD BLOCKING):**
    ```bash
-   grep -rnE 'Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine|Doug Naeher|Loftin Plumbing|ML Concrete|Banko|Paradise Foam|WG Drywall|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|Island Lumber' src/app/design-system/_fixtures/drummond/ | grep -v '^Binary' | wc -l
+   grep -rnE 'Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine|Doug Naeher|Loftin Plumbing|ML Concrete|Banko|Paradise Foam|WG Drywall|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|Island Lumber|Dewberry|Pou|Krauss|Duncan|Molinari|Markgraf|Harllee|Fish|Clark|Lee Worthy|Nelson Belanger|Bob Mozine|Jason Szykulski|Martin Mannix' src/app/design-system/_fixtures/drummond/ | grep -v '^Binary' | wc -l
    ```
-   MUST return `0`.
+   MUST return `0`. Pattern broadened per nwrp31 #3.
 
 2. **Build gate:** `npm run build` exits 0.
 

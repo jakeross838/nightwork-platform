@@ -12,7 +12,7 @@ threat_model_severity: low
 requirements: []
 must_haves:
   truths:
-    - "User can view AIA G702/G703 print preview at /design-system/prototypes/draws/d-drummond-05/print"
+    - "User can view AIA G702/G703 print preview at /design-system/prototypes/draws/d-caldwell-05/print"
     - "G702 cover sheet attempts pixel-perfect against Pay Application #5 - Drummond-501 74th St.pdf reference"
     - "G703 detail page renders at 80% fidelity (page breaks may differ; signature block stub; bank-acceptable layout)"
     - "G702 1-day judgment encoded as halt point: if pixel-perfect attempt exceeds 1 day, drop to 80% on both G702 and G703 and continue"
@@ -167,7 +167,7 @@ For reconciliation: DRUMMOND_RECONCILIATION_PAIRS
     - src/app/draws/[id]/page.tsx (lines 269-470 — production print toggle precedent: print:hidden chrome + hidden print:block content)
     - src/app/design-system/patterns/page.tsx (lines 1048-1143 Pattern9PrintView — G703 simulated table visual contract)
     - .planning/fixtures/drummond/source3-downloads/Pay Application #5 - Drummond-501 74th St.pdf (the pixel-perfect reference target — read this PDF using Claude Code Read tool to study the exact G702 layout: header block placement, signature blocks, change order summary table position, line numbering A-G)
-    - src/app/design-system/_fixtures/drummond/draws.ts (DRUMMOND_DRAWS — Pay App 5 = d-drummond-05)
+    - src/app/design-system/_fixtures/drummond/draws.ts (DRUMMOND_DRAWS — Pay App 5 = d-caldwell-05)
     - src/app/design-system/_fixtures/drummond/draw-line-items.ts (G703 line items)
     - src/app/design-system/_fixtures/drummond/cost-codes.ts (5-digit cost codes for G703 column A)
     - src/app/design-system/_fixtures/drummond/change-orders.ts (PCCO log for G702 change order summary table)
@@ -488,7 +488,7 @@ export default function DrawPrintPage({ params }: { params: { id: string } }) {
     T10c check: `grep -E '@/lib/(supabase|org|auth)' src/app/design-system/prototypes/draws/[id]/print/page.tsx` returns 0 matches.
 
     Manual visual checks (Chrome MCP):
-    - Visit `/design-system/prototypes/draws/d-drummond-05/print`. Print preview chrome (Back + Print button) renders.
+    - Visit `/design-system/prototypes/draws/d-caldwell-05/print`. Print preview chrome (Back + Print button) renders.
     - Click "Print" button — browser print dialog opens.
     - In print preview UI, verify: chrome hidden, content fits letter portrait with 0.75in margins, G702 occupies first page, G703 starts on second page (page-break-after: always works).
     - Compare side-by-side with `Pay Application #5 - Drummond-501 74th St.pdf`: G702 layout matches reference within tractable bounds (header block placement, signature block at bottom).
@@ -627,7 +627,7 @@ Add this section AFTER `</section>` of `g702-cover`, INSIDE the `<main>` tag:
     Expected: build exits 0; grep returns >=2.
 
     Manual visual checks (Chrome MCP):
-    - Visit `/design-system/prototypes/draws/d-drummond-05/print` → click Print button → in browser print preview:
+    - Visit `/design-system/prototypes/draws/d-caldwell-05/print` → click Print button → in browser print preview:
       - G703 starts on page 2 (page-break-after on g702-cover works)
       - 8 columns labeled A-H render
       - All N line items render (one row per draw_line_item)
@@ -703,7 +703,7 @@ import Card from "@/components/nw/Card";
 import Eyebrow from "@/components/nw/Eyebrow";
 import DataRow from "@/components/nw/DataRow";
 
-// Each pair has a candidate label embedded in id (e.g., rec-drummond-invoice_po-1
+// Each pair has a candidate label embedded in id (e.g., rec-caldwell-invoice_po-1
 // for candidate 1 of invoice_po drift type).
 function candidateOf(pair: DrummondReconciliationPair): number {
   const match = pair.id.match(/-([1-4])$/);
@@ -1004,7 +1004,7 @@ export default function ReconciliationStrawmanPage() {
 </verification>
 
 <success_criteria>
-- Print preview at `/design-system/prototypes/draws/d-drummond-05/print` renders G702 cover (pixel-perfect attempt or 80% per escape clause) + G703 detail (80%)
+- Print preview at `/design-system/prototypes/draws/d-caldwell-05/print` renders G702 cover (pixel-perfect attempt or 80% per escape clause) + G703 detail (80%)
 - Reconciliation strawman at `/design-system/prototypes/reconciliation/` renders 4 candidates × 2 drift types = 8 prototypes
 - Phase 1B 1-day judgment encoded as explicit task structure with escape clause
 - Leading-candidate observation captured in plan summary (does NOT lock per Q3=C)

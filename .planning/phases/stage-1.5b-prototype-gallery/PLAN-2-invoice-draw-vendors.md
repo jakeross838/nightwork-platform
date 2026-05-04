@@ -17,7 +17,7 @@ must_haves:
     - "User can view a Drummond invoice rendered with Document Review pattern at /design-system/prototypes/invoices/{id}"
     - "Invoice renders for all 4 fixture statuses (ai_processed, pm_review, qa_review, paid) with correct status badge + audit timeline"
     - "Invoice renders all 3 format types (clean PDF, T&M, lump_sum) with appropriate confidence routing colors"
-    - "User can view Drummond Pay App 5 rendered with Document Review pattern at /design-system/prototypes/draws/d-drummond-05"
+    - "User can view Drummond Pay App 5 rendered with Document Review pattern at /design-system/prototypes/draws/d-caldwell-05"
     - "Draw approval renders G702 summary panel + G703 line items table with all rows"
     - "User can browse 17 Drummond vendors in List+Detail at /design-system/prototypes/vendors"
     - "Long vendor names ('Bay Region Carpentry Inc', 'Coastal Smart Systems LLC') render without breaking layout on nw-phone breakpoint"
@@ -467,12 +467,12 @@ export default function InvoicePrototypePage({ params }: { params: { id: string 
     T10c check: `grep -E '@/lib/(supabase|org|auth)' src/app/design-system/prototypes/invoices/[id]/page.tsx` returns 0 matches.
 
     Manual visual checks (executor uses Chrome MCP per CLAUDE.md mandatory testing rule):
-    - Visit `http://localhost:3000/design-system/prototypes/invoices/inv-drummond-001` (or actual fixture id — first invoice in DRUMMOND_INVOICES). Renders without errors.
+    - Visit `http://localhost:3000/design-system/prototypes/invoices/inv-caldwell-001` (or actual fixture id — first invoice in DRUMMOND_INVOICES). Renders without errors.
     - Eyebrows are UPPERCASE with wide tracking (0.18em — Site Office).
     - Cards have 1px slate-tile left-stamp (NOT brass-bezel top — that's Direction A).
     - Money values render in JetBrains Mono, tabular-nums.
     - Status badge color matches confidence routing (paid=green, pm_review=yellow, qa_review=blue/info, ai_processed=yellow).
-    - Cycle through invoices for each status: visit `inv-drummond-001` through end of fixture; each renders without crashing on missing optional fields (cost_code, po_id, payment_date can be null).
+    - Cycle through invoices for each status: visit `inv-caldwell-001` through end of fixture; each renders without crashing on missing optional fields (cost_code, po_id, payment_date can be null).
   </verify>
 
   <done>
@@ -519,7 +519,7 @@ Header band: breadcrumb + draw number + period + status badge + Print button (li
 //
 // Draw approval prototype — Document Review pattern extends to draw
 // approval per CONTEXT D-008 + PATTERNS.md §2/§3. Pay App 5
-// (d-drummond-05) is the canonical render target per
+// (d-caldwell-05) is the canonical render target per
 // EXPANDED-SCOPE deliverable #3.
 //
 // Hero layout: G702 summary LEFT + G703 line items RIGHT.
@@ -772,12 +772,12 @@ export default function DrawPrototypePage({ params }: { params: { id: string } }
     Hex check + T10c check (same patterns as Task 1) return 0 matches.
 
     Manual visual checks (Chrome MCP):
-    - Visit `http://localhost:3000/design-system/prototypes/draws/d-drummond-05`. Page renders without crashing.
-    - G703 line items table shows ALL line items for Pay App 5 (count matches `DRUMMOND_DRAW_LINE_ITEMS.filter(l => l.draw_id === "d-drummond-05").length`).
+    - Visit `http://localhost:3000/design-system/prototypes/draws/d-caldwell-05`. Page renders without crashing.
+    - G703 line items table shows ALL line items for Pay App 5 (count matches `DRUMMOND_DRAW_LINE_ITEMS.filter(l => l.draw_id === "d-caldwell-05").length`).
     - On tablet width (768px+), all 8 G703 columns fit without horizontal scroll.
     - On phone width (360px), horizontal scroll appears (acceptable per PATTERNS.md §2 mobile behavior).
     - Status timeline at bottom shows ≥1 entry derived from draw status.
-    - Try `d-drummond-01` through `d-drummond-04` — all render without errors.
+    - Try `d-caldwell-01` through `d-caldwell-04` — all render without errors.
   </verify>
 
   <done>
@@ -808,7 +808,7 @@ export default function DrawPrototypePage({ params }: { params: { id: string } }
   <action>
 **Step A — Create `src/app/design-system/prototypes/vendors/page.tsx`:**
 
-List + Detail layout. 280px LEFT rail listing all 17 vendors; RIGHT pane defaults to first vendor's profile (or empty state with "Select a vendor" prompt). Per Pattern6ListDetail analog with selection driven by URL search params (`?selected=v-drummond-...`).
+List + Detail layout. 280px LEFT rail listing all 17 vendors; RIGHT pane defaults to first vendor's profile (or empty state with "Select a vendor" prompt). Per Pattern6ListDetail analog with selection driven by URL search params (`?selected=v-caldwell-...`).
 
 ```typescript
 // src/app/design-system/prototypes/vendors/page.tsx
@@ -1203,7 +1203,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 
 <success_criteria>
 - Invoice prototype renders all 4+ DRUMMOND_INVOICES at `/design-system/prototypes/invoices/{id}`
-- Draw prototype renders all 5 DRUMMOND_DRAWS at `/design-system/prototypes/draws/{id}`, with Pay App 5 (`d-drummond-05`) as the canonical demo
+- Draw prototype renders all 5 DRUMMOND_DRAWS at `/design-system/prototypes/draws/{id}`, with Pay App 5 (`d-caldwell-05`) as the canonical demo
 - Vendors list renders 17 entries at `/design-system/prototypes/vendors` with state-driven selection
 - Vendor detail renders any DRUMMOND_VENDORS entry at `/design-system/prototypes/vendors/{id}`
 - All routes pass build, T10c, and token discipline gates

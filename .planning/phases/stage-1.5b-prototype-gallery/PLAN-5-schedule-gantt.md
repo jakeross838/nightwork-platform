@@ -11,7 +11,7 @@ threat_model_severity: low
 requirements: []
 must_haves:
   truths:
-    - "User can view Drummond schedule (Gantt) at /design-system/prototypes/jobs/j-drummond/schedule"
+    - "User can view Drummond schedule (Gantt) at /design-system/prototypes/jobs/j-caldwell-1/schedule"
     - "Gantt renders timeline with >=20 tasks visible"
     - "Total date span >=6 months (max(end_date) - min(start_date) over all rendered items)"
     - "Dependencies (predecessor_ids) visible — connector lines OR start-after offsets clear in render"
@@ -524,7 +524,7 @@ export default function SchedulePrototypePage({ params }: { params: { id: string
     T10c check: `grep -E '@/lib/(supabase|org|auth)' src/app/design-system/prototypes/jobs/[id]/schedule/page.tsx` returns 0 matches.
 
     Manual visual checks (Chrome MCP):
-    - Visit `/design-system/prototypes/jobs/j-drummond/schedule`. Page renders.
+    - Visit `/design-system/prototypes/jobs/j-caldwell-1/schedule`. Page renders.
     - Header shows total task count (>=20), date range (>=6 months), task count.
     - Gantt grid: each row shows task name LEFT (column 1), status badge (column 2), timeline bar/diamond (column 3).
     - Bars vary in length proportional to (end_date - start_date).
