@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Throwaway HTML prototype gallery on sanitized Drummond data, rendered in locked Site Office direction + Set B palette. Validates whether the design system actually works for real construction workflows before F1-F4 foundations begin. 11 deliverables (10 prototype routes + 1 Drummond fixture sanitization). Per D-009 sequencing: 1.5a documents → 1.5b prototype gallery → 1.5c test infrastructure. Strategic Checkpoint #2 closed (Site Office + Set B locked per D-037).
+Throwaway HTML prototype gallery on sanitized Caldwell data, rendered in locked Site Office direction + Set B palette. Validates whether the design system actually works for real construction workflows before F1-F4 foundations begin. 11 deliverables (10 prototype routes + 1 Caldwell fixture sanitization). Per D-009 sequencing: 1.5a documents → 1.5b prototype gallery → 1.5c test infrastructure. Strategic Checkpoint #2 closed (Site Office + Set B locked per D-037).
 
 **Sources of truth (locked):**
 - EXPANDED-SCOPE.md (APPROVED 2026-05-01 with overrides Q2=C, Q7=tiered, R1 4-day halt rule)
@@ -23,20 +23,20 @@ Throwaway HTML prototype gallery on sanitized Drummond data, rendered in locked 
 
 ### Fixture Loader Pattern
 - **D-03:** `src/app/design-system/_fixtures/drummond/*.ts` mirrors existing `_fixtures/{jobs,vendors,invoices,draws,change-orders,cost-codes,users}.ts` shape — each file exports a typed const array. Barrel `index.ts` re-exports everything.
-- **D-04:** Use `DRUMMOND_*` named constants (vs `SAMPLE_*` for fictional fixtures) to keep playground's fictional fixtures separable from Drummond's sanitized fixtures during cross-imports.
-- **D-05:** Drummond-only types extend the existing pattern: `DrummondLienRelease` (4-statute enum + status without history JSONB per gap #7), `DrummondBudgetLine` (computed math vars per CLAUDE.md), `DrummondScheduleItem` (Wave 2 entity per Q2 override C — see D-11), `DrummondPayment` (inferred from invoice fields per CURRENT-STATE A.2).
+- **D-04:** Use `CALDWELL_*` named constants (vs `SAMPLE_*` for fictional fixtures) to keep playground's fictional fixtures separable from Caldwell's sanitized fixtures during cross-imports.
+- **D-05:** Drummond-only types extend the existing pattern: `CaldwellLienRelease` (4-statute enum + status without history JSONB per gap #7), `CaldwellBudgetLine` (computed math vars per CLAUDE.md), `CaldwellScheduleItem` (Wave 2 entity per Q2 override C — see D-11), `CaldwellPayment` (inferred from invoice fields per CURRENT-STATE A.2).
 - **D-06:** All sanitized data lives as static const arrays — no runtime extraction at prototype-render time. The extractor script writes once during execute-phase.
 
 ### Reconciliation Strawman Organization
 - **D-07:** Single page at `src/app/design-system/prototypes/reconciliation/page.tsx` rendering 4×2 matrix top-to-bottom (per drift-type sections: invoice↔PO, draw↔budget). Each section contains 4 candidate Cards stacked. Section anchors enable side-by-side scrolling comparison.
 - **D-08:** Extends existing `ReconciliationStrawman` function in `src/app/design-system/patterns/page.tsx:1149-1279` (which already implements the 4 candidate visual shapes: side-by-side delta, inline diff, timeline overlay, hybrid split+inline). Reuses 1.5a-locked PATTERNS.md §11 strawman — does NOT diverge, would force forbidden rewrite per A16.1.
-- **D-09:** Drummond drift fixtures live at `_fixtures/drummond/reconciliation.ts` as paired `imported` / `current` shapes derived from real Source 3 invoice-vs-PO and pay-app-vs-budget mismatches.
+- **D-09:** Caldwell drift fixtures live at `_fixtures/drummond/reconciliation.ts` as paired `imported` / `current` shapes derived from real Source 3 invoice-vs-PO and pay-app-vs-budget mismatches.
 
 ### Schedule (Gantt) Implementation
 - **D-10:** **Use TanStack Table v8** (already installed `@^8.21.3` per `package.json:27`) with custom timeline cell renderers — NOT from-scratch CSS grid. TanStack handles virtualization, sorting, column sizing; we write only the bar-rendering logic on top. Fallback if TanStack timeline support insufficient: lightweight Gantt library (frappe-gantt or similar small well-maintained dep). NOT custom CSS grid Gantt — known time sink.
 - **D-11:** **`schedule_items` proposed shape (1.5b — NOT canonical, F1 may revise):**
   ```typescript
-  type DrummondScheduleItem = {
+  type CaldwellScheduleItem = {
     id: string;
     job_id: string;
     name: string;
@@ -81,6 +81,7 @@ Throwaway HTML prototype gallery on sanitized Drummond data, rendered in locked 
 ### Privacy Posture (D-26 + D-27, locked 2026-05-04 per nwrp31)
 - **D-26 — substitution-map redaction:** Substitution pairs (real → fictional name mappings) MUST NOT be inlined in committed planning artifacts. PLAN-1's original `<interfaces>` block contained the full substitution table — redacted in the post-37c5a92 redaction commit. Future PLAN / CONTEXT / RESEARCH / PATTERNS / EXPANDED-SCOPE files reference the gitignored `.planning/fixtures/drummond/SUBSTITUTION-MAP.md` instead. Historical exposure at commit 37c5a92 is accepted (residual threat T-1.5b-W0-07; repo private; force-push avoided per nwrp31). Plan-level reviewers (architect, security-reviewer, compliance) MUST flag any new inlined substitution pair on future PRs.
 - **D-27 — caldwell-* prefix:** Sanitized fixture identifiers use `caldwell-*` prefix (e.g., `j-caldwell-1`, `v-caldwell-coastal-smart-systems`, `inv-caldwell-001`, `d-caldwell-05`). NOT `drummond-*`. The directory `_fixtures/drummond/` retains the "Drummond reference job" labeling (matches CLAUDE.md / MASTER-PLAN.md / VISION.md naming) — this is documentation labeling, not data, and is accepted leak per D-21.
+- **D-28 — Caldwell\* type/const naming locked per nwrp32.** Privacy hardening — type and constant names use the substituted surname, not the source surname. The only place 'Drummond' survives in source code is `scripts/sanitize-drummond.ts` which reads SUBSTITUTION-MAP.md to know about the source data by definition. All fixture types (`CaldwellJob`, `CaldwellVendor`, `CaldwellInvoice`, `CaldwellDraw`, etc. — 22 types total) and consts (`CALDWELL_JOBS`, `CALDWELL_VENDORS`, `CALDWELL_INVOICES`, etc. — 14 consts total) use the substituted name. The committed sanitized fixtures + prototype routes + plan-level docs all reference Caldwell exclusively. Body-text "Drummond" mentions remain only in: (a) historical-context commentary in PLAN-1 / CONTEXT / PATTERNS (sparse, acceptable per nwrp31 #7 + nwrp32 #7); (b) real raw filenames in `.planning/fixtures/drummond/source3-downloads/` (gitignored); (c) directory labeling `_fixtures/drummond/` (per D-27); (d) `DRUMMOND-FIXTURE-SUMMARY.md` real architecture filename in `.planning/architecture/`; (e) `SUBSTITUTION-MAP.md` (gitignored).
 - **Defense-in-depth grep gate (per nwrp31 #2 + #3):** Three tiers — (1) extractor-side in `scripts/sanitize-drummond.ts` (refuses to write if real names survive substitution), (2) Claude-pre-commit in `.claude/hooks/nightwork-pre-commit.sh` (blocks Claude-initiated commits with real names in `src/app/design-system/_fixtures/drummond/`), (3) CI-side in `.github/workflows/drummond-grep-check.yml` (blocks PRs/pushes to main). The CI pattern is broadened beyond the original 17-vendor list to include Tier 2 Ross Built customers (Dewberry, Pou, Krauss, Duncan, Molinari, Markgraf, Harllee, Fish, Clark) + canonical PM names (Lee Worthy, Nelson Belanger, Bob Mozine, Jason Szykulski, Martin Mannix). All three tiers share the same pattern.
 - **Sanitize-script CI guard (per nwrp31 #5):** `scripts/sanitize-drummond.ts` throws at startup if `process.env.CI === "true"` or `process.env.VERCEL === "1"` — local-only execution; prevents accidental cloud run from leaking real filenames to build logs.
 - **Sanitize-script gitignore hard-fail (per nwrp31 #4):** `scripts/sanitize-drummond.ts` runs `git check-ignore -v` against `scripts/drummond-invoice-fields.json` at startup; throws if file exists but is not gitignored. Belt-and-braces.
@@ -118,7 +119,7 @@ None — `gsd-sdk query todo.match-phase 1.5` returned 0 matches.
 - `.planning/architecture/TARGET.md` — F1-F4 target state.
 - `.planning/architecture/GAP.md` — F1-F4 sequencing.
 - `.planning/architecture/CP1-RESOLUTIONS.md` — D-029 (substitution-map workflow), D-036 (reconciliation strawman as 1.5b deliverable).
-- `.planning/architecture/DRUMMOND-FIXTURE-SUMMARY.md` — Drummond Source 1+2+3 inventory; uses sanitized counts only.
+- `.planning/architecture/DRUMMOND-FIXTURE-SUMMARY.md` — Caldwell Source 1+2+3 inventory; uses sanitized counts only.
 
 ### Operational rules
 - `CLAUDE.md` — Drummond reference job, Site Office direction lock, hook T10c, design tokens always, R.1-R.23 rules.
@@ -134,7 +135,7 @@ None — `gsd-sdk query todo.match-phase 1.5` returned 0 matches.
 - `.claude/hooks/nightwork-post-edit.sh:194-230` — T10c sample-data isolation in `src/app/design-system/*`.
 - `src/middleware.ts:98-117` — `/design-system/*` platform_admin gate (inherits to `prototypes/*` via `startsWith`).
 
-### Drummond fixtures (gitignored — local only)
+### Caldwell fixtures (gitignored — local only)
 - `.planning/fixtures/drummond/source3-downloads/` — 19 staged raw files (5 pay apps, budget XLSX, schedule XLSX, lien releases PDF, combined invoices PDF, contract DOCX, 6 split-invoices).
 - `.planning/fixtures/drummond/SUBSTITUTION-MAP.md` — locked 17 vendor + owner + address mappings (gitignored authoritative source).
 

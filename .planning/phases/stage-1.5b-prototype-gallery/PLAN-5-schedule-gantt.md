@@ -11,7 +11,7 @@ threat_model_severity: low
 requirements: []
 must_haves:
   truths:
-    - "User can view Drummond schedule (Gantt) at /design-system/prototypes/jobs/j-caldwell-1/schedule"
+    - "User can view Caldwell schedule (Gantt) at /design-system/prototypes/jobs/j-caldwell-1/schedule"
     - "Gantt renders timeline with >=20 tasks visible"
     - "Total date span >=6 months (max(end_date) - min(start_date) over all rendered items)"
     - "Dependencies (predecessor_ids) visible — connector lines OR start-after offsets clear in render"
@@ -25,12 +25,12 @@ must_haves:
   artifacts:
     - path: "src/app/design-system/prototypes/jobs/[id]/schedule/page.tsx"
       provides: "Schedule (Gantt) prototype — TanStack Table v8 + custom timeline cell renderers"
-      contains: "DRUMMOND_SCHEDULE_ITEMS"
+      contains: "CALDWELL_SCHEDULE_ITEMS"
   key_links:
     - from: "prototypes/jobs/[id]/schedule/page.tsx"
-      to: "DRUMMOND_SCHEDULE_ITEMS + DRUMMOND_VENDORS + DRUMMOND_JOBS"
+      to: "CALDWELL_SCHEDULE_ITEMS + CALDWELL_VENDORS + CALDWELL_JOBS"
       via: "named imports + per-row timeline rendering"
-      pattern: "DRUMMOND_SCHEDULE_ITEMS"
+      pattern: "CALDWELL_SCHEDULE_ITEMS"
     - from: "prototypes/jobs/[id]/schedule/page.tsx"
       to: "@tanstack/react-table v8 (already shipped per package.json)"
       via: "useReactTable + ColumnDef with custom cell renderer for timeline column"
@@ -77,11 +77,11 @@ Output:
 @src/components/nw/Badge.tsx
 
 <interfaces>
-<!-- DrummondScheduleItem from Wave 0 (per CONTEXT D-11; 1.5b proposed, F1 may revise):
+<!-- CaldwellScheduleItem from Wave 0 (per CONTEXT D-11; 1.5b proposed, F1 may revise):
 
-  type DrummondScheduleStatus = "not_started" | "in_progress" | "complete" | "blocked";
+  type CaldwellScheduleStatus = "not_started" | "in_progress" | "complete" | "blocked";
 
-  type DrummondScheduleItem = {
+  type CaldwellScheduleItem = {
     id: string;
     job_id: string;
     name: string;
@@ -91,11 +91,11 @@ Output:
     parent_id?: string;            // hierarchical tasks
     assigned_vendor_id?: string;
     percent_complete: number;      // 0-1
-    status: DrummondScheduleStatus;
+    status: CaldwellScheduleStatus;
     is_milestone: boolean;         // pay app dates render as DIAMONDS, not bars
   };
 
-  export const DRUMMOND_SCHEDULE_ITEMS: DrummondScheduleItem[];
+  export const CALDWELL_SCHEDULE_ITEMS: CaldwellScheduleItem[];
 -->
 
 <!-- TanStack Table v8 (already shipped — package.json: @tanstack/react-table@^8.21.3).
@@ -127,8 +127,8 @@ Output:
 
   <read_first>
     - src/app/design-system/components/data-display/page.tsx (lines 367-660 DataGridSection — TanStack Table v8 base; ColumnDef pattern; useReactTable setup)
-    - src/app/design-system/_fixtures/drummond/schedule.ts (DRUMMOND_SCHEDULE_ITEMS — >=20 items, dates spanning 6+ months, >=2 milestones)
-    - src/app/design-system/_fixtures/drummond/types.ts (DrummondScheduleItem + DrummondScheduleStatus contracts)
+    - src/app/design-system/_fixtures/drummond/schedule.ts (CALDWELL_SCHEDULE_ITEMS — >=20 items, dates spanning 6+ months, >=2 milestones)
+    - src/app/design-system/_fixtures/drummond/types.ts (CaldwellScheduleItem + CaldwellScheduleStatus contracts)
     - src/app/design-system/_fixtures/drummond/vendors.ts (resolve assigned_vendor_id for tooltip/hover)
     - src/app/design-system/_fixtures/drummond/jobs.ts (resolve job_id)
     - .planning/design/SYSTEM.md (Site Office direction tokens — compact density, JetBrains Mono, 0.18em eyebrows)
@@ -164,7 +164,7 @@ Implementation strategy per CONTEXT D-10:
 // — F1 may revise based on real complexity discovered here).
 //
 // Per CONTEXT D-12: uses real Drummond Schedule_*.xlsx data extracted in
-// Wave 0 (DRUMMOND_SCHEDULE_ITEMS). Not reconstructed dates.
+// Wave 0 (CALDWELL_SCHEDULE_ITEMS). Not reconstructed dates.
 //
 // Per acceptance criterion: 6+ month timeline + 20+ tasks + dependencies
 // visible + today-marker clear. If readability fails, log as design-system
@@ -191,11 +191,11 @@ import {
 } from "@tanstack/react-table";
 
 import {
-  DRUMMOND_SCHEDULE_ITEMS,
-  DRUMMOND_VENDORS,
-  DRUMMOND_JOBS,
-  type DrummondScheduleItem,
-  type DrummondScheduleStatus,
+  CALDWELL_SCHEDULE_ITEMS,
+  CALDWELL_VENDORS,
+  CALDWELL_JOBS,
+  type CaldwellScheduleItem,
+  type CaldwellScheduleStatus,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -203,7 +203,7 @@ import Eyebrow from "@/components/nw/Eyebrow";
 import Badge from "@/components/nw/Badge";
 
 // Status → CSS var color mapping (Site Office tokens).
-function statusColor(s: DrummondScheduleStatus): string {
+function statusColor(s: CaldwellScheduleStatus): string {
   switch (s) {
     case "not_started": return "var(--nw-warm-gray)";
     case "in_progress": return "var(--nw-stone-blue)";
@@ -212,7 +212,7 @@ function statusColor(s: DrummondScheduleStatus): string {
   }
 }
 
-const STATUS_BADGE: Record<DrummondScheduleStatus, { variant: "neutral" | "accent" | "success" | "warn" | "danger" | "info"; label: string }> = {
+const STATUS_BADGE: Record<CaldwellScheduleStatus, { variant: "neutral" | "accent" | "success" | "warn" | "danger" | "info"; label: string }> = {
   not_started: { variant: "neutral", label: "NOT STARTED" },
   in_progress: { variant: "accent", label: "IN PROGRESS" },
   complete:    { variant: "success", label: "COMPLETE" },
@@ -220,10 +220,10 @@ const STATUS_BADGE: Record<DrummondScheduleStatus, { variant: "neutral" | "accen
 };
 
 export default function SchedulePrototypePage({ params }: { params: { id: string } }) {
-  const job = DRUMMOND_JOBS.find((j) => j.id === params.id);
+  const job = CALDWELL_JOBS.find((j) => j.id === params.id);
   if (!job) return notFound();
 
-  const items = DRUMMOND_SCHEDULE_ITEMS.filter((i) => i.job_id === job.id);
+  const items = CALDWELL_SCHEDULE_ITEMS.filter((i) => i.job_id === job.id);
 
   // Compute timeline date range from rendered items.
   const projectStart = useMemo(() => {
@@ -269,13 +269,13 @@ export default function SchedulePrototypePage({ params }: { params: { id: string
   }, [projectStart, projectEnd, totalMs]);
 
   // TanStack Table v8 column definitions.
-  const columns = useMemo<ColumnDef<DrummondScheduleItem>[]>(() => [
+  const columns = useMemo<ColumnDef<CaldwellScheduleItem>[]>(() => [
     {
       id: "task",
       header: "Task",
       cell: (info) => {
         const item = info.row.original;
-        const vendor = item.assigned_vendor_id ? DRUMMOND_VENDORS.find((v) => v.id === item.assigned_vendor_id) : null;
+        const vendor = item.assigned_vendor_id ? CALDWELL_VENDORS.find((v) => v.id === item.assigned_vendor_id) : null;
         const indent = item.parent_id ? "pl-4" : "pl-0";
         return (
           <div className={`${indent}`}>
@@ -516,7 +516,7 @@ export default function SchedulePrototypePage({ params }: { params: { id: string
   </action>
 
   <verify>
-    <automated>npm run build && grep -c "useReactTable\|DRUMMOND_SCHEDULE_ITEMS\|is_milestone" src/app/design-system/prototypes/jobs/[id]/schedule/page.tsx</automated>
+    <automated>npm run build && grep -c "useReactTable\|CALDWELL_SCHEDULE_ITEMS\|is_milestone" src/app/design-system/prototypes/jobs/[id]/schedule/page.tsx</automated>
     Expected: build exits 0; grep returns >=3.
 
     Hex check (no hardcoded hex outside intentional CSS var refs): `grep -nE '#[0-9a-fA-F]{3,6}' src/app/design-system/prototypes/jobs/[id]/schedule/page.tsx` returns 0 matches.
@@ -580,7 +580,7 @@ export default function SchedulePrototypePage({ params }: { params: { id: string
 </verification>
 
 <success_criteria>
-- Schedule (Gantt) renders Drummond schedule fixture (>=20 tasks, >=6 months, >=2 milestones)
+- Schedule (Gantt) renders Caldwell schedule fixture (>=20 tasks, >=6 months, >=2 milestones)
 - TanStack Table v8 base used per D-10
 - Status-coded bars + diamond milestones + today-marker visible
 - Site Office direction inherited correctly
@@ -592,7 +592,7 @@ After completion, create `.planning/phases/stage-1.5b-prototype-gallery/stage-1.
 - Final task count rendered + actual date span (months)
 - Whether TanStack-base approach worked or fallback (frappe-gantt) was invoked
 - Site Office Gantt readability finding (specific observations: did compact density work? UPPERCASE month labels readable?)
-- D-11 schedule_items shape findings — did real Drummond data fit the proposed shape?
+- D-11 schedule_items shape findings — did real Caldwell data fit the proposed shape?
 - 1.5a-followup recommendation: should PATTERNS.md gain a Timeline/Gantt entry?
 - Critical findings (if any) — note these do NOT halt phase per EXPANDED-SCOPE §0 schedule acceptance
 </output>

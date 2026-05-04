@@ -42,35 +42,35 @@ must_haves:
       provides: "exceljs read + substitution apply + grep gate + TS file write pipeline"
       contains: "import ExcelJS"
     - path: "src/app/design-system/_fixtures/drummond/types.ts"
-      provides: "DrummondJob, DrummondVendor, DrummondCostCode, DrummondInvoice, DrummondDraw, DrummondDrawLineItem, DrummondChangeOrder, DrummondBudgetLine, DrummondLienRelease, DrummondScheduleItem, DrummondPayment, DrummondReconciliationPair type exports"
-      exports: ["DrummondJob", "DrummondVendor", "DrummondCostCode", "DrummondInvoice", "DrummondDraw", "DrummondDrawLineItem", "DrummondChangeOrder", "DrummondBudgetLine", "DrummondLienRelease", "DrummondScheduleItem", "DrummondPayment", "DrummondReconciliationPair"]
+      provides: "CaldwellJob, CaldwellVendor, CaldwellCostCode, CaldwellInvoice, CaldwellDraw, CaldwellDrawLineItem, CaldwellChangeOrder, CaldwellBudgetLine, CaldwellLienRelease, CaldwellScheduleItem, CaldwellPayment, CaldwellReconciliationPair type exports"
+      exports: ["CaldwellJob", "CaldwellVendor", "CaldwellCostCode", "CaldwellInvoice", "CaldwellDraw", "CaldwellDrawLineItem", "CaldwellChangeOrder", "CaldwellBudgetLine", "CaldwellLienRelease", "CaldwellScheduleItem", "CaldwellPayment", "CaldwellReconciliationPair"]
     - path: "src/app/design-system/_fixtures/drummond/index.ts"
       provides: "Barrel re-export of all 11 fixture files"
       contains: "export *"
     - path: "src/app/design-system/_fixtures/drummond/jobs.ts"
-      provides: "DRUMMOND_JOBS const array (1 entry — Caldwell at 712 Pine Ave)"
-      contains: "DRUMMOND_JOBS"
+      provides: "CALDWELL_JOBS const array (1 entry — Caldwell at 712 Pine Ave)"
+      contains: "CALDWELL_JOBS"
     - path: "src/app/design-system/_fixtures/drummond/vendors.ts"
-      provides: "DRUMMOND_VENDORS const array (17 entries — 14 substituted + 3 NO-SUB)"
-      contains: "DRUMMOND_VENDORS"
+      provides: "CALDWELL_VENDORS const array (17 entries — 14 substituted + 3 NO-SUB)"
+      contains: "CALDWELL_VENDORS"
     - path: "src/app/design-system/_fixtures/drummond/invoices.ts"
-      provides: "DRUMMOND_INVOICES const array (>=4 invoices spanning workflow statuses; 3 format types)"
-      contains: "DRUMMOND_INVOICES"
+      provides: "CALDWELL_INVOICES const array (>=4 invoices spanning workflow statuses; 3 format types)"
+      contains: "CALDWELL_INVOICES"
     - path: "src/app/design-system/_fixtures/drummond/draws.ts"
-      provides: "DRUMMOND_DRAWS const array (5 historical pay apps, Pay App 5 canonical)"
-      contains: "DRUMMOND_DRAWS"
+      provides: "CALDWELL_DRAWS const array (5 historical pay apps, Pay App 5 canonical)"
+      contains: "CALDWELL_DRAWS"
     - path: "src/app/design-system/_fixtures/drummond/budget.ts"
-      provides: "DRUMMOND_BUDGET_LINES const array (>=25 line items)"
-      contains: "DRUMMOND_BUDGET_LINES"
+      provides: "CALDWELL_BUDGET_LINES const array (>=25 line items)"
+      contains: "CALDWELL_BUDGET_LINES"
     - path: "src/app/design-system/_fixtures/drummond/lien-releases.ts"
-      provides: "DRUMMOND_LIEN_RELEASES const array (Florida 4-statute types)"
-      contains: "DRUMMOND_LIEN_RELEASES"
+      provides: "CALDWELL_LIEN_RELEASES const array (Florida 4-statute types)"
+      contains: "CALDWELL_LIEN_RELEASES"
     - path: "src/app/design-system/_fixtures/drummond/schedule.ts"
-      provides: "DRUMMOND_SCHEDULE_ITEMS const array (>=20 tasks, 6+ month timeline, milestones)"
-      contains: "DRUMMOND_SCHEDULE_ITEMS"
+      provides: "CALDWELL_SCHEDULE_ITEMS const array (>=20 tasks, 6+ month timeline, milestones)"
+      contains: "CALDWELL_SCHEDULE_ITEMS"
     - path: "src/app/design-system/_fixtures/drummond/reconciliation.ts"
-      provides: "DRUMMOND_RECONCILIATION_PAIRS const array (8 pairs = 4 candidates × 2 drift types)"
-      contains: "DRUMMOND_RECONCILIATION_PAIRS"
+      provides: "CALDWELL_RECONCILIATION_PAIRS const array (8 pairs = 4 candidates × 2 drift types)"
+      contains: "CALDWELL_RECONCILIATION_PAIRS"
     - path: "src/app/design-system/prototypes/layout.tsx"
       provides: "Direction/palette lock for all prototype routes (data-direction=C, data-palette=B)"
       contains: "data-direction=\"C\""
@@ -108,7 +108,7 @@ must_haves:
 ---
 
 <objective>
-Drummond fixture extraction (Wave 0). Build the sanitization pipeline + write all 11 sanitized fixture files + scaffold the prototypes/ route shell + add the CI grep gate. **HARD HALT after completion** — Jake reviews sanitized output before any prototype rendering begins (per D-23 / R1 hard halt rule).
+Caldwell fixture extraction (Wave 0). Build the sanitization pipeline + write all 11 sanitized fixture files + scaffold the prototypes/ route shell + add the CI grep gate. **HARD HALT after completion** — Jake reviews sanitized output before any prototype rendering begins (per D-23 / R1 hard halt rule).
 
 This plan is the foundation everything else depends on. Get it right.
 
@@ -168,7 +168,7 @@ Output:
 
 <!-- Existing fixture type shapes (analogs in src/app/design-system/_fixtures/).
      Drummond types EXTEND these patterns — same fields, "Drummond*" prefix,
-     "DRUMMOND_*" const naming. -->
+     "CALDWELL_*" const naming. -->
 
 From src/app/design-system/_fixtures/jobs.ts (analog SampleJob shape):
   type SampleJob = {
@@ -197,7 +197,7 @@ From src/app/design-system/_fixtures/vendors.ts (analog SampleVendor shape):
     default_cost_code_id: string | null;
   };
 
-From src/app/design-system/_fixtures/invoices.ts (analog SampleInvoice shape — DrummondInvoice MAY add original_file_url + co_id):
+From src/app/design-system/_fixtures/invoices.ts (analog SampleInvoice shape — CaldwellInvoice MAY add original_file_url + co_id):
   type SampleInvoice = {
     id: string;
     vendor_id: string;
@@ -218,7 +218,7 @@ From src/app/design-system/_fixtures/invoices.ts (analog SampleInvoice shape —
     flags: string[];
   };
 
-From src/app/design-system/_fixtures/draws.ts (analog SampleDraw shape — DrummondDraw matches verbatim):
+From src/app/design-system/_fixtures/draws.ts (analog SampleDraw shape — CaldwellDraw matches verbatim):
   type SampleDraw = {
     id: string;
     job_id: string;
@@ -258,8 +258,8 @@ From src/app/design-system/_fixtures/change-orders.ts (analog SampleChangeOrder 
 
 <!-- New types per CONTEXT D-05/D-11 — no playground analog -->
 
-DrummondBudgetLine (per CONTEXT D-05; computed fields LEFT OFF the type per R.2):
-  type DrummondBudgetLine = {
+CaldwellBudgetLine (per CONTEXT D-05; computed fields LEFT OFF the type per R.2):
+  type CaldwellBudgetLine = {
     id: string;
     job_id: string;
     cost_code_id: string;
@@ -267,8 +267,8 @@ DrummondBudgetLine (per CONTEXT D-05; computed fields LEFT OFF the type per R.2)
     revised_estimate: number;     // cents (original + approved COs)
   };
 
-DrummondDrawLineItem (1 per cost code per draw — 20-50 rows per pay app):
-  type DrummondDrawLineItem = {
+CaldwellDrawLineItem (1 per cost code per draw — 20-50 rows per pay app):
+  type CaldwellDrawLineItem = {
     id: string;
     draw_id: string;
     budget_line_id: string;
@@ -280,28 +280,28 @@ DrummondDrawLineItem (1 per cost code per draw — 20-50 rows per pay app):
     balance_to_finish: number;
   };
 
-DrummondLienRelease (Florida 4-statute types; status_history JSONB column missing per F1 gap #7):
-  type DrummondLienReleaseType =
+CaldwellLienRelease (Florida 4-statute types; status_history JSONB column missing per F1 gap #7):
+  type CaldwellLienReleaseType =
     | "conditional_progress"        // Florida statute 713.20(2)(a)
     | "unconditional_progress"      // Florida statute 713.20(2)(c)
     | "conditional_final"           // Florida statute 713.20(2)(b)
     | "unconditional_final";        // Florida statute 713.20(2)(d)
-  type DrummondLienReleaseStatus = "not_required" | "pending" | "received" | "waived";
-  type DrummondLienRelease = {
+  type CaldwellLienReleaseStatus = "not_required" | "pending" | "received" | "waived";
+  type CaldwellLienRelease = {
     id: string;
     job_id: string;
     vendor_id: string;
     invoice_id: string;
     draw_id: string | null;
-    release_type: DrummondLienReleaseType;
-    status: DrummondLienReleaseStatus;
+    release_type: CaldwellLienReleaseType;
+    status: CaldwellLienReleaseStatus;
     release_date: string | null;
     amount_through: number;        // cents
   };
 
-DrummondScheduleItem (per CONTEXT D-11 — 1.5b proposed, F1 may revise):
-  type DrummondScheduleStatus = "not_started" | "in_progress" | "complete" | "blocked";
-  type DrummondScheduleItem = {
+CaldwellScheduleItem (per CONTEXT D-11 — 1.5b proposed, F1 may revise):
+  type CaldwellScheduleStatus = "not_started" | "in_progress" | "complete" | "blocked";
+  type CaldwellScheduleItem = {
     id: string;
     job_id: string;
     name: string;
@@ -311,12 +311,12 @@ DrummondScheduleItem (per CONTEXT D-11 — 1.5b proposed, F1 may revise):
     parent_id?: string;            // hierarchical
     assigned_vendor_id?: string;
     percent_complete: number;      // 0-1
-    status: DrummondScheduleStatus;
+    status: CaldwellScheduleStatus;
     is_milestone: boolean;         // pay app dates render as diamonds
   };
 
-DrummondPayment (inferred from invoice fields per CURRENT-STATE A.2):
-  type DrummondPayment = {
+CaldwellPayment (inferred from invoice fields per CURRENT-STATE A.2):
+  type CaldwellPayment = {
     id: string;
     invoice_id: string;
     job_id: string;
@@ -328,11 +328,11 @@ DrummondPayment (inferred from invoice fields per CURRENT-STATE A.2):
     picked_up_at: string | null;
   };
 
-DrummondReconciliationPair (per CONTEXT D-09 — paired imported/current):
-  type DrummondReconciliationDriftType = "invoice_po" | "draw_budget";
-  type DrummondReconciliationPair = {
+CaldwellReconciliationPair (per CONTEXT D-09 — paired imported/current):
+  type CaldwellReconciliationDriftType = "invoice_po" | "draw_budget";
+  type CaldwellReconciliationPair = {
     id: string;
-    drift_type: DrummondReconciliationDriftType;
+    drift_type: CaldwellReconciliationDriftType;
     imported: Record<string, unknown>;
     current:  Record<string, unknown>;
     diffs: Array<{ field: string; imported_value: unknown; current_value: unknown }>;
@@ -368,7 +368,7 @@ DrummondReconciliationPair (per CONTEXT D-09 — paired imported/current):
 Single file containing ALL Drummond type definitions exported. Pattern: each type is `Drummond<Entity>` (matches PATTERNS.md analog naming). Copy these EXACT shapes (from `<interfaces>` block above):
 
 ```typescript
-// Drummond fixture types — Stage 1.5b prototype gallery.
+// Caldwell fixture types — Stage 1.5b prototype gallery.
 //
 // Pure type-only file (no runtime values). No imports from
 // @/lib/supabase|org|auth (per hook T10c sample-data isolation
@@ -383,10 +383,10 @@ Single file containing ALL Drummond type definitions exported. Pattern: each typ
 //
 // Per R.2 / CLAUDE.md "Recalculate, don't increment" — computed
 // fields (previous_applications, total_to_date, percent_complete,
-// balance_to_finish) are LEFT OFF DrummondBudgetLine and computed
+// balance_to_finish) are LEFT OFF CaldwellBudgetLine and computed
 // on-render in prototype pages.
 
-export type DrummondJob = {
+export type CaldwellJob = {
   id: string;
   name: string;
   address: string;
@@ -402,7 +402,7 @@ export type DrummondJob = {
   gc_fee_percentage: number;
 };
 
-export type DrummondVendor = {
+export type CaldwellVendor = {
   id: string;
   name: string;
   address: string;
@@ -411,7 +411,7 @@ export type DrummondVendor = {
   default_cost_code_id: string | null;
 };
 
-export type DrummondCostCode = {
+export type CaldwellCostCode = {
   id: string;
   code: string;        // 5-digit, e.g. "01101"
   description: string;
@@ -419,13 +419,13 @@ export type DrummondCostCode = {
   sort_order: number;
 };
 
-export type DrummondInvoiceType = "progress" | "time_and_materials" | "lump_sum";
+export type CaldwellInvoiceType = "progress" | "time_and_materials" | "lump_sum";
 
-export type DrummondInvoiceStatus =
+export type CaldwellInvoiceStatus =
   | "received" | "ai_processed" | "pm_review" | "pm_approved" | "pm_held" | "pm_denied"
   | "qa_review" | "qa_approved" | "qa_kicked_back" | "pushed_to_qb" | "in_draw" | "paid";
 
-export type DrummondInvoiceLineItem = {
+export type CaldwellInvoiceLineItem = {
   description: string;
   date: string | null;
   qty: number | null;
@@ -434,7 +434,7 @@ export type DrummondInvoiceLineItem = {
   amount: number;        // cents
 };
 
-export type DrummondInvoiceConfidenceDetails = {
+export type CaldwellInvoiceConfidenceDetails = {
   vendor_name: number;
   invoice_number: number;
   total_amount: number;
@@ -442,7 +442,7 @@ export type DrummondInvoiceConfidenceDetails = {
   cost_code_suggestion: number;
 };
 
-export type DrummondInvoice = {
+export type CaldwellInvoice = {
   id: string;
   vendor_id: string;
   job_id: string;
@@ -452,29 +452,29 @@ export type DrummondInvoice = {
   invoice_number: string | null;
   invoice_date: string | null;
   description: string;
-  invoice_type: DrummondInvoiceType;
+  invoice_type: CaldwellInvoiceType;
   total_amount: number;           // cents
   confidence_score: number;       // 0-1
-  confidence_details: DrummondInvoiceConfidenceDetails;
-  status: DrummondInvoiceStatus;
+  confidence_details: CaldwellInvoiceConfidenceDetails;
+  status: CaldwellInvoiceStatus;
   received_date: string;
   payment_date: string | null;
   draw_id: string | null;         // set when pulled into a draw
-  line_items: DrummondInvoiceLineItem[];
+  line_items: CaldwellInvoiceLineItem[];
   flags: string[];
   original_file_url: string | null; // sanitized fixture path or null
 };
 
-export type DrummondDrawStatus = "draft" | "pm_review" | "approved" | "submitted" | "paid" | "void";
+export type CaldwellDrawStatus = "draft" | "pm_review" | "approved" | "submitted" | "paid" | "void";
 
-export type DrummondDraw = {
+export type CaldwellDraw = {
   id: string;
   job_id: string;
   draw_number: number;
   application_date: string;
   period_start: string;
   period_end: string;
-  status: DrummondDrawStatus;
+  status: CaldwellDrawStatus;
   revision_number: number;
   original_contract_sum: number;
   net_change_orders: number;
@@ -488,7 +488,7 @@ export type DrummondDraw = {
   paid_at: string | null;
 };
 
-export type DrummondDrawLineItem = {
+export type CaldwellDrawLineItem = {
   id: string;
   draw_id: string;
   budget_line_id: string;
@@ -500,9 +500,9 @@ export type DrummondDrawLineItem = {
   balance_to_finish: number;
 };
 
-export type DrummondChangeOrderStatus = "draft" | "pending_approval" | "approved" | "executed" | "void";
+export type CaldwellChangeOrderStatus = "draft" | "pending_approval" | "approved" | "executed" | "void";
 
-export type DrummondChangeOrder = {
+export type CaldwellChangeOrder = {
   id: string;
   job_id: string;
   pcco_number: number;
@@ -512,15 +512,15 @@ export type DrummondChangeOrder = {
   gc_fee_rate: number;
   total_with_fee: number;
   estimated_days_added: number;
-  status: DrummondChangeOrderStatus;
+  status: CaldwellChangeOrderStatus;
   approved_date: string | null;
   draw_number: number | null;
 };
 
 // Per R.2 — computed fields LEFT OFF this type. Prototype pages
 // derive previous_applications / this_period / total_to_date /
-// percent_complete / balance_to_finish from DRUMMOND_INVOICES on render.
-export type DrummondBudgetLine = {
+// percent_complete / balance_to_finish from CALDWELL_INVOICES on render.
+export type CaldwellBudgetLine = {
   id: string;
   job_id: string;
   cost_code_id: string;
@@ -528,29 +528,29 @@ export type DrummondBudgetLine = {
   revised_estimate: number;        // cents (original + approved COs)
 };
 
-export type DrummondLienReleaseType =
+export type CaldwellLienReleaseType =
   | "conditional_progress"         // Florida statute 713.20(2)(a)
   | "unconditional_progress"       // Florida statute 713.20(2)(c)
   | "conditional_final"            // Florida statute 713.20(2)(b)
   | "unconditional_final";         // Florida statute 713.20(2)(d)
 
-export type DrummondLienReleaseStatus = "not_required" | "pending" | "received" | "waived";
+export type CaldwellLienReleaseStatus = "not_required" | "pending" | "received" | "waived";
 
-export type DrummondLienRelease = {
+export type CaldwellLienRelease = {
   id: string;
   job_id: string;
   vendor_id: string;
   invoice_id: string;
   draw_id: string | null;
-  release_type: DrummondLienReleaseType;
-  status: DrummondLienReleaseStatus;
+  release_type: CaldwellLienReleaseType;
+  status: CaldwellLienReleaseStatus;
   release_date: string | null;
   amount_through: number;          // cents
 };
 
-export type DrummondScheduleStatus = "not_started" | "in_progress" | "complete" | "blocked";
+export type CaldwellScheduleStatus = "not_started" | "in_progress" | "complete" | "blocked";
 
-export type DrummondScheduleItem = {
+export type CaldwellScheduleItem = {
   id: string;
   job_id: string;
   name: string;
@@ -560,11 +560,11 @@ export type DrummondScheduleItem = {
   parent_id?: string;              // hierarchical tasks
   assigned_vendor_id?: string;
   percent_complete: number;        // 0-1
-  status: DrummondScheduleStatus;
+  status: CaldwellScheduleStatus;
   is_milestone: boolean;           // pay app dates render as diamonds in Gantt
 };
 
-export type DrummondPayment = {
+export type CaldwellPayment = {
   id: string;
   invoice_id: string;
   job_id: string;
@@ -576,11 +576,11 @@ export type DrummondPayment = {
   picked_up_at: string | null;
 };
 
-export type DrummondReconciliationDriftType = "invoice_po" | "draw_budget";
+export type CaldwellReconciliationDriftType = "invoice_po" | "draw_budget";
 
-export type DrummondReconciliationPair = {
+export type CaldwellReconciliationPair = {
   id: string;
-  drift_type: DrummondReconciliationDriftType;
+  drift_type: CaldwellReconciliationDriftType;
   imported: Record<string, unknown>;  // QuickBooks / external snapshot
   current:  Record<string, unknown>;  // Nightwork current state
   diffs: Array<{ field: string; imported_value: unknown; current_value: unknown }>;
@@ -592,16 +592,16 @@ export type DrummondReconciliationPair = {
 Mirror the shape of `src/app/design-system/_fixtures/index.ts` exactly. Re-export all 11 fixture files + types:
 
 ```typescript
-// Re-exports for the design-system Drummond fixtures (Stage 1.5b).
+// Re-exports for the design-system Caldwell fixtures (Stage 1.5b).
 //
 // Pure constants only. No imports from @/lib/supabase|org|auth (per
 // hook T10c — nightwork-post-edit.sh:194-230). Consumers can do:
 //
-//   import { DRUMMOND_INVOICES, DRUMMOND_VENDORS } from '@/app/design-system/_fixtures/drummond';
+//   import { CALDWELL_INVOICES, CALDWELL_VENDORS } from '@/app/design-system/_fixtures/drummond';
 //
 // instead of reaching into individual files.
 //
-// Per CONTEXT D-04 — DRUMMOND_* prefix vs SAMPLE_* keeps Drummond
+// Per CONTEXT D-04 — CALDWELL_* prefix vs SAMPLE_* keeps Drummond
 // fixtures separable from playground fictional fixtures during
 // cross-imports.
 
@@ -748,7 +748,7 @@ function grepGate(value: unknown, map: Map<string, string>, path: string[] = [])
 
 // 4. Write a sanitized fixture file with consistent formatting.
 function writeFixtureFile(filename: string, typeName: string, constName: string, items: unknown[], sourceFile: string) {
-  const header = `// Sanitized Drummond fixture — generated by scripts/sanitize-drummond.ts
+  const header = `// Sanitized Caldwell fixture — generated by scripts/sanitize-drummond.ts
 // Source: ${sourceFile}
 // Generated: ${new Date().toISOString().slice(0, 10)}
 // Substitutions applied per .planning/fixtures/drummond/SUBSTITUTION-MAP.md (gitignored)
@@ -788,7 +788,7 @@ async function main() {
   //   }));
   //   const violations = grepGate(sanitized, subMap);
   //   if (violations.length > 0) { console.error(...); process.exit(1); }
-  //   writeFixtureFile("jobs.ts", "DrummondJob", "DRUMMOND_JOBS", sanitized, "...");
+  //   writeFixtureFile("jobs.ts", "CaldwellJob", "CALDWELL_JOBS", sanitized, "...");
   //
   // Detailed per-entity extraction logic — implementer decides based on
   // raw file structure discovered via inspect-xlsx.mjs runs.
@@ -954,20 +954,20 @@ Execute `npx tsx scripts/sanitize-drummond.ts` and verify it:
 
 | File | Min entries | Source | Notes |
 |---|---|---|---|
-| `jobs.ts` (DRUMMOND_JOBS) | 1 | manual (substituted from raw) | `name: "Caldwell Residence"` (or similar — substitute "Drummond"), `address: "712 Pine Ave, Anna Maria FL 34216"`, contract amount from Pay App 5 cover sheet |
-| `vendors.ts` (DRUMMOND_VENDORS) | 17 | invoice JSON + pay apps | 14 substituted + 3 NO-SUB (Ferguson, FPL, Home Depot) |
-| `cost-codes.ts` (DRUMMOND_COST_CODES) | 25+ | "Drummond - Line Items Cost Coded.pdf" or budget XLSX | 5-digit codes; cover Pay App 5 G703 row coverage |
-| `invoices.ts` (DRUMMOND_INVOICES) | 4 minimum, prefer 6+ | invoice JSON | Spans ai_processed/pm_review/qa_review/paid + 3 format types |
-| `draws.ts` (DRUMMOND_DRAWS) | 5 | Pay Apps 1-5 (xlsx + PDF) | All historical pay apps; Draw #5 = canonical |
-| `draw-line-items.ts` (DRUMMOND_DRAW_LINE_ITEMS) | 25+ per draw, 100+ total | Pay App 5 G703 + earlier pay apps | One per cost code per draw |
-| `change-orders.ts` (DRUMMOND_CHANGE_ORDERS) | 4-6 | Pay App 5 cover sheet PCCO log | Default GC fee 20%; tests "complex CO chains affecting multiple budget lines" |
-| `budget.ts` (DRUMMOND_BUDGET_LINES) | 25+ | Drummond_Budget_2026-04-15.xlsx | Per cost code per job; computed fields LEFT OFF type |
-| `lien-releases.ts` (DRUMMOND_LIEN_RELEASES) | 4 minimum (1 per Florida statute type) | Drummond-Nov 2025 Lein Releases.pdf | 4-statute enum exercised |
-| `schedule.ts` (DRUMMOND_SCHEDULE_ITEMS) | 20+ | Schedule_List_Drummond-501 74th St.xlsx | 6+ month timeline; >=2 milestones; dependencies populated |
-| `payments.ts` (DRUMMOND_PAYMENTS) | 1 per `paid` invoice | derived from DRUMMOND_INVOICES | payment_date computed via Ross Built rule (received by 5th → 15th, by 20th → 30th) |
-| `reconciliation.ts` (DRUMMOND_RECONCILIATION_PAIRS) | 8 | derived from invoices+POs+budget | 4 candidates × 2 drift types (invoice_po, draw_budget) |
+| `jobs.ts` (CALDWELL_JOBS) | 1 | manual (substituted from raw) | `name: "Caldwell Residence"` (or similar — substitute "Drummond"), `address: "712 Pine Ave, Anna Maria FL 34216"`, contract amount from Pay App 5 cover sheet |
+| `vendors.ts` (CALDWELL_VENDORS) | 17 | invoice JSON + pay apps | 14 substituted + 3 NO-SUB (Ferguson, FPL, Home Depot) |
+| `cost-codes.ts` (CALDWELL_COST_CODES) | 25+ | "Drummond - Line Items Cost Coded.pdf" or budget XLSX | 5-digit codes; cover Pay App 5 G703 row coverage |
+| `invoices.ts` (CALDWELL_INVOICES) | 4 minimum, prefer 6+ | invoice JSON | Spans ai_processed/pm_review/qa_review/paid + 3 format types |
+| `draws.ts` (CALDWELL_DRAWS) | 5 | Pay Apps 1-5 (xlsx + PDF) | All historical pay apps; Draw #5 = canonical |
+| `draw-line-items.ts` (CALDWELL_DRAW_LINE_ITEMS) | 25+ per draw, 100+ total | Pay App 5 G703 + earlier pay apps | One per cost code per draw |
+| `change-orders.ts` (CALDWELL_CHANGE_ORDERS) | 4-6 | Pay App 5 cover sheet PCCO log | Default GC fee 20%; tests "complex CO chains affecting multiple budget lines" |
+| `budget.ts` (CALDWELL_BUDGET_LINES) | 25+ | Drummond_Budget_2026-04-15.xlsx | Per cost code per job; computed fields LEFT OFF type |
+| `lien-releases.ts` (CALDWELL_LIEN_RELEASES) | 4 minimum (1 per Florida statute type) | Drummond-Nov 2025 Lein Releases.pdf | 4-statute enum exercised |
+| `schedule.ts` (CALDWELL_SCHEDULE_ITEMS) | 20+ | Schedule_List_Drummond-501 74th St.xlsx | 6+ month timeline; >=2 milestones; dependencies populated |
+| `payments.ts` (CALDWELL_PAYMENTS) | 1 per `paid` invoice | derived from CALDWELL_INVOICES | payment_date computed via Ross Built rule (received by 5th → 15th, by 20th → 30th) |
+| `reconciliation.ts` (CALDWELL_RECONCILIATION_PAIRS) | 8 | derived from invoices+POs+budget | 4 candidates × 2 drift types (invoice_po, draw_budget) |
 
-**Per R.2:** Compute fields like `total_with_fee = amount + gc_fee_amount` at WRITE time (these are stored values that come from the source pay app). Fields that must be DERIVED at render time (`previous_applications`, `total_to_date`, `percent_complete`, `balance_to_finish` for budget lines) STAY OUT of `DRUMMOND_BUDGET_LINES` per the type contract.
+**Per R.2:** Compute fields like `total_with_fee = amount + gc_fee_amount` at WRITE time (these are stored values that come from the source pay app). Fields that must be DERIVED at render time (`previous_applications`, `total_to_date`, `percent_complete`, `balance_to_finish` for budget lines) STAY OUT of `CALDWELL_BUDGET_LINES` per the type contract.
 
 **Per CONTEXT D-22:** any vendor list update here MUST also be reflected in the CI workflow hardcoded list (Task 3, `.github/workflows/drummond-grep-check.yml`).
 
@@ -991,14 +991,14 @@ Execute `npx tsx scripts/sanitize-drummond.ts` and verify it:
 
     Manual checks:
     - `wc -l src/app/design-system/_fixtures/drummond/*.ts` shows reasonable line counts (vendors 50+ lines, invoices 200+, draw-line-items 300+).
-    - Each file imports its type from `./types` and exports the corresponding `DRUMMOND_*` const.
+    - Each file imports its type from `./types` and exports the corresponding `CALDWELL_*` const.
     - `git check-ignore -v scripts/drummond-invoice-fields.json` confirms gitignored.
-    - `npx tsx -e 'import { DRUMMOND_JOBS, DRUMMOND_VENDORS, DRUMMOND_INVOICES, DRUMMOND_DRAWS, DRUMMOND_BUDGET_LINES, DRUMMOND_LIEN_RELEASES, DRUMMOND_SCHEDULE_ITEMS, DRUMMOND_RECONCILIATION_PAIRS } from "./src/app/design-system/_fixtures/drummond"; console.log({jobs: DRUMMOND_JOBS.length, vendors: DRUMMOND_VENDORS.length, invoices: DRUMMOND_INVOICES.length, draws: DRUMMOND_DRAWS.length, budget: DRUMMOND_BUDGET_LINES.length, lien: DRUMMOND_LIEN_RELEASES.length, schedule: DRUMMOND_SCHEDULE_ITEMS.length, recon: DRUMMOND_RECONCILIATION_PAIRS.length})'` prints counts matching the table above.
+    - `npx tsx -e 'import { CALDWELL_JOBS, CALDWELL_VENDORS, CALDWELL_INVOICES, CALDWELL_DRAWS, CALDWELL_BUDGET_LINES, CALDWELL_LIEN_RELEASES, CALDWELL_SCHEDULE_ITEMS, CALDWELL_RECONCILIATION_PAIRS } from "./src/app/design-system/_fixtures/drummond"; console.log({jobs: CALDWELL_JOBS.length, vendors: CALDWELL_VENDORS.length, invoices: CALDWELL_INVOICES.length, draws: CALDWELL_DRAWS.length, budget: CALDWELL_BUDGET_LINES.length, lien: CALDWELL_LIEN_RELEASES.length, schedule: CALDWELL_SCHEDULE_ITEMS.length, recon: CALDWELL_RECONCILIATION_PAIRS.length})'` prints counts matching the table above.
   </verify>
 
   <done>
     - All 12 fixture files exist and typecheck
-    - Vendor count = 17 (verified via DRUMMOND_VENDORS.length)
+    - Vendor count = 17 (verified via CALDWELL_VENDORS.length)
     - Draw count = 5
     - Budget line count >= 25
     - Schedule item count >= 20 with >= 2 is_milestone=true entries
@@ -1082,7 +1082,7 @@ Index landing for `/design-system/prototypes/` with 10 prototype Card links. Mir
 //
 // Prototype gallery index — landing page for /design-system/prototypes/.
 // Lists the 10 prototype routes that validate the design system on
-// real-shape Drummond data per Stage 1.5b expanded scope.
+// real-shape Caldwell data per Stage 1.5b expanded scope.
 //
 // All 10 sections inherit Site Office + Set B from prototypes/layout.tsx
 // (per CONTEXT D-02). Token discipline enforced — no hardcoded hex.
@@ -1126,7 +1126,7 @@ const SECTIONS: Array<{
     href: "/design-system/prototypes/draws/d-caldwell-05",
     label: "Draw approval",
     Icon: CheckBadgeIcon,
-    blurb: "Pay App 5 — G702 summary + G703 line items with full Drummond CO chain rolled in.",
+    blurb: "Pay App 5 — G702 summary + G703 line items with full Caldwell CO chain rolled in.",
     goal: "Validate Document Review extending to draw approval at 25+ G703 line item density.",
   },
   {
@@ -1140,7 +1140,7 @@ const SECTIONS: Array<{
     href: "/design-system/prototypes/jobs/j-caldwell-1/budget",
     label: "Budget view",
     Icon: ChartBarIcon,
-    blurb: "Drummond budget — 25+ line items with computed previous/this-period/percent-complete derived on render.",
+    blurb: "Caldwell budget — 25+ line items with computed previous/this-period/percent-complete derived on render.",
     goal: "Validate Pattern3Dashboard + DataGrid stress test at compact density.",
   },
   {
@@ -1154,7 +1154,7 @@ const SECTIONS: Array<{
     href: "/design-system/prototypes/vendors",
     label: "Vendors",
     Icon: BuildingOfficeIcon,
-    blurb: "17 Drummond vendors in List+Detail layout — long names stress test.",
+    blurb: "17 Caldwell vendors in List+Detail layout — long names stress test.",
     goal: "Validate Pattern6ListDetail at real vendor name length + entity-type mix.",
   },
   {
@@ -1183,7 +1183,7 @@ const SECTIONS: Array<{
     label: "Reconciliation strawman",
     Icon: ScaleIcon,
     blurb: "4 candidates × 2 drift types (invoice↔PO, draw↔budget) = 8 prototypes.",
-    goal: "Validate PATTERNS §11 strawman against real Drummond drift. Leading candidate documented at 1.5b end.",
+    goal: "Validate PATTERNS §11 strawman against real Caldwell drift. Leading candidate documented at 1.5b end.",
   },
 ];
 
@@ -1204,7 +1204,7 @@ export default function PrototypeGalleryIndex() {
           Prototype gallery
         </h1>
         <p className="text-[14px] mb-4" style={{ color: "var(--text-secondary)" }}>
-          Site Office direction + Set B palette, rendered against sanitized Drummond fixtures.
+          Site Office direction + Set B palette, rendered against sanitized Caldwell fixtures.
           Validates whether the design system actually works for real construction workflows.
         </p>
         <Badge variant="accent">CP2 locked: Site Office + Set B</Badge>
@@ -1343,7 +1343,7 @@ jobs:
 
   <what-built>
     - Sanitization pipeline: `scripts/sanitize-drummond.ts` reads SUBSTITUTION-MAP.md, parses 5 pay app `.xlsx` + 1 budget `.xlsx` + 2 schedule files + 1 invoice JSON, applies multi-pass substitution, runs grep gate, writes 12 sanitized TS fixture files
-    - 12 sanitized Drummond fixture files at `src/app/design-system/_fixtures/drummond/` (jobs, vendors, cost-codes, invoices, draws, draw-line-items, change-orders, budget, lien-releases, schedule, payments, reconciliation) + types.ts + index.ts barrel
+    - 12 sanitized Caldwell fixture files at `src/app/design-system/_fixtures/drummond/` (jobs, vendors, cost-codes, invoices, draws, draw-line-items, change-orders, budget, lien-releases, schedule, payments, reconciliation) + types.ts + index.ts barrel
     - Counts: 17 vendors, 5 draws, 25+ budget lines, 20+ schedule items, 4-6 COs, 8 reconciliation pairs, 4-statute lien-release coverage
     - Prototype gallery scaffold: `src/app/design-system/prototypes/layout.tsx` (forces direction=C palette=B), `src/app/design-system/prototypes/page.tsx` (10-Card index)
     - First-ever GitHub Actions workflow: `.github/workflows/drummond-grep-check.yml` (CI-side grep gate, ~17-20 high-risk identifiers)
@@ -1363,7 +1363,7 @@ jobs:
 
 2. **Counts verification.** Run:
    ```bash
-   npx tsx -e 'import * as f from "./src/app/design-system/_fixtures/drummond"; console.log({jobs: f.DRUMMOND_JOBS.length, vendors: f.DRUMMOND_VENDORS.length, costCodes: f.DRUMMOND_COST_CODES.length, invoices: f.DRUMMOND_INVOICES.length, draws: f.DRUMMOND_DRAWS.length, drawLineItems: f.DRUMMOND_DRAW_LINE_ITEMS.length, changeOrders: f.DRUMMOND_CHANGE_ORDERS.length, budget: f.DRUMMOND_BUDGET_LINES.length, lien: f.DRUMMOND_LIEN_RELEASES.length, schedule: f.DRUMMOND_SCHEDULE_ITEMS.length, payments: f.DRUMMOND_PAYMENTS.length, recon: f.DRUMMOND_RECONCILIATION_PAIRS.length})'
+   npx tsx -e 'import * as f from "./src/app/design-system/_fixtures/drummond"; console.log({jobs: f.CALDWELL_JOBS.length, vendors: f.CALDWELL_VENDORS.length, costCodes: f.CALDWELL_COST_CODES.length, invoices: f.CALDWELL_INVOICES.length, draws: f.CALDWELL_DRAWS.length, drawLineItems: f.CALDWELL_DRAW_LINE_ITEMS.length, changeOrders: f.CALDWELL_CHANGE_ORDERS.length, budget: f.CALDWELL_BUDGET_LINES.length, lien: f.CALDWELL_LIEN_RELEASES.length, schedule: f.CALDWELL_SCHEDULE_ITEMS.length, payments: f.CALDWELL_PAYMENTS.length, recon: f.CALDWELL_RECONCILIATION_PAIRS.length})'
    ```
    Expected counts: jobs=1, vendors=17, costCodes>=25, invoices>=4, draws=5, drawLineItems>=100, changeOrders=4-6, budget>=25, lien>=4, schedule>=20, payments>=count(invoices.status=='paid'), recon=8
 

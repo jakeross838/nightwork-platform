@@ -26,13 +26,13 @@ must_haves:
   artifacts:
     - path: "src/app/design-system/prototypes/draws/[id]/print/page.tsx"
       provides: "AIA G702/G703 print preview — pixel-perfect G702 attempt + 80% G703"
-      contains: "DRUMMOND_DRAWS"
+      contains: "CALDWELL_DRAWS"
     - path: "src/app/design-system/prototypes/reconciliation/page.tsx"
       provides: "Reconciliation strawman — 4 candidates × 2 drift types matrix"
-      contains: "DRUMMOND_RECONCILIATION_PAIRS"
+      contains: "CALDWELL_RECONCILIATION_PAIRS"
   key_links:
     - from: "prototypes/draws/[id]/print/page.tsx"
-      to: "DRUMMOND_DRAWS + DRUMMOND_DRAW_LINE_ITEMS + DRUMMOND_COST_CODES + DRUMMOND_CHANGE_ORDERS + DRUMMOND_JOBS"
+      to: "CALDWELL_DRAWS + CALDWELL_DRAW_LINE_ITEMS + CALDWELL_COST_CODES + CALDWELL_CHANGE_ORDERS + CALDWELL_JOBS"
       via: "named imports + print stylesheet rules"
       pattern: "@media print"
     - from: "prototypes/draws/[id]/print/page.tsx"
@@ -40,12 +40,12 @@ must_haves:
       via: "inheritance via @media print { } block"
       pattern: "print:hidden"
     - from: "prototypes/reconciliation/page.tsx"
-      to: "DRUMMOND_RECONCILIATION_PAIRS"
+      to: "CALDWELL_RECONCILIATION_PAIRS"
       via: "named import + filter by drift_type"
-      pattern: "DRUMMOND_RECONCILIATION_PAIRS"
+      pattern: "CALDWELL_RECONCILIATION_PAIRS"
     - from: "prototypes/reconciliation/page.tsx"
       to: "patterns/page.tsx:1149-1279 ReconciliationStrawman 4 candidate visual shapes"
-      via: "structural mirror — re-implement same 4 Card shapes against Drummond data"
+      via: "structural mirror — re-implement same 4 Card shapes against Caldwell data"
       pattern: "Candidate 1\\|Candidate 2\\|Candidate 3\\|Candidate 4"
 ---
 
@@ -56,7 +56,7 @@ Both are specialized prototypes that depend on PLAN-2's draws/[id]/page.tsx layo
 
 Purpose:
 - Print preview tests PATTERNS.md §10 Print View at AIA fidelity. The G702 pixel-perfect attempt is the single biggest risk in 1.5b after fixture extraction — encoded with explicit 1-day judgment + escape clause per CONTEXT D-16/D-24.
-- Reconciliation strawman tests PATTERNS.md §11 against real Drummond drift. Per CONTEXT Q3=C: render all 4 candidates; document a "leading candidate" recommendation at end (final lock at reconciliation phase post-3.9).
+- Reconciliation strawman tests PATTERNS.md §11 against real Caldwell drift. Per CONTEXT Q3=C: render all 4 candidates; document a "leading candidate" recommendation at end (final lock at reconciliation phase post-3.9).
 
 Output:
 - Print preview at `/design-system/prototypes/draws/{id}/print`
@@ -96,16 +96,16 @@ Output:
 @.planning/fixtures/drummond/source3-downloads/Pay Application #5 - Drummond-501 74th St.pdf
 
 <interfaces>
-<!-- Drummond fixture imports — same set as PLAN-2/PLAN-3.
+<!-- Caldwell fixture imports — same set as PLAN-2/PLAN-3.
 
-For print: DRUMMOND_DRAWS, DRUMMOND_DRAW_LINE_ITEMS, DRUMMOND_COST_CODES,
-           DRUMMOND_CHANGE_ORDERS, DRUMMOND_JOBS
+For print: CALDWELL_DRAWS, CALDWELL_DRAW_LINE_ITEMS, CALDWELL_COST_CODES,
+           CALDWELL_CHANGE_ORDERS, CALDWELL_JOBS
 
-For reconciliation: DRUMMOND_RECONCILIATION_PAIRS
-  type DrummondReconciliationDriftType = "invoice_po" | "draw_budget";
-  type DrummondReconciliationPair = {
+For reconciliation: CALDWELL_RECONCILIATION_PAIRS
+  type CaldwellReconciliationDriftType = "invoice_po" | "draw_budget";
+  type CaldwellReconciliationPair = {
     id: string;
-    drift_type: DrummondReconciliationDriftType;
+    drift_type: CaldwellReconciliationDriftType;
     imported: Record<string, unknown>;  // QuickBooks / external snapshot
     current:  Record<string, unknown>;  // Nightwork current state
     diffs: Array<{ field: string; imported_value: unknown; current_value: unknown }>;
@@ -167,7 +167,7 @@ For reconciliation: DRUMMOND_RECONCILIATION_PAIRS
     - src/app/draws/[id]/page.tsx (lines 269-470 — production print toggle precedent: print:hidden chrome + hidden print:block content)
     - src/app/design-system/patterns/page.tsx (lines 1048-1143 Pattern9PrintView — G703 simulated table visual contract)
     - .planning/fixtures/drummond/source3-downloads/Pay Application #5 - Drummond-501 74th St.pdf (the pixel-perfect reference target — read this PDF using Claude Code Read tool to study the exact G702 layout: header block placement, signature blocks, change order summary table position, line numbering A-G)
-    - src/app/design-system/_fixtures/drummond/draws.ts (DRUMMOND_DRAWS — Pay App 5 = d-caldwell-05)
+    - src/app/design-system/_fixtures/drummond/draws.ts (CALDWELL_DRAWS — Pay App 5 = d-caldwell-05)
     - src/app/design-system/_fixtures/drummond/draw-line-items.ts (G703 line items)
     - src/app/design-system/_fixtures/drummond/cost-codes.ts (5-digit cost codes for G703 column A)
     - src/app/design-system/_fixtures/drummond/change-orders.ts (PCCO log for G702 change order summary table)
@@ -225,11 +225,11 @@ import Link from "next/link";
 import { PrinterIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_DRAWS,
-  DRUMMOND_DRAW_LINE_ITEMS,
-  DRUMMOND_COST_CODES,
-  DRUMMOND_CHANGE_ORDERS,
-  DRUMMOND_JOBS,
+  CALDWELL_DRAWS,
+  CALDWELL_DRAW_LINE_ITEMS,
+  CALDWELL_COST_CODES,
+  CALDWELL_CHANGE_ORDERS,
+  CALDWELL_JOBS,
 } from "@/app/design-system/_fixtures/drummond";
 
 // Helper: cents → "$X,XXX.XX" format. Print uses plain text, not Money component.
@@ -238,12 +238,12 @@ function fmt(cents: number): string {
 }
 
 export default function DrawPrintPage({ params }: { params: { id: string } }) {
-  const draw = DRUMMOND_DRAWS.find((d) => d.id === params.id);
+  const draw = CALDWELL_DRAWS.find((d) => d.id === params.id);
   if (!draw) return notFound();
 
-  const job = DRUMMOND_JOBS.find((j) => j.id === draw.job_id);
-  const lineItems = DRUMMOND_DRAW_LINE_ITEMS.filter((li) => li.draw_id === draw.id);
-  const cosThroughThisDraw = DRUMMOND_CHANGE_ORDERS
+  const job = CALDWELL_JOBS.find((j) => j.id === draw.job_id);
+  const lineItems = CALDWELL_DRAW_LINE_ITEMS.filter((li) => li.draw_id === draw.id);
+  const cosThroughThisDraw = CALDWELL_CHANGE_ORDERS
     .filter((co) => co.draw_number !== null && co.draw_number <= draw.draw_number)
     .sort((a, b) => a.pcco_number - b.pcco_number);
 
@@ -516,7 +516,7 @@ export default function DrawPrintPage({ params }: { params: { id: string } }) {
   <read_first>
     - The file just-built in Task 1 (extending it)
     - src/app/design-system/patterns/page.tsx (lines 1048-1143 Pattern9PrintView — G703 simulated table visual contract)
-    - src/app/design-system/_fixtures/drummond/draw-line-items.ts (DRUMMOND_DRAW_LINE_ITEMS — one per cost code per draw)
+    - src/app/design-system/_fixtures/drummond/draw-line-items.ts (CALDWELL_DRAW_LINE_ITEMS — one per cost code per draw)
     - src/app/design-system/_fixtures/drummond/cost-codes.ts (5-digit codes for column A)
   </read_first>
 
@@ -575,7 +575,7 @@ Add this section AFTER `</section>` of `g702-cover`, INSIDE the `<main>` tag:
     </thead>
     <tbody>
       {lineItems.map((li) => {
-        const cc = DRUMMOND_COST_CODES.find((c) => c.id === li.cost_code_id);
+        const cc = CALDWELL_COST_CODES.find((c) => c.id === li.cost_code_id);
         const scheduled = li.previous_applications + li.this_period + li.balance_to_finish;
         return (
           <tr key={li.id} className="print-avoid-break">
@@ -656,8 +656,8 @@ Add this section AFTER `</section>` of `g702-cover`, INSIDE the `<main>` tag:
 
   <read_first>
     - src/app/design-system/patterns/page.tsx (lines 1149-1279 — ReconciliationStrawman function — read FULL function; this prototype EXTENDS, does NOT diverge per A16.1)
-    - src/app/design-system/_fixtures/drummond/reconciliation.ts (DRUMMOND_RECONCILIATION_PAIRS — 8 pairs: 4 candidates × 2 drift types)
-    - src/app/design-system/_fixtures/drummond/types.ts (DrummondReconciliationPair contract)
+    - src/app/design-system/_fixtures/drummond/reconciliation.ts (CALDWELL_RECONCILIATION_PAIRS — 8 pairs: 4 candidates × 2 drift types)
+    - src/app/design-system/_fixtures/drummond/types.ts (CaldwellReconciliationPair contract)
     - .planning/design/PATTERNS.md §11 (Reconciliation strawman with Candidates A/B/C/D documented)
     - src/components/nw/Card.tsx, Eyebrow.tsx, Money.tsx, DataRow.tsx, Badge.tsx
   </read_first>
@@ -667,7 +667,7 @@ Add this section AFTER `</section>` of `g702-cover`, INSIDE the `<main>` tag:
 
 Single page rendering 4×2 matrix top-to-bottom. Per CONTEXT D-07: per drift-type sections (invoice↔PO at top, draw↔budget at bottom). Each section contains 4 candidate Cards stacked.
 
-Per CONTEXT D-08: EXTENDS existing ReconciliationStrawman function visual contract — does NOT diverge. Re-implements the same 4 Card visual shapes against Drummond drift fixture.
+Per CONTEXT D-08: EXTENDS existing ReconciliationStrawman function visual contract — does NOT diverge. Re-implements the same 4 Card visual shapes against Caldwell drift fixture.
 
 ```typescript
 // src/app/design-system/prototypes/reconciliation/page.tsx
@@ -684,7 +684,7 @@ Per CONTEXT D-08: EXTENDS existing ReconciliationStrawman function visual contra
 // in patterns/page.tsx:1149-1279 — does NOT diverge per A16.1
 // (would force forbidden PATTERNS.md §11 rewrite).
 //
-// Per CONTEXT D-09: uses DRUMMOND_RECONCILIATION_PAIRS fixture from
+// Per CONTEXT D-09: uses CALDWELL_RECONCILIATION_PAIRS fixture from
 // _fixtures/drummond/reconciliation.ts — 8 paired imported/current
 // shapes derived from real Source 3 invoice-vs-PO and pay-app-vs-budget
 // mismatches.
@@ -694,9 +694,9 @@ Per CONTEXT D-08: EXTENDS existing ReconciliationStrawman function visual contra
 import Link from "next/link";
 
 import {
-  DRUMMOND_RECONCILIATION_PAIRS,
-  type DrummondReconciliationPair,
-  type DrummondReconciliationDriftType,
+  CALDWELL_RECONCILIATION_PAIRS,
+  type CaldwellReconciliationPair,
+  type CaldwellReconciliationDriftType,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -705,7 +705,7 @@ import DataRow from "@/components/nw/DataRow";
 
 // Each pair has a candidate label embedded in id (e.g., rec-caldwell-invoice_po-1
 // for candidate 1 of invoice_po drift type).
-function candidateOf(pair: DrummondReconciliationPair): number {
+function candidateOf(pair: CaldwellReconciliationPair): number {
   const match = pair.id.match(/-([1-4])$/);
   return match ? parseInt(match[1], 10) : 1;
 }
@@ -718,7 +718,7 @@ function val(v: unknown): string {
 }
 
 // Candidate 1 — Side-by-side delta (analog patterns/page.tsx:1168-1193)
-function Candidate1SideBySide({ pair }: { pair: DrummondReconciliationPair }) {
+function Candidate1SideBySide({ pair }: { pair: CaldwellReconciliationPair }) {
   const driftFields = pair.diffs.map((d) => d.field);
   const importedKeys = Object.keys(pair.imported);
   const currentKeys = Object.keys(pair.current);
@@ -752,7 +752,7 @@ function Candidate1SideBySide({ pair }: { pair: DrummondReconciliationPair }) {
 }
 
 // Candidate 2 — Inline diff (analog patterns/page.tsx:1196-1218)
-function Candidate2InlineDiff({ pair }: { pair: DrummondReconciliationPair }) {
+function Candidate2InlineDiff({ pair }: { pair: CaldwellReconciliationPair }) {
   return (
     <Card padding="md">
       <Eyebrow tone="accent" className="mb-2">Candidate 2 · Inline diff</Eyebrow>
@@ -776,7 +776,7 @@ function Candidate2InlineDiff({ pair }: { pair: DrummondReconciliationPair }) {
 }
 
 // Candidate 3 — Timeline overlay (analog patterns/page.tsx:1221-1248)
-function Candidate3TimelineOverlay({ pair }: { pair: DrummondReconciliationPair }) {
+function Candidate3TimelineOverlay({ pair }: { pair: CaldwellReconciliationPair }) {
   const allKeys = Array.from(new Set([...Object.keys(pair.imported), ...Object.keys(pair.current)]));
   const driftFields = pair.diffs.map((d) => d.field);
 
@@ -812,7 +812,7 @@ function Candidate3TimelineOverlay({ pair }: { pair: DrummondReconciliationPair 
 }
 
 // Candidate 4 — Hybrid split + inline (analog patterns/page.tsx:1251-1276)
-function Candidate4Hybrid({ pair }: { pair: DrummondReconciliationPair }) {
+function Candidate4Hybrid({ pair }: { pair: CaldwellReconciliationPair }) {
   const driftFields = pair.diffs.map((d) => d.field);
   const allKeys = Array.from(new Set([...Object.keys(pair.imported), ...Object.keys(pair.current)]));
 
@@ -857,7 +857,7 @@ function Candidate4Hybrid({ pair }: { pair: DrummondReconciliationPair }) {
   );
 }
 
-function CandidateRenderer({ pair }: { pair: DrummondReconciliationPair }) {
+function CandidateRenderer({ pair }: { pair: CaldwellReconciliationPair }) {
   const c = candidateOf(pair);
   switch (c) {
     case 1: return <Candidate1SideBySide pair={pair} />;
@@ -868,8 +868,8 @@ function CandidateRenderer({ pair }: { pair: DrummondReconciliationPair }) {
   }
 }
 
-function DriftSection({ driftType, title, anchor }: { driftType: DrummondReconciliationDriftType; title: string; anchor: string }) {
-  const pairs = DRUMMOND_RECONCILIATION_PAIRS
+function DriftSection({ driftType, title, anchor }: { driftType: CaldwellReconciliationDriftType; title: string; anchor: string }) {
+  const pairs = CALDWELL_RECONCILIATION_PAIRS
     .filter((p) => p.drift_type === driftType)
     .sort((a, b) => candidateOf(a) - candidateOf(b));
 
@@ -899,7 +899,7 @@ export default function ReconciliationStrawmanPage() {
           Reconciliation strawman
         </h1>
         <p className="text-[13px] mb-3" style={{ color: "var(--text-secondary)" }}>
-          4 candidates × 2 drift types = 8 prototypes rendered against real Drummond drift.
+          4 candidates × 2 drift types = 8 prototypes rendered against real Caldwell drift.
           Per CONTEXT Q3=C: leading candidate documented at end of 1.5b; final lock at first reconciliation phase post-3.9.
         </p>
         {/* Anchor nav */}
@@ -921,7 +921,7 @@ export default function ReconciliationStrawmanPage() {
           Per CONTEXT D-08 and PATTERNS.md §11 acceptance posture (A16.1), this prototype EXTENDS the
           existing ReconciliationStrawman function in <code>src/app/design-system/patterns/page.tsx:1149-1279</code> —
           it does NOT diverge. Picking a non-Candidate-1 model now would force a non-trivial PATTERNS.md
-          rewrite mid-foundation. Per Q3=C, the goal of 1.5b is to render all 4 against real Drummond drift
+          rewrite mid-foundation. Per Q3=C, the goal of 1.5b is to render all 4 against real Caldwell drift
           so Jake's preference becomes visually obvious; the leading candidate is a recommendation, not a lock.
         </p>
       </div>
@@ -930,7 +930,7 @@ export default function ReconciliationStrawmanPage() {
 }
 ```
 
-**Per CONTEXT acceptance criterion:** "Reconciliation strawman renders all 4 candidates × 2 drift types (8 prototypes)". The DriftSection component renders all candidates for each drift_type filter; Wave 0 Task 2 acceptance ensures DRUMMOND_RECONCILIATION_PAIRS contains exactly 8 entries (4 candidates × 2 drift types).
+**Per CONTEXT acceptance criterion:** "Reconciliation strawman renders all 4 candidates × 2 drift types (8 prototypes)". The DriftSection component renders all candidates for each drift_type filter; Wave 0 Task 2 acceptance ensures CALDWELL_RECONCILIATION_PAIRS contains exactly 8 entries (4 candidates × 2 drift types).
 
 **Per CONTEXT D-08 (do NOT diverge):** the 4 Candidate components (Candidate1SideBySide, Candidate2InlineDiff, Candidate3TimelineOverlay, Candidate4Hybrid) mirror the visual contracts at `patterns/page.tsx:1168-1276` exactly. If the executor finds a "better" rendering during execute, that's a PATTERNS.md §11 polish proposal — log as 1.5b finding, do NOT modify the component shapes here.
 
@@ -938,7 +938,7 @@ export default function ReconciliationStrawmanPage() {
   </action>
 
   <verify>
-    <automated>npm run build && grep -c "Candidate1SideBySide\|Candidate2InlineDiff\|Candidate3TimelineOverlay\|Candidate4Hybrid\|DRUMMOND_RECONCILIATION_PAIRS" src/app/design-system/prototypes/reconciliation/page.tsx</automated>
+    <automated>npm run build && grep -c "Candidate1SideBySide\|Candidate2InlineDiff\|Candidate3TimelineOverlay\|Candidate4Hybrid\|CALDWELL_RECONCILIATION_PAIRS" src/app/design-system/prototypes/reconciliation/page.tsx</automated>
     Expected: build exits 0; grep returns >=5.
 
     Hex check: `grep -nE '#[0-9a-fA-F]{3,6}' src/app/design-system/prototypes/reconciliation/page.tsx` — ALLOWED only inside `rgba(220, 38, 38, ...)` / `rgba(34, 197, 94, ...)` calls (these are CSS rgba carve-outs for the candidate-2 inline diff backgrounds, mirror of the patterns/ analog). Any other hex MUST be 0.
@@ -986,8 +986,8 @@ export default function ReconciliationStrawmanPage() {
 | Threat ID | Category | Component | Disposition | Mitigation Plan |
 |-----------|----------|-----------|-------------|-----------------|
 | T-1.5b-W2-01 | T (Tampering) | Print stylesheet leaks personally-styled colors into print, breaks bank-acceptable monochrome | mitigate | Page-specific @page + @media print rules force `#000000` text, `#ffffff` background, `#999` borders. Existing globals.css:255-289 base print stylesheet enforces. |
-| T-1.5b-W2-02 | I (Information disclosure) | Drummond name leaks into G702 cover sheet via DRUMMOND_JOBS rendering | mitigate (existing) | Wave 0 grep gates ensure DRUMMOND_JOBS contains substituted name (Caldwell). G702 renders `{job.client_name}` which is sanitized. |
-| T-1.5b-W2-03 | I (Information disclosure) | Reconciliation pair imported/current shapes contain real names | mitigate (existing) | Wave 0 Task 2 generates DRUMMOND_RECONCILIATION_PAIRS via the same substitution pipeline as other fixtures. CI grep gate runs on every commit. |
+| T-1.5b-W2-02 | I (Information disclosure) | Drummond name leaks into G702 cover sheet via CALDWELL_JOBS rendering | mitigate (existing) | Wave 0 grep gates ensure CALDWELL_JOBS contains substituted name (Caldwell). G702 renders `{job.client_name}` which is sanitized. |
+| T-1.5b-W2-03 | I (Information disclosure) | Reconciliation pair imported/current shapes contain real names | mitigate (existing) | Wave 0 Task 2 generates CALDWELL_RECONCILIATION_PAIRS via the same substitution pipeline as other fixtures. CI grep gate runs on every commit. |
 | T-1.5b-W2-04 | E (Elevation of privilege) | Print page calls `window.print()` — no privilege escalation since this is a prototype with no real submission pathway | accept | window.print() opens browser print dialog; no API call. |
 | T-1.5b-W2-05 | T (Tampering) | Pixel-perfect G702 attempt could bypass 1-day judgment if executor doesn't self-evaluate | mitigate | Task 1 explicitly encodes Phase 1A (1-day attempt) + Phase 1B (self-evaluate at 1-day mark). The escape clause is the documented secondary success path — invoking it is acceptable, NOT a failure. Plan summary captures the outcome. |
 </threat_model>
@@ -1016,6 +1016,6 @@ After completion, create `.planning/phases/stage-1.5b-prototype-gallery/stage-1.
 - **Phase 1B outcome:** Did pixel-perfect G702 converge in 1 day? OR was the escape clause invoked? (Either is success per CONTEXT D-16/D-24.)
 - If escape clause invoked: log "1.5b-followup-N: pixel-perfect AIA G702 fidelity for production AIA Document Service certification — separate phase post-1.5b"
 - G703 80% fidelity render observations
-- Reconciliation leading-candidate observation (which candidate visually communicated drift most clearly against Drummond data?) — recommendation only; final lock at reconciliation phase post-3.9
+- Reconciliation leading-candidate observation (which candidate visually communicated drift most clearly against Caldwell data?) — recommendation only; final lock at reconciliation phase post-3.9
 - Critical findings (if any)
 </output>

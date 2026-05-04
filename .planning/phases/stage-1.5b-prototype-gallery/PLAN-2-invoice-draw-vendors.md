@@ -14,12 +14,12 @@ threat_model_severity: low
 requirements: []
 must_haves:
   truths:
-    - "User can view a Drummond invoice rendered with Document Review pattern at /design-system/prototypes/invoices/{id}"
+    - "User can view a Caldwell invoice rendered with Document Review pattern at /design-system/prototypes/invoices/{id}"
     - "Invoice renders for all 4 fixture statuses (ai_processed, pm_review, qa_review, paid) with correct status badge + audit timeline"
     - "Invoice renders all 3 format types (clean PDF, T&M, lump_sum) with appropriate confidence routing colors"
-    - "User can view Drummond Pay App 5 rendered with Document Review pattern at /design-system/prototypes/draws/d-caldwell-05"
+    - "User can view Caldwell Pay App 5 rendered with Document Review pattern at /design-system/prototypes/draws/d-caldwell-05"
     - "Draw approval renders G702 summary panel + G703 line items table with all rows"
-    - "User can browse 17 Drummond vendors in List+Detail at /design-system/prototypes/vendors"
+    - "User can browse 17 Caldwell vendors in List+Detail at /design-system/prototypes/vendors"
     - "Long vendor names ('Bay Region Carpentry Inc', 'Coastal Smart Systems LLC') render without breaking layout on nw-phone breakpoint"
     - "User can view a single vendor detail at /design-system/prototypes/vendors/{id} with vendor profile + recent invoice activity"
     - "All routes inherit Site Office direction (UPPERCASE 0.18em eyebrows, JetBrains Mono dominance, compact density, slate-tile left-stamp, 150ms motion) from prototypes/layout.tsx"
@@ -27,44 +27,44 @@ must_haves:
   artifacts:
     - path: "src/app/design-system/prototypes/invoices/[id]/page.tsx"
       provides: "Invoice approval prototype — Document Review pattern with hero grid 50/50 (file preview LEFT + right-rail panels RIGHT) + audit timeline"
-      contains: "DRUMMOND_INVOICES"
+      contains: "CALDWELL_INVOICES"
     - path: "src/app/design-system/prototypes/draws/[id]/page.tsx"
       provides: "Draw approval prototype — Document Review pattern + G702 summary + G703 line items table"
-      contains: "DRUMMOND_DRAWS"
+      contains: "CALDWELL_DRAWS"
     - path: "src/app/design-system/prototypes/vendors/page.tsx"
       provides: "Vendors index — List+Detail layout with 17 entries"
-      contains: "DRUMMOND_VENDORS"
+      contains: "CALDWELL_VENDORS"
     - path: "src/app/design-system/prototypes/vendors/[id]/page.tsx"
       provides: "Vendor detail — Document Review pattern with profile + recent activity"
-      contains: "DRUMMOND_VENDORS"
+      contains: "CALDWELL_VENDORS"
   key_links:
     - from: "prototypes/invoices/[id]/page.tsx"
-      to: "DRUMMOND_INVOICES + DRUMMOND_VENDORS + DRUMMOND_JOBS + DRUMMOND_COST_CODES"
+      to: "CALDWELL_INVOICES + CALDWELL_VENDORS + CALDWELL_JOBS + CALDWELL_COST_CODES"
       via: "named imports from @/app/design-system/_fixtures/drummond"
       pattern: "from \"@/app/design-system/_fixtures/drummond\""
     - from: "prototypes/draws/[id]/page.tsx"
-      to: "DRUMMOND_DRAWS + DRUMMOND_DRAW_LINE_ITEMS + DRUMMOND_COST_CODES + DRUMMOND_CHANGE_ORDERS"
+      to: "CALDWELL_DRAWS + CALDWELL_DRAW_LINE_ITEMS + CALDWELL_COST_CODES + CALDWELL_CHANGE_ORDERS"
       via: "named imports from @/app/design-system/_fixtures/drummond"
-      pattern: "DRUMMOND_DRAW_LINE_ITEMS"
+      pattern: "CALDWELL_DRAW_LINE_ITEMS"
     - from: "prototypes/vendors/page.tsx"
-      to: "DRUMMOND_VENDORS + DRUMMOND_INVOICES"
+      to: "CALDWELL_VENDORS + CALDWELL_INVOICES"
       via: "named imports + filter for vendor activity"
-      pattern: "DRUMMOND_VENDORS"
+      pattern: "CALDWELL_VENDORS"
     - from: "prototypes/vendors/[id]/page.tsx"
-      to: "DRUMMOND_VENDORS + DRUMMOND_INVOICES + DRUMMOND_LIEN_RELEASES"
+      to: "CALDWELL_VENDORS + CALDWELL_INVOICES + CALDWELL_LIEN_RELEASES"
       via: "named imports + filter for vendor's invoice/lien history"
-      pattern: "DRUMMOND_INVOICES.filter"
+      pattern: "CALDWELL_INVOICES.filter"
 ---
 
 <objective>
-Render the financial workflow Document Review surfaces — invoice approval, draw approval (Pay App 5), and vendor management (list + detail). All extend PATTERNS.md §2 Document Review (gold standard) at Site Office direction with real-shape Drummond data.
+Render the financial workflow Document Review surfaces — invoice approval, draw approval (Pay App 5), and vendor management (list + detail). All extend PATTERNS.md §2 Document Review (gold standard) at Site Office direction with real-shape Caldwell data.
 
 Purpose: This is the primary stress test for the gold-standard Document Review pattern. If the design system fundamentally fails on real data, the failure surfaces here first (long vendor names breaking layout, 25+ G703 line items overflowing compact density, status timeline cluttering the audit panel).
 
 Output:
-- Invoice prototype at `/design-system/prototypes/invoices/{id}` for any of 4-6 Drummond invoices (4 statuses × 3 format types)
+- Invoice prototype at `/design-system/prototypes/invoices/{id}` for any of 4-6 Caldwell invoices (4 statuses × 3 format types)
 - Draw prototype at `/design-system/prototypes/draws/{id}` rendering Pay App 5 (canonical) with full G703 line items
-- Vendor list at `/design-system/prototypes/vendors` showing all 17 Drummond vendors in List+Detail
+- Vendor list at `/design-system/prototypes/vendors` showing all 17 Caldwell vendors in List+Detail
 - Vendor detail at `/design-system/prototypes/vendors/{id}` for any single vendor
 </objective>
 
@@ -98,29 +98,29 @@ Output:
 @src/components/nw/StatusDot.tsx
 
 <interfaces>
-<!-- Drummond fixture types from Wave 0 (PLAN-1). Available via:
+<!-- Caldwell fixture types from Wave 0 (PLAN-1). Available via:
        import { ... } from "@/app/design-system/_fixtures/drummond";
      The barrel re-exports types + all 12 const arrays. -->
 
 Core types (full shapes in src/app/design-system/_fixtures/drummond/types.ts):
-  - DrummondInvoice (id, vendor_id, job_id, cost_code_id, po_id, co_id, invoice_number, invoice_date, description, invoice_type, total_amount, confidence_score, confidence_details, status, received_date, payment_date, draw_id, line_items, flags, original_file_url)
-  - DrummondVendor (id, name, address, phone, email, default_cost_code_id)
-  - DrummondJob (id, name, address, client_name, contract_type, original_contract_amount, current_contract_amount, gc_fee_percentage, ...)
-  - DrummondCostCode (id, code, description, category, sort_order)
-  - DrummondDraw (id, job_id, draw_number, application_date, period_start, period_end, status, revision_number, original_contract_sum, net_change_orders, contract_sum_to_date, total_completed_to_date, less_previous_payments, current_payment_due, balance_to_finish, deposit_amount)
-  - DrummondDrawLineItem (id, draw_id, budget_line_id, cost_code_id, previous_applications, this_period, total_to_date, percent_complete, balance_to_finish)
-  - DrummondChangeOrder (id, job_id, pcco_number, description, amount, gc_fee_amount, gc_fee_rate, total_with_fee, estimated_days_added, status, approved_date, draw_number)
-  - DrummondLienRelease (id, vendor_id, invoice_id, draw_id, release_type, status, release_date, amount_through)
+  - CaldwellInvoice (id, vendor_id, job_id, cost_code_id, po_id, co_id, invoice_number, invoice_date, description, invoice_type, total_amount, confidence_score, confidence_details, status, received_date, payment_date, draw_id, line_items, flags, original_file_url)
+  - CaldwellVendor (id, name, address, phone, email, default_cost_code_id)
+  - CaldwellJob (id, name, address, client_name, contract_type, original_contract_amount, current_contract_amount, gc_fee_percentage, ...)
+  - CaldwellCostCode (id, code, description, category, sort_order)
+  - CaldwellDraw (id, job_id, draw_number, application_date, period_start, period_end, status, revision_number, original_contract_sum, net_change_orders, contract_sum_to_date, total_completed_to_date, less_previous_payments, current_payment_due, balance_to_finish, deposit_amount)
+  - CaldwellDrawLineItem (id, draw_id, budget_line_id, cost_code_id, previous_applications, this_period, total_to_date, percent_complete, balance_to_finish)
+  - CaldwellChangeOrder (id, job_id, pcco_number, description, amount, gc_fee_amount, gc_fee_rate, total_with_fee, estimated_days_added, status, approved_date, draw_number)
+  - CaldwellLienRelease (id, vendor_id, invoice_id, draw_id, release_type, status, release_date, amount_through)
 
 Const arrays (named exports):
-  - DRUMMOND_INVOICES: DrummondInvoice[]
-  - DRUMMOND_VENDORS: DrummondVendor[]
-  - DRUMMOND_JOBS: DrummondJob[]
-  - DRUMMOND_COST_CODES: DrummondCostCode[]
-  - DRUMMOND_DRAWS: DrummondDraw[]
-  - DRUMMOND_DRAW_LINE_ITEMS: DrummondDrawLineItem[]
-  - DRUMMOND_CHANGE_ORDERS: DrummondChangeOrder[]
-  - DRUMMOND_LIEN_RELEASES: DrummondLienRelease[]
+  - CALDWELL_INVOICES: CaldwellInvoice[]
+  - CALDWELL_VENDORS: CaldwellVendor[]
+  - CALDWELL_JOBS: CaldwellJob[]
+  - CALDWELL_COST_CODES: CaldwellCostCode[]
+  - CALDWELL_DRAWS: CaldwellDraw[]
+  - CALDWELL_DRAW_LINE_ITEMS: CaldwellDrawLineItem[]
+  - CALDWELL_CHANGE_ORDERS: CaldwellChangeOrder[]
+  - CALDWELL_LIEN_RELEASES: CaldwellLienRelease[]
 
 <!-- Nightwork primitive components (from src/components/nw/). All read CSS
      vars; all are tenant-blind (no org_id/membership/vendor_id props). -->
@@ -160,7 +160,7 @@ import Badge from "@/components/nw/Badge";
 
   <read_first>
     - src/app/design-system/patterns/page.tsx (lines 259-407 — Pattern1DocumentReview FULL function; the gold standard layout)
-    - src/app/design-system/_fixtures/drummond/types.ts (DrummondInvoice + sub-types — full file from Wave 0)
+    - src/app/design-system/_fixtures/drummond/types.ts (CaldwellInvoice + sub-types — full file from Wave 0)
     - src/app/design-system/_fixtures/drummond/invoices.ts (full file — actual fixture data the prototype renders)
     - src/app/design-system/_fixtures/invoices.ts (analog: SAMPLE_INVOICES — see how status badge variants map to confidence routing)
     - src/app/design-system/_fixtures/drummond/vendors.ts (resolve vendor_id → name)
@@ -179,15 +179,15 @@ import Badge from "@/components/nw/Badge";
 **Create `src/app/design-system/prototypes/invoices/[id]/page.tsx`:**
 
 Mirror `src/app/design-system/patterns/page.tsx:259-407` Pattern1DocumentReview structure, but:
-- Replace static demo data with lookup against `DRUMMOND_INVOICES` by `params.id`
+- Replace static demo data with lookup against `CALDWELL_INVOICES` by `params.id`
 - Add a header band with breadcrumb + invoice number + vendor name + status badge + action buttons
-- Add the bottom audit timeline derived from invoice.status (faked since DrummondInvoice doesn't carry status_history JSONB — label as faked client-side per F1 gap)
+- Add the bottom audit timeline derived from invoice.status (faked since CaldwellInvoice doesn't carry status_history JSONB — label as faked client-side per F1 gap)
 
 ```typescript
 // src/app/design-system/prototypes/invoices/[id]/page.tsx
 //
 // Invoice approval prototype — Document Review pattern (PATTERNS §2)
-// rendering real-shape Drummond invoice data. Per Stage 1.5b deliverable #2.
+// rendering real-shape Caldwell invoice data. Per Stage 1.5b deliverable #2.
 //
 // Hero grid 50/50: file preview LEFT, right-rail panels RIGHT, audit
 // timeline below. Validates the gold-standard layout under real-data
@@ -206,12 +206,12 @@ import {
 } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_INVOICES,
-  DRUMMOND_VENDORS,
-  DRUMMOND_JOBS,
-  DRUMMOND_COST_CODES,
-  type DrummondInvoiceStatus,
-  type DrummondInvoiceConfidenceDetails,
+  CALDWELL_INVOICES,
+  CALDWELL_VENDORS,
+  CALDWELL_JOBS,
+  CALDWELL_COST_CODES,
+  type CaldwellInvoiceStatus,
+  type CaldwellInvoiceConfidenceDetails,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -221,7 +221,7 @@ import DataRow from "@/components/nw/DataRow";
 import Badge from "@/components/nw/Badge";
 
 // Map invoice status → Badge variant. Mirror confidence routing colors per CLAUDE.md.
-const STATUS_BADGE: Record<DrummondInvoiceStatus, { variant: "neutral" | "accent" | "success" | "warn" | "danger" | "info"; label: string }> = {
+const STATUS_BADGE: Record<CaldwellInvoiceStatus, { variant: "neutral" | "accent" | "success" | "warn" | "danger" | "info"; label: string }> = {
   received: { variant: "neutral", label: "RECEIVED" },
   ai_processed: { variant: "warn", label: "AI PROCESSED" },         // yellow flag (70-84%)
   pm_review: { variant: "warn", label: "PM REVIEW" },
@@ -244,10 +244,10 @@ function confidenceTone(score: number): "success" | "warn" | "danger" {
 }
 
 // Build a faked status timeline from the invoice's terminal status.
-// DrummondInvoice doesn't carry status_history JSONB (per F1 gap). The
+// CaldwellInvoice doesn't carry status_history JSONB (per F1 gap). The
 // timeline below shows the workflow path that would have been taken to
 // reach the current status — labeled as faked client-side.
-function buildTimeline(inv: typeof DRUMMOND_INVOICES[number]) {
+function buildTimeline(inv: typeof CALDWELL_INVOICES[number]) {
   const steps: Array<{ when: string; what: string; done: boolean }> = [];
   const r = inv.received_date;
   steps.push({ when: `${r} · 10:04`, what: "RECEIVED via email-in", done: true });
@@ -276,10 +276,10 @@ function buildTimeline(inv: typeof DRUMMOND_INVOICES[number]) {
 }
 
 // Confidence per-field grid for AI parse panel.
-function ConfidenceGrid({ details }: { details: DrummondInvoiceConfidenceDetails }) {
+function ConfidenceGrid({ details }: { details: CaldwellInvoiceConfidenceDetails }) {
   return (
     <div className="grid grid-cols-2 gap-2 text-[11px]">
-      {(Object.keys(details) as Array<keyof DrummondInvoiceConfidenceDetails>).map((k) => {
+      {(Object.keys(details) as Array<keyof CaldwellInvoiceConfidenceDetails>).map((k) => {
         const tone = confidenceTone(details[k]);
         return (
           <div key={k} className="flex items-center justify-between p-2" style={{ background: "var(--bg-subtle)" }}>
@@ -293,12 +293,12 @@ function ConfidenceGrid({ details }: { details: DrummondInvoiceConfidenceDetails
 }
 
 export default function InvoicePrototypePage({ params }: { params: { id: string } }) {
-  const inv = DRUMMOND_INVOICES.find((i) => i.id === params.id);
+  const inv = CALDWELL_INVOICES.find((i) => i.id === params.id);
   if (!inv) return notFound();
 
-  const vendor = DRUMMOND_VENDORS.find((v) => v.id === inv.vendor_id);
-  const job = DRUMMOND_JOBS.find((j) => j.id === inv.job_id);
-  const costCode = inv.cost_code_id ? DRUMMOND_COST_CODES.find((c) => c.id === inv.cost_code_id) : null;
+  const vendor = CALDWELL_VENDORS.find((v) => v.id === inv.vendor_id);
+  const job = CALDWELL_JOBS.find((j) => j.id === inv.job_id);
+  const costCode = inv.cost_code_id ? CALDWELL_COST_CODES.find((c) => c.id === inv.cost_code_id) : null;
   const status = STATUS_BADGE[inv.status];
   const timeline = buildTimeline(inv);
 
@@ -459,7 +459,7 @@ export default function InvoicePrototypePage({ params }: { params: { id: string 
   </action>
 
   <verify>
-    <automated>npm run build && grep -c "DRUMMOND_INVOICES" src/app/design-system/prototypes/invoices/[id]/page.tsx</automated>
+    <automated>npm run build && grep -c "CALDWELL_INVOICES" src/app/design-system/prototypes/invoices/[id]/page.tsx</automated>
     Expected: build exits 0; grep returns >=1.
 
     Hex check: `grep -nE '#[0-9a-fA-F]{3,6}' src/app/design-system/prototypes/invoices/[id]/page.tsx` returns 0 matches.
@@ -467,7 +467,7 @@ export default function InvoicePrototypePage({ params }: { params: { id: string 
     T10c check: `grep -E '@/lib/(supabase|org|auth)' src/app/design-system/prototypes/invoices/[id]/page.tsx` returns 0 matches.
 
     Manual visual checks (executor uses Chrome MCP per CLAUDE.md mandatory testing rule):
-    - Visit `http://localhost:3000/design-system/prototypes/invoices/inv-caldwell-001` (or actual fixture id — first invoice in DRUMMOND_INVOICES). Renders without errors.
+    - Visit `http://localhost:3000/design-system/prototypes/invoices/inv-caldwell-001` (or actual fixture id — first invoice in CALDWELL_INVOICES). Renders without errors.
     - Eyebrows are UPPERCASE with wide tracking (0.18em — Site Office).
     - Cards have 1px slate-tile left-stamp (NOT brass-bezel top — that's Direction A).
     - Money values render in JetBrains Mono, tabular-nums.
@@ -476,7 +476,7 @@ export default function InvoicePrototypePage({ params }: { params: { id: string 
   </verify>
 
   <done>
-    - Invoice prototype renders for all 4+ Drummond invoices (statuses: ai_processed, pm_review, qa_review, paid)
+    - Invoice prototype renders for all 4+ Caldwell invoices (statuses: ai_processed, pm_review, qa_review, paid)
     - Document Review hero grid 50/50 + audit timeline below
     - All 3 invoice_type values render distinctively (progress, time_and_materials, lump_sum)
     - Confidence routing colors match CLAUDE.md thresholds (≥85% green, 70-84% yellow, <70% red)
@@ -493,8 +493,8 @@ export default function InvoicePrototypePage({ params }: { params: { id: string 
 
   <read_first>
     - src/app/design-system/patterns/page.tsx (lines 259-407 Pattern1DocumentReview AND lines 1048-1143 Pattern9PrintView G703 simulated table)
-    - src/app/design-system/_fixtures/drummond/draws.ts (DRUMMOND_DRAWS — 5 entries, Draw #5 canonical)
-    - src/app/design-system/_fixtures/drummond/draw-line-items.ts (DRUMMOND_DRAW_LINE_ITEMS — one per cost code per draw)
+    - src/app/design-system/_fixtures/drummond/draws.ts (CALDWELL_DRAWS — 5 entries, Draw #5 canonical)
+    - src/app/design-system/_fixtures/drummond/draw-line-items.ts (CALDWELL_DRAW_LINE_ITEMS — one per cost code per draw)
     - src/app/design-system/_fixtures/drummond/cost-codes.ts (resolve cost_code_id → code+description for G703 row Display)
     - src/app/design-system/_fixtures/drummond/change-orders.ts (PCCO log for G702 cover sheet CO summary table)
     - src/app/design-system/_fixtures/drummond/jobs.ts (resolve job_id → job name + contract amount)
@@ -536,12 +536,12 @@ import {
 } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_DRAWS,
-  DRUMMOND_DRAW_LINE_ITEMS,
-  DRUMMOND_COST_CODES,
-  DRUMMOND_CHANGE_ORDERS,
-  DRUMMOND_JOBS,
-  type DrummondDrawStatus,
+  CALDWELL_DRAWS,
+  CALDWELL_DRAW_LINE_ITEMS,
+  CALDWELL_COST_CODES,
+  CALDWELL_CHANGE_ORDERS,
+  CALDWELL_JOBS,
+  type CaldwellDrawStatus,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -550,7 +550,7 @@ import Money from "@/components/nw/Money";
 import DataRow from "@/components/nw/DataRow";
 import Badge from "@/components/nw/Badge";
 
-const STATUS_BADGE: Record<DrummondDrawStatus, { variant: "neutral" | "accent" | "success" | "warn" | "danger" | "info"; label: string }> = {
+const STATUS_BADGE: Record<CaldwellDrawStatus, { variant: "neutral" | "accent" | "success" | "warn" | "danger" | "info"; label: string }> = {
   draft: { variant: "neutral", label: "DRAFT" },
   pm_review: { variant: "warn", label: "PM REVIEW" },
   approved: { variant: "success", label: "APPROVED" },
@@ -560,13 +560,13 @@ const STATUS_BADGE: Record<DrummondDrawStatus, { variant: "neutral" | "accent" |
 };
 
 export default function DrawPrototypePage({ params }: { params: { id: string } }) {
-  const draw = DRUMMOND_DRAWS.find((d) => d.id === params.id);
+  const draw = CALDWELL_DRAWS.find((d) => d.id === params.id);
   if (!draw) return notFound();
 
-  const job = DRUMMOND_JOBS.find((j) => j.id === draw.job_id);
+  const job = CALDWELL_JOBS.find((j) => j.id === draw.job_id);
   const status = STATUS_BADGE[draw.status];
-  const lineItems = DRUMMOND_DRAW_LINE_ITEMS.filter((li) => li.draw_id === draw.id);
-  const cosThroughThisDraw = DRUMMOND_CHANGE_ORDERS.filter((co) => co.draw_number !== null && co.draw_number <= draw.draw_number);
+  const lineItems = CALDWELL_DRAW_LINE_ITEMS.filter((li) => li.draw_id === draw.id);
+  const cosThroughThisDraw = CALDWELL_CHANGE_ORDERS.filter((co) => co.draw_number !== null && co.draw_number <= draw.draw_number);
 
   return (
     <div className="px-6 py-8 max-w-[1600px] mx-auto">
@@ -689,7 +689,7 @@ export default function DrawPrototypePage({ params }: { params: { id: string } }
               </thead>
               <tbody>
                 {lineItems.map((li) => {
-                  const cc = DRUMMOND_COST_CODES.find((c) => c.id === li.cost_code_id);
+                  const cc = CALDWELL_COST_CODES.find((c) => c.id === li.cost_code_id);
                   return (
                     <tr key={li.id}>
                       <td className="px-2 py-1.5 border" style={{ borderColor: "var(--border-subtle)" }}>{cc?.code ?? "—"}</td>
@@ -766,14 +766,14 @@ export default function DrawPrototypePage({ params }: { params: { id: string } }
   </action>
 
   <verify>
-    <automated>npm run build && grep -c "DRUMMOND_DRAW_LINE_ITEMS" src/app/design-system/prototypes/draws/[id]/page.tsx</automated>
+    <automated>npm run build && grep -c "CALDWELL_DRAW_LINE_ITEMS" src/app/design-system/prototypes/draws/[id]/page.tsx</automated>
     Expected: build exits 0; grep returns >=1.
 
     Hex check + T10c check (same patterns as Task 1) return 0 matches.
 
     Manual visual checks (Chrome MCP):
     - Visit `http://localhost:3000/design-system/prototypes/draws/d-caldwell-05`. Page renders without crashing.
-    - G703 line items table shows ALL line items for Pay App 5 (count matches `DRUMMOND_DRAW_LINE_ITEMS.filter(l => l.draw_id === "d-caldwell-05").length`).
+    - G703 line items table shows ALL line items for Pay App 5 (count matches `CALDWELL_DRAW_LINE_ITEMS.filter(l => l.draw_id === "d-caldwell-05").length`).
     - On tablet width (768px+), all 8 G703 columns fit without horizontal scroll.
     - On phone width (360px), horizontal scroll appears (acceptable per PATTERNS.md §2 mobile behavior).
     - Status timeline at bottom shows ≥1 entry derived from draw status.
@@ -797,7 +797,7 @@ export default function DrawPrototypePage({ params }: { params: { id: string } }
 
   <read_first>
     - src/app/design-system/patterns/page.tsx (lines 818-869 Pattern6ListDetail; lines 871-940ish Pattern1DocumentReviewMini for the detail-pane pattern)
-    - src/app/design-system/_fixtures/drummond/vendors.ts (DRUMMOND_VENDORS — 17 entries; includes long names like "Bay Region Carpentry Inc")
+    - src/app/design-system/_fixtures/drummond/vendors.ts (CALDWELL_VENDORS — 17 entries; includes long names like "Bay Region Carpentry Inc")
     - src/app/design-system/_fixtures/drummond/invoices.ts (filter for vendor's recent invoice activity)
     - src/app/design-system/_fixtures/drummond/cost-codes.ts (resolve default_cost_code_id → code+description)
     - src/app/design-system/_fixtures/drummond/lien-releases.ts (filter for vendor's lien-release activity)
@@ -828,9 +828,9 @@ import Link from "next/link";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_VENDORS,
-  DRUMMOND_INVOICES,
-  DRUMMOND_COST_CODES,
+  CALDWELL_VENDORS,
+  CALDWELL_INVOICES,
+  CALDWELL_COST_CODES,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -840,17 +840,17 @@ import DataRow from "@/components/nw/DataRow";
 import Badge from "@/components/nw/Badge";
 
 export default function VendorsListPage() {
-  const [selectedId, setSelectedId] = useState<string>(DRUMMOND_VENDORS[0]?.id ?? "");
-  const selected = DRUMMOND_VENDORS.find((v) => v.id === selectedId) ?? DRUMMOND_VENDORS[0];
-  const recentInvoices = DRUMMOND_INVOICES
+  const [selectedId, setSelectedId] = useState<string>(CALDWELL_VENDORS[0]?.id ?? "");
+  const selected = CALDWELL_VENDORS.find((v) => v.id === selectedId) ?? CALDWELL_VENDORS[0];
+  const recentInvoices = CALDWELL_INVOICES
     .filter((i) => i.vendor_id === selected?.id)
     .sort((a, b) => (b.received_date ?? "").localeCompare(a.received_date ?? ""))
     .slice(0, 5);
-  const totalInvoiced = DRUMMOND_INVOICES
+  const totalInvoiced = CALDWELL_INVOICES
     .filter((i) => i.vendor_id === selected?.id)
     .reduce((sum, i) => sum + i.total_amount, 0);
   const defaultCC = selected?.default_cost_code_id
-    ? DRUMMOND_COST_CODES.find((c) => c.id === selected.default_cost_code_id)
+    ? CALDWELL_COST_CODES.find((c) => c.id === selected.default_cost_code_id)
     : null;
 
   return (
@@ -866,7 +866,7 @@ export default function VendorsListPage() {
           Vendors
         </h1>
         <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-          {DRUMMOND_VENDORS.length} active vendors on the Caldwell Residence project.
+          {CALDWELL_VENDORS.length} active vendors on the Caldwell Residence project.
         </p>
       </div>
 
@@ -879,10 +879,10 @@ export default function VendorsListPage() {
           {/* LEFT — list rail */}
           <div className="border-r" style={{ borderColor: "var(--border-default)" }}>
             <div className="px-4 py-3 border-b" style={{ borderColor: "var(--border-default)" }}>
-              <Eyebrow tone="muted">Vendors · {DRUMMOND_VENDORS.length}</Eyebrow>
+              <Eyebrow tone="muted">Vendors · {CALDWELL_VENDORS.length}</Eyebrow>
             </div>
             <ul>
-              {DRUMMOND_VENDORS.map((v) => {
+              {CALDWELL_VENDORS.map((v) => {
                 const isSelected = v.id === selected?.id;
                 return (
                   <li
@@ -945,7 +945,7 @@ export default function VendorsListPage() {
                     <Eyebrow tone="muted" className="mb-3">Activity</Eyebrow>
                     <div className="space-y-2">
                       <DataRow label="Total invoiced" value={<Money cents={totalInvoiced} size="md" variant="emphasized" />} />
-                      <DataRow label="Recent invoices" value={`${recentInvoices.length} of ${DRUMMOND_INVOICES.filter(i => i.vendor_id === selected.id).length}`} />
+                      <DataRow label="Recent invoices" value={`${recentInvoices.length} of ${CALDWELL_INVOICES.filter(i => i.vendor_id === selected.id).length}`} />
                     </div>
                   </Card>
                 </div>
@@ -1008,10 +1008,10 @@ import Link from "next/link";
 import { CheckBadgeIcon } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_VENDORS,
-  DRUMMOND_INVOICES,
-  DRUMMOND_LIEN_RELEASES,
-  DRUMMOND_COST_CODES,
+  CALDWELL_VENDORS,
+  CALDWELL_INVOICES,
+  CALDWELL_LIEN_RELEASES,
+  CALDWELL_COST_CODES,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -1021,13 +1021,13 @@ import DataRow from "@/components/nw/DataRow";
 import Badge from "@/components/nw/Badge";
 
 export default function VendorDetailPage({ params }: { params: { id: string } }) {
-  const vendor = DRUMMOND_VENDORS.find((v) => v.id === params.id);
+  const vendor = CALDWELL_VENDORS.find((v) => v.id === params.id);
   if (!vendor) return notFound();
 
-  const invoices = DRUMMOND_INVOICES.filter((i) => i.vendor_id === vendor.id);
-  const lienReleases = DRUMMOND_LIEN_RELEASES.filter((l) => l.vendor_id === vendor.id);
+  const invoices = CALDWELL_INVOICES.filter((i) => i.vendor_id === vendor.id);
+  const lienReleases = CALDWELL_LIEN_RELEASES.filter((l) => l.vendor_id === vendor.id);
   const totalInvoiced = invoices.reduce((sum, i) => sum + i.total_amount, 0);
-  const defaultCC = vendor.default_cost_code_id ? DRUMMOND_COST_CODES.find((c) => c.id === vendor.default_cost_code_id) : null;
+  const defaultCC = vendor.default_cost_code_id ? CALDWELL_COST_CODES.find((c) => c.id === vendor.default_cost_code_id) : null;
 
   return (
     <div className="px-6 py-8 max-w-[1600px] mx-auto">
@@ -1146,7 +1146,7 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
   </action>
 
   <verify>
-    <automated>npm run build && grep -c "DRUMMOND_VENDORS" src/app/design-system/prototypes/vendors/page.tsx src/app/design-system/prototypes/vendors/[id]/page.tsx</automated>
+    <automated>npm run build && grep -c "CALDWELL_VENDORS" src/app/design-system/prototypes/vendors/page.tsx src/app/design-system/prototypes/vendors/[id]/page.tsx</automated>
     Expected: build exits 0; grep returns >=2.
 
     Hex + T10c checks return 0 matches.
@@ -1195,26 +1195,26 @@ export default function VendorDetailPage({ params }: { params: { id: string } })
 - Hook T10c silent on all 4 new files (no @/lib/supabase|org|auth imports)
 - No hardcoded hex anywhere in the 4 new files
 - Visual checks confirm Site Office direction applied (UPPERCASE 0.18em eyebrows + slate-tile left-stamp + compact density)
-- All 4+ Drummond invoice statuses render distinctly with correct Badge color tone
+- All 4+ Caldwell invoice statuses render distinctly with correct Badge color tone
 - All 5 Drummond draws render Pay App G702 + G703 without errors
-- All 17 Drummond vendors render in list with long names truncating cleanly
+- All 17 Caldwell vendors render in list with long names truncating cleanly
 - Cross-route links work (vendor detail → invoices)
 </verification>
 
 <success_criteria>
-- Invoice prototype renders all 4+ DRUMMOND_INVOICES at `/design-system/prototypes/invoices/{id}`
-- Draw prototype renders all 5 DRUMMOND_DRAWS at `/design-system/prototypes/draws/{id}`, with Pay App 5 (`d-caldwell-05`) as the canonical demo
+- Invoice prototype renders all 4+ CALDWELL_INVOICES at `/design-system/prototypes/invoices/{id}`
+- Draw prototype renders all 5 CALDWELL_DRAWS at `/design-system/prototypes/draws/{id}`, with Pay App 5 (`d-caldwell-05`) as the canonical demo
 - Vendors list renders 17 entries at `/design-system/prototypes/vendors` with state-driven selection
-- Vendor detail renders any DRUMMOND_VENDORS entry at `/design-system/prototypes/vendors/{id}`
+- Vendor detail renders any CALDWELL_VENDORS entry at `/design-system/prototypes/vendors/{id}`
 - All routes pass build, T10c, and token discipline gates
 - Long vendor names + 25+ G703 line items don't break layout on tablet width
 </success_criteria>
 
 <output>
 After completion, create `.planning/phases/stage-1.5b-prototype-gallery/stage-1.5b-prototype-gallery-2-SUMMARY.md` covering:
-- Which DRUMMOND_INVOICES rendered (count + status diversity + format-type diversity)
-- Which DRUMMOND_DRAWS rendered (Pay App 5 G703 line item count, CO chain length)
-- DRUMMOND_VENDORS visual stress observations (long-name truncation behavior, mobile layout)
+- Which CALDWELL_INVOICES rendered (count + status diversity + format-type diversity)
+- Which CALDWELL_DRAWS rendered (Pay App 5 G703 line item count, CO chain length)
+- CALDWELL_VENDORS visual stress observations (long-name truncation behavior, mobile layout)
 - Any findings for the 1.5b polish backlog (visual issues that don't block but feed Wave 1.1)
 - Critical findings (if any) — does the design system fundamentally fail at any of these workflows?
 - Hook T10c clean? Token discipline clean?

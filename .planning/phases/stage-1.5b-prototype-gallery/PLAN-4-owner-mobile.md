@@ -25,26 +25,26 @@ must_haves:
   artifacts:
     - path: "src/app/design-system/prototypes/owner-portal/page.tsx"
       provides: "Homeowner-facing dashboard — Pattern3Dashboard simplified for non-builder audience"
-      contains: "DRUMMOND_DRAWS"
+      contains: "CALDWELL_DRAWS"
     - path: "src/app/design-system/prototypes/owner-portal/draws/[id]/page.tsx"
       provides: "Owner-facing draw approval — Document Review with vendor-name transparency"
-      contains: "DRUMMOND_DRAW_LINE_ITEMS"
+      contains: "CALDWELL_DRAW_LINE_ITEMS"
     - path: "src/app/design-system/prototypes/mobile-approval/page.tsx"
       provides: "Mobile invoice approval — iPhone-sized viewport simulator with 56px high-stakes targets"
-      contains: "DRUMMOND_INVOICES"
+      contains: "CALDWELL_INVOICES"
   key_links:
     - from: "prototypes/owner-portal/page.tsx"
-      to: "DRUMMOND_DRAWS + DRUMMOND_JOBS + DRUMMOND_CHANGE_ORDERS"
+      to: "CALDWELL_DRAWS + CALDWELL_JOBS + CALDWELL_CHANGE_ORDERS"
       via: "named imports + on-render summarization"
-      pattern: "DRUMMOND_DRAWS"
+      pattern: "CALDWELL_DRAWS"
     - from: "prototypes/owner-portal/draws/[id]/page.tsx"
-      to: "DRUMMOND_DRAW_LINE_ITEMS + DRUMMOND_INVOICES + DRUMMOND_VENDORS + DRUMMOND_COST_CODES"
+      to: "CALDWELL_DRAW_LINE_ITEMS + CALDWELL_INVOICES + CALDWELL_VENDORS + CALDWELL_COST_CODES"
       via: "named imports + per-line-item vendor breakdown"
-      pattern: "DRUMMOND_VENDORS"
+      pattern: "CALDWELL_VENDORS"
     - from: "prototypes/mobile-approval/page.tsx"
-      to: "DRUMMOND_INVOICES + DRUMMOND_VENDORS + DRUMMOND_COST_CODES"
+      to: "CALDWELL_INVOICES + CALDWELL_VENDORS + CALDWELL_COST_CODES"
       via: "named imports for the rendered invoice"
-      pattern: "DRUMMOND_INVOICES"
+      pattern: "CALDWELL_INVOICES"
 ---
 
 <objective>
@@ -90,10 +90,10 @@ Output:
 @src/components/nw/Badge.tsx
 
 <interfaces>
-<!-- Drummond fixture imports — same set as PLAN-2/PLAN-3.
+<!-- Caldwell fixture imports — same set as PLAN-2/PLAN-3.
 
-DrummondInvoice / DrummondDraw / DrummondDrawLineItem / DrummondVendor /
-DrummondJob / DrummondCostCode / DrummondChangeOrder shapes — see PLAN-2's
+CaldwellInvoice / CaldwellDraw / CaldwellDrawLineItem / CaldwellVendor /
+CaldwellJob / CaldwellCostCode / CaldwellChangeOrder shapes — see PLAN-2's
 <interfaces> block for full field-by-field contracts. -->
 
 <!-- SYSTEM.md §11 mobile touch targets (per Q10=A in 1.5a):
@@ -160,9 +160,9 @@ import {
 } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_DRAWS,
-  DRUMMOND_JOBS,
-  DRUMMOND_CHANGE_ORDERS,
+  CALDWELL_DRAWS,
+  CALDWELL_JOBS,
+  CALDWELL_CHANGE_ORDERS,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -171,18 +171,18 @@ import Money from "@/components/nw/Money";
 import Badge from "@/components/nw/Badge";
 
 export default function OwnerPortalDashboard() {
-  const job = DRUMMOND_JOBS[0]; // single-job fixture
+  const job = CALDWELL_JOBS[0]; // single-job fixture
   if (!job) return null;
 
   // Compute KPIs from source-of-truth fixture rows (R.2 honored).
-  const draws = DRUMMOND_DRAWS.filter((d) => d.job_id === job.id);
+  const draws = CALDWELL_DRAWS.filter((d) => d.job_id === job.id);
   const latestDraw = draws[draws.length - 1];
   const paidToDate = draws
     .filter((d) => d.status === "paid")
     .reduce((sum, d) => sum + d.current_payment_due, 0);
   const balanceToFinish = job.current_contract_amount - paidToDate;
   const drawsAwaitingApproval = draws.filter((d) => d.status === "submitted" || d.status === "pm_review");
-  const approvedCOs = DRUMMOND_CHANGE_ORDERS.filter((co) => co.job_id === job.id && (co.status === "approved" || co.status === "executed"));
+  const approvedCOs = CALDWELL_CHANGE_ORDERS.filter((co) => co.job_id === job.id && (co.status === "approved" || co.status === "executed"));
 
   // Next draw date estimate — last draw application_date + 30 days.
   const nextDrawDate = latestDraw
@@ -330,12 +330,12 @@ import {
 } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_DRAWS,
-  DRUMMOND_DRAW_LINE_ITEMS,
-  DRUMMOND_INVOICES,
-  DRUMMOND_VENDORS,
-  DRUMMOND_COST_CODES,
-  DRUMMOND_JOBS,
+  CALDWELL_DRAWS,
+  CALDWELL_DRAW_LINE_ITEMS,
+  CALDWELL_INVOICES,
+  CALDWELL_VENDORS,
+  CALDWELL_COST_CODES,
+  CALDWELL_JOBS,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -345,21 +345,21 @@ import DataRow from "@/components/nw/DataRow";
 import Badge from "@/components/nw/Badge";
 
 export default function OwnerDrawApprovalPage({ params }: { params: { id: string } }) {
-  const draw = DRUMMOND_DRAWS.find((d) => d.id === params.id);
+  const draw = CALDWELL_DRAWS.find((d) => d.id === params.id);
   if (!draw) return notFound();
 
-  const job = DRUMMOND_JOBS.find((j) => j.id === draw.job_id);
-  const lineItems = DRUMMOND_DRAW_LINE_ITEMS.filter((li) => li.draw_id === draw.id);
+  const job = CALDWELL_JOBS.find((j) => j.id === draw.job_id);
+  const lineItems = CALDWELL_DRAW_LINE_ITEMS.filter((li) => li.draw_id === draw.id);
 
   // Per cost code, find vendor breakdown — for owner transparency.
   function vendorsForLine(costCodeId: string) {
-    const invoicesForLine = DRUMMOND_INVOICES.filter((i) => i.cost_code_id === costCodeId && i.draw_id === draw.id);
+    const invoicesForLine = CALDWELL_INVOICES.filter((i) => i.cost_code_id === costCodeId && i.draw_id === draw.id);
     const byVendor = new Map<string, number>();
     for (const inv of invoicesForLine) {
       byVendor.set(inv.vendor_id, (byVendor.get(inv.vendor_id) ?? 0) + inv.total_amount);
     }
     return Array.from(byVendor.entries()).map(([vid, cents]) => ({
-      vendor: DRUMMOND_VENDORS.find((v) => v.id === vid),
+      vendor: CALDWELL_VENDORS.find((v) => v.id === vid),
       cents,
     }));
   }
@@ -418,7 +418,7 @@ export default function OwnerDrawApprovalPage({ params }: { params: { id: string
         </p>
         <ul className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
           {lineItems.map((li) => {
-            const cc = DRUMMOND_COST_CODES.find((c) => c.id === li.cost_code_id);
+            const cc = CALDWELL_COST_CODES.find((c) => c.id === li.cost_code_id);
             const vendors = vendorsForLine(li.cost_code_id);
             if (li.this_period === 0) return null;
             return (
@@ -460,7 +460,7 @@ export default function OwnerDrawApprovalPage({ params }: { params: { id: string
   </action>
 
   <verify>
-    <automated>npm run build && grep -c "DRUMMOND_DRAWS\|DRUMMOND_DRAW_LINE_ITEMS\|DRUMMOND_VENDORS" src/app/design-system/prototypes/owner-portal/page.tsx src/app/design-system/prototypes/owner-portal/draws/[id]/page.tsx</automated>
+    <automated>npm run build && grep -c "CALDWELL_DRAWS\|CALDWELL_DRAW_LINE_ITEMS\|CALDWELL_VENDORS" src/app/design-system/prototypes/owner-portal/page.tsx src/app/design-system/prototypes/owner-portal/draws/[id]/page.tsx</automated>
     Expected: build exits 0; grep returns >=2.
 
     Hex check: `grep -nE '#[0-9a-fA-F]{3,6}' src/app/design-system/prototypes/owner-portal/page.tsx src/app/design-system/prototypes/owner-portal/draws/[id]/page.tsx` returns 0 matches.
@@ -494,7 +494,7 @@ export default function OwnerDrawApprovalPage({ params }: { params: { id: string
 
   <read_first>
     - src/app/design-system/patterns/page.tsx (lines 590-718 Pattern4MobileApproval — note this is a SCALED-DOWN preview at 260px width; the prototype is FULL-SCREEN at real iPhone viewport instead)
-    - src/app/design-system/_fixtures/drummond/invoices.ts (pick a single Drummond invoice in pm_review status as the demo)
+    - src/app/design-system/_fixtures/drummond/invoices.ts (pick a single Caldwell invoice in pm_review status as the demo)
     - src/app/design-system/_fixtures/drummond/vendors.ts (resolve vendor for the demo invoice)
     - src/app/design-system/_fixtures/drummond/cost-codes.ts (resolve cost code)
     - .planning/design/SYSTEM.md §11 (mobile touch targets — 44px standard, 56px high-stakes per Q10=A)
@@ -540,9 +540,9 @@ import {
 } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_INVOICES,
-  DRUMMOND_VENDORS,
-  DRUMMOND_COST_CODES,
+  CALDWELL_INVOICES,
+  CALDWELL_VENDORS,
+  CALDWELL_COST_CODES,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -553,9 +553,9 @@ import Badge from "@/components/nw/Badge";
 
 export default function MobileApprovalPage() {
   // Pick the first pm_review invoice as the demo (or first invoice if none).
-  const inv = DRUMMOND_INVOICES.find((i) => i.status === "pm_review") ?? DRUMMOND_INVOICES[0];
-  const vendor = inv ? DRUMMOND_VENDORS.find((v) => v.id === inv.vendor_id) : null;
-  const costCode = inv?.cost_code_id ? DRUMMOND_COST_CODES.find((c) => c.id === inv.cost_code_id) : null;
+  const inv = CALDWELL_INVOICES.find((i) => i.status === "pm_review") ?? CALDWELL_INVOICES[0];
+  const vendor = inv ? CALDWELL_VENDORS.find((v) => v.id === inv.vendor_id) : null;
+  const costCode = inv?.cost_code_id ? CALDWELL_COST_CODES.find((c) => c.id === inv.cost_code_id) : null;
   const [showLineItems, setShowLineItems] = useState(false);
 
   if (!inv) return null;
@@ -789,7 +789,7 @@ export default function MobileApprovalPage() {
 
 | Threat ID | Category | Component | Disposition | Mitigation Plan |
 |-----------|----------|-----------|-------------|-----------------|
-| T-1.5b-W1-08 | I (Information disclosure) | Owner portal renders sanitized fixtures only — no real client data leaks | mitigate (existing) | Wave 0 grep gates (extractor + CI) prevent real-data leaks. Owner portal imports DRUMMOND_* fixtures only. |
+| T-1.5b-W1-08 | I (Information disclosure) | Owner portal renders sanitized fixtures only — no real client data leaks | mitigate (existing) | Wave 0 grep gates (extractor + CI) prevent real-data leaks. Owner portal imports CALDWELL_* fixtures only. |
 | T-1.5b-W1-09 | E (Elevation of privilege) | Mobile approval renders without auth check at the prototype layer | accept | Hook T10c forbids tenant module imports → no live data ever reaches the prototype. Middleware gates `/design-system/*` to platform_admin in production. The mobile prototype is a static render, not a real approval pathway — clicking Approve has no effect (no `onClick` wired to real API). |
 | T-1.5b-W1-10 | T (Tampering) | Owner draw approval shows vendor breakdown derived from current invoice fixtures — could mislead if fixtures don't match draw period | accept | Wave 0 fixture extraction scripted; vendor breakdown in PLAN-4 Task 1 filters by `cost_code_id === bl.cost_code_id && draw_id === draw.id`. Provided Wave 0 generates consistent draw_id assignments (per fixture extraction acceptance), this is safe. |
 </threat_model>

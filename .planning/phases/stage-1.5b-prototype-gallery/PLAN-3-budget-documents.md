@@ -12,8 +12,8 @@ threat_model_severity: low
 requirements: []
 must_haves:
   truths:
-    - "User can view Drummond budget at /design-system/prototypes/jobs/j-caldwell-1/budget with KPI strip + 25+ line items"
-    - "Computed fields (previous_applications, this_period, total_to_date, percent_complete, balance_to_finish) derived on render from DRUMMOND_INVOICES (per R.2 recalculate-don't-increment)"
+    - "User can view Caldwell budget at /design-system/prototypes/jobs/j-caldwell-1/budget with KPI strip + 25+ line items"
+    - "Computed fields (previous_applications, this_period, total_to_date, percent_complete, balance_to_finish) derived on render from CALDWELL_INVOICES (per R.2 recalculate-don't-increment)"
     - "TanStack Table v8 renders 25+ budget line items in compact density without horizontal scroll on nw-tablet (≥768px)"
     - "User can view documents at /design-system/prototypes/documents/{id} for plans, contracts, and lien releases"
     - "Lien release prototype renders all 4 Florida statute types correctly"
@@ -23,27 +23,27 @@ must_haves:
   artifacts:
     - path: "src/app/design-system/prototypes/jobs/[id]/budget/page.tsx"
       provides: "Budget view prototype — Pattern3Dashboard KPI strip + DataGrid (TanStack Table v8) for budget lines"
-      contains: "DRUMMOND_BUDGET_LINES"
+      contains: "CALDWELL_BUDGET_LINES"
     - path: "src/app/design-system/prototypes/documents/[id]/page.tsx"
       provides: "Document review prototype — handles 3 document types (plans, contracts, lien releases) via type discriminator"
-      contains: "DRUMMOND_LIEN_RELEASES"
+      contains: "CALDWELL_LIEN_RELEASES"
   key_links:
     - from: "prototypes/jobs/[id]/budget/page.tsx"
-      to: "DRUMMOND_BUDGET_LINES + DRUMMOND_INVOICES + DRUMMOND_COST_CODES + DRUMMOND_JOBS + DRUMMOND_CHANGE_ORDERS"
+      to: "CALDWELL_BUDGET_LINES + CALDWELL_INVOICES + CALDWELL_COST_CODES + CALDWELL_JOBS + CALDWELL_CHANGE_ORDERS"
       via: "named imports + on-render computation"
-      pattern: "DRUMMOND_BUDGET_LINES"
+      pattern: "CALDWELL_BUDGET_LINES"
     - from: "prototypes/jobs/[id]/budget/page.tsx"
       to: "@tanstack/react-table v8"
       via: "useReactTable + ColumnDef + getCoreRowModel + getSortedRowModel"
       pattern: "useReactTable"
     - from: "prototypes/documents/[id]/page.tsx"
-      to: "DRUMMOND_LIEN_RELEASES + DRUMMOND_VENDORS + DRUMMOND_INVOICES"
+      to: "CALDWELL_LIEN_RELEASES + CALDWELL_VENDORS + CALDWELL_INVOICES"
       via: "named imports + lookup by document id prefix"
-      pattern: "DRUMMOND_LIEN_RELEASES"
+      pattern: "CALDWELL_LIEN_RELEASES"
 ---
 
 <objective>
-Render the budget view (Pattern3Dashboard + DataGrid stress test) and document review (3 document types: plans, contracts, lien releases). Both extend established 1.5a patterns with real-shape Drummond complexity.
+Render the budget view (Pattern3Dashboard + DataGrid stress test) and document review (3 document types: plans, contracts, lien releases). Both extend established 1.5a patterns with real-shape Caldwell complexity.
 
 Purpose:
 - Budget view tests the DataGrid stress case (25+ line items at compact Site Office density without horizontal scroll on tablet) and validates R.2 "recalculate, don't increment" applies even in prototype contexts.
@@ -82,11 +82,11 @@ Output:
 @src/components/nw/Badge.tsx
 
 <interfaces>
-<!-- Drummond fixture types from Wave 0. Available via:
+<!-- Caldwell fixture types from Wave 0. Available via:
        import { ... } from "@/app/design-system/_fixtures/drummond";
 
-DrummondBudgetLine (per R.2 — computed fields LEFT OFF the type):
-  type DrummondBudgetLine = {
+CaldwellBudgetLine (per R.2 — computed fields LEFT OFF the type):
+  type CaldwellBudgetLine = {
     id: string;
     job_id: string;
     cost_code_id: string;
@@ -94,17 +94,17 @@ DrummondBudgetLine (per R.2 — computed fields LEFT OFF the type):
     revised_estimate: number;     // cents (original + approved COs)
   };
 
-DrummondLienRelease + types:
-  type DrummondLienReleaseType = "conditional_progress" | "unconditional_progress" | "conditional_final" | "unconditional_final";
-  type DrummondLienReleaseStatus = "not_required" | "pending" | "received" | "waived";
-  type DrummondLienRelease = {
+CaldwellLienRelease + types:
+  type CaldwellLienReleaseType = "conditional_progress" | "unconditional_progress" | "conditional_final" | "unconditional_final";
+  type CaldwellLienReleaseStatus = "not_required" | "pending" | "received" | "waived";
+  type CaldwellLienRelease = {
     id: string;
     job_id: string;
     vendor_id: string;
     invoice_id: string;
     draw_id: string | null;
-    release_type: DrummondLienReleaseType;
-    status: DrummondLienReleaseStatus;
+    release_type: CaldwellLienReleaseType;
+    status: CaldwellLienReleaseStatus;
     release_date: string | null;
     amount_through: number;        // cents
   };
@@ -147,7 +147,7 @@ useReactTable shape:
   <read_first>
     - src/app/design-system/patterns/page.tsx (lines 483-584 Pattern3Dashboard — KPI strip + attention-required pattern)
     - src/app/design-system/components/data-display/page.tsx (lines 367-660 DataGridSection — TanStack Table v8 setup, ColumnDef pattern, sorting state)
-    - src/app/design-system/_fixtures/drummond/budget.ts (full file — DRUMMOND_BUDGET_LINES; ≥25 entries)
+    - src/app/design-system/_fixtures/drummond/budget.ts (full file — CALDWELL_BUDGET_LINES; ≥25 entries)
     - src/app/design-system/_fixtures/drummond/invoices.ts (for computing previous_applications + this_period — filter by cost_code_id + draw_id)
     - src/app/design-system/_fixtures/drummond/cost-codes.ts (resolve cost_code_id → code+description)
     - src/app/design-system/_fixtures/drummond/jobs.ts (resolve job_id → job)
@@ -161,7 +161,7 @@ useReactTable shape:
   <action>
 **Create `src/app/design-system/prototypes/jobs/[id]/budget/page.tsx`:**
 
-Compose Pattern3Dashboard (KPI strip) + DataGrid (TanStack Table v8) for budget lines. Per R.2, ALL computed fields (`previous_applications`, `this_period`, `total_to_date`, `percent_complete`, `balance_to_finish`) derived on-render from `DRUMMOND_INVOICES` — NEVER pre-baked into the fixture.
+Compose Pattern3Dashboard (KPI strip) + DataGrid (TanStack Table v8) for budget lines. Per R.2, ALL computed fields (`previous_applications`, `this_period`, `total_to_date`, `percent_complete`, `balance_to_finish`) derived on-render from `CALDWELL_INVOICES` — NEVER pre-baked into the fixture.
 
 ```typescript
 // src/app/design-system/prototypes/jobs/[id]/budget/page.tsx
@@ -171,8 +171,8 @@ Compose Pattern3Dashboard (KPI strip) + DataGrid (TanStack Table v8) for budget 
 //
 // Per R.2 "Recalculate, don't increment" — every computed field
 // (previous_applications, this_period, total_to_date, percent_complete,
-// balance_to_finish) is derived on-render from DRUMMOND_INVOICES,
-// NOT pre-baked into DRUMMOND_BUDGET_LINES (the type contract excludes them).
+// balance_to_finish) is derived on-render from CALDWELL_INVOICES,
+// NOT pre-baked into CALDWELL_BUDGET_LINES (the type contract excludes them).
 //
 // Stress test: 25+ line items must render at compact Site Office density
 // without horizontal scroll on nw-tablet (≥768px).
@@ -194,13 +194,13 @@ import {
 } from "@tanstack/react-table";
 
 import {
-  DRUMMOND_BUDGET_LINES,
-  DRUMMOND_INVOICES,
-  DRUMMOND_COST_CODES,
-  DRUMMOND_JOBS,
-  DRUMMOND_CHANGE_ORDERS,
-  DRUMMOND_DRAWS,
-  type DrummondBudgetLine,
+  CALDWELL_BUDGET_LINES,
+  CALDWELL_INVOICES,
+  CALDWELL_COST_CODES,
+  CALDWELL_JOBS,
+  CALDWELL_CHANGE_ORDERS,
+  CALDWELL_DRAWS,
+  type CaldwellBudgetLine,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -209,7 +209,7 @@ import Money from "@/components/nw/Money";
 import Badge from "@/components/nw/Badge";
 
 // Computed shape per R.2 — never stored. Always derived on render.
-type BudgetRow = DrummondBudgetLine & {
+type BudgetRow = CaldwellBudgetLine & {
   cost_code_label: string;
   previous_applications: number;
   this_period: number;
@@ -219,20 +219,20 @@ type BudgetRow = DrummondBudgetLine & {
 };
 
 export default function BudgetPrototypePage({ params }: { params: { id: string } }) {
-  const job = DRUMMOND_JOBS.find((j) => j.id === params.id);
+  const job = CALDWELL_JOBS.find((j) => j.id === params.id);
   if (!job) return notFound();
 
   // Identify "current draw" = the draw being prepared (or the latest paid).
-  // For Drummond fixture, Pay App 5 is canonical (per EXPANDED-SCOPE deliverable #3).
-  const currentDraw = DRUMMOND_DRAWS.find((d) => d.id === "d-caldwell-05") ?? DRUMMOND_DRAWS[DRUMMOND_DRAWS.length - 1];
+  // For Caldwell fixture, Pay App 5 is canonical (per EXPANDED-SCOPE deliverable #3).
+  const currentDraw = CALDWELL_DRAWS.find((d) => d.id === "d-caldwell-05") ?? CALDWELL_DRAWS[CALDWELL_DRAWS.length - 1];
 
   // Per R.2 — compute on render from source-of-truth invoice fixture rows.
   const rows: BudgetRow[] = useMemo(() => {
-    return DRUMMOND_BUDGET_LINES.filter((bl) => bl.job_id === job.id).map((bl) => {
-      const cc = DRUMMOND_COST_CODES.find((c) => c.id === bl.cost_code_id);
+    return CALDWELL_BUDGET_LINES.filter((bl) => bl.job_id === job.id).map((bl) => {
+      const cc = CALDWELL_COST_CODES.find((c) => c.id === bl.cost_code_id);
 
       // Sum invoices in PRIOR draws for this cost code.
-      const previous_applications = DRUMMOND_INVOICES
+      const previous_applications = CALDWELL_INVOICES
         .filter((i) =>
           i.cost_code_id === bl.cost_code_id &&
           i.draw_id !== null &&
@@ -241,7 +241,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
         .reduce((sum, i) => sum + i.total_amount, 0);
 
       // Sum invoices in CURRENT draw for this cost code.
-      const this_period = DRUMMOND_INVOICES
+      const this_period = CALDWELL_INVOICES
         .filter((i) =>
           i.cost_code_id === bl.cost_code_id &&
           i.draw_id === currentDraw.id
@@ -270,7 +270,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
     const revisedSum = rows.reduce((s, r) => s + r.revised_estimate, 0);
     const totalToDateSum = rows.reduce((s, r) => s + r.total_to_date, 0);
     const balanceSum = rows.reduce((s, r) => s + r.balance_to_finish, 0);
-    const approvedCOs = DRUMMOND_CHANGE_ORDERS
+    const approvedCOs = CALDWELL_CHANGE_ORDERS
       .filter((co) => co.job_id === job.id && (co.status === "approved" || co.status === "executed"))
       .reduce((s, co) => s + co.total_with_fee, 0);
     const overUnderTotal = rows.filter((r) => r.balance_to_finish < 0).length;
@@ -453,7 +453,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
 }
 ```
 
-**R.2 verification:** the `DrummondBudgetLine` type from Wave 0 deliberately omits `previous_applications`, `this_period`, `total_to_date`, `percent_complete`, `balance_to_finish`. The component's `BudgetRow` type ADDS them as the result of derivation. The `useMemo` block computes them. NO pre-baking allowed.
+**R.2 verification:** the `CaldwellBudgetLine` type from Wave 0 deliberately omits `previous_applications`, `this_period`, `total_to_date`, `percent_complete`, `balance_to_finish`. The component's `BudgetRow` type ADDS them as the result of derivation. The `useMemo` block computes them. NO pre-baking allowed.
 
 **Acceptance criterion verification:** "All 30+ line item DataGrid renders within Site Office compact density without horizontal scroll on nw-tablet."
 - Site Office direction enforces `--card-padding-y: 1rem` (compact) inherited from `prototypes/layout.tsx`
@@ -465,7 +465,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
     <automated>npm run build && grep -c "useReactTable\|getCoreRowModel\|getSortedRowModel" src/app/design-system/prototypes/jobs/[id]/budget/page.tsx</automated>
     Expected: build exits 0; grep returns >=3.
 
-    Per R.2 verification: `grep -c "useMemo\|previous_applications.*=.*DRUMMOND_INVOICES" src/app/design-system/prototypes/jobs/[id]/budget/page.tsx` returns >=2 (computed via useMemo + DRUMMOND_INVOICES filter).
+    Per R.2 verification: `grep -c "useMemo\|previous_applications.*=.*CALDWELL_INVOICES" src/app/design-system/prototypes/jobs/[id]/budget/page.tsx` returns >=2 (computed via useMemo + CALDWELL_INVOICES filter).
 
     Hex + T10c checks return 0 matches.
 
@@ -479,7 +479,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
   </verify>
 
   <done>
-    - Budget prototype renders 25+ Drummond budget lines with all computed fields derived on render (R.2 honored)
+    - Budget prototype renders 25+ Caldwell budget lines with all computed fields derived on render (R.2 honored)
     - KPI strip shows 4 derived sums
     - TanStack Table v8 sorting works on every column
     - All 8 columns fit at tablet width (768px+) without horizontal scroll
@@ -494,7 +494,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
 
   <read_first>
     - src/app/design-system/patterns/page.tsx (lines 259-407 Pattern1DocumentReview — Document Review canonical)
-    - src/app/design-system/_fixtures/drummond/lien-releases.ts (DRUMMOND_LIEN_RELEASES; 4 statute types covered)
+    - src/app/design-system/_fixtures/drummond/lien-releases.ts (CALDWELL_LIEN_RELEASES; 4 statute types covered)
     - src/app/design-system/_fixtures/drummond/vendors.ts (resolve vendor_id)
     - src/app/design-system/_fixtures/drummond/invoices.ts (resolve invoice_id for lien-release linkage)
     - src/app/design-system/_fixtures/drummond/jobs.ts (resolve job_id)
@@ -508,7 +508,7 @@ export default function BudgetPrototypePage({ params }: { params: { id: string }
 **Create `src/app/design-system/prototypes/documents/[id]/page.tsx`:**
 
 Discriminate document type by id prefix:
-- `lr-caldwell-*` → lien release (resolve from `DRUMMOND_LIEN_RELEASES`)
+- `lr-caldwell-*` → lien release (resolve from `CALDWELL_LIEN_RELEASES`)
 - `plan-drummond-*` → architectural plans (synthesize stub from job; sanitized plan PDF preview)
 - `contract-drummond-*` → construction contract (synthesize stub; sanitized contract DOCX preview)
 
@@ -523,7 +523,7 @@ Each renders the Document Review pattern (file preview LEFT + structured fields 
 //   - Lien releases (Florida 4-statute types — 713.20(2)(a)/(b)/(c)/(d))
 //
 // Document type discriminated via id prefix:
-//   lr-caldwell-*       → DrummondLienRelease lookup
+//   lr-caldwell-*       → CaldwellLienRelease lookup
 //   plan-drummond-*     → synthesized plan stub
 //   contract-drummond-* → synthesized contract stub
 //
@@ -546,12 +546,12 @@ import {
 } from "@heroicons/react/24/outline";
 
 import {
-  DRUMMOND_LIEN_RELEASES,
-  DRUMMOND_VENDORS,
-  DRUMMOND_INVOICES,
-  DRUMMOND_JOBS,
-  type DrummondLienReleaseType,
-  type DrummondLienReleaseStatus,
+  CALDWELL_LIEN_RELEASES,
+  CALDWELL_VENDORS,
+  CALDWELL_INVOICES,
+  CALDWELL_JOBS,
+  type CaldwellLienReleaseType,
+  type CaldwellLienReleaseStatus,
 } from "@/app/design-system/_fixtures/drummond";
 
 import Card from "@/components/nw/Card";
@@ -561,14 +561,14 @@ import DataRow from "@/components/nw/DataRow";
 import Badge from "@/components/nw/Badge";
 
 // Florida 4-statute reference — per CLAUDE.md.
-const STATUTE_LABEL: Record<DrummondLienReleaseType, { label: string; statute: string }> = {
+const STATUTE_LABEL: Record<CaldwellLienReleaseType, { label: string; statute: string }> = {
   conditional_progress:   { label: "Conditional waiver — progress payment", statute: "Florida Statute 713.20(2)(a)" },
   unconditional_progress: { label: "Unconditional waiver — progress payment", statute: "Florida Statute 713.20(2)(c)" },
   conditional_final:      { label: "Conditional waiver — final payment", statute: "Florida Statute 713.20(2)(b)" },
   unconditional_final:    { label: "Unconditional waiver — final payment", statute: "Florida Statute 713.20(2)(d)" },
 };
 
-const LIEN_STATUS_BADGE: Record<DrummondLienReleaseStatus, { variant: "neutral" | "accent" | "success" | "warn" | "danger" | "info"; label: string }> = {
+const LIEN_STATUS_BADGE: Record<CaldwellLienReleaseStatus, { variant: "neutral" | "accent" | "success" | "warn" | "danger" | "info"; label: string }> = {
   not_required: { variant: "neutral", label: "NOT REQUIRED" },
   pending:      { variant: "warn", label: "PENDING" },
   received:     { variant: "success", label: "RECEIVED" },
@@ -576,12 +576,12 @@ const LIEN_STATUS_BADGE: Record<DrummondLienReleaseStatus, { variant: "neutral" 
 };
 
 function LienReleaseDocument({ id }: { id: string }) {
-  const lr = DRUMMOND_LIEN_RELEASES.find((l) => l.id === id);
+  const lr = CALDWELL_LIEN_RELEASES.find((l) => l.id === id);
   if (!lr) return notFound();
 
-  const vendor = DRUMMOND_VENDORS.find((v) => v.id === lr.vendor_id);
-  const invoice = DRUMMOND_INVOICES.find((i) => i.id === lr.invoice_id);
-  const job = DRUMMOND_JOBS.find((j) => j.id === lr.job_id);
+  const vendor = CALDWELL_VENDORS.find((v) => v.id === lr.vendor_id);
+  const invoice = CALDWELL_INVOICES.find((i) => i.id === lr.invoice_id);
+  const job = CALDWELL_JOBS.find((j) => j.id === lr.job_id);
   const statute = STATUTE_LABEL[lr.release_type];
   const status = LIEN_STATUS_BADGE[lr.status];
 
@@ -686,7 +686,7 @@ function PlanDocument({ id }: { id: string }) {
   // Synthesized stub — no fixture for plans, but the component renders the
   // Document Review shape consistently. Real plans would come from the
   // documents table (Wave 2 — currently MISSING per CURRENT-STATE A.4).
-  const job = DRUMMOND_JOBS[0]; // single-job fixture
+  const job = CALDWELL_JOBS[0]; // single-job fixture
 
   return (
     <div className="px-6 py-8 max-w-[1600px] mx-auto">
@@ -741,8 +741,8 @@ function PlanDocument({ id }: { id: string }) {
 }
 
 function ContractDocument({ id }: { id: string }) {
-  // Synthesized stub from Drummond contract (anonymized).
-  const job = DRUMMOND_JOBS[0];
+  // Synthesized stub from Caldwell contract (anonymized).
+  const job = CALDWELL_JOBS[0];
 
   return (
     <div className="px-6 py-8 max-w-[1600px] mx-auto">
@@ -798,7 +798,7 @@ export default function DocumentPrototypePage({ params }: { params: { id: string
   if (params.id.startsWith("plan-drummond-")) return <PlanDocument id={params.id} />;
   if (params.id.startsWith("contract-drummond-")) return <ContractDocument id={params.id} />;
   // Default: try lien releases (most likely match if no prefix specified)
-  if (DRUMMOND_LIEN_RELEASES.some((l) => l.id === params.id)) return <LienReleaseDocument id={params.id} />;
+  if (CALDWELL_LIEN_RELEASES.some((l) => l.id === params.id)) return <LienReleaseDocument id={params.id} />;
   return notFound();
 }
 ```
@@ -858,14 +858,14 @@ export default function DocumentPrototypePage({ params }: { params: { id: string
 - npm run build passes
 - Hook T10c silent on both new files
 - No hardcoded hex
-- R.2 honored: BudgetRow computed fields derived in useMemo, NOT pre-baked into DRUMMOND_BUDGET_LINES
+- R.2 honored: BudgetRow computed fields derived in useMemo, NOT pre-baked into CALDWELL_BUDGET_LINES
 - TanStack Table v8 imports + setup match analog at data-display/page.tsx:367-660
 - All 4 Florida statute types render distinctly in lien release prototype
 - F1 disclaimer present and visible above lien-release status timeline
 </verification>
 
 <success_criteria>
-- Budget prototype renders 25+ Drummond budget lines with full computed-field derivation, sortable columns, KPI strip
+- Budget prototype renders 25+ Caldwell budget lines with full computed-field derivation, sortable columns, KPI strip
 - Documents prototype handles 3 sub-types via id prefix discriminator
 - All 4 Florida lien-release statute types render correctly
 - All routes pass build, T10c, and token discipline gates

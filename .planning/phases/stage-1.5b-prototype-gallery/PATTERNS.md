@@ -111,7 +111,7 @@ export * from "./draws";
 export * from "./change-orders";
 ```
 
-**Apply to drummond/index.ts:** same shape, `DRUMMOND_*` constants instead of `SAMPLE_*` per D-04 (keeps fictional and Drummond fixtures separable on cross-imports).
+**Apply to drummond/index.ts:** same shape, `CALDWELL_*` constants instead of `SAMPLE_*` per D-04 (keeps fictional and Caldwell fixtures separable on cross-imports).
 
 ---
 
@@ -161,8 +161,8 @@ export const SAMPLE_JOBS: SampleJob[] = [
 ```
 
 **Apply to drummond/jobs.ts:**
-- `DrummondJob` type (extends `SampleJob` shape; only one job — Drummond/Halcyon — but Drummond has more nuance per CONTEXT D-001 sec 1.1: substitution covers homeowner name + address)
-- `DRUMMOND_JOB` (single object) or `DRUMMOND_JOBS` (1-item array — keeps shape consistent for cross-fixture lookups)
+- `CaldwellJob` type (extends `SampleJob` shape; only one job — Drummond/Halcyon — but Drummond has more nuance per CONTEXT D-001 sec 1.1: substitution covers homeowner name + address)
+- `CALDWELL_JOB` (single object) or `CALDWELL_JOBS` (1-item array — keeps shape consistent for cross-fixture lookups)
 - Use **substituted** name + address from SUBSTITUTION-MAP.md (locked: owner Caldwell, "712 Pine Ave, Anna Maria FL 34216", job code GC0501 per AUTO-LOG line 99)
 
 ---
@@ -196,8 +196,8 @@ export const SAMPLE_VENDORS: SampleVendor[] = [
 ```
 
 **Apply to drummond/vendors.ts:**
-- `DrummondVendor` type (same shape as `SampleVendor`)
-- `DRUMMOND_VENDORS` array — 17 entries per AUTO-LOG (14 fictional + 3 NO-SUB for Ferguson/FPL/Home Depot per nwrp27 RULE 1)
+- `CaldwellVendor` type (same shape as `SampleVendor`)
+- `CALDWELL_VENDORS` array — 17 entries per AUTO-LOG (14 fictional + 3 NO-SUB for Ferguson/FPL/Home Depot per nwrp27 RULE 1)
 - Long names are the stress test (e.g., "Florida Sunshine Carpentry", "ML Concrete LLC") — verify this layout doesn't break List+Detail mobile rendering
 - IDs prefixed `v-caldwell-` (per CONTEXT D-27 + nwrp31 #7) to avoid collision with playground `v-coastal-carpentry`
 
@@ -230,7 +230,7 @@ export const SAMPLE_COST_CODES: SampleCostCode[] = [
 ];
 ```
 
-**Apply to drummond/cost-codes.ts:** same `SampleCostCode` shape (renamed `DrummondCostCode`). Drummond uses 5-digit codes mapping AIA G703 — extract from `Drummond - Line Items Cost Coded.pdf` (Source 1) per CONTEXT 1.1. Sort_order matches G703 row order in Pay App 5.
+**Apply to drummond/cost-codes.ts:** same `SampleCostCode` shape (renamed `CaldwellCostCode`). Drummond uses 5-digit codes mapping AIA G703 — extract from `Drummond - Line Items Cost Coded.pdf` (Source 1) per CONTEXT 1.1. Sort_order matches G703 row order in Pay App 5.
 
 ---
 
@@ -308,11 +308,11 @@ export type SampleInvoice = {
 ```
 
 **Apply to drummond/invoices.ts:**
-- `DrummondInvoice` type EXTENDS `SampleInvoice` (per CONTEXT D-005). Additional fields if needed: `original_file_url` (string for fixture path), `co_id` (link to change order — already supported via `co_reference_raw` in CLAUDE.md schema).
+- `CaldwellInvoice` type EXTENDS `SampleInvoice` (per CONTEXT D-005). Additional fields if needed: `original_file_url` (string for fixture path), `co_id` (link to change order — already supported via `co_reference_raw` in CLAUDE.md schema).
 - Per EXPANDED-SCOPE deliverable #2: ≥4 invoices spanning the workflow (ai_processed yellow, pm_review yellow, qa_review green, paid). Three format types per CLAUDE.md (clean PDF, T&M, lump-sum).
 - Per D-19 fallback: if manual Read for ~94 PDFs is too slow, parse only 4-6 priority invoices manually; render rest with line-item summaries from pay apps.
 
-**Sample entry — T&M, mid-confidence, pm_review** (`_fixtures/invoices.ts:99-165`) is the analog for T&M (Drummond Pay App 5 has Florida Sunshine Carpentry T&M invoices — daily labor entries).
+**Sample entry — T&M, mid-confidence, pm_review** (`_fixtures/invoices.ts:99-165`) is the analog for T&M (Caldwell Pay App 5 has Florida Sunshine Carpentry T&M invoices — daily labor entries).
 
 ---
 
@@ -375,9 +375,9 @@ export const SAMPLE_DRAWS: SampleDraw[] = [
 ```
 
 **Apply to drummond/draws.ts:**
-- `DrummondDraw` type same shape; 5 entries (Drs 1-5 per Source 3 inventory; per EXPANDED-SCOPE deliverable #3, Pay App 5 is the canonical render target).
+- `CaldwellDraw` type same shape; 5 entries (Drs 1-5 per Source 3 inventory; per EXPANDED-SCOPE deliverable #3, Pay App 5 is the canonical render target).
 - Numbers extracted from XLSX pay apps via the sanitization script.
-- **Per CONTEXT 1.1** "Drummond Pay App 8" reference in CLAUDE.md does NOT match Source 3 inventory (5 pay apps, not 8) — flag as polish requirement.
+- **Per CONTEXT 1.1** "Caldwell Pay App 8" reference in CLAUDE.md does NOT match Source 3 inventory (5 pay apps, not 8) — flag as polish requirement.
 
 **Note: `_fixtures/draws.ts` already has `draw_line_items` shape implied via the G702 fields. Drummond will need a separate `draw_line_items.ts` if rendering full G703 detail (one per cost code per draw — 20-50 rows per pay app per CONTEXT 1.1). Treat as part of `drummond/draws.ts` if rolled in, OR add a sibling `drummond/draw-line-items.ts` to keep file granularity matched to fixture-per-entity convention.**
 
@@ -427,7 +427,7 @@ export const SAMPLE_CHANGE_ORDERS: SampleChangeOrder[] = [
 ```
 
 **Apply to drummond/change-orders.ts:**
-- `DrummondChangeOrder` type same shape.
+- `CaldwellChangeOrder` type same shape.
 - 4-6 CO chain per CONTEXT 1.1 (PCCO logs implicit in Pay App PDFs G702 cover sheets).
 - Drummond default GC fee 20% (some at 18%, some "no fee" per CLAUDE.md).
 - Tests "complex CO chains affecting multiple budget lines" (deliverable acceptance criterion).
@@ -438,12 +438,12 @@ export const SAMPLE_CHANGE_ORDERS: SampleChangeOrder[] = [
 
 **Analog:** No direct existing fixture (no `budget.ts` exists in playground `_fixtures/`). Mirror `cost-codes.ts` shape for type discipline.
 
-**Pattern to follow** — mirror existing fixture file shape, define new `DrummondBudgetLine` type per CONTEXT D-005:
+**Pattern to follow** — mirror existing fixture file shape, define new `CaldwellBudgetLine` type per CONTEXT D-005:
 
 ```typescript
 // New shape, mirrors CLAUDE.md budget_lines schema with computed fields
 // LEFT OFF the type per R.2 "Recalculate, don't increment".
-export type DrummondBudgetLine = {
+export type CaldwellBudgetLine = {
   id: string;
   job_id: string;
   cost_code_id: string;
@@ -451,13 +451,13 @@ export type DrummondBudgetLine = {
   revised_estimate: number;  // cents (original + approved COs)
 };
 
-export const DRUMMOND_BUDGET_LINES: DrummondBudgetLine[] = [
+export const CALDWELL_BUDGET_LINES: CaldwellBudgetLine[] = [
   // 25-50 line items per CONTEXT 1.1 — extracted from Drummond_Budget_2026-04-15.xlsx
 ];
 ```
 
 **Computed fields (NEVER stored, always derived per R.2 / CLAUDE.md):**
-- `previous_applications` — sum of invoices in prior draws (from `DRUMMOND_INVOICES.filter(i => i.draw_id === priorDraw.id)`)
+- `previous_applications` — sum of invoices in prior draws (from `CALDWELL_INVOICES.filter(i => i.draw_id === priorDraw.id)`)
 - `this_period` — sum of invoices in current draw
 - `total_to_date` — `previous + this_period`
 - `percent_complete` — `total_to_date / revised_estimate`
@@ -478,28 +478,28 @@ export const DRUMMOND_BUDGET_LINES: DrummondBudgetLine[] = [
 // violation, F1 fixes). For 1.5b prototype: render the 4-status enum WITHOUT
 // JSONB drilldown, OR fake a history client-side and label it explicitly.
 
-export type DrummondLienReleaseType =
+export type CaldwellLienReleaseType =
   | "conditional_progress"        // Florida statute 713.20(2)(a)
   | "unconditional_progress"      // Florida statute 713.20(2)(c)
   | "conditional_final"           // Florida statute 713.20(2)(b)
   | "unconditional_final";        // Florida statute 713.20(2)(d)
 
-export type DrummondLienReleaseStatus =
+export type CaldwellLienReleaseStatus =
   | "not_required" | "pending" | "received" | "waived";
 
-export type DrummondLienRelease = {
+export type CaldwellLienRelease = {
   id: string;
   job_id: string;
   vendor_id: string;
   invoice_id: string;
   draw_id: string | null;
-  release_type: DrummondLienReleaseType;
-  status: DrummondLienReleaseStatus;
+  release_type: CaldwellLienReleaseType;
+  status: CaldwellLienReleaseStatus;
   release_date: string | null; // YYYY-MM-DD
   amount_through: number; // cents — amount through which release applies
 };
 
-export const DRUMMOND_LIEN_RELEASES: DrummondLienRelease[] = [
+export const CALDWELL_LIEN_RELEASES: CaldwellLienRelease[] = [
   // Extracted from Drummond-Nov 2025 Lien Releases.pdf
 ];
 ```
@@ -521,10 +521,10 @@ export const DRUMMOND_LIEN_RELEASES: DrummondLienRelease[] = [
 // schema lock happens in F1; 1.5b implementation may discover real
 // complexity that informs F1 revision.
 
-export type DrummondScheduleStatus =
+export type CaldwellScheduleStatus =
   | "not_started" | "in_progress" | "complete" | "blocked";
 
-export type DrummondScheduleItem = {
+export type CaldwellScheduleItem = {
   id: string;
   job_id: string;
   name: string;
@@ -534,11 +534,11 @@ export type DrummondScheduleItem = {
   parent_id?: string;          // hierarchical tasks (constant in real construction schedules)
   assigned_vendor_id?: string;
   percent_complete: number;    // 0-1
-  status: DrummondScheduleStatus;
+  status: CaldwellScheduleStatus;
   is_milestone: boolean;       // milestones render as diamonds in Gantt, not bars; pay app dates are milestones
 };
 
-export const DRUMMOND_SCHEDULE_ITEMS: DrummondScheduleItem[] = [
+export const CALDWELL_SCHEDULE_ITEMS: CaldwellScheduleItem[] = [
   // ≥20 tasks per acceptance criterion. Source:
   //   Schedule_List_Drummond-501 74th St.xlsx
   //   Schedule_Gantt_Drummond-501 74th St (12).pdf
@@ -567,7 +567,7 @@ export const DRUMMOND_SCHEDULE_ITEMS: DrummondScheduleItem[] = [
 // — see src/lib/payment-schedule.ts for the canonical math (NOT for import,
 // fixture is pure data).
 
-export type DrummondPayment = {
+export type CaldwellPayment = {
   id: string;
   invoice_id: string;
   job_id: string;
@@ -579,8 +579,8 @@ export type DrummondPayment = {
   picked_up_at: string | null;
 };
 
-export const DRUMMOND_PAYMENTS: DrummondPayment[] = [
-  // Inferred from sanitized DRUMMOND_INVOICES rows where status is in
+export const CALDWELL_PAYMENTS: CaldwellPayment[] = [
+  // Inferred from sanitized CALDWELL_INVOICES rows where status is in
   // ['paid'] (per CLAUDE.md SPENT_STATUSES + payment-schedule.ts logic).
 ];
 ```
@@ -593,25 +593,25 @@ export const DRUMMOND_PAYMENTS: DrummondPayment[] = [
 
 **Pattern to follow:**
 ```typescript
-// Drummond drift fixtures derived from real Source 3 invoice-vs-PO and
+// Caldwell drift fixtures derived from real Source 3 invoice-vs-PO and
 // pay-app-vs-budget mismatches. Per CONTEXT D-009 — paired
 // `imported` / `current` shapes for ReconciliationStrawman 4 candidates ×
 // 2 drift types. Q6 = A primary (invoice ↔ PO) + B secondary (draw ↔ budget).
 
-export type DrummondReconciliationDriftType =
+export type CaldwellReconciliationDriftType =
   | "invoice_po"    // canonical example per D-028
   | "draw_budget";
 
-export type DrummondReconciliationPair = {
+export type CaldwellReconciliationPair = {
   id: string;
-  drift_type: DrummondReconciliationDriftType;
+  drift_type: CaldwellReconciliationDriftType;
   imported: Record<string, unknown>;  // QuickBooks / external snapshot
   current:  Record<string, unknown>;  // Nightwork current state
   // Field-level diff highlighting per the strawman candidates
   diffs: Array<{ field: string; imported_value: unknown; current_value: unknown }>;
 };
 
-export const DRUMMOND_RECONCILIATION_PAIRS: DrummondReconciliationPair[] = [
+export const CALDWELL_RECONCILIATION_PAIRS: CaldwellReconciliationPair[] = [
   // 4 candidates × 2 drift types = 8 prototype pairs (per Q3=C, Q6=A+B).
 ];
 ```
@@ -827,7 +827,7 @@ const SECTIONS: Array<{
 
 **Apply to prototypes/invoices/[id]/page.tsx:**
 - Import from `@/app/design-system/_fixtures/drummond` (NOT the playground `_fixtures/`).
-- Look up invoice by route param `params.id` against `DRUMMOND_INVOICES`.
+- Look up invoice by route param `params.id` against `CALDWELL_INVOICES`.
 - Header band with breadcrumb + invoice number + vendor name + status badge + action buttons (Reject / Push to QB).
 - Hero grid 50/50: file preview LEFT (placeholder per `lines 322-353` until react-pdf is wired), right-rail panels RIGHT.
 - Status timeline at bottom — derived from `status_history` JSONB (CLAUDE.md schema) — for the prototype, fake the timeline from sanitized data.
@@ -1039,7 +1039,7 @@ const table = useReactTable({
 ```
 
 **Apply to prototypes/jobs/[id]/budget/page.tsx:**
-- KPI strip top: original_estimate / committed / invoiced / balance — derived on-render from `DRUMMOND_BUDGET_LINES` + `DRUMMOND_INVOICES` + `DRUMMOND_PURCHASE_ORDERS` per R.2 "Recalculate, don't increment".
+- KPI strip top: original_estimate / committed / invoiced / balance — derived on-render from `CALDWELL_BUDGET_LINES` + `CALDWELL_INVOICES` + `CALDWELL_PURCHASE_ORDERS` per R.2 "Recalculate, don't increment".
 - DataGrid for budget lines (25-50 rows per CONTEXT 1.1) — TanStack Table v8 with sortable columns.
 - Drilldown via slide-out (mirror real `src/app/jobs/[id]/budget/page.tsx:9` `SlideOutPanel` pattern, but stub it for prototype).
 - Tests "DataGrid stress test" (acceptance criterion: 30+ line items render at compact density without horizontal scroll on `nw-tablet`).
@@ -1139,7 +1139,7 @@ const columns = useMemo<ColumnDef<ScheduleRow>[]>(
 ```
 
 **Apply to prototypes/vendors/page.tsx:**
-- 17 Drummond vendors per CONTEXT 1.1.
+- 17 Caldwell vendors per CONTEXT 1.1.
 - Long names stress test: "Florida Sunshine Carpentry" (substituted), "ML Concrete LLC" (substituted) — verify `truncate` Tailwind class still keeps card boundaries clean on mobile.
 - Selected vendor renders sub-Pattern in right pane (mini detail card; or a route push to vendors/[id]/page.tsx for full detail).
 
@@ -1229,7 +1229,7 @@ const columns = useMemo<ColumnDef<ScheduleRow>[]>(
 **Apply to prototypes/reconciliation/page.tsx:**
 - **Per D-007:** single page rendering 4×2 matrix top-to-bottom. Per drift-type sections: invoice↔PO (top), draw↔budget (bottom). Each section contains 4 candidate Cards stacked. Section anchors enable side-by-side scrolling comparison.
 - **Per D-008:** EXTENDS existing `ReconciliationStrawman` function — does NOT diverge.
-- **Per D-009:** uses `DRUMMOND_RECONCILIATION_PAIRS` fixture from `_fixtures/drummond/reconciliation.ts`.
+- **Per D-009:** uses `CALDWELL_RECONCILIATION_PAIRS` fixture from `_fixtures/drummond/reconciliation.ts`.
 - 4 candidates × 2 drift types = 8 prototypes (per Q3=C, Q6=A+B).
 
 ---
@@ -1358,7 +1358,7 @@ import { ... } from "@/lib/auth";  // BLOCKED
 ```typescript
 import type { ... } from "@/lib/supabase/types/...";  // type-only OK
 import { SAMPLE_INVOICES } from "@/app/design-system/_fixtures";  // OK
-import { DRUMMOND_INVOICES } from "@/app/design-system/_fixtures/drummond";  // OK (inherits)
+import { CALDWELL_INVOICES } from "@/app/design-system/_fixtures/drummond";  // OK (inherits)
 import Card from "@/components/nw/Card";  // OK
 import { Combobox } from "@/components/ui/combobox";  // OK
 ```
@@ -1402,13 +1402,13 @@ import {
 // only correct posture, even in prototypes).
 
 const previous_applications = useMemo(() => {
-  return DRUMMOND_INVOICES
+  return CALDWELL_INVOICES
     .filter((i) => i.cost_code_id === budgetLine.cost_code_id && i.draw_id < currentDraw.id)
     .reduce((sum, i) => sum + i.total_amount, 0);
 }, [budgetLine.cost_code_id, currentDraw.id]);
 
 const this_period = useMemo(() => {
-  return DRUMMOND_INVOICES
+  return CALDWELL_INVOICES
     .filter((i) => i.cost_code_id === budgetLine.cost_code_id && i.draw_id === currentDraw.id)
     .reduce((sum, i) => sum + i.total_amount, 0);
 }, [budgetLine.cost_code_id, currentDraw.id]);
