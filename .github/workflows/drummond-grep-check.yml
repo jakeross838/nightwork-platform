@@ -1,0 +1,49 @@
+# .github/workflows/drummond-grep-check.yml
+#
+# Two-tier grep gate (tier 2 — CI-side, defense-in-depth). Per CONTEXT
+# D-20 + D-22 (Stage 1.5b). Tier 1 is the extractor (scripts/sanitize-drummond.ts).
+# Tier 1.5 is .githooks/pre-commit + .claude/hooks/nightwork-pre-commit.sh.
+# Tier 2 (this workflow) catches hand-written drift bypassing both extractor
+# and pre-commit hooks (e.g. commits made on a different machine without
+# project hooks installed).
+#
+# Runs on every PR + push to main. Fails the workflow if any of ~32
+# real Drummond identifiers appear in committed sanitized fixtures.
+#
+# This list MUST be kept in sync with .planning/fixtures/drummond/SUBSTITUTION-MAP.md
+# (gitignored). Updates to vendor list go in BOTH places (per D-22).
+
+name: Drummond grep check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  grep-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check sanitized fixtures for real Drummond identifiers
+        run: |
+          # Hardcoded list of high-risk Drummond identifiers (per D-21 narrow
+          # scope + nwrp31 #3 broadening).
+          # Original 17: owner + site address + 14 vendor real names from
+          # SUBSTITUTION-MAP.md.
+          # Tier 2 customers (per nwrp31): Dewberry, Pou, Krauss, Duncan,
+          # Molinari, Markgraf, Harllee, Fish, Clark.
+          # Canonical PM names (per CLAUDE.md): Lee Worthy, Nelson Belanger,
+          # Bob Mozine, Jason Szykulski, Martin Mannix.
+          PATTERN='Drummond|501 74th|Holmes Beach|SmartShield Homes|Florida Sunshine Carpentry|Doug Naeher Drywall|Paradise Foam|Banko Overhead Doors|WG Drywall|Loftin Plumbing|Island Lumber|CoatRite|Ecosouth|MJ Florida|Rangel Tile|TNT Painting|Avery Roofing|ML Concrete LLC|Dewberry|Pou|Krauss|Duncan|Molinari|Markgraf|Harllee|Fish|Clark|Lee Worthy|Nelson Belanger|Bob Mozine|Jason Szykulski|Martin Mannix'
+
+          if git grep -nE "$PATTERN" -- 'src/app/design-system/_fixtures/drummond/'; then
+            echo ""
+            echo "::error::Real Drummond identifier detected in sanitized fixtures."
+            echo "::error::Sanitized fixtures must use SUBSTITUTION-MAP.md substitutions (Caldwell, 712 Pine Ave, etc.)."
+            echo "::error::Either re-run scripts/sanitize-drummond.ts or hand-fix the offending file."
+            exit 1
+          fi
+
+          echo "OK: no real Drummond identifiers found in src/app/design-system/_fixtures/drummond/"
